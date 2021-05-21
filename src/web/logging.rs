@@ -18,8 +18,11 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for RequestLogMiddlew
         let start = Instant::now();
         let response = next.run(request).await;
         let duration = Instant::now() - start;
+        if let Some(error) = response.error() {
+            log::error!("Error processing the request: {:?}", error);
+        }
         log::info!(
-            r#"{peer_addr} {method} {path} → {status} in {duration:#?}"#,
+            r#"Request: {peer_addr} {method} {path} {status} ({duration:#?})"#,
             peer_addr = peer_addr,
             method = method,
             path = path,
