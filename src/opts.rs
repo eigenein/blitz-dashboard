@@ -1,0 +1,18 @@
+use clap::{crate_authors, crate_description, crate_version, AppSettings, Clap};
+
+#[derive(Clap)]
+#[clap(author = crate_authors!())]
+#[clap(version = crate_version!())]
+#[clap(about = crate_description!())]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct Opts {
+    #[clap(short, long, default_value = "localhost", about = "Web app host")]
+    pub host: String,
+
+    #[clap(short, long, default_value = "8080", about = "Web app port")]
+    pub port: u16,
+}
+
+pub fn parse() -> Opts {
+    Opts::parse()
+}
