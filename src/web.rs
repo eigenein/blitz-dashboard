@@ -16,14 +16,32 @@ pub async fn run(host: &str, port: u16) -> anyhow::Result<()> {
 
 async fn index(mut _request: tide::Request<()>) -> tide::Result {
     respond_with_body(html! {
-        section class="hero is-info is-fullheight" {
+        section class="hero is-fullheight" {
             div class="hero-body" {
-                div {
-                    p class="title" {
-                        "Fullheight hero"
-                    }
-                    p class="subtitle" {
-                        "Fullheight subtitle"
+                div class="container" {
+                    div class="columns" {
+                        div class="column is-half is-offset-one-quarter" {
+                            form {
+                                div class="field has-addons" {
+                                    div class="control" {
+                                        span class="select is-medium is-rounded" {
+                                            select {
+                                                option { "🇷🇺 RU" }
+                                                option { "🇪🇺 EU" }
+                                                option { "🇺🇸 NA" }
+                                                option { "🇨🇳 AS" }
+                                            }
+                                        }
+                                    }
+                                    div class="control has-icons-left is-expanded" {
+                                        input class="input is-medium is-rounded" type="text" placeholder="Username or user ID" autofocus;
+                                        span class="icon is-medium is-left" {
+                                            i class="fas fa-user" {}
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -38,6 +56,7 @@ fn respond_with_body(body: Markup) -> tide::Result {
             head {
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css";
+                link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
             }
             body {
                 (body)
