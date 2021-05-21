@@ -6,11 +6,14 @@ use clap::{crate_authors, crate_description, crate_version, AppSettings, Clap};
 #[clap(about = crate_description!())]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
-    #[clap(short, long, default_value = "localhost", about = "Web app host")]
+    #[clap(long, default_value = "localhost", about = "Web app host")]
     pub host: String,
 
     #[clap(short, long, default_value = "8080", about = "Web app port")]
     pub port: u16,
+
+    #[clap(short, long, about = "Wargaming.net API application ID")]
+    pub application_id: String,
 }
 
 pub fn parse() -> Opts {
