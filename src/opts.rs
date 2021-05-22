@@ -9,7 +9,7 @@ pub struct Opts {
     #[clap(long, default_value = "localhost", about = "Web app host")]
     pub host: String,
 
-    #[clap(short, long, default_value = "8080", about = "Web app port")]
+    #[clap(short, long, default_value = "8081", about = "Web app port")]
     pub port: u16,
 
     #[clap(short, long, about = "Wargaming.net API application ID")]
