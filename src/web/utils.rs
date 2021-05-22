@@ -4,7 +4,7 @@ use surf::StatusCode;
 use tide::Response;
 
 /// Wraps the body into a complete HTML document.
-pub fn respond_with_body(body: Markup) -> tide::Result {
+pub fn respond_with_body(code: StatusCode, body: Markup) -> tide::Result {
     let markup: Markup = html! {
         (DOCTYPE)
         html lang="en" {
@@ -20,7 +20,7 @@ pub fn respond_with_body(body: Markup) -> tide::Result {
             }
         }
     };
-    Ok(Response::builder(StatusCode::Ok)
+    Ok(Response::builder(code)
         .body(markup.into_string())
         .content_type(mime::HTML)
         .build())

@@ -1,6 +1,6 @@
 use sentry::capture_error;
 use std::time::Instant;
-use tide::{Request, Response, StatusCode};
+use tide::Request;
 
 pub struct MonitoringMiddleware;
 
@@ -25,7 +25,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for MonitoringMiddlew
             Some(error) => {
                 let sentry_id = capture_error::<dyn std::error::Error>(error.as_ref());
                 log::error!("Response error: {:?} [{}]", error, sentry_id.to_simple());
-                Ok(Response::builder(StatusCode::InternalServerError).build())
+                crate::web::views::errors::get_error_view(&sentry_id)
             }
             None => Ok(response),
         }
