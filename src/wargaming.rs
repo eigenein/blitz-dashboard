@@ -9,7 +9,7 @@ pub struct WargamingApi {
     client: surf::Client,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Account {
     pub nickname: String,
 
@@ -44,7 +44,8 @@ impl WargamingApi {
     }
 }
 
-#[derive(Deserialize)]
+/// Generic Wargaming.net API error.
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(untagged)]
 enum ApiResponse<T> {
     Data {
@@ -57,19 +58,55 @@ enum ApiResponse<T> {
     },
 }
 
-#[derive(Deserialize)]
+/// Wargaming.net API error.
+#[derive(Deserialize, Debug, PartialEq)]
 struct ApiError {
     message: String,
+
+    #[serde(default)]
+    code: Option<u16>,
+
+    #[serde(default)]
+    field: Option<String>,
 }
 
+/// Converts [`ApiResponse`] into [`tide::Result`].
 impl<T> From<ApiResponse<T>> for tide::Result<T> {
     fn from(response: ApiResponse<T>) -> tide::Result<T> {
         match response {
             ApiResponse::Data { data } => Ok(data),
             ApiResponse::Error { error } => tide::Result::Err(tide::Error::from_str(
                 StatusCode::InternalServerError,
-                error.message,
+                format!(
+                    r#"[{}] "{}" in "{}""#,
+                    error.code.unwrap_or_default(),
+                    error.message,
+                    error.field.unwrap_or_default(),
+                ),
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_search_accounts_error() -> Result<(), anyhow::Error> {
+        let response: ApiResponse<Vec<Account>> = serde_json::from_str(
+            r#"{"status":"error","error":{"field":"search","message":"INVALID_SEARCH","code":407,"value":"1 2"}}"#,
+        )?;
+        assert_eq!(
+            response,
+            ApiResponse::Error {
+                error: ApiError {
+                    message: "INVALID_SEARCH".to_string(),
+                    code: Some(407),
+                    field: Some("search".to_string()),
+                }
+            }
+        );
+        Ok(())
     }
 }

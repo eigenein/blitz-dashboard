@@ -1,4 +1,5 @@
 use crate::web::utils::respond_with_body;
+use crate::web::views::user::get_user_url;
 use crate::web::State;
 use maud::html;
 use serde::Deserialize;
@@ -54,10 +55,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
                                 @if let Some(accounts) = accounts {
-                                    div class="tags mt-4" {
+                                    div class="buttons mt-4" {
                                         @for account in accounts {
-                                            span class="tag is-success is-rounded" title=(account.id) {
-                                                (account.nickname)
+                                            a class="button is-link is-small is-rounded" href=(get_user_url(account.id)) {
+                                                span.icon { i class="fas fa-user" {} }
+                                                span { (account.nickname) }
                                             }
                                         }
                                     }

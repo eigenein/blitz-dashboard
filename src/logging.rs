@@ -1,7 +1,8 @@
+use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 
 pub fn init(debug: bool) -> anyhow::Result<()> {
-    TermLogger::init(
+    let logger = TermLogger::new(
         if !debug {
             LevelFilter::Info
         } else {
@@ -16,6 +17,10 @@ pub fn init(debug: bool) -> anyhow::Result<()> {
             .build(),
         TerminalMode::Stderr,
         ColorChoice::Auto,
-    )?;
+    );
+    log::set_boxed_logger(Box::new(
+        SentryLogger::with_dest(logger).filter(|_| LogFilter::Breadcrumb),
+    ))?;
+    log::set_max_level(LevelFilter::Debug);
     Ok(())
 }

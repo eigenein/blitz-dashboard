@@ -16,6 +16,15 @@ pub fn respond_with_body(code: StatusCode, body: Markup) -> tide::Result {
                 link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
             }
             body {
+                nav.navbar role="navigation" aria-label="main navigation" {
+                    div.container {
+                        div class="navbar-brand" {
+                            a href="/" class="navbar-item" {
+                                span class="icon-text" { span.icon { i class="fas fa-home" {} } span { "Home" } }
+                            }
+                        }
+                    }
+                }
                 (body)
             }
         }

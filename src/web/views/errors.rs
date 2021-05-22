@@ -8,7 +8,7 @@ use tide::{Request, StatusCode};
 pub async fn get(_request: Request<State>) -> tide::Result {
     Err(tide::Error::from_str(
         StatusCode::InternalServerError,
-        "This is a simulated error",
+        "Simulated error",
     ))
 }
 
@@ -21,7 +21,7 @@ pub fn get_error_view(sentry_id: &sentry::types::Uuid) -> tide::Result {
                 div class="hero-body" {
                     div class="container" {
                         div class="columns" {
-                            div class="column is-4 is-offset-4" {
+                            div class="column is-6 is-offset-3" {
                                 (card(
                                     Some(html! { "🤖 Oops!…" }),
                                     Some(html! { { "Sentry ID: " code { (sentry_id.to_simple()) } "." } }),
