@@ -14,6 +14,12 @@ pub struct Opts {
 
     #[clap(short, long, about = "Wargaming.net API application ID")]
     pub application_id: String,
+
+    #[clap(long, about = "Sentry DSN")]
+    pub sentry_dsn: Option<String>,
+
+    #[clap(short, long, about = "Enable debugging")]
+    pub debug: bool,
 }
 
 pub fn parse() -> Opts {

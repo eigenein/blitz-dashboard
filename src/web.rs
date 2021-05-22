@@ -4,9 +4,10 @@ use serde::Deserialize;
 
 mod logging;
 mod utils;
+mod views;
 
 #[derive(Clone)]
-struct State {
+pub struct State {
     api: WargamingApi,
 }
 
@@ -23,8 +24,9 @@ pub async fn run(host: &str, port: u16, application_id: String) -> anyhow::Resul
         api: WargamingApi::new(application_id),
     });
     app.with(tide_compress::CompressMiddleware::new());
-    app.with(logging::RequestLogMiddleware);
+    app.with(logging::MonitoringMiddleware);
     app.at("/").get(get_index);
+    app.at("/error").get(views::errors::get);
     log::info!("Listening on {}:{}.", host, port);
     app.listen((host, port)).await?;
     Ok(())

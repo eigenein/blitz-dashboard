@@ -1,26 +1,18 @@
+use sentry::capture_error;
 use std::time::Instant;
+use tide::{Request, Response, StatusCode};
 
-pub struct RequestLogMiddleware;
-
-struct RequestLogMiddlewareHasBeenRun;
+pub struct MonitoringMiddleware;
 
 #[tide::utils::async_trait]
-impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for RequestLogMiddleware {
-    async fn handle(&self, mut request: tide::Request<T>, next: tide::Next<'_, T>) -> tide::Result {
-        if request.ext::<RequestLogMiddlewareHasBeenRun>().is_some() {
-            return Ok(next.run(request).await);
-        }
-        request.set_ext(RequestLogMiddlewareHasBeenRun);
-
+impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for MonitoringMiddleware {
+    async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
         let method = request.method().to_string();
         let start = Instant::now();
         let response = next.run(request).await;
         let duration = Instant::now() - start;
-        if let Some(error) = response.error() {
-            log::error!("Error processing the request: {:?}", error);
-        }
         log::info!(
             r#"Request: {peer_addr} {method} {path} {status} ({duration:#?})"#,
             peer_addr = peer_addr,
@@ -29,6 +21,13 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for RequestLogMiddlew
             status = response.status(),
             duration = duration,
         );
-        Ok(response)
+        match response.error() {
+            Some(error) => {
+                let sentry_id = capture_error::<dyn std::error::Error>(error.as_ref());
+                log::error!("Response error: {:?} [{}]", error, sentry_id.to_simple());
+                Ok(Response::builder(StatusCode::InternalServerError).build())
+            }
+            None => Ok(response),
+        }
     }
 }

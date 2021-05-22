@@ -1,8 +1,12 @@
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 
-pub fn init() -> anyhow::Result<()> {
+pub fn init(debug: bool) -> anyhow::Result<()> {
     TermLogger::init(
-        LevelFilter::Debug,
+        if !debug {
+            LevelFilter::Info
+        } else {
+            LevelFilter::Debug
+        },
         ConfigBuilder::new()
             .set_target_level(LevelFilter::Off)
             .set_location_level(LevelFilter::Off)
