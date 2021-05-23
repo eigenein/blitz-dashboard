@@ -1,8 +1,12 @@
 use crate::wargaming::WargamingApi;
+use crate::web::partials::document;
+use maud::Markup;
+use tide::http::mime;
+use tide::{Response, StatusCode};
 
 mod components;
 mod monitoring;
-mod utils;
+mod partials;
 mod views;
 
 #[derive(Clone)]
@@ -22,4 +26,12 @@ pub async fn run(host: &str, port: u16, application_id: String) -> anyhow::Resul
     log::info!("Listening on {}:{}.", host, port);
     app.listen((host, port)).await?;
     Ok(())
+}
+
+/// Wraps the body into a complete HTML document.
+pub fn respond_with_body(code: StatusCode, body: Markup) -> tide::Result {
+    Ok(Response::builder(code)
+        .body(document(body).into_string())
+        .content_type(mime::HTML)
+        .build())
 }

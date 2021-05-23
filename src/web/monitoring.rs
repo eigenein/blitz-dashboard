@@ -14,7 +14,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for MonitoringMiddlew
         let response = next.run(request).await;
         let duration = Instant::now() - start;
         log::info!(
-            r#"Request: {peer_addr} {method} {path} {status} ({duration:#?})"#,
+            r#"Request: {peer_addr} {method} {path} [{status}] ({duration:#?})"#,
             peer_addr = peer_addr,
             method = method,
             path = path,

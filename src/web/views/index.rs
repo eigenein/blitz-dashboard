@@ -1,6 +1,5 @@
-use crate::web::utils::respond_with_body;
 use crate::web::views::user::get_user_url;
-use crate::web::State;
+use crate::web::{respond_with_body, State};
 use maud::html;
 use serde::Deserialize;
 use tide::StatusCode;
@@ -44,7 +43,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             }
                                         }
                                         div class="control has-icons-left is-expanded" {
-                                            input class="input is-medium is-rounded" type="text" value=(query.search) name="search" placeholder="Username or user ID" autocomplete="nickname" minlength="3" maxlength="24" autofocus required;
+                                            input class="input is-medium is-rounded" type="text" value=(query.search) name="search" placeholder="Username or user ID" autocomplete="nickname" pattern="\\w+" minlength="3" maxlength="24" autofocus required;
                                             span class="icon is-medium is-left" {
                                                 i class="fas fa-user" {}
                                             }

@@ -13,7 +13,7 @@ pub fn card(title: Option<Markup>, content: Option<Markup>) -> Markup {
             }
             @if let Some(content) = content {
                 div class="card-content" {
-                    p.content { (content) }
+                    (content)
                 }
             }
         }

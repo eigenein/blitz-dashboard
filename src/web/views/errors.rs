@@ -1,6 +1,5 @@
 use crate::web::components::card;
-use crate::web::utils::respond_with_body;
-use crate::web::State;
+use crate::web::{respond_with_body, State};
 use maud::html;
 use tide::{Request, StatusCode};
 
@@ -24,7 +23,10 @@ pub fn get_error_view(sentry_id: &sentry::types::Uuid) -> tide::Result {
                             div class="column is-6 is-offset-3" {
                                 (card(
                                     Some(html! { "🤖 Oops!…" }),
-                                    Some(html! { { "Sentry ID: " code { (sentry_id.to_simple()) } "." } }),
+                                    Some(html! {
+                                        p.content { "Sentry ID: " code { (sentry_id.to_simple()) } "." }
+                                        p { a class="button is-info" href="/" { "Go to the Home page" } }
+                                    }),
                                 ))
                             }
                         }
