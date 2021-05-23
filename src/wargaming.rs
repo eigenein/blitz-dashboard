@@ -3,6 +3,8 @@ use std::sync::Arc;
 use surf::Url;
 use tide::StatusCode;
 
+pub type AccountId = u32;
+
 #[derive(Clone)]
 pub struct WargamingApi {
     application_id: Arc<String>,
@@ -14,7 +16,7 @@ pub struct Account {
     pub nickname: String,
 
     #[serde(alias = "account_id")]
-    pub id: u32,
+    pub id: AccountId,
 }
 
 impl WargamingApi {
