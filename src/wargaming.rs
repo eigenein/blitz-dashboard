@@ -1,7 +1,8 @@
+use anyhow::anyhow;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::sync::Arc;
 use surf::Url;
-use tide::StatusCode;
 
 pub type AccountId = u32;
 
@@ -19,6 +20,9 @@ pub struct Account {
     pub id: AccountId,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct AccountInfo {}
+
 impl WargamingApi {
     pub fn new(application_id: String) -> WargamingApi {
         Self {
@@ -28,7 +32,7 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    pub async fn search_accounts(&self, query: &str) -> tide::Result<Vec<Account>> {
+    pub async fn search_accounts(&self, query: &str) -> anyhow::Result<Vec<Account>> {
         log::debug!("Search: {}", query);
         self.client
             .get(Url::parse_with_params(
@@ -39,10 +43,20 @@ impl WargamingApi {
                     ("search", query),
                 ],
             )?)
-            .await?
+            .await
+            .map_err(surf::Error::into_inner)?
             .body_json::<ApiResponse<Vec<Account>>>()
-            .await?
+            .await
+            .map_err(surf::Error::into_inner)?
             .into()
+    }
+
+    /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
+    pub async fn get_account_info(
+        &self,
+        account_id: AccountId,
+    ) -> anyhow::Result<HashMap<String, AccountInfo>> {
+        unimplemented!();
     }
 }
 
@@ -72,19 +86,15 @@ struct ApiError {
     field: Option<String>,
 }
 
-/// Converts [`ApiResponse`] into [`tide::Result`].
-impl<T> From<ApiResponse<T>> for tide::Result<T> {
-    fn from(response: ApiResponse<T>) -> tide::Result<T> {
+impl<T> From<ApiResponse<T>> for anyhow::Result<T> {
+    fn from(response: ApiResponse<T>) -> anyhow::Result<T> {
         match response {
             ApiResponse::Data { data } => Ok(data),
-            ApiResponse::Error { error } => tide::Result::Err(tide::Error::from_str(
-                StatusCode::InternalServerError,
-                format!(
-                    r#"[{}] "{}" in "{}""#,
-                    error.code.unwrap_or_default(),
-                    error.message,
-                    error.field.unwrap_or_default(),
-                ),
+            ApiResponse::Error { error } => anyhow::Result::Err(anyhow!(
+                r#"[{}] "{}" in "{}""#,
+                error.code.unwrap_or_default(),
+                error.message,
+                error.field.unwrap_or_default(),
             )),
         }
     }

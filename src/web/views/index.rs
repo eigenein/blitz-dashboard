@@ -2,7 +2,12 @@ use crate::web::views::user::get_user_url;
 use crate::web::{respond_with_body, State};
 use maud::html;
 use serde::Deserialize;
+use std::ops::Range;
 use tide::StatusCode;
+
+const MIN_QUERY_LENGTH: usize = 3;
+const MAX_QUERY_LENGTH: usize = 24;
+const QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 
 /// User search query.
 #[derive(Deserialize)]
@@ -16,7 +21,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
     let query: QueryString = request.query()?;
     let state = request.state();
 
-    let accounts = if query.search.len() >= 3 {
+    let accounts = if QUERY_LENGTH.contains(&query.search.len()) {
         Some(state.api.search_accounts(&query.search).await?)
     } else {
         None
@@ -43,7 +48,18 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             }
                                         }
                                         div class="control has-icons-left is-expanded" {
-                                            input class="input is-medium is-rounded" type="text" value=(query.search) name="search" placeholder="Username or user ID" autocomplete="nickname" pattern="\\w+" minlength="3" maxlength="24" autofocus required;
+                                            input
+                                                class="input is-medium is-rounded"
+                                                type="text"
+                                                value=(query.search)
+                                                name="search"
+                                                placeholder="Wargaming.net username"
+                                                autocomplete="nickname"
+                                                pattern="\\w+"
+                                                minlength=(MIN_QUERY_LENGTH)
+                                                maxlength=(MAX_QUERY_LENGTH)
+                                                autofocus
+                                                required;
                                             span class="icon is-medium is-left" {
                                                 i class="fas fa-user" {}
                                             }
