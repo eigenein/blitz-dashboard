@@ -1,9 +1,9 @@
 use crate::web::components::{search_accounts, SEARCH_QUERY_LENGTH};
-use crate::web::views::account::get_account_url;
+use crate::web::views::player::get_account_url;
 use crate::web::{respond_with_document, State};
 use maud::html;
 use serde::Deserialize;
-use tide::StatusCode;
+use tide::{Redirect, StatusCode};
 
 /// User search query.
 #[derive(Deserialize)]
@@ -18,7 +18,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
     let state = request.state();
 
     let accounts = if SEARCH_QUERY_LENGTH.contains(&query.search.len()) {
-        Some(state.api.search_accounts(&query.search).await?)
+        let accounts = state.api.search_accounts(&query.search).await?;
+        if accounts.len() == 1 {
+            return Ok(Redirect::temporary(get_account_url(accounts.first().unwrap().id)).into());
+        }
+        Some(accounts)
     } else {
         None
     };

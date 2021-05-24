@@ -5,22 +5,6 @@ pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGT
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;
 
-/// Documentation: <https://bulma.io/documentation/components/card/>.
-pub fn card(title: Option<Markup>, content: Markup) -> Markup {
-    html! {
-        div.card {
-            @if let Some(title) = title {
-                header class="card-header" {
-                    p class="card-header-title" { (title) }
-                }
-            }
-            div class="card-content" {
-                (content)
-            }
-        }
-    }
-}
-
 pub fn search_accounts() -> Markup {
     html! {
         div class="field has-addons" {
@@ -53,6 +37,15 @@ pub fn search_accounts() -> Markup {
             div class="control" {
                 input class="button is-medium is-rounded is-link" type="submit" value="Search";
             }
+        }
+    }
+}
+
+pub fn icon_text(class: &str, text: &str) -> Markup {
+    html! {
+        span class="icon-text" {
+            span.icon { i class=(class) {} }
+            span { (text) }
         }
     }
 }

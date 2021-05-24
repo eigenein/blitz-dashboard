@@ -30,6 +30,9 @@ pub struct AccountInfo {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub created_at: DateTime<Utc>,
+
     pub statistics: AccountInfoStatistics,
 }
 
