@@ -1,3 +1,5 @@
+use crate::opts::SubCommand;
+
 mod logging;
 mod opts;
 mod wargaming;
@@ -8,7 +10,12 @@ async fn main() -> tide::Result<()> {
     let opts = opts::parse();
     logging::init(opts.debug)?;
     let _sentry_guard = init_sentry(&opts);
-    web::run(&opts.host, opts.port, opts.application_id.clone()).await?;
+    match opts.sub_command {
+        SubCommand::Web(web_opts) => {
+            web::run(&web_opts.host, web_opts.port, opts.application_id.clone()).await?
+        }
+        SubCommand::Crawler(_) => unimplemented!(),
+    }
     Ok(())
 }
 
