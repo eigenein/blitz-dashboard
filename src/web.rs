@@ -1,4 +1,4 @@
-use crate::wargaming::WargamingApi;
+use crate::api::wargaming::WargamingApi;
 use crate::web::partials::document;
 use maud::Markup;
 use tide::http::mime;

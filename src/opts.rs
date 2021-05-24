@@ -17,11 +17,11 @@ pub struct Opts {
     pub debug: bool,
 
     #[clap(subcommand)]
-    pub sub_command: SubCommand,
+    pub subcommand: Subcommand,
 }
 
 #[derive(Clap)]
-pub enum SubCommand {
+pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
 }
