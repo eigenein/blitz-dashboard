@@ -1,6 +1,4 @@
-use crate::web::components::card;
-use crate::web::{respond_with_document, State};
-use maud::html;
+use crate::web::State;
 use tide::{Request, StatusCode};
 
 /// Debug endpoint that always returns an error.
@@ -9,31 +7,4 @@ pub async fn get(_request: Request<State>) -> tide::Result {
         StatusCode::InternalServerError,
         "Simulated error",
     ))
-}
-
-/// Renders the error.
-pub fn get_error_view(sentry_id: &sentry::types::Uuid) -> tide::Result {
-    respond_with_document(
-        StatusCode::InternalServerError,
-        Some("Error"),
-        html! {
-            section class="hero is-fullheight" {
-                div class="hero-body" {
-                    div class="container" {
-                        div class="columns" {
-                            div class="column is-6 is-offset-3" {
-                                (card(
-                                    Some(html! { "🤖 Oops!…" }),
-                                    Some(html! {
-                                        p.content { "Sentry ID: " code { (sentry_id.to_simple()) } "." }
-                                        p { a class="button is-info" href="/" { "Go to the Home page" } }
-                                    }),
-                                ))
-                            }
-                        }
-                    }
-                }
-            }
-        },
-    )
 }

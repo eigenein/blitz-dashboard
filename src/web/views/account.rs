@@ -1,10 +1,10 @@
-use crate::api::wargaming::AccountId;
+use crate::api::wargaming::{AccountId, AccountInfoStatisticsDetails};
 use crate::web::{respond_with_document, respond_with_status, State};
 use chrono_humanize::HumanTime;
 use maud::html;
 use tide::StatusCode;
 
-pub fn get_user_url(account_id: AccountId) -> String {
+pub fn get_account_url(account_id: AccountId) -> String {
     format!("/ru/{}", account_id)
 }
 
@@ -23,9 +23,6 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         Some(account_info) => account_info,
         None => return respond_with_status(StatusCode::NotFound),
     };
-    let statistics = &account_info.statistics.all;
-    let win_rate = 100.0 * statistics.wins as f32 / statistics.battles as f32;
-    let survival_rate = 100.0 * statistics.survived_battles as f32 / statistics.battles as f32;
 
     respond_with_document(
         StatusCode::Ok,
@@ -38,16 +35,16 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             span.icon { i."fas"."fa-home" {} }
                             span { "Home" }
                         }
+                        a."navbar-item" href=(get_account_url(account_id)) {
+                            span.icon { i."fas"."fa-user" {} }
+                            span { "Player" }
+                        }
                     }
                 }
             }
 
-            section class="hero is-link is-small" {
-                div class="hero-body" {
-                    div class="container has-text-centered" {
-                        p.title { (account_info.nickname) }
-                    }
-                }
+            section.section {
+                div.container {}
             }
 
             section.section {
@@ -62,13 +59,13 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                         div class="level-item has-text-centered" {
                             div {
                                 p.heading { "Win rate" }
-                                p.title { (format!("{:.2}", win_rate)) "%" }
+                                p.title { (format!("{:.2}", account_info.statistics.all.win_percent())) "%" }
                             }
                         }
                         div class="level-item has-text-centered" {
                             div {
                                 p.heading { "Survival rate" }
-                                p.title { (format!("{:.2}", survival_rate)) "%" }
+                                p.title { (format!("{:.2}", account_info.statistics.all.survival_percent())) "%" }
                             }
                         }
                         div class="level-item has-text-centered" {
@@ -84,4 +81,14 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             }
         },
     )
+}
+
+impl AccountInfoStatisticsDetails {
+    pub fn win_percent(&self) -> f32 {
+        100.0 * (self.wins as f32) / (self.battles as f32)
+    }
+
+    pub fn survival_percent(&self) -> f32 {
+        100.0 * (self.survived_battles as f32) / (self.battles as f32)
+    }
 }

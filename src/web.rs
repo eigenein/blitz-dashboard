@@ -22,7 +22,7 @@ pub async fn run(host: &str, port: u16, application_id: String) -> anyhow::Resul
     app.with(tide_compress::CompressMiddleware::new());
     app.with(monitoring::MonitoringMiddleware);
     app.at("/").get(views::index::get);
-    app.at("/ru/:account_id").get(views::user::get);
+    app.at("/ru/:account_id").get(views::account::get);
     app.at("/error").get(views::errors::get);
     log::info!("Listening on {}:{}.", host, port);
     app.listen((host, port)).await?;

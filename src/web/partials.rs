@@ -1,4 +1,7 @@
+use crate::web::components::card;
+use crate::web::respond_with_document;
 use maud::{html, Markup, DOCTYPE};
+use tide::StatusCode;
 
 pub fn head(title: Option<&str>) -> Markup {
     html! {
@@ -18,4 +21,31 @@ pub fn document(title: Option<&str>, body: Markup) -> Markup {
             body { (body) }
         }
     }
+}
+
+/// Renders the error.
+pub fn error_document(sentry_id: &sentry::types::Uuid) -> tide::Result {
+    respond_with_document(
+        StatusCode::InternalServerError,
+        Some("Error"),
+        html! {
+            section class="hero is-fullheight" {
+                div class="hero-body" {
+                    div class="container" {
+                        div class="columns" {
+                            div class="column is-6 is-offset-3" {
+                                (card(
+                                    Some(html! { "🤖 Oops!…" }),
+                                    html! {
+                                        p.content { "Sentry ID: " code { (sentry_id.to_simple()) } "." }
+                                        p { a class="button is-info" href="/" { "Go to the Home page" } }
+                                    },
+                                ))
+                            }
+                        }
+                    }
+                }
+            }
+        },
+    )
 }
