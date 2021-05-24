@@ -1,5 +1,5 @@
 use crate::web::components::card;
-use crate::web::{respond_with_body, State};
+use crate::web::{respond_with_document, State};
 use maud::html;
 use tide::{Request, StatusCode};
 
@@ -13,8 +13,9 @@ pub async fn get(_request: Request<State>) -> tide::Result {
 
 /// Renders the error.
 pub fn get_error_view(sentry_id: &sentry::types::Uuid) -> tide::Result {
-    respond_with_body(
+    respond_with_document(
         StatusCode::InternalServerError,
+        Some("Error"),
         html! {
             section class="hero is-fullheight" {
                 div class="hero-body" {

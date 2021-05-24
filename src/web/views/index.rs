@@ -1,5 +1,5 @@
 use crate::web::views::user::get_user_url;
-use crate::web::{respond_with_body, State};
+use crate::web::{respond_with_document, State};
 use maud::html;
 use serde::Deserialize;
 use std::ops::Range;
@@ -27,8 +27,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         None
     };
 
-    respond_with_body(
+    respond_with_document(
         StatusCode::Ok,
+        None,
         html! {
             section class="hero is-fullheight" {
                 div class="hero-body" {
@@ -65,7 +66,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             }
                                         }
                                         div class="control" {
-                                            input class="button is-medium is-rounded is-info" type="submit" value="Search";
+                                            input class="button is-medium is-rounded is-link" type="submit" value="Search";
                                         }
                                     }
                                 }

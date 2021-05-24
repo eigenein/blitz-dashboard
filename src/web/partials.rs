@@ -1,8 +1,8 @@
 use maud::{html, Markup, DOCTYPE};
 
-pub fn head() -> Markup {
+pub fn head(title: Option<&str>) -> Markup {
     html! {
-        title { "Blitz Dashboard" }
+        title { @if let Some(title) = title { (title) " – " } "Blitz Dashboard" }
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta charset="UTF-8";
         link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
@@ -10,11 +10,11 @@ pub fn head() -> Markup {
     }
 }
 
-pub fn document(body: Markup) -> Markup {
+pub fn document(title: Option<&str>, body: Markup) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en" {
-            head { (head()) }
+            head { (head(title)) }
             body { (body) }
         }
     }

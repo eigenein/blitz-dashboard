@@ -16,7 +16,7 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
-          command: check
+          command: test
       - name: Clippy
         uses: actions-rs/clippy-check@v1
         continue-on-error: true

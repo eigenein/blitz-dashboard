@@ -5,6 +5,8 @@ mod logging;
 mod opts;
 mod web;
 
+type Result<T = ()> = anyhow::Result<T>;
+
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     let opts = opts::parse();
