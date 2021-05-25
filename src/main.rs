@@ -1,4 +1,5 @@
 use crate::opts::{Opts, Subcommand};
+use clap::{crate_name, crate_version};
 use sentry::integrations::anyhow::capture_anyhow;
 
 mod api;
@@ -12,6 +13,7 @@ type Result<T = ()> = anyhow::Result<T>;
 async fn main() -> crate::Result {
     let opts = opts::parse();
     logging::init(opts.debug)?;
+    log::info!("{} {}", crate_name!(), crate_version!());
     let _sentry_guard = init_sentry(&opts);
     let result = run_app(opts).await;
     if let Err(ref error) = result {
