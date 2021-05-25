@@ -27,7 +27,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         .database
         .collection::<AccountInfo>("accounts")
         .replace_one(
-            doc! { "account_id": account_info.id, "updated_at": account_info.updated_at.timestamp() },
+            doc! { "account_id": account_info.id, "last_battle_time": account_info.last_battle_time.timestamp() },
             account_info,
             Some(ReplaceOptions::builder().upsert(true).build()),
         )

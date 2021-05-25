@@ -35,9 +35,6 @@ pub struct AccountInfo {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
 
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub updated_at: DateTime<Utc>,
-
     pub statistics: AccountInfoStatistics,
 }
 

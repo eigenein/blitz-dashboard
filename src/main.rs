@@ -63,8 +63,8 @@ async fn init_database(uri: &str) -> crate::Result<Database> {
             mongodb::bson::doc! {
                 "createIndexes": "accounts",
                 "indexes": [{
-                    "key": {"account_id": 1, "updated_at": -1},
-                    "name": "account_id_1_updated_at_-1",
+                    "key": {"account_id": 1, "last_battle_time": -1},
+                    "name": "account_id_last_battle_time",
                     "unique": true,
                 }],
             },
