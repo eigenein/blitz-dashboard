@@ -1,4 +1,5 @@
-use crate::opts::Subcommand;
+use crate::opts::{Opts, Subcommand};
+use sentry::integrations::anyhow::capture_anyhow;
 
 mod api;
 mod logging;
@@ -8,17 +9,24 @@ mod web;
 type Result<T = ()> = anyhow::Result<T>;
 
 #[async_std::main]
-async fn main() -> tide::Result<()> {
+async fn main() -> crate::Result {
     let opts = opts::parse();
     logging::init(opts.debug)?;
     let _sentry_guard = init_sentry(&opts);
+    let result = run_app(opts).await;
+    if let Err(ref error) = result {
+        capture_anyhow(error);
+    }
+    result
+}
+
+async fn run_app(opts: Opts) -> crate::Result {
     match opts.subcommand {
         Subcommand::Web(web_opts) => {
-            web::run(&web_opts.host, web_opts.port, opts.application_id.clone()).await?
+            web::run(&web_opts.host, web_opts.port, opts.application_id.clone()).await
         }
         Subcommand::Crawler(_) => unimplemented!(),
     }
-    Ok(())
 }
 
 /// Initialize Sentry.
