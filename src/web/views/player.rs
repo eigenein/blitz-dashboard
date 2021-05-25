@@ -4,6 +4,8 @@ use crate::web::responses::document_response;
 use crate::web::State;
 use chrono_humanize::HumanTime;
 use maud::html;
+use mongodb::bson::doc;
+use mongodb::options::ReplaceOptions;
 use tide::{Response, StatusCode};
 
 pub fn get_account_url(account_id: AccountId) -> String {
@@ -24,7 +26,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
     state
         .database
         .collection::<AccountInfo>("accounts")
-        .insert_one(account_info, None)
+        .replace_one(
+            doc! { "account_id": account_info.id, "updated_at": account_info.updated_at.timestamp() },
+            account_info,
+            Some(ReplaceOptions::builder().upsert(true).build()),
+        )
         .await?;
     let win_percentage = account_info.statistics.all.win_percentage();
 

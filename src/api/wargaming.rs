@@ -16,7 +16,7 @@ pub struct WargamingApi {
 pub struct Account {
     pub nickname: String,
 
-    #[serde(alias = "account_id")]
+    #[serde(rename = "account_id")]
     pub id: AccountId,
 }
 
@@ -24,7 +24,7 @@ pub type Accounts = Vec<Account>;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct AccountInfo {
-    #[serde(alias = "account_id")]
+    #[serde(rename = "account_id")]
     pub id: AccountId,
 
     pub nickname: String,
