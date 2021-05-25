@@ -1,24 +1,26 @@
 use crate::api::wargaming::WargamingApi;
-use crate::web::partials::document;
-use maud::Markup;
-use tide::http::mime;
-use tide::{Response, StatusCode};
+use mongodb::Database;
 
 mod components;
 mod monitoring;
 mod partials;
+mod responses;
 mod views;
 
 #[derive(Clone)]
 pub struct State {
     api: WargamingApi,
+    database: Database,
 }
 
 /// Run the web app.
-pub async fn run(host: &str, port: u16, application_id: String) -> anyhow::Result<()> {
-    let mut app = tide::with_state(State {
-        api: WargamingApi::new(application_id),
-    });
+pub async fn run(
+    host: &str,
+    port: u16,
+    api: WargamingApi,
+    database: Database,
+) -> anyhow::Result<()> {
+    let mut app = tide::with_state(State { api, database });
     app.with(monitoring::MonitoringMiddleware);
     app.at("/").get(views::index::get);
     app.at("/ru/:account_id").get(views::player::get);
@@ -26,12 +28,4 @@ pub async fn run(host: &str, port: u16, application_id: String) -> anyhow::Resul
     log::info!("Listening on {}:{}.", host, port);
     app.listen((host, port)).await?;
     Ok(())
-}
-
-/// Wraps the body into a complete HTML document.
-pub fn respond_with_document(code: StatusCode, title: Option<&str>, body: Markup) -> tide::Result {
-    Ok(Response::builder(code)
-        .body(document(title, body).into_string())
-        .content_type(mime::HTML)
-        .build())
 }

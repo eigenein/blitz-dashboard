@@ -1,6 +1,7 @@
 use crate::web::components::{search_accounts, SEARCH_QUERY_LENGTH};
+use crate::web::responses::document_response;
 use crate::web::views::player::get_account_url;
-use crate::web::{respond_with_document, State};
+use crate::web::State;
 use maud::html;
 use serde::Deserialize;
 use tide::{Redirect, StatusCode};
@@ -27,7 +28,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         None
     };
 
-    respond_with_document(
+    document_response(
         StatusCode::Ok,
         None,
         html! {

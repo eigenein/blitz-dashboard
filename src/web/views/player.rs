@@ -1,6 +1,7 @@
-use crate::api::wargaming::{AccountId, AccountInfoStatisticsDetails};
+use crate::api::wargaming::{AccountId, AccountInfo, AccountInfoStatisticsDetails};
 use crate::web::components::*;
-use crate::web::{respond_with_document, State};
+use crate::web::responses::document_response;
+use crate::web::State;
 use chrono_humanize::HumanTime;
 use maud::html;
 use tide::{Response, StatusCode};
@@ -10,11 +11,7 @@ pub fn get_account_url(account_id: AccountId) -> String {
 }
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
-    let account_id = match request.param("account_id") {
-        Ok(account_id) => account_id,
-        Err(_) => return Ok(Response::new(StatusCode::BadRequest)),
-    };
-    let account_id: AccountId = match account_id.parse() {
+    let account_id: AccountId = match request.param("account_id")?.parse() {
         Ok(account_id) => account_id,
         Err(_) => return Ok(Response::new(StatusCode::BadRequest)),
     };
@@ -24,9 +21,14 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         Some(account_info) => account_info,
         None => return Ok(Response::new(StatusCode::NotFound)),
     };
+    state
+        .database
+        .collection::<AccountInfo>("accounts")
+        .insert_one(account_info, None)
+        .await?;
     let win_percentage = account_info.statistics.all.win_percentage();
 
-    respond_with_document(
+    document_response(
         StatusCode::Ok,
         Some(account_info.nickname.as_str()),
         html! {

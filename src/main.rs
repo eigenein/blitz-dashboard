@@ -1,5 +1,7 @@
+use crate::api::wargaming::WargamingApi;
 use crate::opts::{Opts, Subcommand};
 use clap::{crate_name, crate_version};
+use mongodb::Database;
 use sentry::integrations::anyhow::capture_anyhow;
 
 mod api;
@@ -15,17 +17,24 @@ async fn main() -> crate::Result {
     logging::init(opts.debug)?;
     log::info!("{} {}", crate_name!(), crate_version!());
     let _sentry_guard = init_sentry(&opts);
-    let result = run_app(opts).await;
+    let result = run_subcommand(opts).await;
     if let Err(ref error) = result {
         capture_anyhow(error);
     }
     result
 }
 
-async fn run_app(opts: Opts) -> crate::Result {
+async fn run_subcommand(opts: Opts) -> crate::Result {
+    let database = init_database(&opts.mongodb_uri).await?;
     match opts.subcommand {
         Subcommand::Web(web_opts) => {
-            web::run(&web_opts.host, web_opts.port, opts.application_id.clone()).await
+            web::run(
+                &web_opts.host,
+                web_opts.port,
+                WargamingApi::new(&opts.application_id),
+                database,
+            )
+            .await
         }
         Subcommand::Crawler(_) => unimplemented!(),
     }
@@ -44,4 +53,23 @@ fn init_sentry(opts: &opts::Opts) -> Option<sentry::ClientInitGuard> {
             },
         ))
     })
+}
+
+async fn init_database(uri: &str) -> crate::Result<Database> {
+    let client = mongodb::Client::with_uri_str(uri).await?;
+    let database = client.database("blitz-dashboard");
+    database
+        .run_command(
+            mongodb::bson::doc! {
+                "createIndexes": "accounts",
+                "indexes": [{
+                    "key": {"account_id": 1, "updated_at": -1},
+                    "name": "account_id_1_updated_at_-1",
+                    "unique": true,
+                }],
+            },
+            None,
+        )
+        .await?;
+    Ok(database)
 }
