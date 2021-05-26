@@ -1,5 +1,5 @@
 use crate::api::wargaming::WargamingApi;
-use mongodb::Database;
+use crate::database::Database;
 
 mod components;
 mod middleware;

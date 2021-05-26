@@ -1,11 +1,10 @@
-use crate::api::wargaming::{AccountId, AccountInfo, AccountInfoStatisticsDetails};
+use crate::api::wargaming::models::{AccountId, AccountInfoStatisticsDetails};
+use crate::database;
 use crate::web::components::*;
-use crate::web::responses::document_response;
+use crate::web::responses::render_document;
 use crate::web::State;
 use chrono_humanize::HumanTime;
 use maud::html;
-use mongodb::bson::doc;
-use mongodb::options::ReplaceOptions;
 use tide::{Response, StatusCode};
 
 pub fn get_account_url(account_id: AccountId) -> String {
@@ -18,23 +17,18 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         Err(_) => return Ok(Response::new(StatusCode::BadRequest)),
     };
     let state = request.state();
-    let account_infos = state.api.get_account_info(account_id).await?;
-    let account_info = match account_infos.values().next() {
-        Some(account_info) => account_info,
+    let mut account_infos = state.api.get_account_info(account_id).await?;
+    let account_info = match account_infos.drain().next() {
+        Some((_, account_info)) => account_info,
         None => return Ok(Response::new(StatusCode::NotFound)),
     };
-    state
-        .database
-        .collection::<AccountInfo>("accounts")
-        .replace_one(
-            doc! { "account_id": account_info.id, "last_battle_time": account_info.last_battle_time.timestamp() },
-            account_info,
-            Some(ReplaceOptions::builder().upsert(true).build()),
-        )
-        .await?;
     let win_percentage = account_info.statistics.all.win_percentage();
 
-    document_response(
+    // TODO: ignore errors here, only log them.
+    database::upsert(&state.database.accounts, &account_info).await?;
+    database::upsert(&state.database.account_snapshots, &account_info).await?;
+
+    Ok(render_document(
         StatusCode::Ok,
         Some(account_info.nickname.as_str()),
         html! {
@@ -63,7 +57,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                                 div class="card-content" {
                                     h1.title { (account_info.nickname) }
-                                    h2.subtitle { "Created " (HumanTime::from(account_info.created_at)) }
+                                    h2.subtitle title=(account_info.created_at) { "Created " (HumanTime::from(account_info.created_at)) }
                                 }
                             }
                         }
@@ -83,7 +77,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         }
                                         div class="level-item has-text-centered" {
                                             div {
-                                                p.heading { "Win rate" }
+                                                p.heading { "Wins" }
                                                 p.title {
                                                     span class=(win_rate_class(win_percentage)) {
                                                         (format!("{:.2}", win_percentage)) "%"
@@ -93,7 +87,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         }
                                         div class="level-item has-text-centered" {
                                             div {
-                                                p.heading { "Survival rate" }
+                                                p.heading { "Survival" }
                                                 p.title {
                                                     (format!("{:.2}", account_info.statistics.all.survival_percentage())) "%"
                                                 }
@@ -115,7 +109,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                 }
             }
         },
-    )
+    ))
 }
 
 impl AccountInfoStatisticsDetails {

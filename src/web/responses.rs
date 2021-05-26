@@ -4,15 +4,15 @@ use tide::http::mime;
 use tide::{Response, StatusCode};
 
 /// Wraps the body into a complete HTML document.
-pub fn document_response(code: StatusCode, title: Option<&str>, body: Markup) -> tide::Result {
-    Ok(Response::builder(code)
+pub fn render_document(code: StatusCode, title: Option<&str>, body: Markup) -> Response {
+    Response::builder(code)
         .body(document(title, body).into_string())
         .content_type(mime::HTML)
-        .build())
+        .build()
 }
 
-pub fn error_document(sentry_id: &sentry::types::Uuid) -> tide::Result {
-    document_response(
+pub fn render_error(sentry_id: &sentry::types::Uuid) -> Response {
+    render_document(
         StatusCode::InternalServerError,
         Some("Error"),
         html! {

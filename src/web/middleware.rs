@@ -25,7 +25,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggingMiddleware
             Some(error) => {
                 let sentry_id = capture_error::<dyn std::error::Error>(error.as_ref());
                 log::error!("Response error: {:?} [{}]", error, sentry_id.to_simple());
-                crate::web::responses::error_document(&sentry_id)
+                Ok(crate::web::responses::render_error(&sentry_id))
             }
             None => Ok(response),
         }
