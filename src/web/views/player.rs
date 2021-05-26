@@ -146,6 +146,7 @@ impl Statistics {
     }
 }
 
+// TODO: should be moved to a shared place (`Database` itself?), because the crawler is gonna need it.
 /// Saves the account statistics to the database.
 async fn save_snapshots(
     database: Database,
@@ -166,7 +167,7 @@ async fn save_snapshots(
             InsertManyOptions::builder().ordered(false).build(),
         )
         .await;
-    log::info!("Account snapshots saved in {:#?}.", Instant::now() - start);
+    log::debug!("Snapshots saved in {:#?}.", Instant::now() - start);
 }
 
 fn win_percentage_class(percentage: f32) -> &'static str {
