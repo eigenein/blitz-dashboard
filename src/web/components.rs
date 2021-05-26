@@ -5,22 +5,18 @@ pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGT
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;
 
-pub fn search_accounts() -> Markup {
+pub fn account_search(class: &str, has_autofocus: bool) -> Markup {
     html! {
         div class="field has-addons" {
             div class="control" {
-                span class="select is-medium is-rounded" {
-                    select disabled {
+                span."select"."is-rounded".(class) {
+                    select {
                         option { "🇷🇺 RU" }
-                        option { "🇪🇺 EU" }
-                        option { "🇺🇸 NA" }
-                        option { "🇨🇳 AS" }
                     }
                 }
             }
             div class="control has-icons-left is-expanded" {
-                input
-                    class="input is-medium is-rounded"
+                input."input"."is-rounded".(class)
                     type="text"
                     name="search"
                     placeholder="Player nickname"
@@ -28,14 +24,14 @@ pub fn search_accounts() -> Markup {
                     pattern="\\w+"
                     minlength=(MIN_QUERY_LENGTH)
                     maxlength=(MAX_QUERY_LENGTH)
-                    autofocus
+                    autofocus[has_autofocus]
                     required;
-                span class="icon is-medium is-left" {
+                span.icon.is-left.(class) {
                     i class="fas fa-user" {}
                 }
             }
-            div class="control" {
-                input class="button is-medium is-rounded is-link" type="submit" value="Search";
+            div.control {
+                input.button.is-rounded.is-link.(class) type="submit" value="Search";
             }
         }
     }

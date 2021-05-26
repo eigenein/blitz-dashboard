@@ -1,4 +1,4 @@
-use crate::web::components::{search_accounts, SEARCH_QUERY_LENGTH};
+use crate::web::components::{account_search, SEARCH_QUERY_LENGTH};
 use crate::web::responses::render_document;
 use crate::web::views::player::get_account_url;
 use crate::web::State;
@@ -38,7 +38,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                         div class="columns" {
                             div class="column is-8 is-offset-2" {
                                 form action="/" method="GET" {
-                                    (search_accounts())
+                                    (account_search("is-medium", true))
                                 }
                                 @if let Some(accounts) = accounts {
                                     div class="buttons mt-4" {
