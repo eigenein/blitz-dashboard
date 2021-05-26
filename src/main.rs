@@ -9,6 +9,7 @@ mod convert;
 mod database;
 mod logging;
 mod opts;
+mod serde;
 mod web;
 
 type Result<T = ()> = anyhow::Result<T>;
@@ -21,7 +22,6 @@ async fn main() -> crate::Result {
     let _sentry_guard = init_sentry(&opts);
     let result = run_subcommand(opts).await;
     if let Err(ref error) = result {
-        // TODO: move this to `crate::logging`.
         capture_anyhow(error);
     }
     result

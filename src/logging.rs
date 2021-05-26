@@ -1,5 +1,7 @@
+use sentry::integrations::anyhow::capture_anyhow;
 use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
+use std::borrow::Borrow;
 
 pub fn init(debug: bool) -> anyhow::Result<()> {
     let logger = TermLogger::new(
@@ -23,4 +25,12 @@ pub fn init(debug: bool) -> anyhow::Result<()> {
     ))?;
     log::set_max_level(LevelFilter::Debug);
     Ok(())
+}
+
+/// Check the result and log an error, if any.
+pub fn log_anyhow<T, R: Borrow<crate::Result<T>>>(result: R) {
+    if let Err(ref error) = result.borrow() {
+        let sentry_id = capture_anyhow(error);
+        log::error!("{:?} [{}]", error, sentry_id.to_simple());
+    }
 }

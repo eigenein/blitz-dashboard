@@ -1,15 +1,15 @@
-use crate::api::wargaming::models::{AccountId, AccountInfoStatisticsDetails};
+use crate::api::wargaming::models::{AccountId, AccountInfo, Statistics, TankStatistics};
 use crate::database;
+use crate::database::Database;
+use crate::logging::log_anyhow;
 use crate::web::components::*;
 use crate::web::responses::render_document;
 use crate::web::State;
 use chrono_humanize::HumanTime;
 use maud::html;
+use mongodb::options::InsertManyOptions;
+use std::time::Instant;
 use tide::{Response, StatusCode};
-
-pub fn get_account_url(account_id: AccountId) -> String {
-    format!("/ru/{}", account_id)
-}
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let account_id: AccountId = match request.param("account_id")?.parse() {
@@ -22,13 +22,16 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         Some((_, account_info)) => account_info,
         None => return Ok(Response::new(StatusCode::NotFound)),
     };
+    let (_, tanks_stats) = state
+        .api
+        .get_tanks_stats(account_id)
+        .await?
+        .drain()
+        .next()
+        .unwrap();
     let win_percentage = account_info.statistics.all.win_percentage();
 
-    // TODO: ignore errors here, only log them.
-    database::upsert(&state.database.accounts, &account_info).await?;
-    database::upsert(&state.database.account_snapshots, &account_info).await?;
-
-    Ok(render_document(
+    let response = render_document(
         StatusCode::Ok,
         Some(account_info.nickname.as_str()),
         html! {
@@ -88,7 +91,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             div {
                                                 p.heading { "Wins" }
                                                 p.title {
-                                                    span class=(win_rate_class(win_percentage)) {
+                                                    span class=(win_percentage_class(win_percentage)) {
                                                         (format!("{:.2}", win_percentage)) "%"
                                                     }
                                                 }
@@ -118,20 +121,55 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                 }
             }
         },
-    ))
+    );
+
+    async_std::task::spawn(save_snapshots(
+        state.database.clone(),
+        account_info,
+        tanks_stats,
+    ));
+
+    Ok(response)
 }
 
-impl AccountInfoStatisticsDetails {
-    pub fn win_percentage(&self) -> f32 {
+pub fn get_account_url(account_id: AccountId) -> String {
+    format!("/ru/{}", account_id)
+}
+
+impl Statistics {
+    fn win_percentage(&self) -> f32 {
         100.0 * (self.wins as f32) / (self.battles as f32)
     }
 
-    pub fn survival_percentage(&self) -> f32 {
+    fn survival_percentage(&self) -> f32 {
         100.0 * (self.survived_battles as f32) / (self.battles as f32)
     }
 }
 
-fn win_rate_class(percentage: f32) -> &'static str {
+/// Saves the account statistics to the database.
+async fn save_snapshots(
+    database: Database,
+    account_info: AccountInfo,
+    tanks_stats: Vec<TankStatistics>,
+) {
+    let start = Instant::now();
+    log_anyhow(database::upsert(&database.accounts, &account_info).await);
+    log_anyhow(database::upsert(&database.account_snapshots, &account_info).await);
+    let _ = database
+        // Unfortunately, I have to ignore errors here,
+        // because the driver doesn't support the proper bulk operations.
+        .tank_snapshots
+        .insert_many(
+            tanks_stats
+                .iter()
+                .map(Into::<crate::database::models::TankSnapshot>::into),
+            InsertManyOptions::builder().ordered(false).build(),
+        )
+        .await;
+    log::info!("Account snapshots saved in {:#?}.", Instant::now() - start);
+}
+
+fn win_percentage_class(percentage: f32) -> &'static str {
     if percentage < 45.0 {
         "has-text-danger"
     } else if percentage < 50.0 {

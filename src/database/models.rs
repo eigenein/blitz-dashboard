@@ -34,11 +34,12 @@ pub struct AccountSnapshot {
     pub last_battle_time: DateTime,
 
     #[serde(rename = "st")]
-    pub statistics: AccountSnapshotStatistics,
+    pub statistics: StatisticsSnapshot,
 }
 
+/// Represents either a single account or a single player's tank statistics.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AccountSnapshotStatistics {
+pub struct StatisticsSnapshot {
     #[serde(rename = "nb")]
     pub battles: i32,
 
@@ -61,5 +62,33 @@ pub struct AccountSnapshotStatistics {
 impl UpsertQuery for AccountSnapshot {
     fn query(&self) -> Document {
         doc! { "aid": self.account_id, "lbts": Bson::DateTime(self.last_battle_time) }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TankSnapshot {
+    #[serde(rename = "aid")]
+    pub account_id: AccountId,
+
+    #[serde(rename = "tid")]
+    pub tank_id: i32,
+
+    #[serde(rename = "blt")]
+    pub battle_life_time: i64,
+
+    #[serde(rename = "lbts")]
+    pub last_battle_time: DateTime,
+
+    #[serde(rename = "st")]
+    pub statistics: StatisticsSnapshot,
+}
+
+impl UpsertQuery for TankSnapshot {
+    fn query(&self) -> Document {
+        doc! {
+            "aid": self.account_id,
+            "tid": self.tank_id,
+            "lbts": Bson::DateTime(self.last_battle_time),
+        }
     }
 }
