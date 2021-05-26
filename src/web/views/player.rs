@@ -3,6 +3,7 @@ use crate::database;
 use crate::database::Database;
 use crate::logging::log_anyhow;
 use crate::web::components::*;
+use crate::web::partials::{footer, header};
 use crate::web::responses::render_document;
 use crate::web::State;
 use chrono_humanize::HumanTime;
@@ -35,27 +36,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         StatusCode::Ok,
         Some(account_info.nickname.as_str()),
         html! {
-            nav.navbar.is-light role="navigation" aria-label="main navigation" {
-                div.container {
-                    div."navbar-brand" {
-                        a."navbar-item" href="/" {
-                            span.icon { i."fas"."fa-home" {} }
-                            span { "Home" }
-                        }
-                        a.navbar-item href=(get_account_url(account_id)) {
-                            span.icon { i.fas.fa-users {} }
-                            span { "Player" }
-                        }
-                    }
-                    div."navbar-menu" {
-                        div.navbar-end {
-                            form.navbar-item action="/" method="GET" {
-                                (account_search("is-small", false))
-                            }
-                        }
-                    }
-                }
-            }
+            (header(account_id))
 
             section.section {
                 div.container {
@@ -120,6 +101,8 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                     }
                 }
             }
+
+            (footer())
         },
     );
 
