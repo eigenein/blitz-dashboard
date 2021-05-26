@@ -2,7 +2,7 @@ use crate::api::wargaming::WargamingApi;
 use mongodb::Database;
 
 mod components;
-mod monitoring;
+mod middleware;
 mod partials;
 mod responses;
 mod views;
@@ -21,7 +21,7 @@ pub async fn run(
     database: Database,
 ) -> anyhow::Result<()> {
     let mut app = tide::with_state(State { api, database });
-    app.with(monitoring::MonitoringMiddleware);
+    app.with(middleware::LoggingMiddleware);
     app.at("/").get(views::index::get);
     app.at("/ru/:account_id").get(views::player::get);
     app.at("/error").get(views::errors::get);

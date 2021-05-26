@@ -2,10 +2,10 @@ use sentry::capture_error;
 use std::time::Instant;
 use tide::Request;
 
-pub struct MonitoringMiddleware;
+pub struct LoggingMiddleware;
 
 #[tide::utils::async_trait]
-impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for MonitoringMiddleware {
+impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggingMiddleware {
     async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
