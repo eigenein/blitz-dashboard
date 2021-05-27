@@ -16,7 +16,7 @@ pub struct Account {
 
 pub type Accounts = Vec<Account>;
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(rename = "account_id")]
     pub id: AccountId,
@@ -32,12 +32,12 @@ pub struct AccountInfo {
     pub statistics: AccountInfoStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
     pub all: Statistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct Statistics {
     pub battles: i32,
     pub wins: i32,
@@ -49,7 +49,7 @@ pub struct Statistics {
 
 pub type AccountInfos = HashMap<String, AccountInfo>;
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
     pub account_id: AccountId,
 

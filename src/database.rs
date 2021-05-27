@@ -1,12 +1,16 @@
 pub mod models;
 
+use crate::api::wargaming::models::{AccountInfo, TankStatistics};
+use crate::logging::log_anyhow;
 use mongodb::bson::{doc, Document};
+use mongodb::options::InsertManyOptions;
 use mongodb::options::ReplaceOptions;
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
+use std::time::Instant;
 
 const DATABASE_NAME: &str = "blitz-dashboard";
 
@@ -52,6 +56,27 @@ impl Database {
             account_snapshots: database.collection("account_snapshots"),
             tank_snapshots: database.collection("tank_snapshots"),
         })
+    }
+
+    /// Saves the account statistics to the database.
+    pub async fn save_snapshots(
+        &self,
+        account_info: AccountInfo,
+        tanks_stats: Vec<TankStatistics>,
+    ) {
+        let start = Instant::now();
+        log_anyhow(upsert(&self.accounts, &account_info).await);
+        log_anyhow(upsert(&self.account_snapshots, &account_info).await);
+        let _ = self
+            // Unfortunately, I have to ignore errors here,
+            // because the driver doesn't support the proper bulk operations.
+            .tank_snapshots
+            .insert_many(
+                tanks_stats.iter().map(Into::<models::TankSnapshot>::into),
+                InsertManyOptions::builder().ordered(false).build(),
+            )
+            .await;
+        log::debug!("Snapshots saved in {:#?}.", Instant::now() - start);
     }
 }
 

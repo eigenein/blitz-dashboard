@@ -3,6 +3,7 @@ use crate::database::Database;
 
 mod components;
 mod middleware;
+mod models;
 mod partials;
 mod responses;
 mod views;
