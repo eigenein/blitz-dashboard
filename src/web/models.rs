@@ -55,12 +55,9 @@ impl PlayerViewModel {
             .parse()?;
         log::debug!("{} {}", type_name::<Self>(), account_id);
         let state = request.state();
-        let (account_info, _is_cached): (AccountInfo, bool) =
+        let (account_info, is_cached): (AccountInfo, bool) =
             match state.database.get_account(account_id).await? {
-                Some(account_info) => {
-                    log::debug!("Using cached account info.");
-                    (account_info.into(), true)
-                }
+                Some(account_info) => (account_info.into(), true),
                 None => {
                     let (_, account_info) = state
                         .api
@@ -72,6 +69,8 @@ impl PlayerViewModel {
                     (account_info, false)
                 }
             };
+        log::debug!("Cached {}: {}", account_id, is_cached);
+        // TODO: read tank snapshots from the database.
         let (_, tanks_stats) = state
             .api
             .get_tanks_stats(account_id)
@@ -79,8 +78,7 @@ impl PlayerViewModel {
             .into_iter()
             .next()
             .ok_or_else(|| anyhow!("account tanks not found"))?;
-        {
-            // TODO: only do this if `is_cached`.
+        if !is_cached {
             let database = state.database.clone();
             let account_info = account_info.clone();
             let tanks_stats = tanks_stats.clone();

@@ -10,6 +10,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
         let method = request.method().to_string();
+        log::info!("Begin request: {} {} {}", peer_addr, method, path);
         let start = Instant::now();
         let response = next.run(request).await;
         let duration = Instant::now() - start;

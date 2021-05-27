@@ -19,10 +19,9 @@ const DATABASE_NAME: &str = "blitz-dashboard";
 /// Convenience collection container.
 #[derive(Clone)]
 pub struct Database {
-    // FIXME: make these private, expose methods.
-    pub accounts: Collection<models::Account>,
-    pub account_snapshots: Collection<models::AccountSnapshot>,
-    pub tank_snapshots: Collection<models::TankSnapshot>,
+    accounts: Collection<models::Account>,
+    account_snapshots: Collection<models::AccountSnapshot>,
+    tank_snapshots: Collection<models::TankSnapshot>,
 }
 
 /// Used to derive an `upsert` query from a document.
@@ -67,7 +66,7 @@ impl Database {
     pub async fn get_account(&self, account_id: i32) -> crate::Result<Option<models::AccountInfo>> {
         let since =
             (Utc::now() - Duration::minutes(Self::ACCOUNT_EXPIRATION_MINUTES)).trunc_subsecs(3);
-        log::debug!("get_account {} since {}", account_id, since);
+        log::debug!("Retrieve account {} since {}", account_id, since);
         let account = self
             .accounts
             .find_one(
@@ -105,8 +104,8 @@ impl Database {
     ) {
         let models::AccountInfo(account, account_info) = account_info.into();
         let start = Instant::now();
-        log_anyhow(upsert(&self.accounts, account).await);
-        log_anyhow(upsert(&self.account_snapshots, account_info).await);
+        log_anyhow(Self::upsert(&self.accounts, account).await);
+        log_anyhow(Self::upsert(&self.account_snapshots, account_info).await);
         let _ = self
             // Unfortunately, I have to ignore errors here,
             // because the driver doesn't support the proper bulk operations.
@@ -120,19 +119,19 @@ impl Database {
             .await;
         log::debug!("Snapshots saved in {:#?}.", Instant::now() - start);
     }
-}
 
-/// Convenience wrapper around `[mongodb::Collection::replace_one]`.
-/// Automatically constructs a query with the `[UpsertQuery]` trait and sets the `upsert` flag.
-pub async fn upsert<T, R>(collection: &Collection<T>, replacement: R) -> crate::Result<UpdateResult>
-where
-    T: Serialize + DeserializeOwned + Unpin + Debug + UpsertQuery,
-    R: Borrow<T>,
-{
-    let replacement = replacement.borrow();
-    let query = replacement.query();
-    let options = Some(ReplaceOptions::builder().upsert(true).build());
-    Ok(collection.replace_one(query, replacement, options).await?)
+    /// Convenience wrapper around `[mongodb::Collection::replace_one]`.
+    /// Automatically constructs a query with the `[UpsertQuery]` trait and sets the `upsert` flag.
+    async fn upsert<T, R>(collection: &Collection<T>, replacement: R) -> crate::Result<UpdateResult>
+    where
+        T: Serialize + DeserializeOwned + Unpin + Debug + UpsertQuery,
+        R: Borrow<T>,
+    {
+        let replacement = replacement.borrow();
+        let query = replacement.query();
+        let options = Some(ReplaceOptions::builder().upsert(true).build());
+        Ok(collection.replace_one(query, replacement, options).await?)
+    }
 }
 
 async fn create_index(

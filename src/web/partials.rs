@@ -26,7 +26,7 @@ pub fn document(title: Option<&str>, body: Markup) -> Markup {
 
 pub fn header(account_id: i32) -> Markup {
     html! {
-        nav.navbar.is-light role="navigation" aria-label="main navigation" {
+        nav.navbar.is-dark role="navigation" aria-label="main navigation" {
             div.container {
                 div."navbar-brand" {
                     a."navbar-item" href="/" {
