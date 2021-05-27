@@ -1,4 +1,4 @@
-use crate::api::wargaming::models::AccountId;
+use crate::wargaming::models::AccountId;
 use crate::web::components::account_search;
 use crate::web::views::player::get_account_url;
 use clap::crate_version;

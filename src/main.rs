@@ -1,15 +1,15 @@
-use crate::api::wargaming::WargamingApi;
 use crate::database::Database;
 use crate::opts::{Opts, Subcommand};
+use crate::wargaming::WargamingApi;
 use clap::{crate_name, crate_version};
 use sentry::integrations::anyhow::capture_anyhow;
 
-mod api;
 mod convert;
 mod database;
 mod logging;
 mod opts;
 mod serde;
+mod wargaming;
 mod web;
 
 type Result<T = ()> = anyhow::Result<T>;

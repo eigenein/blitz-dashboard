@@ -1,4 +1,4 @@
-use crate::api::wargaming::models::AccountId;
+use crate::wargaming::models::AccountId;
 use crate::web::components::*;
 use crate::web::models::PlayerViewModel;
 use crate::web::partials::{footer, header};

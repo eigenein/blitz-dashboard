@@ -1,7 +1,7 @@
 pub mod models;
 
-use crate::api::wargaming::models::{AccountInfo, TankStatistics};
 use crate::logging::log_anyhow;
+use crate::wargaming::models::{AccountInfo, TankStatistics};
 use mongodb::bson::{doc, Document};
 use mongodb::options::InsertManyOptions;
 use mongodb::options::ReplaceOptions;

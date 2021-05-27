@@ -1,7 +1,7 @@
 //! Conversions that do not belong to an either party, but rather to both of them.
 
-use crate::api::wargaming;
 use crate::database;
+use crate::wargaming;
 use chrono::Utc;
 use std::borrow::Borrow;
 

@@ -1,4 +1,4 @@
-use crate::api::wargaming::models::{AccountId, Accounts, Statistics, TankStatistics};
+use crate::wargaming::models::{AccountId, Accounts, Statistics, TankStatistics};
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
 use anyhow::anyhow;
