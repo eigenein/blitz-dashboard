@@ -6,14 +6,10 @@ use crate::web::responses::render_document;
 use crate::web::State;
 use chrono_humanize::HumanTime;
 use maud::html;
-use tide::{Response, StatusCode};
+use tide::StatusCode;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
-    let model = match request.param("account_id")?.parse() {
-        Ok(account_id) => PlayerViewModel::new(account_id, request.state()).await?,
-        Err(_) => return Ok(Response::new(StatusCode::BadRequest)),
-    };
-
+    let model = PlayerViewModel::new(request).await?;
     Ok(render_document(
         StatusCode::Ok,
         Some(model.nickname.as_str()),

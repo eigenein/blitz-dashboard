@@ -2,6 +2,7 @@ use crate::api::wargaming::models::{AccountId, Statistics, TankStatistics};
 use crate::web::State;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use tide::Request;
 
 pub type Percentage = f32;
 
@@ -17,7 +18,12 @@ pub struct PlayerViewModel {
 }
 
 impl PlayerViewModel {
-    pub async fn new(account_id: AccountId, state: &State) -> crate::Result<Self> {
+    pub async fn new(request: Request<State>) -> crate::Result<Self> {
+        let account_id: AccountId = request
+            .param("account_id")
+            .map_err(surf::Error::into_inner)?
+            .parse()?;
+        let state = request.state();
         let mut account_infos = state.api.get_account_info(account_id).await?;
         let (_, account_info) = account_infos
             .drain()
