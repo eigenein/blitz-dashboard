@@ -1,10 +1,23 @@
-use crate::api::wargaming::models::{AccountId, Statistics, TankStatistics};
+use crate::api::wargaming::models::{AccountId, Accounts, Statistics, TankStatistics};
+use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use serde::Deserialize;
 use tide::Request;
 
 pub type Percentage = f32;
+
+/// User search query.
+#[derive(Deserialize)]
+pub struct IndexQueryString {
+    #[serde(default = "Option::default")]
+    search: Option<String>,
+}
+
+pub struct IndexViewModel {
+    pub accounts: Option<Accounts>,
+}
 
 pub struct PlayerViewModel {
     pub account_id: AccountId,
@@ -15,6 +28,20 @@ pub struct PlayerViewModel {
     pub survival: Percentage,
     pub all_statistics: Statistics,
     pub tanks_stats: Vec<TankStatistics>,
+}
+
+impl IndexViewModel {
+    pub async fn new(request: Request<State>) -> crate::Result<Self> {
+        let query: IndexQueryString = request.query().map_err(surf::Error::into_inner)?;
+        if let Some(query) = query.search {
+            if SEARCH_QUERY_LENGTH.contains(&query.len()) {
+                return Ok(IndexViewModel {
+                    accounts: Some(request.state().api.search_accounts(&query).await?),
+                });
+            }
+        }
+        Ok(Self { accounts: None })
+    }
 }
 
 impl PlayerViewModel {
@@ -45,7 +72,7 @@ impl PlayerViewModel {
             });
         }
         let all_statistics = account_info.statistics.all.clone();
-        Ok(PlayerViewModel {
+        Ok(Self {
             account_id,
             nickname: account_info.nickname,
             created_at: account_info.created_at,
