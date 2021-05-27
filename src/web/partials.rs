@@ -1,4 +1,3 @@
-use crate::wargaming::models::AccountId;
 use crate::web::components::account_search;
 use crate::web::views::player::get_account_url;
 use clap::crate_version;
@@ -25,7 +24,7 @@ pub fn document(title: Option<&str>, body: Markup) -> Markup {
     }
 }
 
-pub fn header(account_id: AccountId) -> Markup {
+pub fn header(account_id: i32) -> Markup {
     html! {
         nav.navbar.is-light role="navigation" aria-label="main navigation" {
             div.container {

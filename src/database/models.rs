@@ -1,14 +1,18 @@
 use crate::database::UpsertQuery;
-use crate::wargaming::models::AccountId;
 use mongodb::bson::{doc, Bson, DateTime, Document};
 use serde::{Deserialize, Serialize};
+
+pub struct AccountInfo(pub Account, pub AccountSnapshot);
 
 /// Represents a player account.
 /// Used to look up last updated timestamp.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Account {
     #[serde(rename = "aid")]
-    pub id: AccountId,
+    pub id: i32,
+
+    #[serde(rename = "crts")]
+    pub created_at: DateTime,
 
     /// Timestamp when the document is updated in the database.
     #[serde(rename = "ts")]
@@ -16,6 +20,9 @@ pub struct Account {
 
     #[serde(rename = "lbts")]
     pub last_battle_time: DateTime,
+
+    #[serde(rename = "n")]
+    pub nickname: String,
 }
 
 impl UpsertQuery for Account {
@@ -28,7 +35,7 @@ impl UpsertQuery for Account {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AccountSnapshot {
     #[serde(rename = "aid")]
-    pub account_id: AccountId,
+    pub account_id: i32,
 
     #[serde(rename = "lbts")]
     pub last_battle_time: DateTime,
@@ -68,7 +75,7 @@ impl UpsertQuery for AccountSnapshot {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TankSnapshot {
     #[serde(rename = "aid")]
-    pub account_id: AccountId,
+    pub account_id: i32,
 
     #[serde(rename = "tid")]
     pub tank_id: i32,

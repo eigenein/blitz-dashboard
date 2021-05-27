@@ -1,9 +1,11 @@
-use crate::wargaming::models::{AccountId, Accounts, Statistics, TankStatistics};
+use crate::wargaming::models::{AccountInfo, Accounts, Statistics, TankStatistics};
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use mongodb::bson::doc;
 use serde::Deserialize;
+use std::any::type_name;
 use tide::Request;
 
 pub type Percentage = f32;
@@ -20,7 +22,7 @@ pub struct IndexViewModel {
 }
 
 pub struct PlayerViewModel {
-    pub account_id: AccountId,
+    pub account_id: i32,
     pub nickname: String,
     pub created_at: DateTime<Utc>,
     pub last_battle_time: DateTime<Utc>,
@@ -33,6 +35,7 @@ pub struct PlayerViewModel {
 impl IndexViewModel {
     pub async fn new(request: Request<State>) -> crate::Result<Self> {
         let query: IndexQueryString = request.query().map_err(surf::Error::into_inner)?;
+        log::debug!("{} {:?}", type_name::<Self>(), query.search);
         if let Some(query) = query.search {
             if SEARCH_QUERY_LENGTH.contains(&query.len()) {
                 return Ok(IndexViewModel {
@@ -46,24 +49,38 @@ impl IndexViewModel {
 
 impl PlayerViewModel {
     pub async fn new(request: Request<State>) -> crate::Result<Self> {
-        let account_id: AccountId = request
+        let account_id: i32 = request
             .param("account_id")
             .map_err(surf::Error::into_inner)?
             .parse()?;
+        log::debug!("{} {}", type_name::<Self>(), account_id);
         let state = request.state();
-        let mut account_infos = state.api.get_account_info(account_id).await?;
-        let (_, account_info) = account_infos
-            .drain()
-            .next()
-            .ok_or_else(|| anyhow!("account not found"))?;
+        let (account_info, _is_cached): (AccountInfo, bool) =
+            match state.database.get_account(account_id).await? {
+                Some(account_info) => {
+                    log::debug!("Using cached account info.");
+                    (account_info.into(), true)
+                }
+                None => {
+                    let (_, account_info) = state
+                        .api
+                        .get_account_info(account_id)
+                        .await?
+                        .into_iter()
+                        .next()
+                        .ok_or_else(|| anyhow!("account not found"))?;
+                    (account_info, false)
+                }
+            };
         let (_, tanks_stats) = state
             .api
             .get_tanks_stats(account_id)
             .await?
-            .drain()
+            .into_iter()
             .next()
-            .unwrap();
+            .ok_or_else(|| anyhow!("account tanks not found"))?;
         {
+            // TODO: only do this if `is_cached`.
             let database = state.database.clone();
             let account_info = account_info.clone();
             let tanks_stats = tanks_stats.clone();
@@ -71,7 +88,7 @@ impl PlayerViewModel {
                 database.save_snapshots(account_info, tanks_stats).await
             });
         }
-        let all_statistics = account_info.statistics.all.clone();
+        let all_statistics = account_info.statistics.all;
         Ok(Self {
             account_id,
             nickname: account_info.nickname,

@@ -1,4 +1,3 @@
-use crate::wargaming::models::AccountId;
 use crate::web::components::*;
 use crate::web::models::PlayerViewModel;
 use crate::web::partials::{footer, header};
@@ -85,7 +84,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
     ))
 }
 
-pub fn get_account_url(account_id: AccountId) -> String {
+pub fn get_account_url(account_id: i32) -> String {
     format!("/ru/{}", account_id)
 }
 

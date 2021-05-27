@@ -25,7 +25,7 @@ pub async fn run(
     app.with(middleware::LoggerMiddleware);
     app.at("/").get(views::index::get);
     app.at("/ru/:account_id").get(views::player::get);
-    app.at("/error").get(views::errors::get);
+    app.at("/error").get(views::error::get);
     log::info!("Listening on {}:{}.", host, port);
     app.listen((host, port)).await?;
     Ok(())

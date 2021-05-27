@@ -4,14 +4,12 @@ use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
 
-pub type AccountId = i32;
-
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Account {
     pub nickname: String,
 
     #[serde(rename = "account_id")]
-    pub id: AccountId,
+    pub id: i32,
 }
 
 pub type Accounts = Vec<Account>;
@@ -19,7 +17,7 @@ pub type Accounts = Vec<Account>;
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(rename = "account_id")]
-    pub id: AccountId,
+    pub id: i32,
 
     pub nickname: String,
 
@@ -51,7 +49,7 @@ pub type AccountInfos = HashMap<String, AccountInfo>;
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
-    pub account_id: AccountId,
+    pub account_id: i32,
 
     pub tank_id: i32,
 

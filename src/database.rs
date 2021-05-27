@@ -1,22 +1,25 @@
-pub mod models;
+use std::borrow::Borrow;
+use std::fmt::Debug;
+use std::time::Instant;
 
-use crate::logging::log_anyhow;
-use crate::wargaming::models::{AccountInfo, TankStatistics};
+use chrono::{Duration, SubsecRound, Utc};
 use mongodb::bson::{doc, Document};
-use mongodb::options::InsertManyOptions;
-use mongodb::options::ReplaceOptions;
+use mongodb::options::{FindOneOptions, InsertManyOptions, ReplaceOptions};
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::fmt::Debug;
-use std::time::Instant;
+
+use crate::logging::log_anyhow;
+
+pub mod models;
 
 const DATABASE_NAME: &str = "blitz-dashboard";
 
 /// Convenience collection container.
 #[derive(Clone)]
 pub struct Database {
+    // FIXME: make these private, expose methods.
     pub accounts: Collection<models::Account>,
     pub account_snapshots: Collection<models::AccountSnapshot>,
     pub tank_snapshots: Collection<models::TankSnapshot>,
@@ -28,6 +31,8 @@ pub trait UpsertQuery {
 }
 
 impl Database {
+    const ACCOUNT_EXPIRATION_MINUTES: i64 = 5;
+
     /// Open and initialize the database.
     pub async fn with_uri_str(uri: &str) -> crate::Result<Self> {
         log::info!("Connecting to the database…");
@@ -58,21 +63,58 @@ impl Database {
         })
     }
 
+    /// Retrieve account given that it isn't older than the maximum battle duration.
+    pub async fn get_account(&self, account_id: i32) -> crate::Result<Option<models::AccountInfo>> {
+        let since =
+            (Utc::now() - Duration::minutes(Self::ACCOUNT_EXPIRATION_MINUTES)).trunc_subsecs(3);
+        log::debug!("get_account {} since {}", account_id, since);
+        let account = self
+            .accounts
+            .find_one(
+                doc! { "aid": account_id, "ts": { "$gt": since } },
+                FindOneOptions::builder().show_record_id(false).build(),
+            )
+            .await?;
+        if account.is_none() {
+            return Ok(None);
+        }
+        let account_snapshot = self
+            .account_snapshots
+            .find_one(
+                doc! { "aid": account_id },
+                FindOneOptions::builder()
+                    .show_record_id(false)
+                    .sort(doc! { "lbts": -1 })
+                    .build(),
+            )
+            .await?;
+        if account_snapshot.is_none() {
+            return Ok(None);
+        }
+        Ok(Some(models::AccountInfo(
+            account.unwrap(),
+            account_snapshot.unwrap(),
+        )))
+    }
+
     /// Saves the account statistics to the database.
     pub async fn save_snapshots(
         &self,
-        account_info: AccountInfo,
-        tanks_stats: Vec<TankStatistics>,
+        account_info: impl Into<models::AccountInfo>,
+        tanks_stats: Vec<crate::wargaming::models::TankStatistics>,
     ) {
+        let models::AccountInfo(account, account_info) = account_info.into();
         let start = Instant::now();
-        log_anyhow(upsert(&self.accounts, &account_info).await);
-        log_anyhow(upsert(&self.account_snapshots, &account_info).await);
+        log_anyhow(upsert(&self.accounts, account).await);
+        log_anyhow(upsert(&self.account_snapshots, account_info).await);
         let _ = self
             // Unfortunately, I have to ignore errors here,
             // because the driver doesn't support the proper bulk operations.
             .tank_snapshots
             .insert_many(
-                tanks_stats.iter().map(Into::<models::TankSnapshot>::into),
+                tanks_stats
+                    .into_iter()
+                    .map(Into::<models::TankSnapshot>::into),
                 InsertManyOptions::builder().ordered(false).build(),
             )
             .await;
@@ -85,9 +127,9 @@ impl Database {
 pub async fn upsert<T, R>(collection: &Collection<T>, replacement: R) -> crate::Result<UpdateResult>
 where
     T: Serialize + DeserializeOwned + Unpin + Debug + UpsertQuery,
-    R: Into<T>,
+    R: Borrow<T>,
 {
-    let replacement = replacement.into();
+    let replacement = replacement.borrow();
     let query = replacement.query();
     let options = Some(ReplaceOptions::builder().upsert(true).build());
     Ok(collection.replace_one(query, replacement, options).await?)

@@ -1,5 +1,6 @@
-use crate::web::State;
 use tide::{Request, StatusCode};
+
+use crate::web::State;
 
 /// Debug endpoint that always returns an error.
 pub async fn get(_request: Request<State>) -> tide::Result {

@@ -15,15 +15,13 @@ impl WargamingApi {
     pub fn new(application_id: &str) -> WargamingApi {
         Self {
             application_id: Arc::new(application_id.to_string()),
-            client: surf::client()
-                .with(surf::middleware::Logger::new())
-                .with(crate::wargaming::middleware::UserAgent),
+            client: surf::client().with(crate::wargaming::middleware::UserAgent),
         }
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     pub async fn search_accounts(&self, query: &str) -> crate::Result<models::Accounts> {
-        log::debug!("search_accounts: {}", query);
+        log::debug!("Search: {}", query);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
@@ -36,11 +34,8 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    pub async fn get_account_info(
-        &self,
-        account_id: models::AccountId,
-    ) -> crate::Result<models::AccountInfos> {
-        log::debug!("get_account_info: {}", account_id);
+    pub async fn get_account_info(&self, account_id: i32) -> crate::Result<models::AccountInfos> {
+        log::debug!("Get account info: {}", account_id);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/info/",
             &[
@@ -52,11 +47,8 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    pub async fn get_tanks_stats(
-        &self,
-        account_id: models::AccountId,
-    ) -> crate::Result<models::TanksStatistics> {
-        log::debug!("get_tanks_stats: {}", account_id);
+    pub async fn get_tanks_stats(&self, account_id: i32) -> crate::Result<models::TanksStatistics> {
+        log::debug!("Get tanks stats: {}", account_id);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/tanks/stats/",
             &[
