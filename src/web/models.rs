@@ -1,13 +1,15 @@
-use crate::logging::log_anyhow;
-use crate::wargaming::models::{Accounts, Statistics, TankStatistics};
-use crate::web::components::SEARCH_QUERY_LENGTH;
-use crate::web::State;
+use std::any::type_name;
+
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use mongodb::bson::doc;
 use serde::Deserialize;
-use std::any::type_name;
 use tide::Request;
+
+use crate::logging::log_anyhow;
+use crate::wargaming::models::{Accounts, Statistics, TankStatistics};
+use crate::web::components::SEARCH_QUERY_LENGTH;
+use crate::web::State;
 
 pub type Percentage = f32;
 

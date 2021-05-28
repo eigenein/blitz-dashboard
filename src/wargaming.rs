@@ -1,9 +1,10 @@
-mod middleware;
-pub mod models;
+use std::sync::Arc;
 
 use serde::de::DeserializeOwned;
-use std::sync::Arc;
 use surf::Url;
+
+mod middleware;
+pub mod models;
 
 #[derive(Clone)]
 pub struct WargamingApi {

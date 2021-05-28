@@ -1,5 +1,6 @@
 use std::borrow::Borrow;
 use std::fmt::Debug;
+use std::time::Instant;
 
 use chrono::Utc;
 use mongodb::bson::{doc, Document};
@@ -8,7 +9,6 @@ use mongodb::results::UpdateResult;
 use mongodb::Collection;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::time::Instant;
 
 pub mod models;
 

@@ -1,6 +1,7 @@
-use crate::database::UpsertQuery;
 use mongodb::bson::{doc, Bson, DateTime, Document};
 use serde::{Deserialize, Serialize};
+
+use crate::database::UpsertQuery;
 
 /// Represents a player account.
 /// Used to look up last updated timestamp.
