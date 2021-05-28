@@ -1,4 +1,5 @@
-use crate::wargaming::models::{AccountInfo, Accounts, Statistics, TankStatistics};
+use crate::logging::log_anyhow;
+use crate::wargaming::models::{Accounts, Statistics, TankStatistics};
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
 use anyhow::anyhow;
@@ -35,7 +36,7 @@ pub struct PlayerViewModel {
 impl IndexViewModel {
     pub async fn new(request: Request<State>) -> crate::Result<Self> {
         let query: IndexQueryString = request.query().map_err(surf::Error::into_inner)?;
-        log::debug!("{} {:?}", type_name::<Self>(), query.search);
+        log::debug!("{} {:?}…", type_name::<Self>(), query.search);
         if let Some(query) = query.search {
             if SEARCH_QUERY_LENGTH.contains(&query.len()) {
                 return Ok(IndexViewModel {
@@ -53,24 +54,15 @@ impl PlayerViewModel {
             .param("account_id")
             .map_err(surf::Error::into_inner)?
             .parse()?;
-        log::debug!("{} {}", type_name::<Self>(), account_id);
+        log::info!("{} #{}…", type_name::<Self>(), account_id);
         let state = request.state();
-        let (account_info, is_cached): (AccountInfo, bool) =
-            match state.database.get_account(account_id).await? {
-                Some(account_info) => (account_info.into(), true),
-                None => {
-                    let (_, account_info) = state
-                        .api
-                        .get_account_info(account_id)
-                        .await?
-                        .into_iter()
-                        .next()
-                        .ok_or_else(|| anyhow!("account not found"))?;
-                    (account_info, false)
-                }
-            };
-        log::debug!("Cached {}: {}", account_id, is_cached);
-        // TODO: read tank snapshots from the database.
+        let (_, account_info) = state
+            .api
+            .get_account_info(account_id)
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| anyhow!("account not found"))?;
         let (_, tanks_stats) = state
             .api
             .get_tanks_stats(account_id)
@@ -78,24 +70,35 @@ impl PlayerViewModel {
             .into_iter()
             .next()
             .ok_or_else(|| anyhow!("account tanks not found"))?;
-        if !is_cached {
+        let account_updated_at = state.database.get_account_updated_at(account_id).await?;
+        {
             let database = state.database.clone();
             let account_info = account_info.clone();
             let tanks_stats = tanks_stats.clone();
             async_std::task::spawn(async move {
-                database.save_snapshots(account_info, tanks_stats).await
+                log_anyhow(
+                    database
+                        .upsert_account_info(
+                            &account_info,
+                            &account_info,
+                            tanks_stats.iter().filter(|tank| {
+                                account_updated_at.is_none()
+                                    || tank.last_battle_time >= account_updated_at.unwrap()
+                            }),
+                        )
+                        .await,
+                );
             });
         }
-        let all_statistics = account_info.statistics.all;
+        let all = account_info.statistics.all;
         Ok(Self {
             account_id,
             nickname: account_info.nickname,
             created_at: account_info.created_at,
             last_battle_time: account_info.last_battle_time,
-            wins: 100.0 * (all_statistics.wins as f32) / (all_statistics.battles as f32),
-            survival: 100.0 * (all_statistics.survived_battles as f32)
-                / (all_statistics.battles as f32),
-            all_statistics,
+            wins: 100.0 * (all.wins as f32) / (all.battles as f32),
+            survival: 100.0 * (all.survived_battles as f32) / (all.battles as f32),
+            all_statistics: all,
             tanks_stats,
         })
     }

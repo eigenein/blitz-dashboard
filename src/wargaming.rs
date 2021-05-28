@@ -21,7 +21,7 @@ impl WargamingApi {
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     pub async fn search_accounts(&self, query: &str) -> crate::Result<models::Accounts> {
-        log::debug!("Search: {}", query);
+        log::debug!("Searching: {}", query);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
@@ -35,7 +35,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
     pub async fn get_account_info(&self, account_id: i32) -> crate::Result<models::AccountInfos> {
-        log::debug!("Get account info: {}", account_id);
+        log::debug!("Retrieving account #{} info…", account_id);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/info/",
             &[
@@ -48,7 +48,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
     pub async fn get_tanks_stats(&self, account_id: i32) -> crate::Result<models::TanksStatistics> {
-        log::debug!("Get tanks stats: {}", account_id);
+        log::debug!("Retrieving #{} tanks stats…", account_id);
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/tanks/stats/",
             &[

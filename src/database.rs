@@ -1,27 +1,21 @@
 use std::borrow::Borrow;
 use std::fmt::Debug;
-use std::time::Instant;
 
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::Utc;
 use mongodb::bson::{doc, Document};
-use mongodb::options::{FindOneOptions, InsertManyOptions, ReplaceOptions};
+use mongodb::options::{FindOneOptions, ReplaceOptions};
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-
-use crate::logging::log_anyhow;
+use std::time::Instant;
 
 pub mod models;
-
-const DATABASE_NAME: &str = "blitz-dashboard";
 
 /// Convenience collection container.
 #[derive(Clone)]
 pub struct Database {
-    accounts: Collection<models::Account>,
-    account_snapshots: Collection<models::AccountSnapshot>,
-    tank_snapshots: Collection<models::TankSnapshot>,
+    database: mongodb::Database,
 }
 
 /// Used to derive an `upsert` query from a document.
@@ -30,94 +24,120 @@ pub trait UpsertQuery {
 }
 
 impl Database {
-    const ACCOUNT_EXPIRATION_MINUTES: i64 = 5;
+    const DATABASE_NAME: &'static str = "blitz-dashboard";
+    const ACCOUNT_SNAPSHOT_COLLECTION: &'static str = "account_snapshots";
+    const ACCOUNT_COLLECTION: &'static str = "accounts";
+    const TANK_SNAPSHOT_COLLECTION: &'static str = "tank_snapshots";
 
     /// Open and initialize the database.
     pub async fn with_uri_str(uri: &str) -> crate::Result<Self> {
         log::info!("Connecting to the database…");
         let client = mongodb::Client::with_uri_str(uri).await?;
-        let database = client.database(DATABASE_NAME);
+        let database = client.database(Self::DATABASE_NAME);
 
         log::info!("Initializing the database…");
-        create_index(&database, "accounts", doc! {"aid": 1}, "aid").await?;
+        create_index(&database, Self::ACCOUNT_COLLECTION, doc! {"aid": 1}, "aid").await?;
         create_index(
             &database,
-            "account_snapshots",
+            Self::ACCOUNT_SNAPSHOT_COLLECTION,
             doc! {"aid": 1, "lbts": -1},
             "aid_lbts",
         )
         .await?;
         create_index(
             &database,
-            "tank_snapshots",
+            Self::TANK_SNAPSHOT_COLLECTION,
             doc! {"aid": 1, "tid": 1, "lbts": -1},
             "aid_tid_lbts",
         )
         .await?;
 
-        Ok(Database {
-            accounts: database.collection("accounts"),
-            account_snapshots: database.collection("account_snapshots"),
-            tank_snapshots: database.collection("tank_snapshots"),
-        })
+        Ok(Database { database })
     }
 
-    /// Retrieve account given that it isn't older than the maximum battle duration.
-    pub async fn get_account(&self, account_id: i32) -> crate::Result<Option<models::AccountInfo>> {
-        let since =
-            (Utc::now() - Duration::minutes(Self::ACCOUNT_EXPIRATION_MINUTES)).trunc_subsecs(3);
-        log::debug!("Retrieve account {} since {}", account_id, since);
-        let account = self
-            .accounts
-            .find_one(
-                doc! { "aid": account_id, "ts": { "$gt": since } },
-                FindOneOptions::builder().show_record_id(false).build(),
-            )
-            .await?;
-        if account.is_none() {
-            return Ok(None);
-        }
-        let account_snapshot = self
-            .account_snapshots
+    pub async fn get_account_updated_at(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<Option<chrono::DateTime<Utc>>> {
+        log::debug!("Retrieving account updated timestamp #{}…", account_id);
+        let document = self
+            .database
+            .collection::<Document>(Self::ACCOUNT_COLLECTION)
             .find_one(
                 doc! { "aid": account_id },
                 FindOneOptions::builder()
-                    .show_record_id(false)
-                    .sort(doc! { "lbts": -1 })
+                    .projection(doc! { "ts": 1 })
                     .build(),
             )
             .await?;
-        if account_snapshot.is_none() {
-            return Ok(None);
+        match document {
+            Some(document) => Ok(Some(document.get_datetime("ts")?.clone().into())),
+            None => Ok(None),
         }
-        Ok(Some(models::AccountInfo(
-            account.unwrap(),
-            account_snapshot.unwrap(),
-        )))
     }
 
-    /// Saves the account statistics to the database.
-    pub async fn save_snapshots(
+    pub async fn upsert_account<A: Into<models::Account>>(
         &self,
-        account_info: impl Into<models::AccountInfo>,
-        tanks_stats: Vec<crate::wargaming::models::TankStatistics>,
-    ) {
-        let models::AccountInfo(account, account_info) = account_info.into();
+        account: A,
+    ) -> crate::Result<UpdateResult> {
+        let account = account.into();
+        log::debug!("Upserting account #{}…", account.id);
+        Self::upsert(&self.database.collection(Self::ACCOUNT_COLLECTION), account).await
+    }
+
+    pub async fn upsert_account_snapshot<A: Into<models::AccountSnapshot>>(
+        &self,
+        account_snapshot: A,
+    ) -> crate::Result<UpdateResult> {
+        let account_snapshot = account_snapshot.into();
+        log::debug!(
+            "Upserting account #{} snapshot…",
+            account_snapshot.account_id
+        );
+        Self::upsert(
+            &self.database.collection(Self::ACCOUNT_SNAPSHOT_COLLECTION),
+            account_snapshot,
+        )
+        .await
+    }
+
+    pub async fn upsert_tank_snapshot<T: Into<models::TankSnapshot>>(
+        &self,
+        tank_snapshot: T,
+    ) -> crate::Result<UpdateResult> {
+        Self::upsert(
+            &self.database.collection(Self::TANK_SNAPSHOT_COLLECTION),
+            tank_snapshot.into(),
+        )
+        .await
+    }
+
+    pub async fn upsert_account_info<A, S, T, TS>(
+        &self,
+        account: A,
+        account_snapshot: S,
+        tank_snapshots: TS,
+    ) -> crate::Result
+    where
+        A: Into<models::Account>,
+        S: Into<models::AccountSnapshot>,
+        T: Into<models::TankSnapshot>,
+        TS: Iterator<Item = T>,
+    {
         let start = Instant::now();
-        log_anyhow(Self::upsert(&self.accounts, account).await);
-        log_anyhow(Self::upsert(&self.account_snapshots, account_info).await);
-        let _ = self
-            // Unfortunately, I have to ignore errors here,
-            // because the driver doesn't support the proper bulk operations.
-            .tank_snapshots
-            .insert_many(
-                tanks_stats
-                    .into_iter()
-                    .map(Into::<models::TankSnapshot>::into),
-                InsertManyOptions::builder().ordered(false).build(),
-            )
-            .await;
-        log::debug!("Snapshots saved in {:#?}.", Instant::now() - start);
+        let account = account.into();
+        let account_id = account.id;
+        self.upsert_account(account).await?;
+        self.upsert_account_snapshot(account_snapshot).await?;
+        for tank_snapshot in tank_snapshots {
+            self.upsert_tank_snapshot(tank_snapshot).await?;
+        }
+        log::info!(
+            "Account #{} info upserted in {:#?}.",
+            account_id,
+            Instant::now() - start
+        );
+        Ok(())
     }
 
     /// Convenience wrapper around `[mongodb::Collection::replace_one]`.

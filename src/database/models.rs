@@ -2,8 +2,6 @@ use crate::database::UpsertQuery;
 use mongodb::bson::{doc, Bson, DateTime, Document};
 use serde::{Deserialize, Serialize};
 
-pub struct AccountInfo(pub Account, pub AccountSnapshot);
-
 /// Represents a player account.
 /// Used to look up last updated timestamp.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -11,18 +9,12 @@ pub struct Account {
     #[serde(rename = "aid")]
     pub id: i32,
 
-    #[serde(rename = "crts")]
-    pub created_at: DateTime,
-
     /// Timestamp when the document is updated in the database.
     #[serde(rename = "ts")]
     pub updated_at: DateTime,
 
     #[serde(rename = "lbts")]
     pub last_battle_time: DateTime,
-
-    #[serde(rename = "n")]
-    pub nickname: String,
 }
 
 impl UpsertQuery for Account {
