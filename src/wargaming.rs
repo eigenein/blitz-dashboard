@@ -38,51 +38,64 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    pub async fn get_account_info(&self, account_id: i32) -> crate::Result<models::AccountInfos> {
+    pub async fn get_account_info(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<Option<models::AccountInfo>> {
         log::debug!("Retrieving account #{} info…", account_id);
-        self.call(Url::parse_with_params(
-            "https://api.wotblitz.ru/wotb/account/info/",
-            &[
-                ("application_id", self.application_id.as_str()),
-                ("account_id", account_id.to_string().as_str()),
-            ],
-        )?)
-        .await
+        match self
+            .call::<models::AccountInfos, _>(Url::parse_with_params(
+                "https://api.wotblitz.ru/wotb/account/info/",
+                &[
+                    ("application_id", self.application_id.as_str()),
+                    ("account_id", account_id.to_string().as_str()),
+                ],
+            )?)
+            .await?
+            .into_iter()
+            .next()
+        {
+            Some((_, info)) => Ok(Some(info)),
+            None => Ok(None),
+        }
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    pub async fn get_tanks_stats(&self, account_id: i32) -> crate::Result<models::TanksStatistics> {
+    pub async fn get_tanks_stats(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<Vec<models::TankStatistics>> {
         log::debug!("Retrieving #{} tanks stats…", account_id);
-        self.call(Url::parse_with_params(
-            "https://api.wotblitz.ru/wotb/tanks/stats/",
-            &[
-                ("application_id", self.application_id.as_str()),
-                ("account_id", account_id.to_string().as_str()),
-            ],
-        )?)
-        .await
+        match self
+            .call::<models::TanksStatistics, _>(Url::parse_with_params(
+                "https://api.wotblitz.ru/wotb/tanks/stats/",
+                &[
+                    ("application_id", self.application_id.as_str()),
+                    ("account_id", account_id.to_string().as_str()),
+                ],
+            )?)
+            .await?
+            .into_iter()
+            .next()
+        {
+            Some((_, tank_stats)) => Ok(tank_stats),
+            None => Ok(Vec::new()),
+        }
     }
 
     pub async fn get_full_account_info(
         &self,
         account_id: i32,
     ) -> crate::Result<(models::AccountInfo, Vec<models::TankStatistics>)> {
-        let (_, account_info) = self
+        let account_info = self
             .get_account_info(account_id)
             .await?
-            .into_iter()
-            .next()
-            .ok_or_else(|| anyhow!("API returned nothing"))?;
-        let (_, tanks_stats) = self
-            .get_tanks_stats(account_id)
-            .await?
-            .into_iter()
-            .next()
-            .ok_or_else(|| anyhow!("API returned nothing"))?;
+            .ok_or_else(|| anyhow!("account ID not found"))?;
+        let tanks_stats = self.get_tanks_stats(account_id).await?;
         Ok((account_info, tanks_stats))
     }
 
-    async fn call<T: DeserializeOwned>(&self, uri: impl AsRef<str>) -> crate::Result<T> {
+    async fn call<T: DeserializeOwned, U: AsRef<str>>(&self, uri: U) -> crate::Result<T> {
         self.client
             .get(uri)
             .await
