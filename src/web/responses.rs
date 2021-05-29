@@ -1,7 +1,8 @@
-use crate::web::partials::document;
 use maud::{html, Markup};
 use tide::http::mime;
 use tide::{Response, StatusCode};
+
+use crate::web::partials::document;
 
 /// Wraps the body into a complete HTML document.
 pub fn render_document(code: StatusCode, title: Option<&str>, body: Markup) -> Response {

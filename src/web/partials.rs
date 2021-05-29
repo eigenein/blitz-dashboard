@@ -1,7 +1,8 @@
-use crate::web::components::account_search;
-use crate::web::views::player::get_account_url;
 use clap::crate_version;
 use maud::{html, Markup, DOCTYPE};
+
+use crate::web::components::account_search;
+use crate::web::views::player::get_account_url;
 
 pub fn head(title: Option<&str>) -> Markup {
     html! {

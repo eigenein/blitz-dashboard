@@ -1,7 +1,8 @@
+use std::borrow::Borrow;
+
 use sentry::integrations::anyhow::capture_anyhow;
 use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
-use std::borrow::Borrow;
 
 pub fn init(debug: bool) -> anyhow::Result<()> {
     let logger = TermLogger::new(

@@ -1,8 +1,10 @@
-use crate::serde::deserialize_duration_seconds;
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
-use std::collections::HashMap;
+
+use crate::serde::deserialize_duration_seconds;
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Account {

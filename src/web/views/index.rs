@@ -1,10 +1,11 @@
+use maud::html;
+use tide::{Redirect, StatusCode};
+
 use crate::web::components::account_search;
 use crate::web::models::IndexViewModel;
 use crate::web::responses::render_document;
 use crate::web::views::player::get_account_url;
 use crate::web::State;
-use maud::html;
-use tide::{Redirect, StatusCode};
 
 /// Home page that allows searching for a user.
 pub async fn get(request: tide::Request<State>) -> tide::Result {

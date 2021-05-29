@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::time::Instant;
 
@@ -36,7 +35,7 @@ impl Database {
         let database = client.database(Self::DATABASE_NAME);
 
         log::info!("Initializing the database…");
-        create_index(&database, Self::ACCOUNT_COLLECTION, doc! {"aid": 1}, "aid").await?;
+        create_index(&database, Self::ACCOUNT_COLLECTION, doc! {"ts": 1}, "ts").await?;
         create_index(
             &database,
             Self::ACCOUNT_SNAPSHOT_COLLECTION,
@@ -76,20 +75,30 @@ impl Database {
         }
     }
 
-    pub async fn upsert_account<A: Into<models::Account>>(
-        &self,
-        account: A,
-    ) -> crate::Result<UpdateResult> {
-        let account = account.into();
+    pub async fn get_oldest_account(&self) -> crate::Result<Option<models::Account>> {
+        log::info!("Retrieving the oldest account…");
+        Ok(self
+            .database
+            .collection(Self::ACCOUNT_COLLECTION)
+            .find_one(
+                None,
+                FindOneOptions::builder()
+                    .show_record_id(false)
+                    .sort(doc! { "ts": 1 })
+                    .build(),
+            )
+            .await?)
+    }
+
+    pub async fn upsert_account(&self, account: &models::Account) -> crate::Result<UpdateResult> {
         log::debug!("Upserting account #{}…", account.id);
         Self::upsert(&self.database.collection(Self::ACCOUNT_COLLECTION), account).await
     }
 
-    pub async fn upsert_account_snapshot<A: Into<models::AccountSnapshot>>(
+    pub async fn upsert_account_snapshot(
         &self,
-        account_snapshot: A,
+        account_snapshot: &models::AccountSnapshot,
     ) -> crate::Result<UpdateResult> {
-        let account_snapshot = account_snapshot.into();
         log::debug!(
             "Upserting account #{} snapshot…",
             account_snapshot.account_id
@@ -101,53 +110,50 @@ impl Database {
         .await
     }
 
-    pub async fn upsert_tank_snapshot<T: Into<models::TankSnapshot>>(
+    pub async fn upsert_tank_snapshot(
         &self,
-        tank_snapshot: T,
+        tank_snapshot: &models::TankSnapshot,
     ) -> crate::Result<UpdateResult> {
         Self::upsert(
             &self.database.collection(Self::TANK_SNAPSHOT_COLLECTION),
-            tank_snapshot.into(),
+            tank_snapshot,
         )
         .await
     }
 
-    pub async fn upsert_account_info<A, S, T, TS>(
+    pub async fn upsert_account_info(
         &self,
-        account: A,
-        account_snapshot: S,
-        tank_snapshots: TS,
-    ) -> crate::Result
-    where
-        A: Into<models::Account>,
-        S: Into<models::AccountSnapshot>,
-        T: Into<models::TankSnapshot>,
-        TS: Iterator<Item = T>,
-    {
+        account_info: &crate::wargaming::models::AccountInfo,
+        tanks_stats: &Vec<crate::wargaming::models::TankStatistics>,
+    ) -> crate::Result {
+        log::debug!("Upserting account #{} info…", account_info.id);
         let start = Instant::now();
-        let account = account.into();
-        let account_id = account.id;
-        self.upsert_account(account).await?;
-        self.upsert_account_snapshot(account_snapshot).await?;
-        for tank_snapshot in tank_snapshots {
-            self.upsert_tank_snapshot(tank_snapshot).await?;
+        let account_updated_at = self.get_account_updated_at(account_info.id).await?;
+        self.upsert_account(&account_info.into()).await?;
+        self.upsert_account_snapshot(&account_info.into()).await?;
+        let mut selected_tank_count = 0;
+        for tank in tanks_stats {
+            if account_updated_at.is_none() || tank.last_battle_time >= account_updated_at.unwrap()
+            {
+                selected_tank_count += 1;
+                self.upsert_tank_snapshot(&tank.into()).await?;
+            }
         }
         log::info!(
-            "Account #{} info upserted in {:#?}.",
-            account_id,
-            Instant::now() - start
+            "Account #{} info upserted in {:#?}. ({} tanks)",
+            account_info.id,
+            Instant::now() - start,
+            selected_tank_count,
         );
         Ok(())
     }
 
     /// Convenience wrapper around `[mongodb::Collection::replace_one]`.
     /// Automatically constructs a query with the `[UpsertQuery]` trait and sets the `upsert` flag.
-    async fn upsert<T, R>(collection: &Collection<T>, replacement: R) -> crate::Result<UpdateResult>
+    async fn upsert<T>(collection: &Collection<T>, replacement: &T) -> crate::Result<UpdateResult>
     where
         T: Serialize + DeserializeOwned + Unpin + Debug + UpsertQuery,
-        R: Borrow<T>,
     {
-        let replacement = replacement.borrow();
         let query = replacement.query();
         let options = Some(ReplaceOptions::builder().upsert(true).build());
         Ok(collection.replace_one(query, replacement, options).await?)

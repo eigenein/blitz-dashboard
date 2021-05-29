@@ -1,5 +1,6 @@
-use sentry::capture_error;
 use std::time::Instant;
+
+use sentry::capture_error;
 use tide::Request;
 
 pub struct LoggerMiddleware;

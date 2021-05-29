@@ -1,6 +1,5 @@
 use std::any::type_name;
 
-use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use mongodb::bson::doc;
 use serde::Deserialize;
@@ -58,21 +57,7 @@ impl PlayerViewModel {
             .parse()?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
         let state = request.state();
-        let (_, account_info) = state
-            .api
-            .get_account_info(account_id)
-            .await?
-            .into_iter()
-            .next()
-            .ok_or_else(|| anyhow!("account not found"))?;
-        let (_, tanks_stats) = state
-            .api
-            .get_tanks_stats(account_id)
-            .await?
-            .into_iter()
-            .next()
-            .ok_or_else(|| anyhow!("account tanks not found"))?;
-        let account_updated_at = state.database.get_account_updated_at(account_id).await?;
+        let (account_info, tanks_stats) = state.api.get_full_account_info(account_id).await?;
         {
             let database = state.database.clone();
             let account_info = account_info.clone();
@@ -80,14 +65,7 @@ impl PlayerViewModel {
             async_std::task::spawn(async move {
                 log_anyhow(
                     database
-                        .upsert_account_info(
-                            &account_info,
-                            &account_info,
-                            tanks_stats.iter().filter(|tank| {
-                                account_updated_at.is_none()
-                                    || tank.last_battle_time >= account_updated_at.unwrap()
-                            }),
-                        )
+                        .upsert_account_info(&account_info, &tanks_stats)
                         .await,
                 );
             });

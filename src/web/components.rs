@@ -1,5 +1,6 @@
-use maud::{html, Markup};
 use std::ops::Range;
+
+use maud::{html, Markup};
 
 pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 const MIN_QUERY_LENGTH: usize = 3;

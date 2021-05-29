@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::anyhow;
 use serde::de::DeserializeOwned;
 use surf::Url;
 
@@ -58,6 +59,25 @@ impl WargamingApi {
             ],
         )?)
         .await
+    }
+
+    pub async fn get_full_account_info(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<(models::AccountInfo, Vec<models::TankStatistics>)> {
+        let (_, account_info) = self
+            .get_account_info(account_id)
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| anyhow!("API returned nothing"))?;
+        let (_, tanks_stats) = self
+            .get_tanks_stats(account_id)
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| anyhow!("API returned nothing"))?;
+        Ok((account_info, tanks_stats))
     }
 
     async fn call<T: DeserializeOwned>(&self, uri: impl AsRef<str>) -> crate::Result<T> {
