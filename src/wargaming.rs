@@ -17,7 +17,9 @@ impl WargamingApi {
     pub fn new(application_id: &str) -> WargamingApi {
         Self {
             application_id: Arc::new(application_id.to_string()),
-            client: surf::client().with(crate::wargaming::middleware::UserAgent),
+            client: surf::client()
+                .with(middleware::UserAgent)
+                .with(middleware::Timeout(std::time::Duration::from_secs(10))),
         }
     }
 
