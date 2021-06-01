@@ -47,7 +47,7 @@ pub struct Statistics {
     pub damage_received: i32,
 }
 
-pub type AccountInfos = HashMap<String, AccountInfo>;
+pub type AccountInfos = HashMap<String, Option<AccountInfo>>;
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
@@ -64,7 +64,7 @@ pub struct TankStatistics {
     pub all: Statistics,
 }
 
-pub type TanksStatistics = HashMap<String, Vec<TankStatistics>>;
+pub type TanksStatistics = HashMap<String, Option<Vec<TankStatistics>>>;
 
 /// Generic Wargaming.net API error.
 #[derive(Deserialize, Debug, PartialEq)]

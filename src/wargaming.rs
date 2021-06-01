@@ -43,7 +43,7 @@ impl WargamingApi {
         account_id: i32,
     ) -> crate::Result<Option<models::AccountInfo>> {
         log::debug!("Retrieving account #{} info…", account_id);
-        match self
+        Ok(self
             .call::<models::AccountInfos, _>(Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/account/info/",
                 &[
@@ -53,11 +53,9 @@ impl WargamingApi {
             )?)
             .await?
             .into_iter()
+            .map(|(_, account_info)| account_info)
             .next()
-        {
-            Some((_, info)) => Ok(Some(info)),
-            None => Ok(None),
-        }
+            .flatten())
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
@@ -66,7 +64,7 @@ impl WargamingApi {
         account_id: i32,
     ) -> crate::Result<Vec<models::TankStatistics>> {
         log::debug!("Retrieving #{} tanks stats…", account_id);
-        match self
+        Ok(self
             .call::<models::TanksStatistics, _>(Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/tanks/stats/",
                 &[
@@ -76,11 +74,10 @@ impl WargamingApi {
             )?)
             .await?
             .into_iter()
+            .map(|(_, tank_stats)| tank_stats)
             .next()
-        {
-            Some((_, tank_stats)) => Ok(tank_stats),
-            None => Ok(Vec::new()),
-        }
+            .flatten()
+            .unwrap_or_else(Vec::new))
     }
 
     pub async fn get_full_account_info(
