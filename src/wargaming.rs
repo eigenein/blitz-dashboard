@@ -72,17 +72,17 @@ impl WargamingApi {
             .unwrap_or_else(Vec::new))
     }
 
-    pub async fn get_full_account_info(
-        &self,
-        account_id: i32,
-    ) -> crate::Result<(models::AccountInfo, Vec<models::TankStatistics>)> {
+    pub async fn get_full_account_info(&self, account_id: i32) -> crate::Result<models::FullInfo> {
         let account_info = self
             .get_account_info(account_id)
             .await?
             .ok_or_else(|| anyhow!("account ID not found"))?;
-        let tanks_stats = self.get_tanks_stats(account_id).await?;
+        let tanks_statistics = self.get_tanks_stats(account_id).await?;
         let _tanks_achievements = self.get_tanks_achievements(account_id).await?;
-        Ok((account_info, tanks_stats))
+        Ok(models::FullInfo {
+            account_info,
+            tanks_statistics,
+        })
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.

@@ -12,7 +12,7 @@ pub struct Account {
     pub id: i32,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct AccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
@@ -28,12 +28,12 @@ pub struct AccountInfo {
     pub statistics: AccountInfoStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct AccountInfoStatistics {
     pub all: Statistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Statistics {
     pub battles: i32,
     pub wins: i32,
@@ -43,7 +43,7 @@ pub struct Statistics {
     pub damage_received: i32,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct TankStatistics {
     pub account_id: i32,
 
@@ -58,11 +58,16 @@ pub struct TankStatistics {
     pub all: Statistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct TankAchievements {
     pub account_id: i32,
 
     pub tank_id: i32,
+}
+
+pub struct FullInfo {
+    pub account_info: AccountInfo,
+    pub tanks_statistics: Vec<TankStatistics>,
 }
 
 /// Generic Wargaming.net API error.

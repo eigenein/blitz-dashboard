@@ -6,9 +6,10 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::logging::log_anyhow;
-use crate::wargaming::models::{Account, Statistics, TankStatistics};
+use crate::wargaming::models::{Account, FullInfo};
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
+use std::sync::Arc;
 
 pub type Percentage = f32;
 
@@ -30,8 +31,7 @@ pub struct PlayerViewModel {
     pub last_battle_time: DateTime<Utc>,
     pub wins: Percentage,
     pub survival: Percentage,
-    pub all_statistics: Statistics,
-    pub tanks_stats: Vec<TankStatistics>,
+    pub full_info: Arc<FullInfo>,
 }
 
 impl IndexViewModel {
@@ -57,29 +57,24 @@ impl PlayerViewModel {
             .parse()?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
         let state = request.state();
-        let (account_info, tanks_stats) = state.api.get_full_account_info(account_id).await?;
+        let full_info = Arc::new(state.api.get_full_account_info(account_id).await?);
         {
             let database = state.database.clone();
-            let account_info = account_info.clone();
-            let tanks_stats = tanks_stats.clone();
+            let full_info = full_info.clone();
             async_std::task::spawn(async move {
-                log_anyhow(
-                    database
-                        .upsert_account_info(&account_info, &tanks_stats)
-                        .await,
-                );
+                log_anyhow(database.upsert_full_info(&full_info).await);
             });
         }
-        let all = account_info.statistics.all;
         Ok(Self {
             account_id,
-            nickname: account_info.nickname,
-            created_at: account_info.created_at,
-            last_battle_time: account_info.last_battle_time,
-            wins: 100.0 * (all.wins as f32) / (all.battles as f32),
-            survival: 100.0 * (all.survived_battles as f32) / (all.battles as f32),
-            all_statistics: all,
-            tanks_stats,
+            nickname: full_info.account_info.nickname.clone(),
+            created_at: full_info.account_info.created_at,
+            last_battle_time: full_info.account_info.last_battle_time,
+            wins: 100.0 * (full_info.account_info.statistics.all.wins as f32)
+                / (full_info.account_info.statistics.all.battles as f32),
+            survival: 100.0 * (full_info.account_info.statistics.all.survived_battles as f32)
+                / (full_info.account_info.statistics.all.battles as f32),
+            full_info,
         })
     }
 }
