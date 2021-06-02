@@ -6,7 +6,7 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::logging::log_anyhow;
-use crate::wargaming::models::{Accounts, Statistics, TankStatistics};
+use crate::wargaming::models::{Account, Statistics, TankStatistics};
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::State;
 
@@ -20,7 +20,7 @@ pub struct IndexQueryString {
 }
 
 pub struct IndexViewModel {
-    pub accounts: Option<Accounts>,
+    pub accounts: Option<Vec<Account>>,
 }
 
 pub struct PlayerViewModel {

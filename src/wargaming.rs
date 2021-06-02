@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 use surf::Url;
 
 mod middleware;
@@ -24,9 +25,9 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    pub async fn search_accounts(&self, query: &str) -> crate::Result<models::Accounts> {
+    pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::Account>> {
         log::debug!("Searching: {}", query);
-        self.call(Url::parse_with_params(
+        self.call(&Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
                 ("application_id", self.application_id.as_str()),
@@ -42,20 +43,8 @@ impl WargamingApi {
         &self,
         account_id: i32,
     ) -> crate::Result<Option<models::AccountInfo>> {
-        log::debug!("Retrieving account #{} info…", account_id);
-        Ok(self
-            .call::<models::AccountInfos, _>(Url::parse_with_params(
-                "https://api.wotblitz.ru/wotb/account/info/",
-                &[
-                    ("application_id", self.application_id.as_str()),
-                    ("account_id", account_id.to_string().as_str()),
-                ],
-            )?)
-            .await?
-            .into_iter()
-            .map(|(_, account_info)| account_info)
-            .next()
-            .flatten())
+        self.call_by_account("https://api.wotblitz.ru/wotb/account/info/", account_id)
+            .await
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
@@ -63,20 +52,23 @@ impl WargamingApi {
         &self,
         account_id: i32,
     ) -> crate::Result<Vec<models::TankStatistics>> {
-        log::debug!("Retrieving #{} tanks stats…", account_id);
         Ok(self
-            .call::<models::TanksStatistics, _>(Url::parse_with_params(
-                "https://api.wotblitz.ru/wotb/tanks/stats/",
-                &[
-                    ("application_id", self.application_id.as_str()),
-                    ("account_id", account_id.to_string().as_str()),
-                ],
-            )?)
+            .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await?
-            .into_iter()
-            .map(|(_, tank_stats)| tank_stats)
-            .next()
-            .flatten()
+            .unwrap_or_else(Vec::new))
+    }
+
+    /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
+    pub async fn get_tanks_achievements(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<Vec<models::TankAchievements>> {
+        Ok(self
+            .call_by_account(
+                "https://api.wotblitz.ru/wotb/tanks/achievements/",
+                account_id,
+            )
+            .await?
             .unwrap_or_else(Vec::new))
     }
 
@@ -89,12 +81,34 @@ impl WargamingApi {
             .await?
             .ok_or_else(|| anyhow!("account ID not found"))?;
         let tanks_stats = self.get_tanks_stats(account_id).await?;
+        let _tanks_achievements = self.get_tanks_achievements(account_id).await?;
         Ok((account_info, tanks_stats))
     }
 
-    async fn call<T: DeserializeOwned, U: AsRef<str>>(&self, uri: U) -> crate::Result<T> {
+    /// Convenience method for endpoints that return data in the form of a map by account ID.
+    async fn call_by_account<T: DeserializeOwned>(
+        &self,
+        url: &str,
+        account_id: i32,
+    ) -> crate::Result<Option<T>> {
+        let account_id = account_id.to_string();
+        log::debug!("{} #{}", url, account_id);
+        Ok(self
+            .call::<HashMap<String, Option<T>>>(&Url::parse_with_params(
+                url,
+                &[
+                    ("application_id", self.application_id.as_str()),
+                    ("account_id", account_id.as_str()),
+                ],
+            )?)
+            .await?
+            .remove(&account_id)
+            .flatten())
+    }
+
+    async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
         self.client
-            .get(uri)
+            .get(url.as_str())
             .await
             .map_err(surf::Error::into_inner)?
             .body_json::<models::ApiResponse<T>>()
