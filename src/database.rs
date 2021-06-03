@@ -125,15 +125,12 @@ impl Database {
         &self,
         full_info: &crate::wargaming::models::FullInfo,
     ) -> crate::Result {
-        log::debug!("Upserting account #{} info…", full_info.account_info.id);
+        let account_info = &full_info.account_info;
+        log::debug!("Upserting account #{} info…", account_info.id);
         let start = Instant::now();
-        let account_updated_at = self
-            .get_account_updated_at(full_info.account_info.id)
-            .await?;
-        self.upsert_account(&(&full_info.account_info).into())
-            .await?;
-        self.upsert_account_snapshot(&(&full_info.account_info).into())
-            .await?;
+        let account_updated_at = self.get_account_updated_at(account_info.id).await?;
+        self.upsert_account(&account_info.into()).await?;
+        self.upsert_account_snapshot(&account_info.into()).await?;
         let mut selected_tank_count: i32 = 0;
         for tank in full_info.tanks_statistics.iter() {
             if account_updated_at.is_none() || tank.last_battle_time >= account_updated_at.unwrap()
@@ -144,7 +141,7 @@ impl Database {
         }
         log::info!(
             "Account #{} info upserted in {:#?}. ({} tanks)",
-            full_info.account_info.id,
+            account_info.id,
             Instant::now() - start,
             selected_tank_count,
         );
