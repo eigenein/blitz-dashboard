@@ -112,8 +112,9 @@ impl<T> From<ApiResponse<T>> for anyhow::Result<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashMap;
+
+    use super::*;
 
     type ResultMap<T> = HashMap<String, Option<T>>;
     type ResultMapVec<T> = ResultMap<Vec<T>>;

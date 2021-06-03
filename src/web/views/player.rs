@@ -3,7 +3,7 @@ use maud::html;
 use tide::StatusCode;
 
 use crate::web::components::*;
-use crate::web::models::PlayerViewModel;
+use crate::web::models::player::PlayerViewModel;
 use crate::web::partials::{footer, header};
 use crate::web::responses::render_document;
 use crate::web::State;
@@ -43,7 +43,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div class="level-item has-text-centered" {
                                             div {
                                                 p.heading { "Battles" }
-                                                p.title { (model.full_info.account_info.statistics.all.battles) }
+                                                p.title { (model.n_battles) }
                                             }
                                         }
                                         div class="level-item has-text-centered" {

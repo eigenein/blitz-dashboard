@@ -1,8 +1,8 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::anyhow;
 use serde::de::DeserializeOwned;
-use std::collections::HashMap;
 use surf::Url;
 
 mod middleware;
@@ -72,7 +72,7 @@ impl WargamingApi {
             .unwrap_or_else(Vec::new))
     }
 
-    pub async fn get_full_account_info(&self, account_id: i32) -> crate::Result<models::FullInfo> {
+    pub async fn get_full_info(&self, account_id: i32) -> crate::Result<models::FullInfo> {
         let account_info = self
             .get_account_info(account_id)
             .await?

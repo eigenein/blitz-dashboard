@@ -18,7 +18,9 @@ async-std = { version = "1.6.0", features = ["std", "attributes"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 chrono-humanize = "0.2.1"
 clap = "3.0.0-beta.2"
+lazy_static = "1.4.0"
 log = "0.4.14"
+lru_time_cache = "0.11.10"
 maud = "0.22.1"
 mongodb = { version = "2.0.0-beta", default-features = false, features = ["async-std-runtime", "bson-chrono-0_4"] }
 sentry = { version = "0.22.0", default-features = false, features = ["backtrace", "contexts", "panic", "surf", "rustls", "anyhow", "log"] }
