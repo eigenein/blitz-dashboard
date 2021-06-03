@@ -54,18 +54,59 @@ pub fn header(account_id: i32) -> Markup {
 pub fn footer() -> Markup {
     html! {
         footer.footer {
-            div.content.has-text-centered {
-                p {
-                    strong {
-                        a href="https://github.com/eigenein/blitz-dashboard" {
-                            "Blitz Dashboard " (crate_version!())
+            div.container {
+                div.columns {
+                    div.column."is-3" {
+                        p.title."is-6" { "About" }
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-home.has-text-info {} }
+                                span {
+                                    a href="https://github.com/eigenein/blitz-dashboard" {
+                                        "Blitz Dashboard " (crate_version!())
+                                    }
+                                    " by "
+                                    a href="https://github.com/eigenein" { "@eigenein" }
+                                }
+                            }
                         }
-                    } " by "
-                    a href="https://github.com/eigenein" { "@eigenein" } "."
-                    " Made with " a href="https://www.rust-lang.org/" { "Rust" }
-                    " and " a href="https://bulma.io/" { "Bulma" } "."
-                    " The source code is licensed "
-                    a href="https://opensource.org/licenses/MIT" { "MIT" } "."
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-heart.has-text-danger {} }
+                                span {
+                                    "Made with " a href="https://www.rust-lang.org/" { "Rust" }
+                                    " and " a href="https://bulma.io/" { "Bulma" }
+                                }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-id-badge.has-text-success {} }
+                                span { "Source code licensed " a href="https://opensource.org/licenses/MIT" { "MIT" } }
+                            }
+                        }
+                    }
+                    div.column."is-3" {
+                        p.title."is-6" { "Support" }
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fab.fa-github.has-text-warning {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Issues" } }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-code-branch.has-text-success {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Pull requests" } }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-comments.has-text-info {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/discussions" { "Discussions" } }
+                            }
+                        }
+                    }
                 }
             }
         }
