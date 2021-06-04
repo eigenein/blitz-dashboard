@@ -9,6 +9,10 @@ pub fn head(title: Option<&str>) -> Markup {
         title { @if let Some(title) = title { (title) " – " } "Blitz Dashboard" }
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta charset="UTF-8";
+        link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png";
+        link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
+        link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
+        link rel="manifest" href="/site.webmanifest";
         link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
@@ -90,7 +94,7 @@ pub fn footer() -> Markup {
                         p.title."is-6" { "Support" }
                         p."mt-1" {
                             span.icon-text {
-                                span.icon { i.fab.fa-github.has-text-warning {} }
+                                span.icon { i.fab.fa-github.has-text-danger {} }
                                 span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Issues" } }
                             }
                         }
