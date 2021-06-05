@@ -1,25 +1,22 @@
-use std::fmt::Debug;
 use std::time::Instant;
 
 use chrono::Utc;
-use mongodb::bson::{doc, Document};
+use lazy_static::lazy_static;
+use mongodb::bson::{doc, Bson, Document};
 use mongodb::options::{FindOneOptions, ReplaceOptions};
 use mongodb::results::UpdateResult;
-use mongodb::Collection;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 
 pub mod models;
+
+lazy_static! {
+    static ref OPTIONS_UPSERT: Option<ReplaceOptions> =
+        Some(ReplaceOptions::builder().upsert(true).build());
+}
 
 /// Convenience collection container.
 #[derive(Clone)]
 pub struct Database {
     database: mongodb::Database,
-}
-
-/// Used to derive an `upsert` query from a document.
-pub trait UpsertQuery {
-    fn query(&self) -> Document;
 }
 
 impl Database {
@@ -92,7 +89,12 @@ impl Database {
 
     pub async fn upsert_account(&self, account: &models::Account) -> crate::Result<UpdateResult> {
         log::debug!("Upserting account #{}…", account.id);
-        Self::upsert(&self.database.collection(Self::ACCOUNT_COLLECTION), account).await
+        let query = doc! { "aid": account.id };
+        Ok(self
+            .database
+            .collection::<models::Account>(Self::ACCOUNT_COLLECTION)
+            .replace_one(query, account, OPTIONS_UPSERT.clone())
+            .await?)
     }
 
     pub async fn upsert_account_snapshot(
@@ -103,22 +105,28 @@ impl Database {
             "Upserting account #{} snapshot…",
             account_snapshot.account_id
         );
-        Self::upsert(
-            &self.database.collection(Self::ACCOUNT_SNAPSHOT_COLLECTION),
-            account_snapshot,
-        )
-        .await
+        let query = doc! { "aid": account_snapshot.account_id, "lbts": Bson::DateTime(account_snapshot.last_battle_time) };
+        Ok(self
+            .database
+            .collection::<models::AccountSnapshot>(Self::ACCOUNT_SNAPSHOT_COLLECTION)
+            .replace_one(query, account_snapshot, OPTIONS_UPSERT.clone())
+            .await?)
     }
 
     pub async fn upsert_tank_snapshot(
         &self,
         tank_snapshot: &models::TankSnapshot,
     ) -> crate::Result<UpdateResult> {
-        Self::upsert(
-            &self.database.collection(Self::TANK_SNAPSHOT_COLLECTION),
-            tank_snapshot,
-        )
-        .await
+        let query = doc! {
+            "aid": tank_snapshot.account_id,
+            "tid": tank_snapshot.tank_id,
+            "lbts": Bson::DateTime(tank_snapshot.last_battle_time),
+        };
+        Ok(self
+            .database
+            .collection::<models::TankSnapshot>(Self::TANK_SNAPSHOT_COLLECTION)
+            .replace_one(query, tank_snapshot, OPTIONS_UPSERT.clone())
+            .await?)
     }
 
     pub async fn upsert_full_info(
@@ -146,17 +154,6 @@ impl Database {
             selected_tank_count,
         );
         Ok(())
-    }
-
-    /// Convenience wrapper around `[mongodb::Collection::replace_one]`.
-    /// Automatically constructs a query with the `[UpsertQuery]` trait and sets the `upsert` flag.
-    async fn upsert<T>(collection: &Collection<T>, replacement: &T) -> crate::Result<UpdateResult>
-    where
-        T: Serialize + DeserializeOwned + Unpin + Debug + UpsertQuery,
-    {
-        let query = replacement.query();
-        let options = Some(ReplaceOptions::builder().upsert(true).build());
-        Ok(collection.replace_one(query, replacement, options).await?)
     }
 }
 

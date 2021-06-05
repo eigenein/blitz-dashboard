@@ -1,7 +1,5 @@
-use mongodb::bson::{doc, Bson, DateTime, Document};
+use mongodb::bson::{doc, DateTime};
 use serde::{Deserialize, Serialize};
-
-use crate::database::UpsertQuery;
 
 /// Represents a player account.
 /// Used to look up last updated timestamp.
@@ -16,12 +14,6 @@ pub struct Account {
 
     #[serde(rename = "lbts")]
     pub last_battle_time: DateTime,
-}
-
-impl UpsertQuery for Account {
-    fn query(&self) -> Document {
-        doc! { "aid": self.id }
-    }
 }
 
 /// Represents a snapshot of account statistics.
@@ -59,12 +51,6 @@ pub struct StatisticsSnapshot {
     pub damage_received: i32,
 }
 
-impl UpsertQuery for AccountSnapshot {
-    fn query(&self) -> Document {
-        doc! { "aid": self.account_id, "lbts": Bson::DateTime(self.last_battle_time) }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TankSnapshot {
     #[serde(rename = "aid")]
@@ -81,14 +67,4 @@ pub struct TankSnapshot {
 
     #[serde(rename = "st")]
     pub statistics: StatisticsSnapshot,
-}
-
-impl UpsertQuery for TankSnapshot {
-    fn query(&self) -> Document {
-        doc! {
-            "aid": self.account_id,
-            "tid": self.tank_id,
-            "lbts": Bson::DateTime(self.last_battle_time),
-        }
-    }
 }
