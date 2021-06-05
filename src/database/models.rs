@@ -16,6 +16,12 @@ pub struct Account {
     pub last_battle_time: DateTime,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AccountUpdatedAt {
+    #[serde(rename = "ts")]
+    pub updated_at: DateTime,
+}
+
 /// Represents a snapshot of account statistics.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AccountSnapshot {

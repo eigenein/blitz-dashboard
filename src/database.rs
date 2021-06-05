@@ -58,7 +58,7 @@ impl Database {
         log::debug!("Retrieving account updated timestamp #{}…", account_id);
         let document = self
             .database
-            .collection::<Document>(Self::ACCOUNT_COLLECTION)
+            .collection::<models::AccountUpdatedAt>(Self::ACCOUNT_COLLECTION)
             .find_one(
                 doc! { "aid": account_id },
                 FindOneOptions::builder()
@@ -66,10 +66,7 @@ impl Database {
                     .build(),
             )
             .await?;
-        match document {
-            Some(document) => Ok(Some(document.get_datetime("ts")?.clone().into())),
-            None => Ok(None),
-        }
+        Ok(document.map(|document| document.updated_at.into()))
     }
 
     pub async fn get_oldest_account(&self) -> crate::Result<Option<models::Account>> {
