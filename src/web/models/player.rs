@@ -38,7 +38,7 @@ impl PlayerViewModel {
         let model = MODEL_CACHE
             .get(&account_id, || async {
                 let state = request.state();
-                let full_info = state.api.get_full_info(account_id).await?;
+                let full_info = state.api.get_aggregated_account_info(account_id).await?;
                 let model = Self::from_full_info(&full_info);
                 let database = state.database.clone();
                 async_std::task::spawn(async move {

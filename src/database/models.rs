@@ -1,5 +1,6 @@
 use mongodb::bson::{doc, DateTime};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Represents a player account.
 /// Used to look up last updated timestamp.
@@ -73,4 +74,9 @@ pub struct TankSnapshot {
 
     #[serde(rename = "st")]
     pub statistics: StatisticsSnapshot,
+    // #[serde(rename = "ach")]
+    // pub achievements: HashMap<i32, i32>,
+
+    // #[serde(rename = "ser")]
+    // pub max_series: HashMap<i32, i32>,
 }

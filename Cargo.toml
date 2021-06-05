@@ -23,6 +23,7 @@ log = "0.4.14"
 lru_time_cache = "0.11.10"
 maud = "0.22.1"
 mongodb = { version = "2.0.0-beta", default-features = false, features = ["async-std-runtime", "bson-chrono-0_4"] }
+seahash = "4.1.0"
 sentry = { version = "0.22.0", default-features = false, features = ["backtrace", "contexts", "panic", "surf", "rustls", "anyhow", "log"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.59"

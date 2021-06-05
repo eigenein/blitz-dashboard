@@ -10,6 +10,7 @@ mod convert;
 mod crawler;
 mod database;
 mod logging;
+mod oh_my_std;
 mod opts;
 mod serde;
 mod wargaming;

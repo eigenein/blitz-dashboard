@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
@@ -30,11 +32,11 @@ pub struct AccountInfo {
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct AccountInfoStatistics {
-    pub all: Statistics,
+    pub all: AllStatistics,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
-pub struct Statistics {
+pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
     pub survived_battles: i32,
@@ -55,19 +57,20 @@ pub struct TankStatistics {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
-    pub all: Statistics,
+    pub all: AllStatistics,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct TankAchievements {
     pub account_id: i32,
-
     pub tank_id: i32,
+    pub achievements: HashMap<String, i32>,
+    pub max_series: HashMap<String, i32>,
 }
 
 pub struct FullInfo {
     pub account_info: AccountInfo,
-    pub tanks_statistics: Vec<TankStatistics>,
+    pub tanks_statistics: HashMap<i32, TankStatistics>,
 }
 
 /// Generic Wargaming.net API error.

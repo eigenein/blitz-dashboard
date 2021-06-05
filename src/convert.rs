@@ -25,8 +25,8 @@ impl From<&wargaming::models::AccountInfo> for database::models::AccountSnapshot
     }
 }
 
-impl From<&wargaming::models::Statistics> for database::models::StatisticsSnapshot {
-    fn from(statistics: &wargaming::models::Statistics) -> Self {
+impl From<&wargaming::models::AllStatistics> for database::models::StatisticsSnapshot {
+    fn from(statistics: &wargaming::models::AllStatistics) -> Self {
         Self {
             battles: statistics.battles,
             survived_battles: statistics.survived_battles,

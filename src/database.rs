@@ -137,7 +137,8 @@ impl Database {
         self.upsert_account(&account_info.into()).await?;
         self.upsert_account_snapshot(&account_info.into()).await?;
         let mut selected_tank_count: i32 = 0;
-        for tank in full_info.tanks_statistics.iter() {
+        for tank in full_info.tanks_statistics.values() {
+            // FIXME:
             if account_updated_at.is_none() || tank.last_battle_time >= account_updated_at.unwrap()
             {
                 selected_tank_count += 1;

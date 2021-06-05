@@ -72,19 +72,6 @@ impl WargamingApi {
             .unwrap_or_else(Vec::new))
     }
 
-    pub async fn get_full_info(&self, account_id: i32) -> crate::Result<models::FullInfo> {
-        let account_info = self
-            .get_account_info(account_id)
-            .await?
-            .ok_or_else(|| anyhow!("account ID not found"))?;
-        let tanks_statistics = self.get_tanks_stats(account_id).await?;
-        let _tanks_achievements = self.get_tanks_achievements(account_id).await?;
-        Ok(models::FullInfo {
-            account_info,
-            tanks_statistics,
-        })
-    }
-
     /// Convenience method for endpoints that return data in the form of a map by account ID.
     async fn call_by_account<T: DeserializeOwned>(
         &self,
@@ -115,5 +102,34 @@ impl WargamingApi {
             .await
             .map_err(surf::Error::into_inner)?
             .into()
+    }
+}
+
+impl WargamingApi {
+    pub async fn get_aggregated_account_info(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<models::FullInfo> {
+        let account_info = self
+            .get_account_info(account_id)
+            .await?
+            .ok_or_else(|| anyhow!("account ID not found"))?;
+        let tanks_statistics = self
+            .get_tanks_stats(account_id)
+            .await?
+            .into_iter()
+            .map(|tank| (tank.tank_id, tank))
+            .collect::<HashMap<i32, models::TankStatistics>>();
+        let _tanks_achievements = self
+            .get_tanks_achievements(account_id)
+            .await?
+            .into_iter()
+            .map(|tank| (tank.tank_id, tank))
+            .collect::<HashMap<i32, models::TankAchievements>>();
+        // TODO
+        Ok(models::FullInfo {
+            account_info,
+            tanks_statistics,
+        })
     }
 }

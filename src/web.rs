@@ -1,6 +1,7 @@
+use tide::{Response, StatusCode};
+
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
-use tide::{Response, StatusCode};
 
 mod components;
 mod middleware;
