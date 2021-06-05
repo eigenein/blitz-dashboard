@@ -1,6 +1,7 @@
+use std::collections::HashMap;
+
 use mongodb::bson::{doc, DateTime};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Represents a player account.
 /// Used to look up last updated timestamp.
