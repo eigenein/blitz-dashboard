@@ -129,13 +129,13 @@ impl Database {
     pub async fn upsert_full_info(
         &self,
         account_info: &crate::wargaming::models::AccountInfo,
-        tanks: &Vec<(
+        tanks: &[(
             i32,
             (
                 crate::wargaming::models::TankStatistics,
                 crate::wargaming::models::TankAchievements,
             ),
-        )>,
+        )],
     ) -> crate::Result {
         log::debug!("Upserting account #{} info…", account_info.id);
         let start = Instant::now();
