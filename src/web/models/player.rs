@@ -9,7 +9,6 @@ use tide::Request;
 
 use crate::cached::Cached;
 use crate::logging::log_anyhow;
-use crate::wargaming::models::FullInfo;
 use crate::web::State;
 
 lazy_static! {
@@ -38,11 +37,12 @@ impl PlayerViewModel {
         let model = MODEL_CACHE
             .get(&account_id, || async {
                 let state = request.state();
-                let full_info = state.api.get_aggregated_account_info(account_id).await?;
-                let model = Self::from_full_info(&full_info);
+                let (account_info, tanks) =
+                    state.api.get_aggregated_account_info(account_id).await?;
+                let model = Self::from(&account_info);
                 let database = state.database.clone();
                 async_std::task::spawn(async move {
-                    log_anyhow(database.upsert_full_info(&full_info).await);
+                    log_anyhow(database.upsert_full_info(&account_info, &tanks).await);
                 });
                 Ok(model)
             })
@@ -57,8 +57,7 @@ impl PlayerViewModel {
             .parse()?)
     }
 
-    fn from_full_info(full_info: &FullInfo) -> Self {
-        let account_info = &full_info.account_info;
+    fn from(account_info: &crate::wargaming::models::AccountInfo) -> Self {
         let all = &account_info.statistics.all;
         Self {
             account_id: account_info.id,
