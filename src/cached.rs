@@ -15,22 +15,23 @@ impl<K: Ord + Clone + Debug, V> Cached<K, V> {
         Self(Arc::new(Mutex::new(cache)))
     }
 
-    pub async fn get<G, Fut>(&self, key: &K, getter: G) -> crate::Result<Arc<V>>
+    pub async fn get<G, R, Fut>(&self, key: &K, getter: G) -> crate::Result<Arc<V>>
     where
         G: FnOnce() -> Fut,
-        Fut: Future<Output = crate::Result<V>>,
+        Fut: Future<Output = crate::Result<R>>,
+        R: Into<Arc<V>>,
     {
         let mut cache = self.0.lock().await;
         let model = match cache.get(&key) {
             Some(model) => {
-                log::debug!(r#"{} hit: {:?}"#, type_name::<Self>(), key);
+                log::debug!(r#"Hit: {:?} => {:?}"#, key, type_name::<V>());
                 model.clone()
             }
             None => {
-                let model = Arc::new(getter().await?);
-                log::debug!(r#"{} insert: {:?}"#, type_name::<Self>(), key);
-                cache.insert(key.clone(), model.clone());
-                model
+                let value = getter().await?.into();
+                log::debug!(r#"Insert: {:?} => {:?}"#, key, type_name::<V>());
+                cache.insert(key.clone(), value.clone());
+                value
             }
         };
         Ok(model)

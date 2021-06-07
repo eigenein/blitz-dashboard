@@ -16,26 +16,20 @@ struct IndexQueryString {
 }
 
 pub struct IndexViewModel {
-    pub accounts: Option<Vec<Account>>,
+    pub accounts: Option<Arc<Vec<Account>>>,
 }
 
 impl IndexViewModel {
-    pub async fn new(request: Request<State>) -> crate::Result<Arc<Self>> {
+    pub async fn new(request: Request<State>) -> crate::Result<Self> {
         let query: IndexQueryString = request.query().map_err(surf::Error::into_inner)?;
         log::debug!("{} {:?}…", type_name::<Self>(), query.search);
         if let Some(query) = query.search {
             if SEARCH_QUERY_LENGTH.contains(&query.len()) {
-                let state = request.state();
-                return state
-                    .index_model_cache
-                    .get(&query, || async {
-                        Ok(Self {
-                            accounts: Some(state.api.search_accounts(&query).await?),
-                        })
-                    })
-                    .await;
+                return Ok(Self {
+                    accounts: Some(request.state().search_accounts(query).await?),
+                });
             }
         }
-        Ok(Arc::new(Self { accounts: None }))
+        Ok(Self { accounts: None })
     }
 }

@@ -1,10 +1,8 @@
 use std::any::type_name;
-use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use tide::Request;
 
-use crate::logging::log_anyhow;
 use crate::web::state::State;
 
 pub type Percentage = f32;
@@ -20,25 +18,14 @@ pub struct PlayerViewModel {
 }
 
 impl PlayerViewModel {
-    pub async fn new(request: Request<State>) -> crate::Result<Arc<Self>> {
+    pub async fn new(request: Request<State>) -> crate::Result<Self> {
         let account_id: i32 = Self::parse_account_id(&request)?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
-        let state = request.state();
-        let model = state
-            .player_model_cache
-            .get(&account_id, || async {
-                let state = request.state();
-                let (account_info, tanks) =
-                    state.api.get_aggregated_account_info(account_id).await?;
-                let model = Self::from(&account_info);
-                let database = state.database.clone();
-                async_std::task::spawn(async move {
-                    log_anyhow(database.upsert_full_info(&account_info, &tanks).await);
-                });
-                Ok(model)
-            })
+        let account_info = request
+            .state()
+            .get_aggregated_account_info(account_id)
             .await?;
-        Ok(model)
+        Ok(Self::from(&account_info.account_info))
     }
 
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {

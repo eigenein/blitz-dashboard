@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use log::Level;
 use sentry::capture_error;
 use tide::Request;
 
@@ -15,7 +16,13 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         let start = Instant::now();
         let response = next.run(request).await;
         let duration = Instant::now() - start;
-        log::info!(
+        let level = if response.status().is_client_error() {
+            Level::Warn
+        } else {
+            Level::Info
+        };
+        log::log!(
+            level,
             r#"Request: {peer_addr} {method} {path} [{status}] ({duration:#?})"#,
             peer_addr = peer_addr,
             method = method,

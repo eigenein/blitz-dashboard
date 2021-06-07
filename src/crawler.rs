@@ -31,7 +31,9 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
             ))
             .await;
         }
-        let (account_info, tanks) = api.get_aggregated_account_info(account.id).await?;
-        database.upsert_full_info(&account_info, &tanks).await?;
+        let account_info = api.get_aggregated_account_info(account.id).await?;
+        database
+            .upsert_aggregated_account_info(&account_info)
+            .await?;
     }
 }

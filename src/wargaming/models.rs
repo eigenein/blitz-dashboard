@@ -68,6 +68,11 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
+pub struct AggregatedAccountInfo {
+    pub account_info: AccountInfo,
+    pub tanks: Vec<(TankStatistics, TankAchievements)>,
+}
+
 /// Generic Wargaming.net API error.
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(untagged)]

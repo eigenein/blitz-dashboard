@@ -110,28 +110,28 @@ impl WargamingApi {
     pub async fn get_aggregated_account_info(
         &self,
         account_id: i32,
-    ) -> crate::Result<(
-        models::AccountInfo,
-        Vec<(i32, (models::TankStatistics, models::TankAchievements))>,
-    )> {
+    ) -> crate::Result<models::AggregatedAccountInfo> {
         let account_info = self
             .get_account_info(account_id)
             .await?
             .ok_or_else(|| anyhow!("account ID not found"))?;
-        let mut tanks_statistics = self.get_tanks_stats(account_id).await?;
-        tanks_statistics.sort_by_key(|tank| tank.tank_id);
-        let mut tanks_achievements = self.get_tanks_achievements(account_id).await?;
-        tanks_achievements.sort_by_key(|tank| tank.tank_id);
+        let mut tank_statistics = self.get_tanks_stats(account_id).await?;
+        tank_statistics.sort_by_key(|tank| tank.tank_id);
+        let mut tank_achievements = self.get_tanks_achievements(account_id).await?;
+        tank_achievements.sort_by_key(|tank| tank.tank_id);
 
-        let merged_tanks = merge_join_by(tanks_statistics, tanks_achievements, |left, right| {
+        let tanks = merge_join_by(tank_statistics, tank_achievements, |left, right| {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
-            EitherOrBoth::Both(stats, achievements) => Some((stats.tank_id, (stats, achievements))),
+            EitherOrBoth::Both(stats, achievements) => Some((stats, achievements)),
             _ => None,
         })
         .collect();
 
-        Ok((account_info, merged_tanks))
+        Ok(models::AggregatedAccountInfo {
+            account_info,
+            tanks,
+        })
     }
 }

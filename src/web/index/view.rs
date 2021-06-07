@@ -32,7 +32,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                                 @if let Some(accounts) = &model.accounts {
                                     div class="buttons mt-4" {
-                                        @for account in accounts {
+                                        @for account in accounts.iter() {
                                             a class="button is-link is-small is-rounded" href=(get_account_url(account.id)) {
                                                 span.icon { i class="fas fa-user" {} }
                                                 span { (account.nickname) }

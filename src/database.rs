@@ -126,24 +126,18 @@ impl Database {
             .await?)
     }
 
-    pub async fn upsert_full_info(
+    pub async fn upsert_aggregated_account_info(
         &self,
-        account_info: &crate::wargaming::models::AccountInfo,
-        tanks: &[(
-            i32,
-            (
-                crate::wargaming::models::TankStatistics,
-                crate::wargaming::models::TankAchievements,
-            ),
-        )],
+        info: &crate::wargaming::models::AggregatedAccountInfo,
     ) -> crate::Result {
-        log::debug!("Upserting account #{} info…", account_info.id);
+        log::debug!("Upserting account #{} info…", info.account_info.id);
         let start = Instant::now();
-        let account_updated_at = self.get_account_updated_at(account_info.id).await?;
-        self.upsert_account(&account_info.into()).await?;
-        self.upsert_account_snapshot(&account_info.into()).await?;
+        let account_updated_at = self.get_account_updated_at(info.account_info.id).await?;
+        self.upsert_account(&(&info.account_info).into()).await?;
+        self.upsert_account_snapshot(&(&info.account_info).into())
+            .await?;
         let mut selected_tank_count: i32 = 0;
-        for (_, (stats, _achievements)) in tanks {
+        for (stats, _achievements) in &info.tanks {
             // FIXME:
             if account_updated_at.is_none() || stats.last_battle_time >= account_updated_at.unwrap()
             {
@@ -154,7 +148,7 @@ impl Database {
         }
         log::info!(
             "Account #{} info upserted in {:#?}. ({} tanks)",
-            account_info.id,
+            info.account_info.id,
             Instant::now() - start,
             selected_tank_count,
         );
