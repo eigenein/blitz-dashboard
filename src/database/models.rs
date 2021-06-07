@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use mongodb::bson::{doc, DateTime};
 use serde::{Deserialize, Serialize};
 
@@ -73,10 +75,12 @@ pub struct TankSnapshot {
 
     #[serde(rename = "st")]
     pub statistics: StatisticsSnapshot,
-    //
-    // #[serde(rename = "ach")]
-    // pub achievements: HashMap<i32, i32>,
 
-    // #[serde(rename = "ser")]
-    // pub max_series: HashMap<i32, i32>,
+    /// Keys here are hexadecimal CRC32's to save space in the database.
+    #[serde(rename = "achv")]
+    pub achievements: HashMap<String, i32>,
+
+    /// Keys here are hexadecimal CRC32's to save space in the database.
+    #[serde(rename = "mxs")]
+    pub max_series: HashMap<String, i32>,
 }

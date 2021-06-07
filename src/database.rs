@@ -1,16 +1,19 @@
 use std::time::Instant;
 
-use chrono::Utc;
+use chrono::{DateTime, TimeZone, Utc};
 use lazy_static::lazy_static;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::options::{FindOneOptions, ReplaceOptions};
 use mongodb::results::UpdateResult;
+
+use crate::convert::to_tank_snapshot;
 
 pub mod models;
 
 lazy_static! {
     static ref OPTIONS_UPSERT: Option<ReplaceOptions> =
         Some(ReplaceOptions::builder().upsert(true).build());
+    static ref EPOCH: DateTime<Utc> = Utc.timestamp_millis(0);
 }
 
 /// Convenience collection container.
@@ -125,30 +128,35 @@ impl Database {
             .replace_one(query, tank_snapshot, OPTIONS_UPSERT.clone())
             .await?)
     }
+}
 
+impl Database {
     pub async fn upsert_aggregated_account_info(
         &self,
         info: &crate::wargaming::models::AggregatedAccountInfo,
     ) -> crate::Result {
-        log::debug!("Upserting account #{} info…", info.account_info.id);
+        let account_id = info.account_info.id;
+        log::debug!("Upserting account #{} info…", account_id);
         let start = Instant::now();
-        let account_updated_at = self.get_account_updated_at(info.account_info.id).await?;
+        let account_updated_at = self.get_account_updated_at(account_id).await?;
         self.upsert_account(&(&info.account_info).into()).await?;
         self.upsert_account_snapshot(&(&info.account_info).into())
             .await?;
         let mut selected_tank_count: i32 = 0;
-        for (stats, _achievements) in &info.tanks {
-            // FIXME:
-            if account_updated_at.is_none() || stats.last_battle_time >= account_updated_at.unwrap()
-            {
+        for (statistics, achievements) in &info.tanks {
+            if &statistics.last_battle_time >= account_updated_at.as_ref().unwrap_or(&EPOCH) {
                 selected_tank_count += 1;
-                // TODO: combine stats and achievements.
-                self.upsert_tank_snapshot(&stats.into()).await?;
+                self.upsert_tank_snapshot(&to_tank_snapshot(
+                    account_id,
+                    &statistics,
+                    &achievements,
+                ))
+                .await?;
             }
         }
         log::info!(
             "Account #{} info upserted in {:#?}. ({} tanks)",
-            info.account_info.id,
+            account_id,
             Instant::now() - start,
             selected_tank_count,
         );

@@ -47,8 +47,6 @@ pub struct AllStatistics {
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct TankStatistics {
-    pub account_id: i32,
-
     pub tank_id: i32,
 
     #[serde(deserialize_with = "deserialize_duration_seconds")]
@@ -62,12 +60,12 @@ pub struct TankStatistics {
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct TankAchievements {
-    pub account_id: i32,
     pub tank_id: i32,
     pub achievements: HashMap<String, i32>,
     pub max_series: HashMap<String, i32>,
 }
 
+/// Not a real response model, just a way to aggregate results of other responses.
 pub struct AggregatedAccountInfo {
     pub account_info: AccountInfo,
     pub tanks: Vec<(TankStatistics, TankAchievements)>,

@@ -1,5 +1,3 @@
-//! Conversions that do not belong to an either party, but rather to both of them.
-
 use chrono::Utc;
 
 use crate::database;
@@ -38,14 +36,38 @@ impl From<&wargaming::models::AllStatistics> for database::models::StatisticsSna
     }
 }
 
-impl From<&wargaming::models::TankStatistics> for database::models::TankSnapshot {
-    fn from(statistics: &wargaming::models::TankStatistics) -> Self {
-        Self {
-            account_id: statistics.account_id,
-            tank_id: statistics.tank_id,
-            last_battle_time: statistics.last_battle_time.into(),
-            battle_life_time: statistics.battle_life_time.num_seconds(),
-            statistics: (&statistics.all).into(),
-        }
+/// Convert tank statistics & achievements into a tank snapshot in the database.
+pub fn to_tank_snapshot(
+    account_id: i32,
+    statistics: &wargaming::models::TankStatistics,
+    achievements: &wargaming::models::TankAchievements,
+) -> database::models::TankSnapshot {
+    database::models::TankSnapshot {
+        account_id,
+        tank_id: statistics.tank_id,
+        last_battle_time: statistics.last_battle_time.into(),
+        battle_life_time: statistics.battle_life_time.num_seconds(),
+        statistics: (&statistics.all).into(),
+        achievements: achievements
+            .achievements
+            .iter()
+            .map(|(key, value)| (encode_key(key), *value))
+            .collect(),
+        max_series: achievements
+            .max_series
+            .iter()
+            .map(|(key, value)| (encode_key(key), *value))
+            .collect(),
     }
+}
+
+/// Encodes the key with hexadecimal representation of its CRC32.
+fn encode_key(key: &str) -> String {
+    format!("{:x}", crc32(key.as_bytes()))
+}
+
+fn crc32(buf: &[u8]) -> u32 {
+    let mut hasher = crc32fast::Hasher::new();
+    hasher.update(buf);
+    hasher.finalize()
 }
