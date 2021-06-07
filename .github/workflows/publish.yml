@@ -1,0 +1,59 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create a GitHub Release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Rustup
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Install Cross
+        run: cargo install cross
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build blitz-dashboard.arm-unknown-linux-gnueabihf (Raspberry Pi 0/1)
+        run: cross build --target arm-unknown-linux-gnueabihf --release
+
+      - name: Upload blitz-dashboard.arm-unknown-linux-gnueabihf
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: target/arm-unknown-linux-gnueabihf/release/blitz-dashboard
+          asset_name: blitz-dashboard.arm-unknown-linux-gnueabihf
+          asset_content_type: application/octet-stream
+
+      - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
+        run: cross build --target armv7-unknown-linux-gnueabihf --release
+
+      - name: Upload blitz-dashboard.armv7-unknown-linux-gnueabihf
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: target/armv7-unknown-linux-gnueabihf/release/blitz-dashboard
+          asset_name: blitz-dashboard.armv7-unknown-linux-gnueabihf
+          asset_content_type: application/octet-stream
