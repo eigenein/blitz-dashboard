@@ -1,22 +1,11 @@
 use std::any::type_name;
 use std::sync::Arc;
-use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use lazy_static::lazy_static;
-use lru_time_cache::LruCache;
 use tide::Request;
 
-use crate::cached::Cached;
 use crate::logging::log_anyhow;
-use crate::web::State;
-
-lazy_static! {
-    /// Caches player models for a minute.
-    static ref MODEL_CACHE: Cached<i32, PlayerViewModel> = Cached::new(
-        LruCache::with_expiry_duration_and_capacity(Duration::from_secs(60), 1000)
-    );
-}
+use crate::web::state::State;
 
 pub type Percentage = f32;
 
@@ -34,7 +23,9 @@ impl PlayerViewModel {
     pub async fn new(request: Request<State>) -> crate::Result<Arc<Self>> {
         let account_id: i32 = Self::parse_account_id(&request)?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
-        let model = MODEL_CACHE
+        let state = request.state();
+        let model = state
+            .player_model_cache
             .get(&account_id, || async {
                 let state = request.state();
                 let (account_info, tanks) =

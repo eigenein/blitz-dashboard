@@ -2,6 +2,7 @@ use tide::{Response, StatusCode};
 
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
+use crate::web::state::State;
 
 mod components;
 mod errors;
@@ -10,12 +11,7 @@ mod middleware;
 mod partials;
 mod player;
 mod responses;
-
-#[derive(Clone)]
-pub struct State {
-    api: WargamingApi,
-    database: Database,
-}
+mod state;
 
 /// Run the web app.
 pub async fn run(
@@ -24,7 +20,7 @@ pub async fn run(
     api: WargamingApi,
     database: Database,
 ) -> anyhow::Result<()> {
-    let mut app = tide::with_state(State { api, database });
+    let mut app = tide::with_state(State::new(api, database));
     app.with(middleware::LoggerMiddleware);
     app.at("/").get(index::view::get);
     app.at("/ru/:account_id").get(player::view::get);

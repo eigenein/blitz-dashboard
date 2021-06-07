@@ -8,11 +8,11 @@ use lru_time_cache::LruCache;
 
 /// [`LruCache`] proxy that automatically calls value getter when needed.
 /// And is also thread-safe.
-pub struct Cached<K: Ord + Clone + Debug, V>(Mutex<LruCache<K, Arc<V>>>);
+pub struct Cached<K, V>(Arc<Mutex<LruCache<K, Arc<V>>>>);
 
 impl<K: Ord + Clone + Debug, V> Cached<K, V> {
     pub fn new(cache: LruCache<K, Arc<V>>) -> Self {
-        Self(Mutex::new(cache))
+        Self(Arc::new(Mutex::new(cache)))
     }
 
     pub async fn get<G, Fut>(&self, key: &K, getter: G) -> crate::Result<Arc<V>>
@@ -34,5 +34,11 @@ impl<K: Ord + Clone + Debug, V> Cached<K, V> {
             }
         };
         Ok(model)
+    }
+}
+
+impl<K, V> Clone for Cached<K, V> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
     }
 }

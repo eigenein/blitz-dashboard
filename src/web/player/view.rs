@@ -6,7 +6,7 @@ use crate::web::components::*;
 use crate::web::partials::{footer, header};
 use crate::web::player::model::PlayerViewModel;
 use crate::web::responses::render_document;
-use crate::web::State;
+use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(request).await?;

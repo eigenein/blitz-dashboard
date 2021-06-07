@@ -6,7 +6,7 @@ use crate::web::components::account_search;
 use crate::web::index::model::IndexViewModel;
 use crate::web::player::view::get_account_url;
 use crate::web::responses::render_document;
-use crate::web::State;
+use crate::web::state::State;
 
 /// Home page that allows searching for a user.
 pub async fn get(request: tide::Request<State>) -> tide::Result {
