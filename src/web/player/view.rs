@@ -1,6 +1,7 @@
 use chrono_humanize::HumanTime;
+use human_format::Formatter;
+use lazy_static::lazy_static;
 use maud::html;
-use num_format::{Locale, ToFormattedString};
 use tide::StatusCode;
 
 use crate::web::components::footer::Footer;
@@ -9,6 +10,14 @@ use crate::web::partials::header;
 use crate::web::player::model::PlayerViewModel;
 use crate::web::responses::render_document;
 use crate::web::state::State;
+
+lazy_static! {
+    static ref FORMATTER: Formatter = {
+        let mut formatter = Formatter::new();
+        formatter.with_decimals(1);
+        formatter
+    };
+}
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
@@ -46,7 +55,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div class="level-item has-text-centered" {
                                             div {
                                                 p.heading { "Battles" }
-                                                p.title { (model.n_battles.to_formatted_string(&Locale::fr)) }
+                                                p.title title=(model.n_battles) { (FORMATTER.format(model.n_battles as f64)) }
                                             }
                                         }
                                         div class="level-item has-text-centered" {
@@ -70,7 +79,8 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div class="level-item has-text-centered" {
                                             div {
                                                 p.heading { "Last battle" }
-                                                p.title title=(model.last_battle_time) {
+                                                p.title.(if model.has_recently_played { "has-text-success" } else { "" })
+                                                    title=(model.last_battle_time) {
                                                     (HumanTime::from(model.last_battle_time))
                                                 }
                                             }

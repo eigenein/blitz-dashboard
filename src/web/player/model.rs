@@ -1,6 +1,6 @@
 use std::any::type_name;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use tide::Request;
 
 use crate::web::state::State;
@@ -12,6 +12,7 @@ pub struct PlayerViewModel {
     pub nickname: String,
     pub created_at: DateTime<Utc>,
     pub last_battle_time: DateTime<Utc>,
+    pub has_recently_played: bool,
     pub wins: Percentage,
     pub survival: Percentage,
     pub n_battles: i32,
@@ -45,6 +46,7 @@ impl PlayerViewModel {
             wins: 100.0 * (all.wins as f32) / (all.battles as f32),
             survival: 100.0 * (all.survived_battles as f32) / (all.battles as f32),
             n_battles: all.battles,
+            has_recently_played: account_info.last_battle_time > (Utc::now() - Duration::hours(1)),
         }
     }
 }

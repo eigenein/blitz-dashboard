@@ -1,6 +1,5 @@
 use clap::crate_version;
 use maud::{html, Markup, Render};
-use num_format::{Locale, ToFormattedString};
 
 use crate::web::state::{State, StatisticsType};
 
@@ -93,19 +92,19 @@ impl Render for Footer {
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-user.has-text-info {} }
-                                    span { strong { (self.account_count.to_formatted_string(&Locale::fr)) } " accounts" }
+                                    span { strong { (self.account_count) } " accounts" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-portrait.has-text-info {} }
-                                    span { strong { (self.account_snapshot_count.to_formatted_string(&Locale::fr)) } " account snapshots" }
+                                    span { strong { (self.account_snapshot_count) } " account snapshots" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-truck-monster.has-text-info {} }
-                                    span { strong { (self.tank_snapshot_count.to_formatted_string(&Locale::fr)) } " tank snapshots" }
+                                    span { strong { (self.tank_snapshot_count) } " tank snapshots" }
                                 }
                             }
                         }
