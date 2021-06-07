@@ -4,11 +4,12 @@ use crate::database::Database;
 use crate::wargaming::WargamingApi;
 
 mod components;
+mod errors;
+mod index;
 mod middleware;
-mod models;
 mod partials;
+mod player;
 mod responses;
-mod views;
 
 #[derive(Clone)]
 pub struct State {
@@ -25,9 +26,9 @@ pub async fn run(
 ) -> anyhow::Result<()> {
     let mut app = tide::with_state(State { api, database });
     app.with(middleware::LoggerMiddleware);
-    app.at("/").get(views::index::get);
-    app.at("/ru/:account_id").get(views::player::get);
-    app.at("/error").get(views::error::get);
+    app.at("/").get(index::view::get);
+    app.at("/ru/:account_id").get(player::view::get);
+    app.at("/error").get(errors::get);
     app.at("/site.webmanifest").get(|_| async {
         Ok(get_static(
             include_bytes!("web/static/site.webmanifest"),

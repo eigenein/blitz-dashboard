@@ -3,8 +3,8 @@ use maud::html;
 use tide::StatusCode;
 
 use crate::web::components::*;
-use crate::web::models::player::PlayerViewModel;
 use crate::web::partials::{footer, header};
+use crate::web::player::model::PlayerViewModel;
 use crate::web::responses::render_document;
 use crate::web::State;
 

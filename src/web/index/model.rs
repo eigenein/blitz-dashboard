@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use lazy_static::lazy_static;
 use lru_time_cache::LruCache;
-use mongodb::bson::doc;
 use serde::Deserialize;
 use tide::Request;
 
