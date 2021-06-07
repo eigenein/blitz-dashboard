@@ -16,6 +16,7 @@ pub struct PlayerViewModel {
     pub is_inactive: bool,
     pub wins: Percentage,
     pub survival: Percentage,
+    pub hits: Percentage,
     pub n_battles: i32,
 }
 
@@ -46,6 +47,7 @@ impl PlayerViewModel {
             last_battle_time: account_info.last_battle_time,
             wins: 100.0 * (all.wins as f32) / (all.battles as f32),
             survival: 100.0 * (all.survived_battles as f32) / (all.battles as f32),
+            hits: 100.0 * (all.hits as f32) / (all.shots as f32),
             n_battles: all.battles,
             has_recently_played: account_info.last_battle_time > (Utc::now() - Duration::hours(1)),
             is_inactive: account_info.last_battle_time < (Utc::now() - Duration::days(365)),

@@ -43,6 +43,8 @@ pub struct AllStatistics {
     pub win_and_survived: i32,
     pub damage_dealt: i32,
     pub damage_received: i32,
+    pub shots: i32,
+    pub hits: i32,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

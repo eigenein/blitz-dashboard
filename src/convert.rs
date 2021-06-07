@@ -33,6 +33,8 @@ impl From<&wargaming::models::AllStatistics> for database::models::StatisticsSna
             win_and_survived: statistics.win_and_survived,
             damage_dealt: statistics.damage_dealt,
             damage_received: statistics.damage_received,
+            hits: statistics.hits,
+            shots: statistics.shots,
         }
     }
 }

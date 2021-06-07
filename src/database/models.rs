@@ -57,6 +57,12 @@ pub struct StatisticsSnapshot {
 
     #[serde(rename = "dmgr")]
     pub damage_received: i32,
+
+    #[serde(rename = "sh")]
+    pub shots: i32,
+
+    #[serde(rename = "hi")]
+    pub hits: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

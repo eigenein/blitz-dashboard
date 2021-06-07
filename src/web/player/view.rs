@@ -53,7 +53,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.heading { "Wins" }
                                                 p.title {
                                                     span class=(win_percentage_class(model.wins)) {
-                                                        (format!("{:.2}", model.wins)) "%"
+                                                        (format!("{:.1}", model.wins)) "%"
                                                     }
                                                 }
                                             }
@@ -62,7 +62,17 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             div {
                                                 p.heading { "Survival" }
                                                 p.title {
-                                                    (format!("{:.2}", model.survival)) "%"
+                                                    (format!("{:.1}", model.survival)) "%"
+                                                }
+                                            }
+                                        }
+                                        div class="level-item has-text-centered" {
+                                            div {
+                                                p.heading { "Hits" }
+                                                p.title {
+                                                    span {
+                                                        (format!("{:.1}", model.hits)) "%"
+                                                    }
                                                 }
                                             }
                                         }
