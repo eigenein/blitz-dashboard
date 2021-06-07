@@ -1,4 +1,5 @@
 use chrono::Utc;
+use crc16::ARC;
 
 use crate::database;
 use crate::wargaming;
@@ -61,13 +62,7 @@ pub fn to_tank_snapshot(
     }
 }
 
-/// Encodes the key with hexadecimal representation of its CRC32.
+/// Encodes the key with hexadecimal representation of its CRC16.
 fn encode_key(key: &str) -> String {
-    format!("{:x}", crc32(key.as_bytes()))
-}
-
-fn crc32(buf: &[u8]) -> u32 {
-    let mut hasher = crc32fast::Hasher::new();
-    hasher.update(buf);
-    hasher.finalize()
+    format!("{:x}", crc16::State::<ARC>::calculate(key.as_bytes()))
 }
