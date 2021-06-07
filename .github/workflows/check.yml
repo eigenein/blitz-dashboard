@@ -12,7 +12,7 @@ jobs:
           profile: minimal
           toolchain: stable
           components: rustfmt, clippy
-      - name: Check
+      - name: Test
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:

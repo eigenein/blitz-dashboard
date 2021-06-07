@@ -14,8 +14,21 @@ pub struct State {
     pub api: WargamingApi,
     pub database: Database,
 
+    /// Caches Wargaming.net account search results.
     search_accounts_cache: Cached<String, Vec<crate::wargaming::models::Account>>,
+
+    /// Caches aggregated Wargaming.net account info.
     account_info_cache: Cached<i32, crate::wargaming::models::AggregatedAccountInfo>,
+
+    /// Caches the database stats.
+    database_statistics_cache: Cached<StatisticsType, u64>,
+}
+
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq)]
+pub enum StatisticsType {
+    AccountCount,
+    AccountSnapshotCount,
+    TankSnapshotCount,
 }
 
 impl State {
@@ -30,6 +43,9 @@ impl State {
             account_info_cache: Cached::new(LruCache::with_expiry_duration_and_capacity(
                 Duration::from_secs(60),
                 1000,
+            )),
+            database_statistics_cache: Cached::new(LruCache::with_expiry_duration(
+                Duration::from_secs(3600),
             )),
         }
     }
@@ -57,6 +73,33 @@ impl State {
                     });
                 }
                 Ok(account_info)
+            })
+            .await
+    }
+
+    pub async fn get_cached_database_statistics(
+        &self,
+        statistics_type: StatisticsType,
+    ) -> crate::Result<Arc<u64>> {
+        self.database_statistics_cache
+            .get(&statistics_type, || async {
+                match statistics_type {
+                    StatisticsType::AccountCount => {
+                        self.database
+                            .get_document_count(Database::ACCOUNT_COLLECTION)
+                            .await
+                    }
+                    StatisticsType::AccountSnapshotCount => {
+                        self.database
+                            .get_document_count(Database::ACCOUNT_SNAPSHOT_COLLECTION)
+                            .await
+                    }
+                    StatisticsType::TankSnapshotCount => {
+                        self.database
+                            .get_document_count(Database::TANK_SNAPSHOT_COLLECTION)
+                            .await
+                    }
+                }
             })
             .await
     }

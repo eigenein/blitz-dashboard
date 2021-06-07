@@ -10,7 +10,7 @@ use crate::web::state::State;
 
 /// Home page that allows searching for a user.
 pub async fn get(request: tide::Request<State>) -> tide::Result {
-    let model = IndexViewModel::new(request).await?;
+    let model = IndexViewModel::new(&request).await?;
 
     if let Some(accounts) = &model.accounts {
         if accounts.len() == 1 {

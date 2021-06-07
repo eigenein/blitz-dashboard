@@ -1,15 +1,18 @@
 use chrono_humanize::HumanTime;
 use maud::html;
+use num_format::{Locale, ToFormattedString};
 use tide::StatusCode;
 
-use crate::web::components::*;
-use crate::web::partials::{footer, header};
+use crate::web::components::footer::Footer;
+use crate::web::components::icon_text;
+use crate::web::partials::header;
 use crate::web::player::model::PlayerViewModel;
 use crate::web::responses::render_document;
 use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
-    let model = PlayerViewModel::new(request).await?;
+    let model = PlayerViewModel::new(&request).await?;
+    let footer = Footer::new(&request.state()).await?;
     Ok(render_document(
         StatusCode::Ok,
         Some(model.nickname.as_str()),
@@ -43,7 +46,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div class="level-item has-text-centered" {
                                             div {
                                                 p.heading { "Battles" }
-                                                p.title { (model.n_battles) }
+                                                p.title { (model.n_battles.to_formatted_string(&Locale::fr)) }
                                             }
                                         }
                                         div class="level-item has-text-centered" {
@@ -80,7 +83,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                 }
             }
 
-            (footer())
+            (footer)
         },
     ))
 }

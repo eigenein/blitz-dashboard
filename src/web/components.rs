@@ -2,6 +2,8 @@ use std::ops::Range;
 
 use maud::{html, Markup};
 
+pub mod footer;
+
 pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;
@@ -20,7 +22,7 @@ pub fn account_search(class: &str, has_autofocus: bool) -> Markup {
                 input."input"."is-rounded".(class)
                     type="text"
                     name="search"
-                    placeholder="Player nickname"
+                    placeholder="Nickname"
                     autocomplete="nickname"
                     pattern="\\w+"
                     minlength=(MIN_QUERY_LENGTH)

@@ -20,7 +20,7 @@ pub struct IndexViewModel {
 }
 
 impl IndexViewModel {
-    pub async fn new(request: Request<State>) -> crate::Result<Self> {
+    pub async fn new(request: &Request<State>) -> crate::Result<Self> {
         let query: IndexQueryString = request.query().map_err(surf::Error::into_inner)?;
         log::debug!("{} {:?}…", type_name::<Self>(), query.search);
         if let Some(query) = query.search {

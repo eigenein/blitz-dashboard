@@ -18,7 +18,7 @@ pub struct PlayerViewModel {
 }
 
 impl PlayerViewModel {
-    pub async fn new(request: Request<State>) -> crate::Result<Self> {
+    pub async fn new(request: &Request<State>) -> crate::Result<Self> {
         let account_id: i32 = Self::parse_account_id(&request)?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
         let account_info = request

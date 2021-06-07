@@ -23,10 +23,11 @@ pub struct Database {
 }
 
 impl Database {
+    pub const ACCOUNT_SNAPSHOT_COLLECTION: &'static str = "account_snapshots";
+    pub const ACCOUNT_COLLECTION: &'static str = "accounts";
+    pub const TANK_SNAPSHOT_COLLECTION: &'static str = "tank_snapshots";
+
     const DATABASE_NAME: &'static str = "blitz-dashboard";
-    const ACCOUNT_SNAPSHOT_COLLECTION: &'static str = "account_snapshots";
-    const ACCOUNT_COLLECTION: &'static str = "accounts";
-    const TANK_SNAPSHOT_COLLECTION: &'static str = "tank_snapshots";
 
     /// Open and initialize the database.
     pub async fn with_uri_str(uri: &str) -> crate::Result<Self> {
@@ -161,6 +162,14 @@ impl Database {
             selected_tank_count,
         );
         Ok(())
+    }
+
+    pub async fn get_document_count(&self, collection_name: &str) -> crate::Result<u64> {
+        Ok(self
+            .database
+            .collection::<Document>(collection_name)
+            .count_documents(None, None)
+            .await?)
     }
 }
 
