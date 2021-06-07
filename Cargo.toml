@@ -19,7 +19,6 @@ chrono = { version = "0.4.19", features = ["serde"] }
 chrono-humanize = "0.2.1"
 clap = "3.0.0-beta.2"
 crc16 = "0.4.0"
-human_format = "1.0.3"
 itertools = "0.10.0"
 lazy_static = "1.4.0"
 log = "0.4.14"
