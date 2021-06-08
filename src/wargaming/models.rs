@@ -35,7 +35,7 @@ pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
@@ -47,7 +47,7 @@ pub struct AllStatistics {
     pub hits: i32,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
     pub tank_id: i32,
 
@@ -69,7 +69,7 @@ pub struct TankAchievements {
 
 /// Not a real response model, just a way to aggregate results of other responses.
 pub struct AggregatedAccountInfo {
-    pub account_info: AccountInfo,
+    pub account: AccountInfo,
     pub tanks: Vec<(TankStatistics, TankAchievements)>,
 }
 

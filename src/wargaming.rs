@@ -130,7 +130,7 @@ impl WargamingApi {
         .collect();
 
         Ok(models::AggregatedAccountInfo {
-            account_info,
+            account: account_info,
             tanks,
         })
     }

@@ -20,13 +20,13 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
             section.section {
                 div.container {
-                    div class="tile is-ancestor" {
-                        div class="tile is-4 is-parent" {
-                            div class="tile is-child card" {
-                                header class="card-header" {
-                                    p class="card-header-title" { (icon_text("fas fa-user", "Player")) }
+                    div.tile.is-ancestor {
+                        div.tile."is-4".is-parent {
+                            div.tile.is-child.card {
+                                header.card-header {
+                                    p.card-header-title { (icon_text("fas fa-user", "Player")) }
                                 }
-                                div class="card-content" {
+                                div.card-content {
                                     h1.title { (model.nickname) }
                                     h2.subtitle title=(model.created_at) {
                                         "created " (HumanTime::from(model.created_at))
@@ -82,6 +82,34 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.title.(if model.has_recently_played { "has-text-success" } else if model.is_inactive { "has-text-danger" } else { "" })
                                                     title=(model.last_battle_time) {
                                                     (HumanTime::from(model.last_battle_time))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    div.tile.is-ancestor {
+                        div.tile."is-4".is-parent {
+                            div.tile.is-child.card {
+                                header.card-header {
+                                    p.card-header-title { (icon_text("fas fa-truck-monster", "Vehicles")) }
+                                }
+                                div.card-content {
+                                    table.table.is-striped.is-hoverable.is-fullwidth {
+                                        tbody {
+                                            @if let Some(tank) = model.longest_life_time_tank {
+                                                tr {
+                                                    td { "Most lived tank" }
+                                                    td { (tank.tank_id) }
+                                                }
+                                            }
+                                            @if let Some(tank) = model.most_played_tank {
+                                                tr {
+                                                    td { "Most played tank" }
+                                                    td { (tank.tank_id) }
                                                 }
                                             }
                                         }

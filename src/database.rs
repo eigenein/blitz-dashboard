@@ -136,12 +136,12 @@ impl Database {
         &self,
         info: &crate::wargaming::models::AggregatedAccountInfo,
     ) -> crate::Result {
-        let account_id = info.account_info.id;
+        let account_id = info.account.id;
         log::debug!("Upserting account #{} info…", account_id);
         let start = Instant::now();
         let account_updated_at = self.get_account_updated_at(account_id).await?;
-        self.upsert_account(&(&info.account_info).into()).await?;
-        self.upsert_account_snapshot(&(&info.account_info).into())
+        self.upsert_account(&(&info.account).into()).await?;
+        self.upsert_account_snapshot(&(&info.account).into())
             .await?;
         let mut selected_tank_count: i32 = 0;
         for (statistics, achievements) in &info.tanks {
