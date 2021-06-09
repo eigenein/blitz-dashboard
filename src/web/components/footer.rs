@@ -87,7 +87,7 @@ impl Render for Footer {
                             }
                         }
 
-                        div.column."is-2" {
+                        div.column."is-3" {
                             p.title."is-6" { "Statistics" }
                             p."mt-1" {
                                 span.icon-text {
