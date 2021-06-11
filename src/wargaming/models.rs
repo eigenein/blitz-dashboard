@@ -67,6 +67,7 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
+// TODO: move to `wargaming.rs`.
 /// Not a real response model, just a way to aggregate results of other responses.
 pub struct AggregatedAccountInfo {
     pub account: AccountInfo,
