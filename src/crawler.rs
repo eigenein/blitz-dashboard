@@ -3,6 +3,8 @@ use chrono::{DateTime, Duration, Utc};
 
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
+use anyhow::anyhow;
+use std::time::Instant;
 
 const ACCOUNT_STALE_TIMEOUT_SECS: i64 = 60;
 
@@ -17,11 +19,11 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
             }
             Some(account) => account,
         };
-        let age = Utc::now() - Into::<DateTime<Utc>>::into(account.updated_at);
+        let age = Utc::now() - Into::<DateTime<Utc>>::into(account.crawled_at);
         log::info!(
-            "Selected account #{} updated at {}.",
+            "Selected account #{}, last crawled at {}.",
             account.id,
-            account.updated_at,
+            account.crawled_at,
         );
         let sleep_duration = (Duration::seconds(ACCOUNT_STALE_TIMEOUT_SECS) - age).num_seconds();
         if sleep_duration > 0 {
@@ -31,9 +33,19 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
             ))
             .await;
         }
-        let account_info = api.get_aggregated_account_info(account.id).await?;
-        database
-            .upsert_aggregated_account_info(&account_info)
-            .await?;
+        let start_instant = Instant::now();
+        let account_info = api
+            .get_account_info(account.id)
+            .await?
+            .ok_or_else(|| anyhow!("account #{} not found", account.id))?;
+        database.upsert_account(&account_info.basic).await?;
+        database.upsert_account_snapshot(&account_info).await?;
+        let tanks = api.get_merged_tanks(account.id).await?;
+        database.upsert_tanks(&tanks).await?;
+        log::info!(
+            "Account #{} crawled in {:?}.",
+            account.id,
+            Instant::now() - start_instant
+        );
     }
 }

@@ -4,10 +4,13 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use surf::Url;
 
+use crate::models;
+use crate::models::Tank;
+
 mod middleware;
-pub mod models;
 
 #[derive(Clone)]
 pub struct WargamingApi {
@@ -73,6 +76,31 @@ impl WargamingApi {
             .unwrap_or_else(Vec::new))
     }
 
+    pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<Tank>> {
+        let mut statistics = self.get_tanks_stats(account_id).await?;
+        let mut achievements = self.get_tanks_achievements(account_id).await?;
+
+        statistics.sort_by_key(|tank| tank.tank_id);
+        achievements.sort_by_key(|tank| tank.tank_id);
+
+        Ok(merge_join_by(statistics, achievements, |left, right| {
+            left.tank_id.cmp(&right.tank_id)
+        })
+        .filter_map(|item| match item {
+            EitherOrBoth::Both(statistics, achievements) => Some(Tank {
+                account_id,
+                tank_id: statistics.tank_id,
+                all_statistics: statistics.all,
+                last_battle_time: statistics.last_battle_time,
+                battle_life_time: statistics.battle_life_time,
+                max_series: achievements.max_series,
+                achievements: achievements.achievements,
+            }),
+            _ => None,
+        })
+        .collect::<Vec<Tank>>())
+    }
+
     /// Convenience method for endpoints that return data in the form of a map by account ID.
     async fn call_by_account<T: DeserializeOwned>(
         &self,
@@ -99,39 +127,73 @@ impl WargamingApi {
             .get(url.as_str())
             .await
             .map_err(surf::Error::into_inner)?
-            .body_json::<models::ApiResponse<T>>()
+            .body_json::<ApiResponse<T>>()
             .await
             .map_err(surf::Error::into_inner)?
             .into()
     }
 }
 
-impl WargamingApi {
-    pub async fn get_aggregated_account_info(
-        &self,
-        account_id: i32,
-    ) -> crate::Result<models::AggregatedAccountInfo> {
-        let account_info = self
-            .get_account_info(account_id)
-            .await?
-            .ok_or_else(|| anyhow!("account ID not found"))?;
-        let mut tank_statistics = self.get_tanks_stats(account_id).await?;
-        tank_statistics.sort_by_key(|tank| tank.tank_id);
-        let mut tank_achievements = self.get_tanks_achievements(account_id).await?;
-        tank_achievements.sort_by_key(|tank| tank.tank_id);
+/// Generic Wargaming.net API error.
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(untagged)]
+enum ApiResponse<T> {
+    Data {
+        data: T,
+    },
 
-        let tanks = merge_join_by(tank_statistics, tank_achievements, |left, right| {
-            left.tank_id.cmp(&right.tank_id)
-        })
-        .filter_map(|item| match item {
-            EitherOrBoth::Both(stats, achievements) => Some((stats, achievements)),
-            _ => None,
-        })
-        .collect();
+    /// See: <https://developers.wargaming.net/documentation/guide/getting-started/#common-errors>
+    Error {
+        error: ApiError,
+    },
+}
 
-        Ok(models::AggregatedAccountInfo {
-            account: account_info,
-            tanks,
-        })
+/// Wargaming.net API error.
+#[derive(Deserialize, Debug, PartialEq)]
+struct ApiError {
+    message: String,
+
+    #[serde(default)]
+    code: Option<u16>,
+
+    #[serde(default)]
+    field: Option<String>,
+}
+
+impl<T> From<ApiResponse<T>> for crate::Result<T> {
+    fn from(response: ApiResponse<T>) -> crate::Result<T> {
+        match response {
+            ApiResponse::Data { data } => Ok(data),
+            ApiResponse::Error { error } => crate::Result::Err(anyhow!(
+                r#"[{}] "{}" in "{}""#,
+                error.code.unwrap_or_default(),
+                error.message,
+                error.field.unwrap_or_default(),
+            )),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_accounts_error() -> crate::Result {
+        let response: ApiResponse<()> = serde_json::from_str(
+            // language=json
+            r#"{"status":"error","error":{"field":"search","message":"INVALID_SEARCH","code":407,"value":"1 2"}}"#,
+        )?;
+        assert_eq!(
+            response,
+            ApiResponse::Error {
+                error: ApiError {
+                    message: "INVALID_SEARCH".to_string(),
+                    code: Some(407),
+                    field: Some("search".to_string()),
+                }
+            }
+        );
+        Ok(())
     }
 }

@@ -1,188 +1,202 @@
+use std::ops::Deref;
+use std::sync::{Arc, Mutex as SyncMutex};
+
+use anyhow::anyhow;
+use async_std::task::spawn_blocking;
+use sqlite::{Bindable, Connection, Readable, State, Statement};
+
+use crate::models::{AccountInfo, BasicAccountInfo, Tank};
 use std::time::Instant;
-
-use chrono::{DateTime, TimeZone, Utc};
-use lazy_static::lazy_static;
-use mongodb::bson::{doc, Bson, Document};
-use mongodb::options::{FindOneOptions, ReplaceOptions};
-use mongodb::results::UpdateResult;
-
-use crate::convert::to_tank_snapshot;
-
-pub mod models;
-
-lazy_static! {
-    static ref OPTIONS_UPSERT: Option<ReplaceOptions> =
-        Some(ReplaceOptions::builder().upsert(true).build());
-    static ref EPOCH: DateTime<Utc> = Utc.timestamp_millis(0);
-}
 
 /// Convenience collection container.
 #[derive(Clone)]
 pub struct Database {
-    database: mongodb::Database,
+    inner: Arc<SyncMutex<Connection>>,
 }
 
 impl Database {
-    pub const ACCOUNT_SNAPSHOT_COLLECTION: &'static str = "account_snapshots";
-    pub const ACCOUNT_COLLECTION: &'static str = "accounts";
-    pub const TANK_SNAPSHOT_COLLECTION: &'static str = "tank_snapshots";
-
-    const DATABASE_NAME: &'static str = "blitz-dashboard";
-
     /// Open and initialize the database.
-    pub async fn with_uri_str(uri: &str) -> crate::Result<Self> {
+    pub async fn open<P: Into<String>>(path: P) -> crate::Result<Self> {
+        let path = path.into();
+
         log::info!("Connecting to the database…");
-        let client = mongodb::Client::with_uri_str(uri).await?;
-        let database = client.database(Self::DATABASE_NAME);
+        let database = Self {
+            inner: Arc::new(SyncMutex::new(
+                spawn_blocking(move || Connection::open(&path)).await?,
+            )),
+        };
 
         log::info!("Initializing the database…");
-        create_index(&database, Self::ACCOUNT_COLLECTION, doc! {"ts": 1}, "ts").await?;
-        create_index(
-            &database,
-            Self::ACCOUNT_SNAPSHOT_COLLECTION,
-            doc! {"aid": 1, "lbts": -1},
-            "aid_lbts",
-        )
-        .await?;
-        create_index(
-            &database,
-            Self::TANK_SNAPSHOT_COLLECTION,
-            doc! {"aid": 1, "tid": 1, "lbts": -1},
-            "aid_tid_lbts",
-        )
-        .await?;
-
-        Ok(Database { database })
-    }
-
-    pub async fn get_account_updated_at(
-        &self,
-        account_id: i32,
-    ) -> crate::Result<Option<chrono::DateTime<Utc>>> {
-        log::debug!("Retrieving account updated timestamp #{}…", account_id);
-        let document = self
-            .database
-            .collection::<models::AccountUpdatedAt>(Self::ACCOUNT_COLLECTION)
-            .find_one(
-                doc! { "aid": account_id },
-                FindOneOptions::builder()
-                    .projection(doc! { "ts": 1 })
-                    .build(),
-            )
+        // language=SQL
+        database
+            .on_inner(|inner| {
+                Ok(inner.execute(
+                    r#"
+                    -- noinspection SqlSignatureForFile
+                    -- noinspection SqlResolveForFile @ routine/"json_extract"
+                    
+                    PRAGMA journal_mode = WAL;
+                    PRAGMA synchronous = normal;
+    
+                    CREATE TABLE IF NOT EXISTS accounts (document JSON NOT NULL);
+                    CREATE UNIQUE INDEX IF NOT EXISTS accounts_account_id
+                        ON accounts(json_extract(document, '$.account_id') ASC);
+                    CREATE INDEX IF NOT EXISTS accounts_crawled_at
+                        ON accounts(json_extract(document, '$.crawled_at') ASC);
+    
+                    CREATE TABLE IF NOT EXISTS account_snapshots (document JSON NOT NULL);
+                    CREATE UNIQUE INDEX IF NOT EXISTS account_snapshots_account_id_last_battle_time
+                        ON account_snapshots(
+                            json_extract(document, '$.last_battle_time') DESC,
+                            json_extract(document, '$.account_id') ASC
+                        );
+    
+                    CREATE TABLE IF NOT EXISTS tank_snapshots (document JSON NOT NULL);
+                    CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_account_id_tank_id_last_battle_time
+                        ON tank_snapshots(
+                            json_extract(document, '$.last_battle_time') DESC,
+                            json_extract(document, '$.account_id') ASC,
+                            json_extract(document, '$.tank_id') ASC
+                        );
+                    "#,
+                )?)
+            })
             .await?;
-        Ok(document.map(|document| document.updated_at.into()))
+
+        Ok(database)
     }
 
-    pub async fn get_oldest_account(&self) -> crate::Result<Option<models::Account>> {
-        log::info!("Retrieving the oldest account…");
-        Ok(self
-            .database
-            .collection(Self::ACCOUNT_COLLECTION)
-            .find_one(
-                None,
-                FindOneOptions::builder()
-                    .show_record_id(false)
-                    .sort(doc! { "ts": 1 })
-                    .build(),
-            )
-            .await?)
+    pub async fn get_account_count(&self) -> crate::Result<i64> {
+        self.on_inner(|inner| {
+            // language=SQL
+            Self::read_scalar(inner.prepare("SELECT count(*) FROM accounts;")?)
+        })
+        .await
     }
 
-    pub async fn upsert_account(&self, account: &models::Account) -> crate::Result<UpdateResult> {
-        log::debug!("Upserting account #{}…", account.id);
-        let query = doc! { "aid": account.id };
-        Ok(self
-            .database
-            .collection::<models::Account>(Self::ACCOUNT_COLLECTION)
-            .replace_one(query, account, OPTIONS_UPSERT.clone())
-            .await?)
+    pub async fn get_account_snapshot_count(&self) -> crate::Result<i64> {
+        self.on_inner(|inner| {
+            // language=SQL
+            Self::read_scalar(inner.prepare("SELECT count(*) FROM account_snapshots;")?)
+        })
+        .await
     }
 
-    pub async fn upsert_account_snapshot(
-        &self,
-        account_snapshot: &models::AccountSnapshot,
-    ) -> crate::Result<UpdateResult> {
-        log::debug!(
-            "Upserting account #{} snapshot…",
-            account_snapshot.account_id
-        );
-        let query = doc! { "aid": account_snapshot.account_id, "lbts": Bson::DateTime(account_snapshot.last_battle_time) };
-        Ok(self
-            .database
-            .collection::<models::AccountSnapshot>(Self::ACCOUNT_SNAPSHOT_COLLECTION)
-            .replace_one(query, account_snapshot, OPTIONS_UPSERT.clone())
-            .await?)
+    pub async fn get_tank_snapshot_count(&self) -> crate::Result<i64> {
+        self.on_inner(|inner| {
+            // language=SQL
+            Self::read_scalar(inner.prepare("SELECT count(*) FROM tank_snapshots;")?)
+        })
+        .await
     }
 
-    pub async fn upsert_tank_snapshot(
-        &self,
-        tank_snapshot: &models::TankSnapshot,
-    ) -> crate::Result<UpdateResult> {
-        let query = doc! {
-            "aid": tank_snapshot.account_id,
-            "tid": tank_snapshot.tank_id,
-            "lbts": Bson::DateTime(tank_snapshot.last_battle_time),
-        };
-        Ok(self
-            .database
-            .collection::<models::TankSnapshot>(Self::TANK_SNAPSHOT_COLLECTION)
-            .replace_one(query, tank_snapshot, OPTIONS_UPSERT.clone())
-            .await?)
+    pub async fn get_oldest_account(&self) -> crate::Result<Option<BasicAccountInfo>> {
+        let document: String = self.on_inner(|inner| {
+            // language=SQL
+            Self::read_scalar(inner.prepare(r"SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT 1;")?)
+        }).await?;
+        Ok(serde_json::from_str(&document)?)
+    }
+
+    pub async fn upsert_account(&self, info: &BasicAccountInfo) -> crate::Result {
+        let document = serde_json::to_string(info)?;
+        self.on_inner(move |inner| {
+            // language=SQL
+            let mut statement =
+                inner.prepare("INSERT OR REPLACE INTO accounts (document) VALUES (?)")?;
+            Self::write_scalar(&mut statement, document.as_str())
+        })
+        .await
+    }
+
+    pub async fn upsert_account_snapshot(&self, info: &AccountInfo) -> crate::Result {
+        let document = serde_json::to_string(info)?;
+        self.on_inner(move |inner| {
+            // language=SQL
+            let mut statement =
+                inner.prepare("INSERT OR IGNORE INTO account_snapshots (document) VALUES (?)")?;
+            Self::write_scalar(&mut statement, document.as_str())
+        })
+        .await
+    }
+
+    pub async fn upsert_tanks(&self, tanks: &[Tank]) -> crate::Result {
+        let documents = tanks
+            .iter()
+            .map(serde_json::to_string)
+            .collect::<serde_json::Result<Vec<String>>>()?;
+        self.on_inner(move |inner| {
+            let start_instant = Instant::now();
+            // language=SQL
+            let mut statement =
+                inner.prepare("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?)")?;
+            for document in documents.iter() {
+                statement.reset()?;
+                Self::write_scalar(&mut statement, document.as_str())?;
+            }
+            log::debug!(
+                "{} tanks upserted in {:?}.",
+                documents.len(),
+                Instant::now() - start_instant,
+            );
+            Ok(())
+        })
+        .await
+    }
+
+    async fn on_inner<F, T>(&self, f: F) -> crate::Result<T>
+    where
+        F: FnOnce(&Connection) -> crate::Result<T> + Send + 'static,
+        T: Send + 'static,
+    {
+        let inner = self.inner.clone();
+        spawn_blocking(move || {
+            f(inner
+                .lock()
+                .map_err(|error| anyhow!("failed to lock the database: {}", error))?
+                .deref())
+        })
+        .await
+    }
+
+    fn read_scalar<T: Readable>(mut statement: Statement) -> crate::Result<T> {
+        match statement.next()? {
+            State::Row => Ok(statement.read(0)?),
+            _ => Err(anyhow!("no results")),
+        }
+    }
+
+    fn write_scalar<T: Bindable>(statement: &mut Statement, scalar: T) -> crate::Result {
+        statement.bind(1, scalar)?;
+        while statement.next()? != State::Done {}
+        Ok(())
     }
 }
 
-impl Database {
-    pub async fn upsert_aggregated_account_info(
-        &self,
-        info: &crate::wargaming::models::AggregatedAccountInfo,
-    ) -> crate::Result {
-        let account_id = info.account.id;
-        log::debug!("Upserting account #{} info…", account_id);
-        let start = Instant::now();
-        let account_updated_at = self.get_account_updated_at(account_id).await?;
-        self.upsert_account(&(&info.account).into()).await?;
-        self.upsert_account_snapshot(&(&info.account).into())
-            .await?;
-        let mut selected_tank_count: i32 = 0;
-        for (statistics, achievements) in &info.tanks {
-            if &statistics.last_battle_time >= account_updated_at.as_ref().unwrap_or(&EPOCH) {
-                selected_tank_count += 1;
-                self.upsert_tank_snapshot(&to_tank_snapshot(
-                    account_id,
-                    &statistics,
-                    &achievements,
-                ))
-                .await?;
-            }
-        }
-        log::info!(
-            "Account #{} info upserted in {:#?}. ({} tanks)",
-            account_id,
-            Instant::now() - start,
-            selected_tank_count,
-        );
+#[cfg(test)]
+mod tests {
+    use chrono::Utc;
+
+    use super::*;
+
+    #[async_std::test]
+    async fn test_open() -> crate::Result {
+        Database::open(":memory:").await?;
         Ok(())
     }
 
-    pub async fn get_document_count(&self, collection_name: &str) -> crate::Result<u64> {
-        Ok(self
-            .database
-            .collection::<Document>(collection_name)
-            .count_documents(None, None)
-            .await?)
-    }
-}
+    #[async_std::test]
+    async fn test_upsert_account() -> crate::Result {
+        let info = BasicAccountInfo {
+            id: 42,
+            last_battle_time: Utc::now(),
+            crawled_at: Utc::now(),
+        };
 
-async fn create_index(
-    database: &mongodb::Database,
-    collection: &str,
-    key: Document,
-    name: &str,
-) -> crate::Result {
-    let command = mongodb::bson::doc! {
-        "createIndexes": collection,
-        "indexes": [{"key": key, "name": name, "unique": true}],
-    };
-    database.run_command(command, None).await?;
-    Ok(())
+        let database = Database::open(":memory:").await?;
+        database.upsert_account(&info).await?;
+        database.upsert_account(&info).await?;
+        assert_eq!(database.get_account_count().await?, 1);
+        Ok(())
+    }
 }

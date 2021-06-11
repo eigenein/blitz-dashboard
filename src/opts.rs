@@ -13,10 +13,10 @@ pub struct Opts {
     #[clap(short, long, about = "Sentry DSN")]
     pub sentry_dsn: Option<String>,
 
-    #[clap(short, long, about = "MongoDB connection string")]
-    pub mongodb_uri: String,
+    #[clap(short, long, about = "Database path")]
+    pub database: String,
 
-    #[clap(short, long, about = "Enable debugging")]
+    #[clap(long, about = "Enable debugging")]
     pub debug: bool,
 
     #[clap(subcommand)]

@@ -1,3 +1,4 @@
+*.sqlite3*
 
 # Created by https://www.toptal.com/developers/gitignore/api/rust,jetbrains,sublimetext,visualstudiocode,macos,windows,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=rust,jetbrains,sublimetext,visualstudiocode,macos,windows,linux

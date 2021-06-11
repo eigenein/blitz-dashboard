@@ -4,7 +4,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tide::Request;
 
-use crate::wargaming::models::Account;
+use crate::models::Account;
 use crate::web::components::SEARCH_QUERY_LENGTH;
 use crate::web::state::State;
 

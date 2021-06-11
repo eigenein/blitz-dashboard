@@ -1,9 +1,15 @@
 use chrono::Duration;
 use serde::Deserialize;
 
-pub fn deserialize_duration_seconds<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
+pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Duration, D::Error> {
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
+}
+
+pub fn serialize_duration_seconds<S: serde::Serializer>(
+    value: &Duration,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_i64(value.num_seconds())
 }

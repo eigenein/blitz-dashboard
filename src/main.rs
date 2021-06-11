@@ -6,10 +6,10 @@ use crate::opts::{Opts, Subcommand};
 use crate::wargaming::WargamingApi;
 
 mod cached;
-mod convert;
 mod crawler;
 mod database;
 mod logging;
+mod models;
 mod opts;
 mod serde;
 mod wargaming;
@@ -32,7 +32,7 @@ async fn main() -> crate::Result {
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let api = WargamingApi::new(&opts.application_id);
-    let database = Database::with_uri_str(&opts.mongodb_uri).await?;
+    let database = Database::open(opts.database).await?;
     match opts.subcommand {
         Subcommand::Web(web_opts) => web::run(&web_opts.host, web_opts.port, api, database).await,
         Subcommand::Crawler(_) => crawler::run(api, database).await,

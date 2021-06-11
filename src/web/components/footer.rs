@@ -1,25 +1,19 @@
 use clap::crate_version;
 use maud::{html, Markup, Render};
 
-use crate::web::state::{State, StatisticsType};
+use crate::web::state::State;
 
 pub struct Footer {
-    account_count: u64,
-    account_snapshot_count: u64,
-    tank_snapshot_count: u64,
+    account_count: i64,
+    account_snapshot_count: i64,
+    tank_snapshot_count: i64,
 }
 
 impl Footer {
     pub async fn new(state: &State) -> crate::Result<Self> {
-        let account_count = *state
-            .get_cached_database_statistics(StatisticsType::AccountCount)
-            .await?;
-        let account_snapshot_count = *state
-            .get_cached_database_statistics(StatisticsType::AccountSnapshotCount)
-            .await?;
-        let tank_snapshot_count = *state
-            .get_cached_database_statistics(StatisticsType::TankSnapshotCount)
-            .await?;
+        let account_count = state.database.get_account_count().await?;
+        let account_snapshot_count = state.database.get_account_snapshot_count().await?;
+        let tank_snapshot_count = state.database.get_tank_snapshot_count().await?;
         Ok(Self {
             account_count,
             account_snapshot_count,

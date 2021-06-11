@@ -3,7 +3,7 @@ use std::any::type_name;
 use chrono::{DateTime, Duration, Utc};
 use tide::Request;
 
-use crate::wargaming::models::TankStatistics;
+use crate::models::{AccountInfo, Tank};
 use crate::web::state::State;
 
 pub struct PlayerViewModel {
@@ -31,21 +31,20 @@ pub struct PlayerViewModel {
     pub n_battles: i32,
 
     /// Tank name with the longest life time.
-    pub longest_life_time_tank: Option<TankStatistics>,
+    pub longest_life_time_tank: Option<Tank>,
 
     /// Tank name with the most battle count.
-    pub most_played_tank: Option<TankStatistics>,
+    pub most_played_tank: Option<Tank>,
 }
 
 impl PlayerViewModel {
     pub async fn new(request: &Request<State>) -> crate::Result<PlayerViewModel> {
         let account_id: i32 = Self::parse_account_id(&request)?;
         log::info!("{} #{}…", type_name::<Self>(), account_id);
-        let account_info = request
-            .state()
-            .get_aggregated_account_info(account_id)
-            .await?;
-        Ok(Self::from(&account_info))
+        let state = request.state();
+        let account_info = state.get_account_info(account_id).await?;
+        let tanks = state.get_tanks(account_id).await?;
+        Ok(Self::from(&account_info, &tanks))
     }
 
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
@@ -55,33 +54,27 @@ impl PlayerViewModel {
             .parse()?)
     }
 
-    fn from(info: &crate::wargaming::models::AggregatedAccountInfo) -> Self {
-        let account = &info.account;
+    fn from(account: &AccountInfo, tanks: &[Tank]) -> Self {
         let all = &account.statistics.all;
-        let longest_life_time_tank = info
-            .tanks
+        let longest_life_time_tank = tanks
             .iter()
-            .map(|(tank, _)| tank)
             .max_by_key(|tank| tank.battle_life_time)
             .cloned();
-        let most_played_tank = info
-            .tanks
+        let most_played_tank = tanks
             .iter()
-            .map(|(tank, _)| tank)
-            .max_by_key(|tank| tank.all.battles)
+            .max_by_key(|tank| tank.all_statistics.battles)
             .cloned();
-
         Self {
-            account_id: account.id,
+            account_id: account.basic.id,
             nickname: account.nickname.clone(),
             created_at: account.created_at,
-            last_battle_time: account.last_battle_time,
+            last_battle_time: account.basic.last_battle_time,
             wins: 100.0 * (all.wins as f32) / (all.battles as f32),
             survival: 100.0 * (all.survived_battles as f32) / (all.battles as f32),
             hits: 100.0 * (all.hits as f32) / (all.shots as f32),
             n_battles: all.battles,
-            has_recently_played: account.last_battle_time > (Utc::now() - Duration::hours(1)),
-            is_inactive: account.last_battle_time < (Utc::now() - Duration::days(365)),
+            has_recently_played: account.basic.last_battle_time > (Utc::now() - Duration::hours(1)),
+            is_inactive: account.basic.last_battle_time < (Utc::now() - Duration::days(365)),
             longest_life_time_tank,
             most_played_tank,
         }
