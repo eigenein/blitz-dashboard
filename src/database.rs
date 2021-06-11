@@ -20,13 +20,15 @@ impl Database {
         let path = path.into();
 
         log::info!("Connecting to the database…");
-        let database = Self {
-            inner: Arc::new(SyncMutex::new(
-                spawn_blocking(move || Connection::open(&path)).await?,
-            )),
-        };
+        let mut connection = spawn_blocking(move || Connection::open(&path)).await?;
 
         log::info!("Initializing the database…");
+        connection.set_busy_timeout(5000)?;
+        let database = Self {
+            inner: Arc::new(SyncMutex::new(connection)),
+        };
+
+        log::info!("Initializing the database schema…");
         // language=SQL
         database
             .on_inner(|inner| {
