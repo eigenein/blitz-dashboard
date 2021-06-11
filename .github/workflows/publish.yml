@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Publish
+    name: publish
     runs-on: ubuntu-latest
     steps:
       - name: Create a GitHub Release
