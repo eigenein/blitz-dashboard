@@ -26,6 +26,8 @@ jobs:
           toolchain: nightly
           override: true
 
+      - uses: Swatinem/rust-cache@v1
+
       - name: Install Cross
         run: cargo install cross
 
