@@ -32,7 +32,7 @@ async fn main() -> crate::Result {
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let api = WargamingApi::new(&opts.application_id);
-    let database = Database::open(opts.database).await?;
+    let database = Database::open(opts.database)?;
     match opts.subcommand {
         Subcommand::Web(web_opts) => web::run(&web_opts.host, web_opts.port, api, database).await,
         Subcommand::Crawler(_) => crawler::run(api, database).await,

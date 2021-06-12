@@ -179,7 +179,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_accounts_error() -> crate::Result {
+    fn response_error() -> crate::Result {
         let response: ApiResponse<()> = serde_json::from_str(
             // language=json
             r#"{"status":"error","error":{"field":"search","message":"INVALID_SEARCH","code":407,"value":"1 2"}}"#,

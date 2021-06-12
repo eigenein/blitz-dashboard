@@ -2,6 +2,7 @@ use clap::crate_version;
 use maud::{html, Markup, Render};
 
 use crate::web::state::State;
+use async_std::task::spawn;
 
 pub struct Footer {
     account_count: i64,
@@ -11,9 +12,19 @@ pub struct Footer {
 
 impl Footer {
     pub async fn new(state: &State) -> crate::Result<Self> {
-        let account_count = state.database.get_account_count().await?;
-        let account_snapshot_count = state.database.get_account_snapshot_count().await?;
-        let tank_snapshot_count = state.database.get_tank_snapshot_count().await?;
+        let account_count = {
+            let database = state.database.clone();
+            spawn(async move { database.lock().await.get_account_count() }).await?
+        };
+        let account_snapshot_count = {
+            let database = state.database.clone();
+            spawn(async move { database.lock().await.get_account_snapshot_count() }).await?
+        };
+        let tank_snapshot_count = {
+            let database = state.database.clone();
+            spawn(async move { database.lock().await.get_tank_snapshot_count() }).await?
+        };
+
         Ok(Self {
             account_count,
             account_snapshot_count,

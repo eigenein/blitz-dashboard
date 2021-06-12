@@ -9,12 +9,13 @@ use crate::logging::log_anyhow;
 use crate::models::{Account, AccountInfo, Tank};
 use crate::wargaming::WargamingApi;
 use anyhow::anyhow;
+use async_std::sync::Mutex;
 
 /// Web application global state.
 #[derive(Clone)]
 pub struct State {
     pub api: WargamingApi,
-    pub database: Database,
+    pub database: Arc<Mutex<Database>>,
 
     search_accounts_cache: Cached<String, Vec<Account>>,
     account_info_cache: Cached<i32, AccountInfo>,
@@ -25,7 +26,7 @@ impl State {
     pub fn new(api: WargamingApi, database: Database) -> Self {
         State {
             api,
-            database,
+            database: Arc::new(Mutex::new(database)),
             search_accounts_cache: Cached::new(LruCache::with_expiry_duration_and_capacity(
                 Duration::from_secs(86400),
                 1000,
@@ -61,8 +62,13 @@ impl State {
                     let account_info = account_info.clone();
                     let database = self.database.clone();
                     async_std::task::spawn(async move {
-                        log_anyhow(database.upsert_account(&account_info.basic).await);
-                        log_anyhow(database.upsert_account_snapshot(&account_info).await);
+                        let database = database.lock().await;
+                        log_anyhow(database.transaction().and_then(|tx| {
+                            database.upsert_account(&account_info.basic)?;
+                            database.upsert_account_snapshot(&account_info)?;
+                            tx.commit()?;
+                            Ok(())
+                        }));
                     });
                 }
                 Ok(account_info)
@@ -78,7 +84,12 @@ impl State {
                     let tanks = tanks.clone();
                     let database = self.database.clone();
                     async_std::task::spawn(async move {
-                        log_anyhow(database.upsert_tanks(&tanks).await);
+                        let database = database.lock().await;
+                        log_anyhow(database.transaction().and_then(|tx| {
+                            database.upsert_tanks(&tanks)?;
+                            tx.commit()?;
+                            Ok(())
+                        }));
                     });
                 }
                 Ok(tanks)
