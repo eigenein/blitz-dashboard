@@ -31,10 +31,10 @@ pub struct PlayerViewModel {
     pub n_battles: i32,
 
     /// Vehicle with the longest life time.
-    pub longest_life_time_vehicle: Option<Vehicle>,
+    pub longest_life_time_vehicle: Option<(Vehicle, Duration)>,
 
     /// Vehicle with the most battle count.
-    pub most_played_vehicle: Option<Vehicle>,
+    pub most_played_vehicle: Option<(Vehicle, i32)>,
 }
 
 impl PlayerViewModel {
@@ -51,13 +51,21 @@ impl PlayerViewModel {
         let longest_life_time_vehicle = tanks
             .iter()
             .max_by_key(|tank| tank.battle_life_time)
-            .and_then(|tank| tankopedia.get(&tank.tank_id))
-            .cloned();
+            .and_then(|tank| {
+                tankopedia
+                    .get(&tank.tank_id)
+                    .cloned()
+                    .map(|vehicle| (vehicle, tank.battle_life_time))
+            });
         let most_played_vehicle = tanks
             .iter()
             .max_by_key(|tank| tank.all_statistics.battles)
-            .and_then(|tank| tankopedia.get(&tank.tank_id))
-            .cloned();
+            .and_then(|tank| {
+                tankopedia
+                    .get(&tank.tank_id)
+                    .cloned()
+                    .map(|vehicle| (vehicle, tank.all_statistics.battles))
+            });
 
         Ok(Self {
             account_id: account.basic.id,

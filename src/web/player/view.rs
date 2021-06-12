@@ -1,7 +1,8 @@
-use chrono_humanize::HumanTime;
-use maud::html;
+use chrono_humanize::{Accuracy, HumanTime, Tense};
+use maud::{html, Markup, Render};
 use tide::StatusCode;
 
+use crate::models::Vehicle;
 use crate::web::components::footer::Footer;
 use crate::web::components::icon_text;
 use crate::web::partials::header;
@@ -92,7 +93,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                     }
 
                     div.tile.is-ancestor {
-                        div.tile."is-4".is-parent {
+                        div.tile."is-6".is-parent {
                             div.tile.is-child.card {
                                 header.card-header {
                                     p.card-header-title { (icon_text("fas fa-truck-monster", "Vehicles")) }
@@ -100,16 +101,18 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.card-content {
                                     table.table.is-striped.is-hoverable.is-fullwidth {
                                         tbody {
-                                            @if let Some(vehicle) = model.longest_life_time_vehicle {
+                                            @if let Some((vehicle, duration)) = model.longest_life_time_vehicle {
                                                 tr {
                                                     td { "Most lived vehicle" }
-                                                    td { (vehicle.name) }
+                                                    td { (vehicle) }
+                                                    td title=(duration) { (HumanTime::from(duration).to_text_en(Accuracy::Rough, Tense::Present)) }
                                                 }
                                             }
-                                            @if let Some(vehicle) = model.most_played_vehicle {
+                                            @if let Some((vehicle, n_battles)) = model.most_played_vehicle {
                                                 tr {
                                                     td { "Most played vehicle" }
-                                                    td { (vehicle.name) }
+                                                    td { (vehicle) }
+                                                    td { (n_battles) " battles" }
                                                 }
                                             }
                                         }
@@ -139,5 +142,28 @@ fn win_percentage_class(percentage: f32) -> &'static str {
         "has-text-primary"
     } else {
         "has-text-success"
+    }
+}
+
+impl Render for Vehicle {
+    fn render(&self) -> Markup {
+        let tier = match self.tier {
+            1 => "Ⅰ",
+            2 => "Ⅱ",
+            3 => "Ⅲ",
+            4 => "Ⅳ",
+            5 => "Ⅴ",
+            6 => "Ⅵ",
+            7 => "Ⅶ",
+            8 => "Ⅷ",
+            9 => "Ⅸ",
+            10 => "Ⅹ",
+            _ => "?",
+        };
+        html! {
+            strong.(if self.is_premium { "has-text-warning-dark" } else { "" }) title=(self.tank_id) {
+                (tier) " " (self.name)
+            }
+        }
     }
 }

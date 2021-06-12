@@ -82,8 +82,10 @@ pub struct TankAchievements {
 /// Tankopedia entry.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
+    pub tank_id: i32,
     pub name: String,
     pub tier: i8,
+    pub is_premium: bool,
 
     #[serde(rename = "type")]
     pub type_: TankType,
