@@ -1,10 +1,11 @@
+use std::time::Instant;
+
+use anyhow::anyhow;
 use async_std::task::sleep;
 use chrono::{DateTime, Duration, Utc};
 
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
-use anyhow::anyhow;
-use std::time::Instant;
 
 const ACCOUNT_STALE_TIMEOUT_SECS: i64 = 60;
 

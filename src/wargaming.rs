@@ -8,7 +8,7 @@ use serde::Deserialize;
 use surf::Url;
 
 use crate::models;
-use crate::models::Tank;
+use std::time::Instant;
 
 mod middleware;
 
@@ -76,7 +76,32 @@ impl WargamingApi {
             .unwrap_or_else(Vec::new))
     }
 
-    pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<Tank>> {
+    /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
+    pub async fn get_tankopedia(&self) -> crate::Result<HashMap<i32, models::Vehicle>> {
+        log::debug!("Retrieving tankopedia…");
+        Ok(self
+            .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
+                "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
+                &[
+                    ("application_id", self.application_id.as_str()),
+                    ("language", "en"),
+                ],
+            )?)
+            .await?
+            .into_iter()
+            .map(|(tank_id, vehicle)| {
+                tank_id
+                    .parse::<i32>()
+                    .map(|tank_id| (tank_id, vehicle))
+                    .map_err(anyhow::Error::from)
+            })
+            .collect::<crate::Result<HashMap<i32, models::Vehicle>>>()?)
+    }
+
+    pub async fn get_merged_tanks(
+        &self,
+        account_id: i32,
+    ) -> crate::Result<Vec<models::TankSnapshot>> {
         let mut statistics = self.get_tanks_stats(account_id).await?;
         let mut achievements = self.get_tanks_achievements(account_id).await?;
 
@@ -87,7 +112,7 @@ impl WargamingApi {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
-            EitherOrBoth::Both(statistics, achievements) => Some(Tank {
+            EitherOrBoth::Both(statistics, achievements) => Some(models::TankSnapshot {
                 account_id,
                 tank_id: statistics.tank_id,
                 all_statistics: statistics.all,
@@ -98,7 +123,7 @@ impl WargamingApi {
             }),
             _ => None,
         })
-        .collect::<Vec<Tank>>())
+        .collect::<Vec<models::TankSnapshot>>())
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
@@ -123,14 +148,22 @@ impl WargamingApi {
     }
 
     async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
-        self.client
+        let start_instant = Instant::now();
+        let result = self
+            .client
             .get(url.as_str())
             .await
             .map_err(surf::Error::into_inner)?
             .body_json::<ApiResponse<T>>()
             .await
             .map_err(surf::Error::into_inner)?
-            .into()
+            .into();
+        log::debug!(
+            "{} resulted in {:?}.",
+            url.path(),
+            Instant::now() - start_instant
+        );
+        result
     }
 }
 

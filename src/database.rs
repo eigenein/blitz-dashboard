@@ -1,9 +1,10 @@
+use std::time::Instant;
+
 use anyhow::anyhow;
 use sqlite::{Bindable, Connection, Readable, State, Statement};
 
 use crate::logging::log_anyhow;
-use crate::models::{AccountInfo, BasicAccountInfo, Tank};
-use std::time::Instant;
+use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot};
 
 pub struct Database {
     inner: Connection,
@@ -107,7 +108,7 @@ impl Database {
         Self::write_scalar(&mut statement, document.as_str())
     }
 
-    pub fn upsert_tanks(&self, tanks: &[Tank]) -> crate::Result {
+    pub fn upsert_tanks(&self, tanks: &[TankSnapshot]) -> crate::Result {
         let documents = tanks
             .iter()
             .map(serde_json::to_string)

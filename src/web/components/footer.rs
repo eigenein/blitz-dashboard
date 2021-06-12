@@ -1,34 +1,17 @@
 use clap::crate_version;
 use maud::{html, Markup, Render};
 
-use crate::web::state::State;
-use async_std::task::spawn;
+use crate::web::state::{DatabaseStatistics, State};
 
 pub struct Footer {
-    account_count: i64,
-    account_snapshot_count: i64,
-    tank_snapshot_count: i64,
+    database_statistics: DatabaseStatistics,
 }
 
 impl Footer {
     pub async fn new(state: &State) -> crate::Result<Self> {
-        let account_count = {
-            let database = state.database.clone();
-            spawn(async move { database.lock().await.get_account_count() }).await?
-        };
-        let account_snapshot_count = {
-            let database = state.database.clone();
-            spawn(async move { database.lock().await.get_account_snapshot_count() }).await?
-        };
-        let tank_snapshot_count = {
-            let database = state.database.clone();
-            spawn(async move { database.lock().await.get_tank_snapshot_count() }).await?
-        };
-
+        let database_statistics = state.get_database_statistics().await?;
         Ok(Self {
-            account_count,
-            account_snapshot_count,
-            tank_snapshot_count,
+            database_statistics,
         })
     }
 }
@@ -97,19 +80,19 @@ impl Render for Footer {
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-user.has-text-info {} }
-                                    span { strong { (self.account_count) } " accounts" }
+                                    span { strong { (self.database_statistics.account_count) } " accounts" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-portrait.has-text-info {} }
-                                    span { strong { (self.account_snapshot_count) } " account snapshots" }
+                                    span { strong { (self.database_statistics.account_snapshot_count) } " account snapshots" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text {
                                     span.icon { i.fas.fa-truck-monster.has-text-info {} }
-                                    span { strong { (self.tank_snapshot_count) } " tank snapshots" }
+                                    span { strong { (self.database_statistics.tank_snapshot_count) } " tank snapshots" }
                                 }
                             }
                         }

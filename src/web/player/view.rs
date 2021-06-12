@@ -100,16 +100,16 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.card-content {
                                     table.table.is-striped.is-hoverable.is-fullwidth {
                                         tbody {
-                                            @if let Some(tank) = model.longest_life_time_tank {
+                                            @if let Some(vehicle) = model.longest_life_time_vehicle {
                                                 tr {
-                                                    td { "Most lived tank" }
-                                                    td { (tank.tank_id) }
+                                                    td { "Most lived vehicle" }
+                                                    td { (vehicle.name) }
                                                 }
                                             }
-                                            @if let Some(tank) = model.most_played_tank {
+                                            @if let Some(vehicle) = model.most_played_vehicle {
                                                 tr {
-                                                    td { "Most played tank" }
-                                                    td { (tank.tank_id) }
+                                                    td { "Most played vehicle" }
+                                                    td { (vehicle.name) }
                                                 }
                                             }
                                         }

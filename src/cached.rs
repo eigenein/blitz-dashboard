@@ -1,13 +1,13 @@
 use std::any::type_name;
 use std::fmt::Debug;
 use std::future::Future;
+use std::ops::Deref;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use async_std::sync::Mutex;
 use lru_time_cache::LruCache;
 
-/// [`LruCache`] proxy that automatically calls value getter when needed.
-/// And is also thread-safe.
 pub struct Cached<K, V>(Arc<Mutex<LruCache<K, Arc<V>>>>);
 
 impl<K: Ord + Clone + Debug, V> Cached<K, V> {
@@ -15,11 +15,10 @@ impl<K: Ord + Clone + Debug, V> Cached<K, V> {
         Self(Arc::new(Mutex::new(cache)))
     }
 
-    pub async fn get<G, R, Fut>(&self, key: &K, getter: G) -> crate::Result<Arc<V>>
+    pub async fn get<G, Fut>(&self, key: &K, getter: G) -> crate::Result<Arc<V>>
     where
         G: FnOnce() -> Fut,
-        Fut: Future<Output = crate::Result<R>>,
-        R: Into<Arc<V>>,
+        Fut: Future<Output = crate::Result<Arc<V>>>,
     {
         let mut cache = self.0.lock().await;
         let model = match cache.get(&key) {
@@ -28,7 +27,7 @@ impl<K: Ord + Clone + Debug, V> Cached<K, V> {
                 model.clone()
             }
             None => {
-                let value = getter().await?.into();
+                let value = getter().await?;
                 log::debug!(r#"Insert: {:?} => {:?}"#, key, type_name::<V>());
                 cache.insert(key.clone(), value.clone());
                 value
@@ -41,5 +40,47 @@ impl<K: Ord + Clone + Debug, V> Cached<K, V> {
 impl<K, V> Clone for Cached<K, V> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
+    }
+}
+
+pub struct CachedScalar<T> {
+    #[allow(clippy::type_complexity)]
+    value: Arc<Mutex<Option<(Instant, Arc<T>)>>>,
+
+    ttl: Duration,
+}
+
+impl<T> CachedScalar<T> {
+    pub fn new(ttl: Duration) -> Self {
+        Self {
+            value: Arc::new(Mutex::new(None)),
+            ttl,
+        }
+    }
+
+    pub async fn get<G, Fut>(&self, getter: G) -> crate::Result<Arc<T>>
+    where
+        G: FnOnce() -> Fut,
+        Fut: Future<Output = crate::Result<Arc<T>>>,
+    {
+        let mut guard = self.value.lock().await;
+        let value = match guard.deref() {
+            Some((expiry_time, value)) if &Instant::now() < expiry_time => value.clone(),
+            _ => {
+                let value = getter().await?;
+                guard.replace((Instant::now() + self.ttl, value.clone()));
+                value
+            }
+        };
+        Ok(value)
+    }
+}
+
+impl<T> Clone for CachedScalar<T> {
+    fn clone(&self) -> Self {
+        Self {
+            value: self.value.clone(),
+            ttl: self.ttl,
+        }
     }
 }
