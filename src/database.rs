@@ -80,10 +80,7 @@ impl Database {
 
     pub fn get_tank_snapshot_count(&self) -> crate::Result<i64> {
         // language=SQL
-        Self::read_scalar(
-            self.inner
-                .prepare("SELECT count(*) FROM account_snapshots;")?,
-        )
+        Self::read_scalar(self.inner.prepare("SELECT count(*) FROM tank_snapshots;")?)
     }
 
     pub fn get_oldest_account(&self) -> crate::Result<Option<BasicAccountInfo>> {
