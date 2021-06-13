@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 
 use anyhow::anyhow;
 use itertools::{merge_join_by, EitherOrBoth};
@@ -8,7 +9,6 @@ use serde::Deserialize;
 use surf::Url;
 
 use crate::models;
-use std::time::Instant;
 
 mod middleware;
 

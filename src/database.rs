@@ -1,14 +1,13 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use anyhow::anyhow;
-use sqlite::{Bindable, Connection, Readable, State, Statement};
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::{OptionalExtension, ToSql};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
-use crate::logging::log_anyhow;
 use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot};
 
-pub struct Database {
-    inner: Connection,
-}
+pub struct Database(rusqlite::Connection);
 
 impl Database {
     /// Open and initialize the database.
@@ -16,14 +15,12 @@ impl Database {
         let path = path.into();
 
         log::info!("Connecting to the database…");
-        let mut inner = Connection::open(&path)?;
-
-        log::info!("Initializing the database…");
-        inner.set_busy_timeout(5000)?;
+        let inner = rusqlite::Connection::open(&path)?;
+        inner.busy_timeout(Duration::from_secs(5))?;
 
         log::info!("Initializing the database schema…");
         // language=SQL
-        inner.execute(
+        inner.execute_batch(
             r#"
             -- noinspection SqlSignatureForFile
             -- noinspection SqlResolveForFile @ routine/"json_extract"
@@ -54,118 +51,121 @@ impl Database {
             "#,
         )?;
 
-        Ok(Self { inner })
+        Ok(Self(inner))
     }
 
     pub fn transaction(&self) -> crate::Result<Transaction> {
-        // language=SQL
-        self.inner.execute("BEGIN IMMEDIATE")?;
-        Ok(Transaction {
-            inner: &self.inner,
-            is_committed: false,
-        })
+        Ok(Transaction(self.0.unchecked_transaction()?))
     }
 
     pub fn get_account_count(&self) -> crate::Result<i64> {
         // language=SQL
-        Self::read_scalar(self.inner.prepare("SELECT count(*) FROM accounts;")?)
+        Ok(self
+            .0
+            .prepare_cached("SELECT count(*) FROM accounts")?
+            .query_row([], |row| row.get(0))?)
     }
 
     pub fn get_account_snapshot_count(&self) -> crate::Result<i64> {
         // language=SQL
-        Self::read_scalar(
-            self.inner
-                .prepare("SELECT count(*) FROM account_snapshots;")?,
-        )
+        Ok(self
+            .0
+            .prepare_cached("SELECT count(*) FROM account_snapshots")?
+            .query_row([], |row| row.get(0))?)
     }
 
     pub fn get_tank_snapshot_count(&self) -> crate::Result<i64> {
         // language=SQL
-        Self::read_scalar(self.inner.prepare("SELECT count(*) FROM tank_snapshots;")?)
+        Ok(self
+            .0
+            .prepare_cached("SELECT count(*) FROM tank_snapshots")?
+            .query_row([], |row| row.get(0))?)
     }
 
     pub fn get_oldest_account(&self) -> crate::Result<Option<BasicAccountInfo>> {
         // language=SQL
-        let document: String = Self::read_scalar(self.inner.prepare(r"SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT 1;")?)?;
-        Ok(serde_json::from_str(&document)?)
+        Ok(self
+            .0
+            .prepare_cached("SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT 1")?
+            .query_row([], |row| row.get(0))
+            .optional()?
+        )
     }
 
     pub fn upsert_account(&self, info: &BasicAccountInfo) -> crate::Result {
-        let document = serde_json::to_string(info)?;
         // language=SQL
-        let mut statement = self
-            .inner
-            .prepare("INSERT OR REPLACE INTO accounts (document) VALUES (?)")?;
-        Self::write_scalar(&mut statement, document.as_str())
+        self.0
+            .prepare_cached("INSERT OR REPLACE INTO accounts (document) VALUES (?1)")?
+            .execute([info])?;
+        Ok(())
     }
 
     pub fn upsert_account_snapshot(&self, info: &AccountInfo) -> crate::Result {
-        let document = serde_json::to_string(info)?;
         // language=SQL
-        let mut statement = self
-            .inner
-            .prepare("INSERT OR IGNORE INTO account_snapshots (document) VALUES (?)")?;
-        Self::write_scalar(&mut statement, document.as_str())
+        self.0
+            .prepare_cached("INSERT OR REPLACE INTO account_snapshots (document) VALUES (?1)")?
+            .execute([info])?;
+        Ok(())
     }
 
     pub fn upsert_tanks(&self, tanks: &[TankSnapshot]) -> crate::Result {
-        let documents = tanks
-            .iter()
-            .map(serde_json::to_string)
-            .collect::<serde_json::Result<Vec<String>>>()?;
         let start_instant = Instant::now();
         // language=SQL
         let mut statement = self
-            .inner
-            .prepare("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?)")?;
-        for document in documents.iter() {
-            statement.reset()?;
-            Self::write_scalar(&mut statement, document.as_str())?;
+            .0
+            .prepare_cached("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)")?;
+        for tank in tanks {
+            statement.execute(&[tank])?;
         }
         log::debug!(
             "{} tanks upserted in {:?}.",
-            documents.len(),
+            tanks.len(),
             Instant::now() - start_instant,
         );
         Ok(())
     }
-
-    fn read_scalar<T: Readable>(mut statement: Statement) -> crate::Result<T> {
-        match statement.next()? {
-            State::Row => Ok(statement.read(0)?),
-            _ => Err(anyhow!("no results")),
-        }
-    }
-
-    fn write_scalar<T: Bindable>(statement: &mut Statement, scalar: T) -> crate::Result {
-        statement.bind(1, scalar)?;
-        while statement.next()? != State::Done {}
-        Ok(())
-    }
 }
 
-pub struct Transaction<'c> {
-    inner: &'c Connection,
-    is_committed: bool,
-}
+pub struct Transaction<'c>(rusqlite::Transaction<'c>);
 
 impl Transaction<'_> {
-    pub fn commit(mut self) -> crate::Result {
-        // language=SQL
-        self.inner.execute("COMMIT")?;
-        self.is_committed = true;
-        Ok(())
+    pub fn commit(self) -> crate::Result {
+        Ok(self.0.commit()?)
     }
 }
 
-impl<'c> Drop for Transaction<'c> {
-    fn drop(&mut self) {
-        if !self.is_committed {
-            log::error!("Dropped transaction, rolling back.");
-            // language=SQL
-            log_anyhow(self.inner.execute("ROLLBACK").map_err(anyhow::Error::from));
-        }
+impl ToSql for BasicAccountInfo {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        serializable_to_sql(self)
     }
+}
+
+impl ToSql for AccountInfo {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        serializable_to_sql(self)
+    }
+}
+
+impl ToSql for TankSnapshot {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        serializable_to_sql(self)
+    }
+}
+
+impl FromSql for BasicAccountInfo {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        deserializable_from_sql(value)
+    }
+}
+
+fn serializable_to_sql<T: Serialize>(object: &T) -> rusqlite::Result<ToSqlOutput<'_>> {
+    Ok(ToSqlOutput::from(serde_json::to_string(object).map_err(
+        |error| rusqlite::Error::ToSqlConversionFailure(error.into()),
+    )?))
+}
+
+fn deserializable_from_sql<T: DeserializeOwned>(value: ValueRef<'_>) -> FromSqlResult<T> {
+    serde_json::from_str(value.as_str()?).map_err(|error| FromSqlError::Other(error.into()))
 }
 
 #[cfg(test)]
