@@ -5,7 +5,6 @@ use crate::database::Database;
 use crate::opts::{Opts, Subcommand};
 use crate::wargaming::WargamingApi;
 
-mod cached;
 mod crawler;
 mod database;
 mod logging;
