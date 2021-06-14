@@ -88,7 +88,7 @@ impl State {
         match cache.get(&account_id) {
             Some(account_info) => Ok(account_info.clone()),
             None => {
-                // TODO: in future I'll most likely read from the database instead.
+                // TODO: try reading from the database first.
                 let account_info = Arc::new(
                     self.api
                         .get_account_info(account_id)
@@ -100,13 +100,7 @@ impl State {
                     let account_info = account_info.clone();
                     let database = self.database.clone();
                     async_std::task::spawn(async move {
-                        let database = database.lock().await;
-                        log_anyhow(database.start_transaction().and_then(|tx| {
-                            database.upsert_account(&account_info.basic)?;
-                            database.upsert_account_snapshot(&account_info)?;
-                            tx.commit()?;
-                            Ok(())
-                        }));
+                        log_anyhow(database.lock().await.upsert_account(&account_info.basic));
                     });
                 }
                 Ok(account_info)
@@ -119,21 +113,9 @@ impl State {
         match cache.get(&account_id) {
             Some(tanks) => Ok(tanks.clone()),
             None => {
-                // TODO: in future I'll most likely read from the database instead.
+                // TODO: try reading from the database first, may be recently crawled.
                 let tanks = Arc::new(self.api.get_merged_tanks(account_id).await?);
                 cache.insert(account_id, tanks.clone());
-                {
-                    let tanks = tanks.clone();
-                    let database = self.database.clone();
-                    async_std::task::spawn(async move {
-                        let database = database.lock().await;
-                        log_anyhow(database.start_transaction().and_then(|tx| {
-                            database.upsert_tanks(&tanks)?;
-                            tx.commit()?;
-                            Ok(())
-                        }));
-                    });
-                }
                 Ok(tanks)
             }
         }
