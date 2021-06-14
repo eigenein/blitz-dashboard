@@ -114,6 +114,7 @@ impl Database {
     }
 
     pub fn upsert_account_snapshot(&self, info: &AccountInfo) -> crate::Result {
+        log::info!("Upserting account #{} snapshot…", info.basic.id);
         self.0
             .prepare_cached(
                 // language=SQL
@@ -124,6 +125,7 @@ impl Database {
     }
 
     pub fn upsert_tanks(&self, tanks: &[TankSnapshot]) -> crate::Result {
+        log::info!("Upserting {} tanks…", tanks.len());
         let start_instant = Instant::now();
         let mut statement = self.0.prepare_cached(
             // language=SQL
@@ -132,7 +134,7 @@ impl Database {
         for tank in tanks {
             statement.execute(&[tank])?;
         }
-        log::debug!(
+        log::info!(
             "{} tanks upserted in {:?}.",
             tanks.len(),
             Instant::now() - start_instant,
