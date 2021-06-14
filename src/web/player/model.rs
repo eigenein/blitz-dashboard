@@ -46,26 +46,23 @@ impl PlayerViewModel {
         let account = state.get_account_info(account_id).await?;
         let tanks = state.get_tanks(account_id).await?;
         let all = &account.statistics.all;
-        let tankopedia = state.get_tankopedia().await?;
 
-        let longest_life_time_vehicle = tanks
-            .iter()
-            .max_by_key(|tank| tank.battle_life_time)
-            .and_then(|tank| {
-                tankopedia
-                    .get(&tank.tank_id)
-                    .cloned()
-                    .map(|vehicle| (vehicle, tank.battle_life_time))
-            });
-        let most_played_vehicle = tanks
-            .iter()
-            .max_by_key(|tank| tank.all_statistics.battles)
-            .and_then(|tank| {
-                tankopedia
-                    .get(&tank.tank_id)
-                    .cloned()
-                    .map(|vehicle| (vehicle, tank.all_statistics.battles))
-            });
+        let longest_life_time_vehicle = match tanks.iter().max_by_key(|tank| tank.battle_life_time)
+        {
+            Some(tank) => (state.get_vehicle(tank.tank_id).await?)
+                .as_ref()
+                .clone()
+                .map(|vehicle| (vehicle, tank.battle_life_time)),
+            None => None,
+        };
+        let most_played_vehicle = match tanks.iter().max_by_key(|tank| tank.all_statistics.battles)
+        {
+            Some(tank) => (state.get_vehicle(tank.tank_id).await?)
+                .as_ref()
+                .clone()
+                .map(|vehicle| (vehicle, tank.all_statistics.battles)),
+            None => None,
+        };
 
         Ok(Self {
             account_id: account.basic.id,

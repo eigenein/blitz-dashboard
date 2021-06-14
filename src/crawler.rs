@@ -11,7 +11,7 @@ const ACCOUNT_STALE_TIMEOUT_SECS: i64 = 60;
 
 pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
     loop {
-        let account = database.get_oldest_account()?;
+        let account = database.retrieve_oldest_account()?;
         let account = match account {
             None => {
                 log::info!("No accounts in the database.");
@@ -43,7 +43,7 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
             .ok_or_else(|| anyhow!("account #{} not found", account.id))?;
         let tanks = api.get_merged_tanks(account.id).await?;
 
-        let tx = database.transaction()?;
+        let tx = database.start_transaction()?;
         database.upsert_account(&account_info.basic)?;
         database.upsert_account_snapshot(&account_info)?;
         database.upsert_tanks(&tanks)?;

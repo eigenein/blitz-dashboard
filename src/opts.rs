@@ -27,6 +27,7 @@ pub struct Opts {
 pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
+    ImportTankopedia(ImportTankopediaOpts),
 }
 
 #[derive(Clap)]
@@ -50,6 +51,14 @@ pub struct WebOpts {
 #[clap(about = "Runs the account crawler")]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct CrawlerOpts;
+
+#[derive(Clap)]
+#[clap(name = crate_name!())]
+#[clap(author = crate_authors!())]
+#[clap(version = crate_version!())]
+#[clap(about = "Imports the tankopedia")]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct ImportTankopediaOpts;
 
 pub fn parse() -> Opts {
     Opts::parse()

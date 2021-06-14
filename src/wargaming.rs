@@ -78,7 +78,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     pub async fn get_tankopedia(&self) -> crate::Result<HashMap<i32, models::Vehicle>> {
-        log::debug!("Retrieving tankopedia…");
+        log::info!("Retrieving tankopedia…");
         Ok(self
             .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
@@ -159,7 +159,7 @@ impl WargamingApi {
             .map_err(surf::Error::into_inner)?
             .into();
         log::debug!(
-            "{} resulted in {:?}.",
+            "Wargaming call {} succeeded in {:?}.",
             url.path(),
             Instant::now() - start_instant
         );

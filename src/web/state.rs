@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -7,7 +6,7 @@ use async_std::sync::Mutex;
 use async_std::task::spawn;
 use lru_time_cache::LruCache;
 
-use crate::cached::{Cached, CachedScalar};
+use crate::cached::Cached;
 use crate::database::Database;
 use crate::logging::log_anyhow;
 use crate::models::{Account, AccountInfo, TankSnapshot, Vehicle};
@@ -22,7 +21,7 @@ pub struct State {
     search_accounts_cache: Cached<String, Vec<Account>>,
     account_info_cache: Cached<i32, AccountInfo>,
     tanks_cache: Cached<i32, Vec<TankSnapshot>>,
-    tankopedia_cache: CachedScalar<HashMap<i32, Vehicle>>,
+    tankopedia_cache: Arc<Mutex<LruCache<i32, Arc<Option<Vehicle>>>>>,
 }
 
 pub struct DatabaseStatistics {
@@ -48,22 +47,24 @@ impl State {
                 Duration::from_secs(60),
                 1000,
             )),
-            tankopedia_cache: CachedScalar::new(Duration::from_secs(86400)),
+            tankopedia_cache: Arc::new(Mutex::new(LruCache::with_expiry_duration(
+                Duration::from_secs(86400),
+            ))),
         }
     }
 
     pub async fn get_database_statistics(&self) -> crate::Result<DatabaseStatistics> {
         let account_count = {
             let database = self.database.clone();
-            spawn(async move { database.lock().await.get_account_count() }).await?
+            spawn(async move { database.lock().await.retrieve_account_count() }).await?
         };
         let account_snapshot_count = {
             let database = self.database.clone();
-            spawn(async move { database.lock().await.get_account_snapshot_count() }).await?
+            spawn(async move { database.lock().await.retrieve_account_snapshot_count() }).await?
         };
         let tank_snapshot_count = {
             let database = self.database.clone();
-            spawn(async move { database.lock().await.get_tank_snapshot_count() }).await?
+            spawn(async move { database.lock().await.retrieve_tank_snapshot_count() }).await?
         };
         Ok(DatabaseStatistics {
             account_count,
@@ -94,7 +95,7 @@ impl State {
                     let database = self.database.clone();
                     async_std::task::spawn(async move {
                         let database = database.lock().await;
-                        log_anyhow(database.transaction().and_then(|tx| {
+                        log_anyhow(database.start_transaction().and_then(|tx| {
                             database.upsert_account(&account_info.basic)?;
                             database.upsert_account_snapshot(&account_info)?;
                             tx.commit()?;
@@ -116,7 +117,7 @@ impl State {
                     let database = self.database.clone();
                     async_std::task::spawn(async move {
                         let database = database.lock().await;
-                        log_anyhow(database.transaction().and_then(|tx| {
+                        log_anyhow(database.start_transaction().and_then(|tx| {
                             database.upsert_tanks(&tanks)?;
                             tx.commit()?;
                             Ok(())
@@ -128,9 +129,16 @@ impl State {
             .await
     }
 
-    pub async fn get_tankopedia(&self) -> crate::Result<Arc<HashMap<i32, Vehicle>>> {
-        self.tankopedia_cache
-            .get(|| async { Ok(Arc::new(self.api.get_tankopedia().await?)) })
-            .await
+    pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Option<Vehicle>>> {
+        let mut cache = self.tankopedia_cache.lock().await;
+        let vehicle = match cache.get(&tank_id) {
+            Some(vehicle) => vehicle.clone(),
+            None => {
+                let vehicle = Arc::new(self.database.lock().await.retrieve_vehicle(tank_id)?);
+                cache.insert(tank_id, vehicle.clone());
+                vehicle
+            }
+        };
+        Ok(vehicle)
     }
 }

@@ -80,7 +80,7 @@ pub struct TankAchievements {
 }
 
 /// Tankopedia entry.
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Vehicle {
     pub tank_id: i32,
     pub name: String,
@@ -89,9 +89,12 @@ pub struct Vehicle {
 
     #[serde(rename = "type")]
     pub type_: TankType,
+
+    #[serde(with = "chrono::serde::ts_seconds", default = "Utc::now")]
+    pub imported_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub enum TankType {
     #[serde(rename = "lightTank")]
     Light,
