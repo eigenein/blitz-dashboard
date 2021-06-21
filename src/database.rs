@@ -52,6 +52,8 @@ impl Database {
             CREATE TABLE IF NOT EXISTS tankopedia (document JSON NOT NULL);
             CREATE UNIQUE INDEX IF NOT EXISTS tankopedia_tank_id
                 ON tankopedia(json_extract(document, '$.tank_id'));
+
+            VACUUM;
             "#,
         )?;
 
