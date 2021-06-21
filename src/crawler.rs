@@ -14,12 +14,12 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
         let account = database
             .retrieve_oldest_account()?
             .ok_or_else(|| anyhow!("the database is empty"))?;
-        let age = Utc::now() - account.crawled_at;
         log::info!(
-            "Selected account #{}, last crawled at {}.",
+            "Account #{}, last crawled at {}.",
             account.id,
             account.crawled_at,
         );
+        let age = Utc::now() - account.crawled_at;
         let sleep_duration = (Duration::seconds(ACCOUNT_STALE_TIMEOUT_SECS) - age).num_seconds();
         if sleep_duration > 0 {
             log::info!("Sleeping for {} secs…", sleep_duration);
@@ -27,27 +27,24 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
         }
 
         let start_instant = Instant::now();
-        let account_info = api
-            .get_account_info(account.id)
-            .await?
-            .ok_or_else(|| anyhow!("account #{} not found", account.id))?;
+        let account_info = api.get_account_info(account.id).await?;
         let tx = database.start_transaction()?;
-        database.upsert_account(&account_info.basic)?;
-        if account_info.basic.last_battle_time > account.crawled_at {
-            database.upsert_account_snapshot(&account_info)?;
-            database.upsert_tanks(&api.get_merged_tanks(account.id).await?)?;
-        } else {
-            log::info!(
-                "Account #{} haven't played since {}.",
-                account.id,
-                account.crawled_at
-            );
+        match account_info {
+            Some(account_info) => {
+                database.upsert_account(&account_info.basic)?;
+                if account_info.basic.last_battle_time > account.crawled_at {
+                    database.upsert_account_snapshot(&account_info)?;
+                    database.upsert_tanks(&api.get_merged_tanks(account.id).await?)?;
+                } else {
+                    log::info!("No new battles.");
+                }
+            }
+            None => {
+                log::warn!("The account does not exist. Deleting…");
+                database.delete_account(account.id)?;
+            }
         }
         tx.commit()?;
-        log::info!(
-            "Account #{} crawled in {:?}.",
-            account.id,
-            Instant::now() - start_instant
-        );
+        log::info!("Elapsed: {:?}.", Instant::now() - start_instant);
     }
 }

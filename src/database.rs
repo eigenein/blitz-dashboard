@@ -113,6 +113,16 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_account(&self, account_id: i32) -> crate::Result {
+        self.0
+            .prepare_cached(
+                // language=SQL
+                "DELETE FROM accounts WHERE json_extract(document, '$.account_id') = ?1",
+            )?
+            .execute([account_id])?;
+        Ok(())
+    }
+
     pub fn upsert_account_snapshot(&self, info: &AccountInfo) -> crate::Result {
         log::info!("Upserting account #{} snapshot…", info.basic.id);
         self.0
@@ -250,6 +260,24 @@ mod tests {
         let database = Database::open(":memory:")?;
         database.upsert_account(&info)?;
         database.upsert_account(&info)?;
+        assert_eq!(database.retrieve_account_count()?, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn delete_account_ok() -> crate::Result {
+        let database = Database::open(":memory:")?;
+        database.upsert_account(&BasicAccountInfo {
+            id: 1,
+            last_battle_time: Utc::now(),
+            crawled_at: Utc::now(),
+        })?;
+        database.upsert_account(&BasicAccountInfo {
+            id: 2,
+            last_battle_time: Utc::now(),
+            crawled_at: Utc::now(),
+        })?;
+        database.delete_account(1)?;
         assert_eq!(database.retrieve_account_count()?, 1);
         Ok(())
     }
