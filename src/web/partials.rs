@@ -34,11 +34,11 @@ pub fn header(account_id: i32) -> Markup {
             div.container {
                 div."navbar-brand" {
                     a."navbar-item" href="/" {
-                        span.icon { i."fas"."fa-home" {} }
+                        span.icon { i.fas.fa-home {} }
                         span { "Home" }
                     }
                     a.navbar-item href=(get_account_url(account_id)) {
-                        span.icon { i.fas.fa-users {} }
+                        span.icon { i.fas.fa-user {} }
                         span { "Player" }
                     }
                 }

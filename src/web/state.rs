@@ -108,6 +108,7 @@ impl State {
         }
     }
 
+    #[allow(unused)]
     pub async fn get_tanks(&self, account_id: i32) -> crate::Result<Arc<Vec<TankSnapshot>>> {
         let mut cache = self.tanks_cache.lock().await;
         match cache.get(&account_id) {
@@ -121,6 +122,7 @@ impl State {
         }
     }
 
+    #[allow(unused)]
     pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Option<Vehicle>>> {
         let mut cache = self.tankopedia_cache.lock().await;
         match cache.get(&tank_id) {

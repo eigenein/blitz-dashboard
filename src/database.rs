@@ -167,6 +167,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(unused)]
     pub fn retrieve_vehicle(&self, tank_id: i32) -> crate::Result<Option<Vehicle>> {
         log::debug!("Retrieving vehicle #{}…", tank_id);
         Ok(self
