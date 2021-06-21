@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Instant;
 
-use anyhow::anyhow;
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -18,19 +16,25 @@ pub struct WargamingApi {
     client: surf::Client,
 }
 
+/// Generic Wargaming.net API response.
+#[derive(Deserialize)]
+struct Response<T> {
+    data: T,
+}
+
 impl WargamingApi {
     pub fn new(application_id: &str) -> WargamingApi {
         Self {
             application_id: Arc::new(application_id.to_string()),
             client: surf::client()
+                .with(middleware::Timeout(std::time::Duration::from_secs(10)))
                 .with(middleware::UserAgent)
-                .with(middleware::Timeout(std::time::Duration::from_secs(10))),
+                .with(middleware::Logger),
         }
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::Account>> {
-        log::debug!("Searching: {}", query);
         self.call(&Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
@@ -78,7 +82,6 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     pub async fn get_tankopedia(&self) -> crate::Result<HashMap<i32, models::Vehicle>> {
-        log::info!("Retrieving tankopedia…");
         Ok(self
             .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
@@ -133,7 +136,6 @@ impl WargamingApi {
         account_id: i32,
     ) -> crate::Result<Option<T>> {
         let account_id = account_id.to_string();
-        log::debug!("{} #{}", url, account_id);
         Ok(self
             .call::<HashMap<String, Option<T>>>(&Url::parse_with_params(
                 url,
@@ -148,85 +150,14 @@ impl WargamingApi {
     }
 
     async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
-        let start_instant = Instant::now();
-        let result = self
+        Ok(self
             .client
             .get(url.as_str())
             .await
             .map_err(surf::Error::into_inner)?
-            .body_json::<ApiResponse<T>>()
+            .body_json::<Response<T>>()
             .await
             .map_err(surf::Error::into_inner)?
-            .into();
-        log::debug!(
-            "Wargaming call {} succeeded in {:?}.",
-            url.path(),
-            Instant::now() - start_instant
-        );
-        result
-    }
-}
-
-/// Generic Wargaming.net API error.
-#[derive(Deserialize, Debug, PartialEq)]
-#[serde(untagged)]
-enum ApiResponse<T> {
-    Data {
-        data: T,
-    },
-
-    /// See: <https://developers.wargaming.net/documentation/guide/getting-started/#common-errors>
-    Error {
-        error: ApiError,
-    },
-}
-
-/// Wargaming.net API error.
-#[derive(Deserialize, Debug, PartialEq)]
-struct ApiError {
-    message: String,
-
-    #[serde(default)]
-    code: Option<u16>,
-
-    #[serde(default)]
-    field: Option<String>,
-}
-
-impl<T> From<ApiResponse<T>> for crate::Result<T> {
-    fn from(response: ApiResponse<T>) -> crate::Result<T> {
-        match response {
-            ApiResponse::Data { data } => Ok(data),
-            ApiResponse::Error { error } => crate::Result::Err(anyhow!(
-                r#"[{}] "{}" in "{}""#,
-                error.code.unwrap_or_default(),
-                error.message,
-                error.field.unwrap_or_default(),
-            )),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn response_error() -> crate::Result {
-        let response: ApiResponse<()> = serde_json::from_str(
-            // language=json
-            r#"{"status":"error","error":{"field":"search","message":"INVALID_SEARCH","code":407,"value":"1 2"}}"#,
-        )?;
-        assert_eq!(
-            response,
-            ApiResponse::Error {
-                error: ApiError {
-                    message: "INVALID_SEARCH".to_string(),
-                    code: Some(407),
-                    field: Some("search".to_string()),
-                }
-            }
-        );
-        Ok(())
+            .data)
     }
 }

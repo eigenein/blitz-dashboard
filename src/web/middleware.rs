@@ -1,3 +1,4 @@
+use std::error::Error as StdError;
 use std::time::Instant;
 
 use log::Level;
@@ -12,7 +13,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
         let method = request.method().to_string();
-        log::debug!("Begin request: {} {} {}", peer_addr, method, path);
+        log::debug!("{} → {} {}", peer_addr, method, path);
         let start = Instant::now();
         let response = next.run(request).await;
         let duration = Instant::now() - start;
@@ -23,7 +24,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         };
         log::log!(
             level,
-            r#"Request: {peer_addr} {method} {path} [{status}] ({duration:#?})"#,
+            r#"{peer_addr} ← {method} {path} [{status}] ({duration:#?})"#,
             peer_addr = peer_addr,
             method = method,
             path = path,
@@ -32,7 +33,7 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         );
         match response.error() {
             Some(error) => {
-                let sentry_id = capture_error::<dyn std::error::Error>(error.as_ref());
+                let sentry_id = capture_error::<dyn StdError>(error.as_ref());
                 log::error!("Response error: {:?} [{}]", error, sentry_id.to_simple());
                 Ok(crate::web::responses::render_error(&sentry_id))
             }
