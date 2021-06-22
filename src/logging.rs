@@ -31,7 +31,10 @@ pub fn init(debug: bool) -> anyhow::Result<()> {
 /// Check the result and log an error, if any.
 pub fn log_anyhow<T, R: Borrow<crate::Result<T>>>(result: R) {
     if let Err(ref error) = result.borrow() {
-        let sentry_id = capture_anyhow(error);
-        log::error!("{:?} [{}]", error, sentry_id.to_simple());
+        log::error!(
+            "{:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})",
+            error,
+            capture_anyhow(error).to_simple()
+        );
     }
 }

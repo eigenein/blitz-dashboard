@@ -1,8 +1,7 @@
-use std::error::Error as StdError;
 use std::time::Instant;
 
-use log::Level;
-use sentry::capture_error;
+use log::{debug, error, log, Level};
+use sentry::integrations::anyhow::capture_anyhow;
 use tide::Request;
 
 pub struct LoggerMiddleware;
@@ -13,16 +12,16 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
         let method = request.method().to_string();
-        log::debug!("{} → {} {}", peer_addr, method, path);
+        debug!("{} → {} {}", peer_addr, method, path);
         let start = Instant::now();
-        let response = next.run(request).await;
+        let mut response = next.run(request).await;
         let duration = Instant::now() - start;
         let level = if response.status().is_client_error() {
             Level::Warn
         } else {
             Level::Info
         };
-        log::log!(
+        log!(
             level,
             r#"{peer_addr} ← {method} {path} [{status}] ({duration:#?})"#,
             peer_addr = peer_addr,
@@ -31,10 +30,17 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
             status = response.status(),
             duration = duration,
         );
-        match response.error() {
+        match response.take_error() {
             Some(error) => {
-                let sentry_id = capture_error::<dyn StdError>(error.as_ref());
-                log::error!("Response error: {:?} [{}]", error, sentry_id.to_simple());
+                let error = error.into_inner();
+                let sentry_id = capture_anyhow(&error);
+                error!(
+                    "{} {}: {:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})",
+                    method,
+                    path,
+                    error,
+                    sentry_id.to_simple()
+                );
                 Ok(crate::web::responses::render_error(&sentry_id))
             }
             None => Ok(response),

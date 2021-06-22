@@ -1,5 +1,4 @@
-use std::any::type_name;
-
+use anyhow::{anyhow, Context};
 use chrono::{DateTime, Duration, Utc};
 use tide::Request;
 
@@ -19,7 +18,7 @@ pub struct PlayerViewModel {
 impl PlayerViewModel {
     pub async fn new(request: &Request<State>) -> crate::Result<PlayerViewModel> {
         let account_id: i32 = Self::parse_account_id(&request)?;
-        log::info!("{} #{}…", type_name::<Self>(), account_id);
+        log::info!("Player: #{}", account_id);
 
         let state = request.state();
         let account = state.get_account_info(account_id).await?;
@@ -41,7 +40,9 @@ impl PlayerViewModel {
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
         Ok(request
             .param("account_id")
-            .map_err(surf::Error::into_inner)?
-            .parse()?)
+            .map_err(surf::Error::into_inner)
+            .context("missing account ID")?
+            .parse()
+            .context("invalid account ID")?)
     }
 }
