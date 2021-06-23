@@ -22,6 +22,7 @@ pub async fn run(
 ) -> anyhow::Result<()> {
     let mut app = tide::with_state(State::new(api, database));
     app.with(middleware::LoggerMiddleware);
+    app.with(middleware::SecurityMiddleware);
     app.at("/").get(index::view::get);
     app.at("/ru/:account_id").get(player::view::get);
     app.at("/error").get(errors::get);

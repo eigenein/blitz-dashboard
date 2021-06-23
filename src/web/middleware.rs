@@ -2,12 +2,13 @@ use std::time::Instant;
 
 use log::{debug, error, log, Level};
 use sentry::integrations::anyhow::capture_anyhow;
-use tide::Request;
+use tide::{Middleware, Request};
 
 pub struct LoggerMiddleware;
+pub struct SecurityMiddleware;
 
 #[tide::utils::async_trait]
-impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware {
+impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
     async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
         let peer_addr = request.peer_addr().unwrap_or("-").to_string();
         let path = request.url().path().to_string();
@@ -45,5 +46,14 @@ impl<T: Clone + Send + Sync + 'static> tide::Middleware<T> for LoggerMiddleware 
             }
             None => Ok(response),
         }
+    }
+}
+
+#[tide::utils::async_trait]
+impl<T: Clone + Send + Sync + 'static> Middleware<T> for SecurityMiddleware {
+    async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
+        let mut response = next.run(request).await;
+        http_types::security::default(&mut response);
+        Ok(response)
     }
 }
