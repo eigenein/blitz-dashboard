@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::serde::{deserialize_duration_seconds, serialize_duration_seconds};
@@ -30,10 +30,14 @@ pub struct AccountInfo {
     #[serde(flatten)]
     pub basic: BasicAccountInfo,
 
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing, default)]
     pub nickname: String,
 
-    #[serde(with = "chrono::serde::ts_seconds", skip_serializing)]
+    #[serde(
+        with = "chrono::serde::ts_seconds",
+        skip_serializing,
+        default = "default_created_at"
+    )]
     pub created_at: DateTime<Utc>,
 
     pub statistics: AccountInfoStatistics,
@@ -125,6 +129,10 @@ pub struct TankSnapshot {
         deserialize_with = "deserialize_duration_seconds"
     )]
     pub battle_life_time: Duration,
+}
+
+fn default_created_at() -> DateTime<Utc> {
+    Utc.timestamp(0, 0)
 }
 
 #[cfg(test)]

@@ -6,13 +6,15 @@ use crate::models::Vehicle;
 use crate::web::components::footer::Footer;
 use crate::web::components::icon_text;
 use crate::web::partials::header;
-use crate::web::player::model::PlayerViewModel;
+use crate::web::player::model::{PlayerViewModel, Since};
 use crate::web::responses::render_document;
 use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
+    let account_url = get_account_url(model.account_id);
     let footer = Footer::new(&request.state()).await?;
+
     Ok(render_document(
         StatusCode::Ok,
         Some(model.nickname.as_str()),
@@ -40,13 +42,13 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div.level-item.has-text-centered {
                                             div {
                                                 p.heading { "Tanks played" }
-                                                p.title { (model.n_tanks) }
+                                                p.title { (model.total_tanks) }
                                             }
                                         }
                                         div.level-item.has-text-centered {
                                             div {
                                                 p.heading { "Battles" }
-                                                p.title { (model.n_battles) }
+                                                p.title { (model.total_battles) }
                                             }
                                         }
                                         div.level-item.has-text-centered {
@@ -66,10 +68,21 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
                     div.tabs.is-boxed {
                         ul {
-                            li.is-active { a { "Today" } }
-                            li { a { "Week" } }
-                            li { a { "Month" } }
-                            li { a { "Year" } }
+                            li.(if model.since == Since::Hour { "is-active" } else { "" }) {
+                                a href=(format!("{}?since=1h", account_url)) { "Hour" }
+                            }
+                            li.(if model.since == Since::Day { "is-active" } else { "" }) {
+                                a href=(format!("{}?since=1d", account_url)) { "Day" }
+                            }
+                            li.(if model.since == Since::Week { "is-active" } else { "" }) {
+                                a href=(format!("{}?since=1w", account_url)) { "Week" }
+                            }
+                            li.(if model.since == Since::Month { "is-active" } else { "" }) {
+                                a href=(format!("{}?since=1m", account_url)) { "Month" }
+                            }
+                            li.(if model.since == Since::Year { "is-active" } else { "" }) {
+                                a href=(format!("{}?since=1y", account_url)) { "Year" }
+                            }
                         }
                     }
 
@@ -84,7 +97,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         div.level-item.has-text-centered {
                                             div {
                                                 p.heading { "Battles" }
-                                                p.title { "1234" }
+                                                p.title { (model.period_battles) }
                                             }
                                         }
                                     }

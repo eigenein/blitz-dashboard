@@ -1,11 +1,12 @@
 use std::time::{Duration, Instant};
 
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
-use rusqlite::{OptionalExtension, Row, ToSql};
+use rusqlite::{params, OptionalExtension, Row, ToSql};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot, Vehicle};
+use chrono::{DateTime, Utc};
 
 pub struct Database(rusqlite::Connection);
 
@@ -103,6 +104,25 @@ impl Database {
             .query_row([], get_scalar)
             .optional()?
         )
+    }
+
+    pub fn retrieve_latest_account_snapshot(
+        &self,
+        account_id: i32,
+        before: &DateTime<Utc>,
+    ) -> crate::Result<Option<AccountInfo>> {
+        Ok(self
+            .0
+            // language=SQL
+            .prepare_cached(
+                "SELECT document 
+                FROM account_snapshots
+                WHERE json_extract(document, '$.account_id') = ?1 AND json_extract(document, '$.last_battle_time') <= ?2
+                ORDER BY json_extract(document, '$.last_battle_time') DESC
+                LIMIT 1",
+            )?
+            .query_row(params![account_id, before.timestamp()], get_scalar)
+            .optional()?)
     }
 
     pub fn upsert_account(&self, info: &BasicAccountInfo) -> crate::Result {
@@ -225,6 +245,12 @@ impl FromSql for BasicAccountInfo {
 }
 
 impl FromSql for Vehicle {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        deserializable_from_sql(value)
+    }
+}
+
+impl FromSql for AccountInfo {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         deserializable_from_sql(value)
     }

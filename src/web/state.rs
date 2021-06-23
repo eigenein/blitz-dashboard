@@ -10,6 +10,7 @@ use crate::database::Database;
 use crate::logging::log_anyhow;
 use crate::models::{Account, AccountInfo, TankSnapshot, Vehicle};
 use crate::wargaming::WargamingApi;
+use chrono::{DateTime, Utc};
 
 /// Web application global state.
 #[derive(Clone)]
@@ -108,7 +109,6 @@ impl State {
         }
     }
 
-    #[allow(unused)]
     pub async fn get_tanks(&self, account_id: i32) -> crate::Result<Arc<Vec<TankSnapshot>>> {
         let mut cache = self.tanks_cache.lock().await;
         match cache.get(&account_id) {
@@ -133,5 +133,20 @@ impl State {
                 Ok(vehicle)
             }
         }
+    }
+
+    pub async fn retrieve_latest_account_snapshot(
+        &self,
+        account_id: i32,
+        since: DateTime<Utc>,
+    ) -> crate::Result<Option<AccountInfo>> {
+        let database = self.database.clone();
+        spawn(async move {
+            database
+                .lock()
+                .await
+                .retrieve_latest_account_snapshot(account_id, &since)
+        })
+        .await
     }
 }
