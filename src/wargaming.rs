@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use anyhow::anyhow;
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -96,7 +97,7 @@ impl WargamingApi {
                 tank_id
                     .parse::<i32>()
                     .map(|tank_id| (tank_id, vehicle))
-                    .map_err(anyhow::Error::from)
+                    .map_err(|error| anyhow!(error))
             })
             .collect::<crate::Result<HashMap<i32, models::Vehicle>>>()?)
     }

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
 use tide::Request;
 
