@@ -3,6 +3,7 @@ use maud::{html, Markup, Render};
 use tide::StatusCode;
 
 use crate::models::Vehicle;
+use crate::statistics::ConfidenceInterval;
 use crate::web::components::footer::Footer;
 use crate::web::components::icon_text;
 use crate::web::partials::header;
@@ -107,94 +108,51 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                     }
 
                     div.tile.is-ancestor {
-                        div.tile."is-4".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
-                                }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Low" }
-                                                p.title { "10.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Wins" }
-                                                p.title { "12.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "High" }
-                                                p.title { "14.3%" }
-                                            }
-                                        }
+                        @if let Some(period_wins) = model.period_wins {
+                            div.tile."is-4".is-parent {
+                                div.tile.is-child.card {
+                                    header.card-header {
+                                        p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
+                                    }
+                                    div.card-content {
+                                        (period_wins)
                                     }
                                 }
                             }
                         }
 
-                        div.tile."is-4".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
-                                }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Low" }
-                                                p.title { "10.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Wins" }
-                                                p.title { "12.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "High" }
-                                                p.title { "14.3%" }
-                                            }
-                                        }
+                        @if let Some(period_survival) = model.period_survival {
+                            div.tile."is-4".is-parent {
+                                div.tile.is-child.card {
+                                    header.card-header {
+                                        p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
+                                    }
+                                    div.card-content {
+                                        (period_survival)
                                     }
                                 }
                             }
                         }
 
-                        div.tile."is-4".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
-                                }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Low" }
-                                                p.title { "10.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Wins" }
-                                                p.title { "12.3%" }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "High" }
-                                                p.title { "14.3%" }
-                                            }
-                                        }
+                        @if let Some(period_hits) = model.period_hits {
+                            div.tile."is-4".is-parent {
+                                div.tile.is-child.card {
+                                    header.card-header {
+                                        p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
+                                    }
+                                    div.card-content {
+                                        (period_hits)
                                     }
                                 }
                             }
+                        }
+                    }
+
+                    article.message.is-info {
+                        div.message-body {
+                            "Lower and upper bounds above refer to 90% "
+                            a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
+                            "."
                         }
                     }
                 }
@@ -227,6 +185,38 @@ impl Render for Vehicle {
         html! {
             strong.(if self.is_premium { "has-text-warning-dark" } else { "" }) title=(self.tank_id) {
                 (tier) " " (self.name)
+            }
+        }
+    }
+}
+
+impl Render for ConfidenceInterval {
+    fn render(&self) -> Markup {
+        let mean = self.mean * 100.0;
+        let margin = self.margin * 100.0;
+        let lower = (mean - margin).max(0.0);
+        let upper = (mean + margin).min(100.0);
+
+        html! {
+            div.level {
+                div.level-item.has-text-centered {
+                    div {
+                        p.heading { "Lower" }
+                        p.title."is-5" title=(lower) { (format!("{:.1}%", lower)) }
+                    }
+                }
+                div.level-item.has-text-centered {
+                    div {
+                        p.heading { "Mean" }
+                        p.title title=(mean) { (format!("{:.1}%", mean)) }
+                    }
+                }
+                div.level-item.has-text-centered {
+                    div {
+                        p.heading { "Upper" }
+                        p.title."is-5" title=(upper) { (format!("{:.1}%", upper)) }
+                    }
+                }
             }
         }
     }

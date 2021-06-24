@@ -3,6 +3,7 @@ use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
 use tide::Request;
 
+use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
 
 pub struct PlayerViewModel {
@@ -13,9 +14,12 @@ pub struct PlayerViewModel {
     pub has_recently_played: bool,
     pub is_inactive: bool,
     pub total_battles: i32,
-    pub period_battles: i32,
     pub total_tanks: usize,
     pub since: Since,
+    pub period_battles: i32,
+    pub period_wins: Option<ConfidenceInterval>,
+    pub period_survival: Option<ConfidenceInterval>,
+    pub period_hits: Option<ConfidenceInterval>,
 }
 
 impl PlayerViewModel {
@@ -34,9 +38,29 @@ impl PlayerViewModel {
         let older_account_info = state
             .retrieve_latest_account_snapshot(account_id, since)
             .await?;
+        let older_account_info = older_account_info.as_ref();
 
         let period_battles = account_info.statistics.all.battles
-            - older_account_info.map_or_else(Default::default, |info| info.statistics.all.battles);
+            - older_account_info.map_or(0, |info| info.statistics.all.battles);
+        let period_wins = ConfidenceInterval::from_proportion(
+            period_battles,
+            account_info.statistics.all.wins
+                - older_account_info.map_or(0, |info| info.statistics.all.wins),
+            None,
+        );
+        let period_survival = ConfidenceInterval::from_proportion(
+            period_battles,
+            account_info.statistics.all.survived_battles
+                - older_account_info.map_or(0, |info| info.statistics.all.survived_battles),
+            None,
+        );
+        let period_hits = ConfidenceInterval::from_proportion(
+            account_info.statistics.all.shots
+                - older_account_info.map_or(0, |info| info.statistics.all.shots),
+            account_info.statistics.all.hits
+                - older_account_info.map_or(0, |info| info.statistics.all.hits),
+            None,
+        );
 
         Ok(Self {
             account_id: account_info.basic.id,
@@ -44,12 +68,15 @@ impl PlayerViewModel {
             created_at: account_info.created_at,
             last_battle_time: account_info.basic.last_battle_time,
             total_battles: account_info.statistics.all.battles,
-            period_battles,
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
             total_tanks: tanks.len(),
             since: query.since,
+            period_battles,
+            period_wins,
+            period_survival,
+            period_hits,
         })
     }
 
