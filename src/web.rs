@@ -5,7 +5,6 @@ use crate::wargaming::WargamingApi;
 use crate::web::state::State;
 
 mod components;
-mod errors;
 mod index;
 mod middleware;
 mod partials;
@@ -25,7 +24,12 @@ pub async fn run(
     app.with(middleware::SecurityMiddleware);
     app.at("/").get(index::view::get);
     app.at("/ru/:account_id").get(player::view::get);
-    app.at("/error").get(errors::get);
+    app.at("/error").get(|_| async {
+        Err::<tide::Response, _>(tide::Error::from_str(
+            StatusCode::InternalServerError,
+            "Simulated error",
+        ))
+    });
     app.at("/site.webmanifest").get(|_| async {
         Ok(get_static(
             include_bytes!("web/static/site.webmanifest"),

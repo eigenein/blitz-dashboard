@@ -22,14 +22,17 @@ pub fn render_error(sentry_id: &sentry::types::Uuid) -> Response {
                     div class="container" {
                         div class="columns" {
                             div class="column is-6 is-offset-3" {
-                                div.card {
-                                    header class="card-header" {
-                                        p class="card-header-title" { "🤖 Oops!…" }
+                                div.box {
+                                    p.title."is-5" { "Internal error" }
+                                    p.content {
+                                        "Sometimes this happens because of a Wargaming.net error."
+                                        " So, you may try to refresh the page."
                                     }
-                                    div class="card-content" {
-                                        p.content { "Sentry ID: " code { (sentry_id.to_simple()) } "." }
-                                        p { a class="button is-info" href="/" { "Go to the Home page" } }
+                                    p.content { "Anyway, the error is already reported." }
+                                    p.content {
+                                        "Here is the reference: " code { (sentry_id.to_simple()) } "."
                                     }
+                                    p { a class="button is-info" href="/" { "Go to the Home page" } }
                                 }
                             }
                         }
