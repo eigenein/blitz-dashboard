@@ -3,7 +3,6 @@ use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
 use tide::Request;
 
-use crate::models::AccountInfo;
 use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
 
@@ -21,6 +20,7 @@ pub struct PlayerViewModel {
     pub period_wins: Option<ConfidenceInterval>,
     pub period_survival: Option<ConfidenceInterval>,
     pub period_hits: Option<ConfidenceInterval>,
+    pub period_damage_dealt: i32,
 }
 
 impl PlayerViewModel {
@@ -35,26 +35,27 @@ impl PlayerViewModel {
 
         let state = request.state();
         let account_info = state.get_account_info(account_id).await?;
+        let actual_statistics = &account_info.statistics.all;
         let tanks = state.get_tanks(account_id).await?;
-        let older_account_info = state
+        let old_statistics = state
             .retrieve_latest_account_snapshot(account_id, since)
-            .await?;
-        let older_account_info = older_account_info.as_ref();
+            .await?
+            .map_or_else(Default::default, |info| info.statistics.all);
 
-        let period_battles =
-            account_info.all_battles() - older_account_info.map_or(0, AccountInfo::all_battles);
+        let period_battles = actual_statistics.battles - old_statistics.battles;
         let period_wins = ConfidenceInterval::from_proportion_90(
             period_battles,
-            account_info.all_wins() - older_account_info.map_or(0, AccountInfo::all_wins),
+            actual_statistics.wins - old_statistics.wins,
         );
         let period_survival = ConfidenceInterval::from_proportion_90(
             period_battles,
-            account_info.all_survived() - older_account_info.map_or(0, AccountInfo::all_survived),
+            actual_statistics.survived_battles - old_statistics.survived_battles,
         );
         let period_hits = ConfidenceInterval::from_proportion_90(
-            account_info.all_shots() - older_account_info.map_or(0, AccountInfo::all_shots),
-            account_info.all_hits() - older_account_info.map_or(0, AccountInfo::all_hits),
+            actual_statistics.shots - old_statistics.shots,
+            actual_statistics.hits - old_statistics.hits,
         );
+        let period_damage_dealt = actual_statistics.damage_dealt - old_statistics.damage_dealt;
 
         Ok(Self {
             account_id: account_info.basic.id,
@@ -71,6 +72,7 @@ impl PlayerViewModel {
             period_wins,
             period_survival,
             period_hits,
+            period_damage_dealt,
         })
     }
 

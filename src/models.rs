@@ -48,7 +48,7 @@ pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
@@ -139,28 +139,6 @@ pub struct TankSnapshot {
 
 fn default_created_at() -> DateTime<Utc> {
     Utc.timestamp(0, 0)
-}
-
-impl AccountInfo {
-    pub fn all_battles(&self) -> i32 {
-        self.statistics.all.battles
-    }
-
-    pub fn all_wins(&self) -> i32 {
-        self.statistics.all.wins
-    }
-
-    pub fn all_survived(&self) -> i32 {
-        self.statistics.all.survived_battles
-    }
-
-    pub fn all_shots(&self) -> i32 {
-        self.statistics.all.shots
-    }
-
-    pub fn all_hits(&self) -> i32 {
-        self.statistics.all.hits
-    }
 }
 
 #[cfg(test)]

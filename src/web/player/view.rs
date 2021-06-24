@@ -114,6 +114,24 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                             }
                         }
+
+                        div.tile."is-2".is-parent {
+                            div.tile.is-child.card {
+                                header.card-header {
+                                    p.card-header-title { (icon_text("fas fa-house-damage", "Damage")) }
+                                }
+                                div.card-content {
+                                    div.level {
+                                        div.level-item.has-text-centered {
+                                            div {
+                                                p.heading { "Dealt" }
+                                                p.title { (model.period_damage_dealt) }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     div.tile.is-ancestor {
