@@ -3,6 +3,7 @@ use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
 use tide::Request;
 
+use crate::models::AccountInfo;
 use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
 
@@ -29,7 +30,7 @@ impl PlayerViewModel {
             .query::<Query>()
             .map_err(|error| anyhow!(error))
             .context("failed to parse the query")?;
-        let since = Utc::now() - Duration::from(&query.since);
+        let since = DateTime::<Utc>::from(&query.since);
         log::info!("Retrieving player #{} since {:?}.", account_id, since);
 
         let state = request.state();
@@ -40,26 +41,19 @@ impl PlayerViewModel {
             .await?;
         let older_account_info = older_account_info.as_ref();
 
-        let period_battles = account_info.statistics.all.battles
-            - older_account_info.map_or(0, |info| info.statistics.all.battles);
-        let period_wins = ConfidenceInterval::from_proportion(
+        let period_battles =
+            account_info.all_battles() - older_account_info.map_or(0, AccountInfo::all_battles);
+        let period_wins = ConfidenceInterval::from_proportion_90(
             period_battles,
-            account_info.statistics.all.wins
-                - older_account_info.map_or(0, |info| info.statistics.all.wins),
-            None,
+            account_info.all_wins() - older_account_info.map_or(0, AccountInfo::all_wins),
         );
-        let period_survival = ConfidenceInterval::from_proportion(
+        let period_survival = ConfidenceInterval::from_proportion_90(
             period_battles,
-            account_info.statistics.all.survived_battles
-                - older_account_info.map_or(0, |info| info.statistics.all.survived_battles),
-            None,
+            account_info.all_survived() - older_account_info.map_or(0, AccountInfo::all_survived),
         );
-        let period_hits = ConfidenceInterval::from_proportion(
-            account_info.statistics.all.shots
-                - older_account_info.map_or(0, |info| info.statistics.all.shots),
-            account_info.statistics.all.hits
-                - older_account_info.map_or(0, |info| info.statistics.all.hits),
-            None,
+        let period_hits = ConfidenceInterval::from_proportion_90(
+            account_info.all_shots() - older_account_info.map_or(0, AccountInfo::all_shots),
+            account_info.all_hits() - older_account_info.map_or(0, AccountInfo::all_hits),
         );
 
         Ok(Self {
@@ -81,12 +75,12 @@ impl PlayerViewModel {
     }
 
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
-        Ok(request
+        request
             .param("account_id")
             .map_err(surf::Error::into_inner)
             .context("missing account ID")?
             .parse()
-            .context("invalid account ID")?)
+            .context("invalid account ID")
     }
 }
 
@@ -100,6 +94,15 @@ struct Query {
 pub enum Since {
     #[serde(rename = "1h")]
     Hour,
+
+    #[serde(rename = "4h")]
+    FourHours,
+
+    #[serde(rename = "8h")]
+    EightHours,
+
+    #[serde(rename = "12h")]
+    TwelveHours,
 
     #[serde(rename = "1d")]
     Day,
@@ -121,13 +124,22 @@ impl Default for Since {
 }
 
 impl From<&Since> for Duration {
-    fn from(this: &Since) -> Self {
-        match this {
+    fn from(since: &Since) -> Self {
+        match since {
             Since::Hour => Self::hours(1),
+            Since::FourHours => Self::hours(4),
+            Since::EightHours => Self::hours(8),
+            Since::TwelveHours => Self::hours(12),
             Since::Day => Self::days(1),
             Since::Week => Self::weeks(1),
             Since::Month => Self::days(30),
             Since::Year => Self::days(365),
         }
+    }
+}
+
+impl From<&Since> for DateTime<Utc> {
+    fn from(since: &Since) -> Self {
+        Utc::now() - Duration::from(since)
     }
 }

@@ -135,6 +135,28 @@ fn default_created_at() -> DateTime<Utc> {
     Utc.timestamp(0, 0)
 }
 
+impl AccountInfo {
+    pub fn all_battles(&self) -> i32 {
+        self.statistics.all.battles
+    }
+
+    pub fn all_wins(&self) -> i32 {
+        self.statistics.all.wins
+    }
+
+    pub fn all_survived(&self) -> i32 {
+        self.statistics.all.survived_battles
+    }
+
+    pub fn all_shots(&self) -> i32 {
+        self.statistics.all.shots
+    }
+
+    pub fn all_hits(&self) -> i32 {
+        self.statistics.all.hits
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
