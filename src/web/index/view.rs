@@ -1,11 +1,12 @@
-use maud::html;
+use clap::crate_name;
+use maud::{html, DOCTYPE};
 use tide::Redirect;
 use tide::StatusCode;
 
 use crate::web::index::model::IndexViewModel;
-use crate::web::partials::account_search;
+use crate::web::partials::{account_search, headers};
 use crate::web::player::view::get_account_url;
-use crate::web::responses::render_document;
+use crate::web::responses::html;
 use crate::web::state::State;
 
 /// Home page that allows searching for a user.
@@ -18,24 +19,32 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         }
     }
 
-    Ok(render_document(
+    Ok(html(
         StatusCode::Ok,
-        None,
         html! {
-            section class="hero is-fullheight" {
-                div class="hero-body" {
-                    div class="container" {
-                        div class="columns" {
-                            div class="column is-8 is-offset-2" {
-                                form action="/" method="GET" {
-                                    (account_search("is-medium", "", true))
-                                }
-                                @if let Some(accounts) = &model.accounts {
-                                    div class="buttons mt-4" {
-                                        @for account in accounts.iter() {
-                                            a class="button is-link is-small is-rounded" href=(get_account_url(account.id)) {
-                                                span.icon { i class="fas fa-user" {} }
-                                                span { (account.nickname) }
+            (DOCTYPE)
+            html lang="en" {
+                head {
+                    (headers())
+                    title { (crate_name!()) }
+                }
+                body {
+                    section class="hero is-fullheight" {
+                        div class="hero-body" {
+                            div class="container" {
+                                div class="columns" {
+                                    div class="column is-8 is-offset-2" {
+                                        form action="/" method="GET" {
+                                            (account_search("is-medium", "", true))
+                                        }
+                                        @if let Some(accounts) = &model.accounts {
+                                            div class="buttons mt-4" {
+                                                @for account in accounts.iter() {
+                                                    a class="button is-link is-small is-rounded" href=(get_account_url(account.id)) {
+                                                        span.icon { i class="fas fa-user" {} }
+                                                        span { (account.nickname) }
+                                                    }
+                                                }
                                             }
                                         }
                                     }

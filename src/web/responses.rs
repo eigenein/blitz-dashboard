@@ -11,28 +11,11 @@ pub fn html(code: StatusCode, markup: Markup) -> Response {
         .build()
 }
 
-/// Wraps the body into a complete HTML document.
-#[deprecated]
-pub fn render_document(code: StatusCode, title: Option<&str>, body: Markup) -> Response {
-    html(
-        code,
-        html! {
-            (DOCTYPE)
-            html lang="en" {
-                head {
-                    (headers())
-                    title { @if let Some(title) = title { (title) " – " } "Blitz Dashboard" }
-                }
-                body { (body) }
-            }
-        },
-    )
-}
-
 pub fn error(sentry_id: &sentry::types::Uuid) -> Response {
     html(
         StatusCode::InternalServerError,
         html! {
+            (DOCTYPE)
             html lang="en" {
                 head {
                     (headers())

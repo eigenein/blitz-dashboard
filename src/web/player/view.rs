@@ -1,13 +1,14 @@
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup, Render};
+use clap::crate_name;
+use maud::{html, Markup, Render, DOCTYPE};
 use tide::StatusCode;
 
 use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
 use crate::web::partials::footer::Footer;
-use crate::web::partials::{account_search, icon_text};
+use crate::web::partials::{account_search, headers, icon_text};
 use crate::web::player::model::{PlayerViewModel, Since};
-use crate::web::responses::render_document;
+use crate::web::responses::html;
 use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
@@ -15,202 +16,210 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
     let account_url = get_account_url(model.account_id);
     let footer = Footer::new(&request.state()).await?;
 
-    Ok(render_document(
+    Ok(html(
         StatusCode::Ok,
-        Some(model.nickname.as_str()),
         html! {
-            nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-                div.container {
-                    div."navbar-brand" {
-                        div.navbar-item {
-                            div.buttons {
-                                a.button.is-link href="/" {
-                                    span.icon { i.fas.fa-home {} }
-                                    span { "Home" }
-                                }
-                            }
-                        }
-                    }
-                    div."navbar-menu" {
-                        div.navbar-end {
-                            form.navbar-item action="/" method="GET" {
-                                (account_search("", &model.nickname, false))
-                            }
-                        }
-                    }
+            (DOCTYPE)
+            html lang="en" {
+                head {
+                    (headers())
+                    title { (model.nickname) " – " (crate_name!()) }
                 }
-            }
-
-            section.section {
-                div.container {
-                    div.tile.is-ancestor {
-                        div.tile."is-6".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-user", &model.nickname)) }
+                body {
+                    nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
+                        div.container {
+                            div."navbar-brand" {
+                                div.navbar-item {
+                                    div.buttons {
+                                        a.button.is-link href="/" {
+                                            span.icon { i.fas.fa-home {} }
+                                            span { "Home" }
+                                        }
+                                    }
                                 }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Account age" }
-                                                p.title title=(model.created_at) {
-                                                    (HumanTime::from(model.created_at).to_text_en(Accuracy::Rough, Tense::Present))
+                            }
+                            div."navbar-menu" {
+                                div.navbar-end {
+                                    form.navbar-item action="/" method="GET" {
+                                        (account_search("", &model.nickname, false))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    section.section {
+                        div.container {
+                            div.tile.is-ancestor {
+                                div.tile."is-6".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-user", &model.nickname)) }
+                                        }
+                                        div.card-content {
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Account age" }
+                                                        p.title title=(model.created_at) {
+                                                            (HumanTime::from(model.created_at).to_text_en(Accuracy::Rough, Tense::Present))
+                                                        }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Tanks played" }
+                                                        p.title { (model.total_tanks) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Battles" }
+                                                        p.title { (model.total_battles) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Last battle" }
+                                                        p.title.(if model.has_recently_played { "has-text-success" } else if model.is_inactive { "has-text-danger" } else { "" })
+                                                            title=(model.last_battle_time) {
+                                                            (HumanTime::from(model.last_battle_time))
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Tanks played" }
-                                                p.title { (model.total_tanks) }
+                                    }
+                                }
+                            }
+
+                            div.tabs.is-boxed {
+                                ul {
+                                    li.(if model.since == Since::Hour { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=1h", account_url)) { "Hour" }
+                                    }
+                                    li.(if model.since == Since::FourHours { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=4h", account_url)) { "4 hours" }
+                                    }
+                                    li.(if model.since == Since::EightHours { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=8h", account_url)) { "8 hours" }
+                                    }
+                                    li.(if model.since == Since::TwelveHours { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=12h", account_url)) { "12 hours" }
+                                    }
+                                    li.(if model.since == Since::Day { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=1d", account_url)) { "24 hours" }
+                                    }
+                                    li.(if model.since == Since::Week { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=1w", account_url)) { "Week" }
+                                    }
+                                    li.(if model.since == Since::Month { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=1m", account_url)) { "Month" }
+                                    }
+                                    li.(if model.since == Since::Year { "is-active" } else { "" }) {
+                                        a href=(format!("{}?since=1y", account_url)) { "Year" }
+                                    }
+                                }
+                            }
+
+                            div.tile.is-ancestor {
+                                div.tile."is-2".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Battles")) }
+                                        }
+                                        div.card-content {
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Battles" }
+                                                        p.title { (model.period_battles) }
+                                                    }
+                                                }
                                             }
                                         }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Battles" }
-                                                p.title { (model.total_battles) }
-                                            }
+                                    }
+                                }
+
+                                div.tile."is-4".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-house-damage", "Damage dealt")) }
                                         }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Last battle" }
-                                                p.title.(if model.has_recently_played { "has-text-success" } else if model.is_inactive { "has-text-danger" } else { "" })
-                                                    title=(model.last_battle_time) {
-                                                    (HumanTime::from(model.last_battle_time))
+                                        div.card-content {
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Total" }
+                                                        p.title { (model.period_damage_dealt_total) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Mean" }
+                                                        p.title title=(model.period_damage_dealt_mean) { (format!("{:.0}", model.period_damage_dealt_mean)) }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    div.tabs.is-boxed {
-                        ul {
-                            li.(if model.since == Since::Hour { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1h", account_url)) { "Hour" }
-                            }
-                            li.(if model.since == Since::FourHours { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=4h", account_url)) { "4 hours" }
-                            }
-                            li.(if model.since == Since::EightHours { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=8h", account_url)) { "8 hours" }
-                            }
-                            li.(if model.since == Since::TwelveHours { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=12h", account_url)) { "12 hours" }
-                            }
-                            li.(if model.since == Since::Day { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1d", account_url)) { "24 hours" }
-                            }
-                            li.(if model.since == Since::Week { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1w", account_url)) { "Week" }
-                            }
-                            li.(if model.since == Since::Month { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1m", account_url)) { "Month" }
-                            }
-                            li.(if model.since == Since::Year { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1y", account_url)) { "Year" }
-                            }
-                        }
-                    }
-
-                    div.tile.is-ancestor {
-                        div.tile."is-2".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Battles")) }
+                            div.tile.is-ancestor {
+                                @if let Some(period_wins) = &model.period_wins {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
+                                            }
+                                            div.card-content {
+                                                (period_wins)
+                                            }
+                                        }
+                                    }
                                 }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Battles" }
-                                                p.title { (model.period_battles) }
+
+                                @if let Some(period_survival) = &model.period_survival {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
+                                            }
+                                            div.card-content {
+                                                (period_survival)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                @if let Some(period_hits) = &model.period_hits {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
+                                            }
+                                            div.card-content {
+                                                (period_hits)
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        div.tile."is-4".is-parent {
-                            div.tile.is-child.card {
-                                header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-house-damage", "Damage dealt")) }
-                                }
-                                div.card-content {
-                                    div.level {
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Total" }
-                                                p.title { (model.period_damage_dealt_total) }
-                                            }
-                                        }
-                                        div.level-item.has-text-centered {
-                                            div {
-                                                p.heading { "Mean" }
-                                                p.title title=(model.period_damage_dealt_mean) { (format!("{:.0}", model.period_damage_dealt_mean)) }
-                                            }
-                                        }
-                                    }
+                            article.message.is-info {
+                                div.message-body {
+                                    "Lower and upper bounds above refer to 90% "
+                                    a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
+                                    "."
                                 }
                             }
                         }
                     }
 
-                    div.tile.is-ancestor {
-                        @if let Some(period_wins) = &model.period_wins {
-                            div.tile."is-4".is-parent {
-                                div.tile.is-child.card {
-                                    header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
-                                    }
-                                    div.card-content {
-                                        (period_wins)
-                                    }
-                                }
-                            }
-                        }
-
-                        @if let Some(period_survival) = &model.period_survival {
-                            div.tile."is-4".is-parent {
-                                div.tile.is-child.card {
-                                    header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
-                                    }
-                                    div.card-content {
-                                        (period_survival)
-                                    }
-                                }
-                            }
-                        }
-
-                        @if let Some(period_hits) = &model.period_hits {
-                            div.tile."is-4".is-parent {
-                                div.tile.is-child.card {
-                                    header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
-                                    }
-                                    div.card-content {
-                                        (period_hits)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    article.message.is-info {
-                        div.message-body {
-                            "Lower and upper bounds above refer to 90% "
-                            a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
-                            "."
-                        }
-                    }
+                    (footer)
                 }
             }
-
-            (footer)
         },
     ))
 }
