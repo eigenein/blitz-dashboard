@@ -25,6 +25,7 @@ pub fn account_search(class: &str, has_autofocus: bool) -> Markup {
                     placeholder="Nickname"
                     autocomplete="nickname"
                     pattern="\\w+"
+                    autocapitalize="none"
                     minlength=(MIN_QUERY_LENGTH)
                     maxlength=(MAX_QUERY_LENGTH)
                     autofocus[has_autofocus]
