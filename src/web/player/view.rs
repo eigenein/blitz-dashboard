@@ -141,7 +141,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                     }
 
                     div.tile.is-ancestor {
-                        @if let Some(period_wins) = model.period_wins {
+                        @if let Some(period_wins) = &model.period_wins {
                             div.tile."is-4".is-parent {
                                 div.tile.is-child.card {
                                     header.card-header {
@@ -154,7 +154,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
                         }
 
-                        @if let Some(period_survival) = model.period_survival {
+                        @if let Some(period_survival) = &model.period_survival {
                             div.tile."is-4".is-parent {
                                 div.tile.is-child.card {
                                     header.card-header {
@@ -167,7 +167,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
                         }
 
-                        @if let Some(period_hits) = model.period_hits {
+                        @if let Some(period_hits) = &model.period_hits {
                             div.tile."is-4".is-parent {
                                 div.tile.is-child.card {
                                     header.card-header {
@@ -223,7 +223,7 @@ impl Render for Vehicle {
     }
 }
 
-impl Render for ConfidenceInterval {
+impl Render for &ConfidenceInterval {
     fn render(&self) -> Markup {
         let mean = self.mean * 100.0;
         let margin = self.margin * 100.0;

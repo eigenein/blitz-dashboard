@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -155,10 +155,12 @@ impl WargamingApi {
             .client
             .get(url.as_str())
             .await
-            .map_err(surf::Error::into_inner)?
+            .map_err(surf::Error::into_inner)
+            .context("request has failed")?
             .body_json::<Response<T>>()
             .await
-            .map_err(surf::Error::into_inner)?
+            .map_err(surf::Error::into_inner)
+            .context("could not parse JSON")?
             .data)
     }
 }

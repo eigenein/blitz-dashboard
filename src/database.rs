@@ -1,14 +1,20 @@
 use std::time::{Duration, Instant};
 
+use chrono::{DateTime, Utc};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::{params, OptionalExtension, Row, ToSql};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot, Vehicle};
-use chrono::{DateTime, Utc};
 
 pub struct Database(rusqlite::Connection);
+
+pub struct Statistics {
+    pub account_count: i64,
+    pub account_snapshot_count: i64,
+    pub tank_snapshot_count: i64,
+}
 
 impl Database {
     /// Open and initialize the database.
@@ -198,6 +204,14 @@ impl Database {
             )?
             .query_row([tank_id], get_scalar)
             .optional()?)
+    }
+
+    pub fn retrieve_statistics(&self) -> crate::Result<Statistics> {
+        Ok(Statistics {
+            account_count: self.retrieve_account_count()?,
+            account_snapshot_count: self.retrieve_account_snapshot_count()?,
+            tank_snapshot_count: self.retrieve_tank_snapshot_count()?,
+        })
     }
 }
 

@@ -1,7 +1,8 @@
 use clap::crate_version;
 use maud::{html, Markup, Render};
 
-use crate::web::state::{DatabaseStatistics, State};
+use crate::database::Statistics as DatabaseStatistics;
+use crate::web::state::State;
 
 pub struct Footer {
     database_statistics: DatabaseStatistics,
@@ -9,7 +10,10 @@ pub struct Footer {
 
 impl Footer {
     pub async fn new(state: &State) -> crate::Result<Self> {
-        let database_statistics = state.get_database_statistics().await?;
+        let database = state.database.clone();
+        let database_statistics =
+            async_std::task::spawn(async move { database.lock().await.retrieve_statistics() })
+                .await?;
         Ok(Self {
             database_statistics,
         })

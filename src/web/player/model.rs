@@ -1,10 +1,28 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Context};
+use async_std::sync::Mutex;
 use chrono::{DateTime, Duration, Utc};
+use lazy_static::lazy_static;
+use lru_time_cache::LruCache;
 use serde::Deserialize;
 use tide::Request;
 
+use crate::logging::log_anyhow;
+use crate::models::AccountInfo;
 use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
+
+/// Defines the model cache lookup key. Consists of account ID and display period.
+type ModelCacheKey = (i32, Since);
+
+lazy_static! {
+    static ref MODEL_CACHE: Arc<Mutex<LruCache<ModelCacheKey, Arc<PlayerViewModel>>>> =
+        Arc::new(Mutex::new(LruCache::with_expiry_duration_and_capacity(
+            std::time::Duration::from_secs(60),
+            1000,
+        )));
+}
 
 pub struct PlayerViewModel {
     pub account_id: i32,
@@ -25,23 +43,51 @@ pub struct PlayerViewModel {
 }
 
 impl PlayerViewModel {
-    pub async fn new(request: &Request<State>) -> crate::Result<PlayerViewModel> {
+    pub async fn new(request: &Request<State>) -> crate::Result<Arc<PlayerViewModel>> {
         let account_id = Self::parse_account_id(&request)?;
         let query = request
             .query::<Query>()
             .map_err(|error| anyhow!(error))
             .context("failed to parse the query")?;
-        let since = DateTime::<Utc>::from(&query.since);
-        log::info!("Retrieving player #{} since {:?}.", account_id, since);
+        log::info!("Requested player #{} since {:?}.", account_id, query.since);
 
-        let state = request.state();
-        let account_info = state.get_account_info(account_id).await?;
+        let mut cache = MODEL_CACHE.lock().await;
+        let model = match cache.get(&(account_id, query.since)) {
+            Some(model) => model.clone(),
+            None => {
+                let model =
+                    Arc::new(Self::new_uncached(request.state(), account_id, query.since).await?);
+                cache.insert((account_id, query.since), model.clone());
+                model
+            }
+        };
+        Ok(model)
+    }
+
+    /// Constructs a model from scratch.
+    async fn new_uncached(state: &State, account_id: i32, since: Since) -> crate::Result<Self> {
+        let account_info = Arc::new(
+            state
+                .api
+                .get_account_info(account_id)
+                .await?
+                .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
+        );
+        Self::upsert_account(&state, &account_info);
+
         let actual_statistics = &account_info.statistics.all;
-        let tanks = state.get_tanks(account_id).await?;
-        let old_statistics = state
-            .retrieve_latest_account_snapshot(account_id, since)
+        let tanks = state.api.get_merged_tanks(account_id).await?;
+        let old_statistics = {
+            let database = state.database.clone();
+            async_std::task::spawn(async move {
+                database
+                    .lock()
+                    .await
+                    .retrieve_latest_account_snapshot(account_id, &DateTime::<Utc>::from(&since))
+            })
             .await?
-            .map_or_else(Default::default, |info| info.statistics.all);
+            .map_or_else(Default::default, |info| info.statistics.all)
+        };
 
         let period_battles = actual_statistics.battles - old_statistics.battles;
         let period_wins = ConfidenceInterval::from_proportion_90(
@@ -70,7 +116,7 @@ impl PlayerViewModel {
                 > (Utc::now() - Duration::hours(1)),
             is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
             total_tanks: tanks.len(),
-            since: query.since,
+            since,
             period_battles,
             period_wins,
             period_survival,
@@ -80,6 +126,16 @@ impl PlayerViewModel {
         })
     }
 
+    /// Upserts account info in background so that it could be picked up by the crawler.
+    fn upsert_account(state: &State, account_info: &Arc<AccountInfo>) {
+        let account_info = account_info.clone();
+        let database = state.database.clone();
+        async_std::task::spawn(async move {
+            log_anyhow(database.lock().await.upsert_account(&account_info.basic));
+        });
+    }
+
+    /// Parses account ID URL segment.
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
         request
             .param("account_id")
@@ -96,7 +152,7 @@ struct Query {
     since: Since,
 }
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize, PartialEq, Clone, Ord, PartialOrd, Eq, Copy, Debug)]
 pub enum Since {
     #[serde(rename = "1h")]
     Hour,
