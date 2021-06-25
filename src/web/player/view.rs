@@ -13,7 +13,6 @@ use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
-    let account_url = get_account_url(model.account_id);
     let footer = Footer::new(&request.state()).await?;
 
     Ok(html(
@@ -96,28 +95,28 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             div.tabs.is-boxed {
                                 ul {
                                     li.(if model.since == Since::Hour { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=1h", account_url)) { "Hour" }
+                                        a href="?since=1h" { "Hour" }
                                     }
                                     li.(if model.since == Since::FourHours { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=4h", account_url)) { "4 hours" }
+                                        a href="?since=4h" { "4 hours" }
                                     }
                                     li.(if model.since == Since::EightHours { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=8h", account_url)) { "8 hours" }
+                                        a href="?since=8h" { "8 hours" }
                                     }
                                     li.(if model.since == Since::TwelveHours { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=12h", account_url)) { "12 hours" }
+                                        a href="?since=12h" { "12 hours" }
                                     }
                                     li.(if model.since == Since::Day { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=1d", account_url)) { "24 hours" }
+                                        a href="?since=1d" { "24 hours" }
                                     }
                                     li.(if model.since == Since::Week { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=1w", account_url)) { "Week" }
+                                        a href="?since=1w" { "Week" }
                                     }
                                     li.(if model.since == Since::Month { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=1m", account_url)) { "Month" }
+                                        a href="?since=1m" { "Month" }
                                     }
                                     li.(if model.since == Since::Year { "is-active" } else { "" }) {
-                                        a href=(format!("{}?since=1y", account_url)) { "Year" }
+                                        a href="?since=1y" { "Year" }
                                     }
                                 }
                             }
