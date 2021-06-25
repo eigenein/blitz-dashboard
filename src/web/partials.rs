@@ -75,29 +75,3 @@ pub fn document(title: Option<&str>, body: Markup) -> Markup {
         }
     }
 }
-
-pub fn header(nickname: &str) -> Markup {
-    html! {
-        nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-            div.container {
-                div."navbar-brand" {
-                    div.navbar-item {
-                        div.buttons {
-                            a.button.is-link href="/" {
-                                span.icon { i.fas.fa-home {} }
-                                span { "Home" }
-                            }
-                        }
-                    }
-                }
-                div."navbar-menu" {
-                    div.navbar-end {
-                        form.navbar-item action="/" method="GET" {
-                            (account_search("", nickname, false))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}

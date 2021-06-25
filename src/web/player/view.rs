@@ -5,7 +5,7 @@ use tide::StatusCode;
 use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
 use crate::web::partials::footer::Footer;
-use crate::web::partials::{header, icon_text};
+use crate::web::partials::{account_search, icon_text};
 use crate::web::player::model::{PlayerViewModel, Since};
 use crate::web::responses::render_document;
 use crate::web::state::State;
@@ -19,7 +19,27 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         StatusCode::Ok,
         Some(model.nickname.as_str()),
         html! {
-            (header(model.nickname.as_str()))
+            nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
+                div.container {
+                    div."navbar-brand" {
+                        div.navbar-item {
+                            div.buttons {
+                                a.button.is-link href="/" {
+                                    span.icon { i.fas.fa-home {} }
+                                    span { "Home" }
+                                }
+                            }
+                        }
+                    }
+                    div."navbar-menu" {
+                        div.navbar-end {
+                            form.navbar-item action="/" method="GET" {
+                                (account_search("", &model.nickname, false))
+                            }
+                        }
+                    }
+                }
+            }
 
             section.section {
                 div.container {
