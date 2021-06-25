@@ -8,7 +8,7 @@ pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGT
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;
 
-pub fn account_search(class: &str, has_autofocus: bool) -> Markup {
+pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Markup {
     html! {
         div class="field has-addons" {
             div class="control" {
@@ -22,6 +22,7 @@ pub fn account_search(class: &str, has_autofocus: bool) -> Markup {
                 input."input"."is-rounded".(class)
                     type="text"
                     name="search"
+                    value=(nickname)
                     placeholder="Nickname"
                     autocomplete="nickname"
                     pattern="\\w+"

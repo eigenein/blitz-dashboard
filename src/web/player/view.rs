@@ -20,7 +20,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         StatusCode::Ok,
         Some(model.nickname.as_str()),
         html! {
-            (header(model.account_id))
+            (header(model.nickname.as_str()))
 
             section.section {
                 div.container {

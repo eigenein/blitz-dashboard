@@ -1,7 +1,6 @@
 use maud::{html, Markup, DOCTYPE};
 
 use crate::web::components::account_search;
-use crate::web::player::view::get_account_url;
 
 pub fn head(title: Option<&str>) -> Markup {
     html! {
@@ -28,24 +27,24 @@ pub fn document(title: Option<&str>, body: Markup) -> Markup {
     }
 }
 
-pub fn header(account_id: i32) -> Markup {
+pub fn header(nickname: &str) -> Markup {
     html! {
-        nav.navbar.is-dark role="navigation" aria-label="main navigation" {
+        nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
             div.container {
                 div."navbar-brand" {
-                    a."navbar-item" href="/" {
-                        span.icon { i.fas.fa-home {} }
-                        span { "Home" }
-                    }
-                    a.navbar-item href=(get_account_url(account_id)) {
-                        span.icon { i.fas.fa-user {} }
-                        span { "Player" }
+                    div.navbar-item {
+                        div.buttons {
+                            a.button.is-link href="/" {
+                                span.icon { i.fas.fa-home {} }
+                                span { "Home" }
+                            }
+                        }
                     }
                 }
                 div."navbar-menu" {
                     div.navbar-end {
                         form.navbar-item action="/" method="GET" {
-                            (account_search("is-small", false))
+                            (account_search("", nickname, false))
                         }
                     }
                 }

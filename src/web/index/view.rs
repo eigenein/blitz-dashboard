@@ -28,7 +28,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                         div class="columns" {
                             div class="column is-8 is-offset-2" {
                                 form action="/" method="GET" {
-                                    (account_search("is-medium", true))
+                                    (account_search("", "is-medium", true))
                                 }
                                 @if let Some(accounts) = &model.accounts {
                                     div class="buttons mt-4" {
