@@ -105,7 +105,7 @@ impl PlayerViewModel {
         let period_damage_dealt_total =
             actual_statistics.damage_dealt - old_statistics.damage_dealt;
         let period_damage_dealt_mean =
-            period_damage_dealt_total as f32 / period_battles.min(1) as f32;
+            period_damage_dealt_total as f32 / period_battles.max(1) as f32;
 
         Ok(Self {
             account_id: account_info.basic.id,
