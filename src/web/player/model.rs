@@ -121,7 +121,7 @@ pub enum Since {
 
 impl Default for Since {
     fn default() -> Self {
-        Self::Day
+        Self::TwelveHours
     }
 }
 

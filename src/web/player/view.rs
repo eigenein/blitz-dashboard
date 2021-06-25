@@ -82,7 +82,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 a href=(format!("{}?since=12h", account_url)) { "12 hours" }
                             }
                             li.(if model.since == Since::Day { "is-active" } else { "" }) {
-                                a href=(format!("{}?since=1d", account_url)) { "Day" }
+                                a href=(format!("{}?since=1d", account_url)) { "24 hours" }
                             }
                             li.(if model.since == Since::Week { "is-active" } else { "" }) {
                                 a href=(format!("{}?since=1w", account_url)) { "Week" }
