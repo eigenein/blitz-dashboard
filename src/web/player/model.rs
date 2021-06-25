@@ -20,7 +20,8 @@ pub struct PlayerViewModel {
     pub period_wins: Option<ConfidenceInterval>,
     pub period_survival: Option<ConfidenceInterval>,
     pub period_hits: Option<ConfidenceInterval>,
-    pub period_damage_dealt: i32,
+    pub period_damage_dealt_total: i32,
+    pub period_damage_dealt_mean: f32,
 }
 
 impl PlayerViewModel {
@@ -55,7 +56,9 @@ impl PlayerViewModel {
             actual_statistics.shots - old_statistics.shots,
             actual_statistics.hits - old_statistics.hits,
         );
-        let period_damage_dealt = actual_statistics.damage_dealt - old_statistics.damage_dealt;
+        let period_damage_dealt_total =
+            actual_statistics.damage_dealt - old_statistics.damage_dealt;
+        let period_damage_dealt_mean = period_damage_dealt_total as f32 / period_battles as f32;
 
         Ok(Self {
             account_id: account_info.basic.id,
@@ -72,7 +75,8 @@ impl PlayerViewModel {
             period_wins,
             period_survival,
             period_hits,
-            period_damage_dealt,
+            period_damage_dealt_total,
+            period_damage_dealt_mean,
         })
     }
 

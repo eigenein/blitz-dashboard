@@ -115,17 +115,23 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
                         }
 
-                        div.tile."is-2".is-parent {
+                        div.tile."is-4".is-parent {
                             div.tile.is-child.card {
                                 header.card-header {
-                                    p.card-header-title { (icon_text("fas fa-house-damage", "Damage")) }
+                                    p.card-header-title { (icon_text("fas fa-house-damage", "Damage dealt")) }
                                 }
                                 div.card-content {
                                     div.level {
                                         div.level-item.has-text-centered {
                                             div {
-                                                p.heading { "Dealt" }
-                                                p.title { (model.period_damage_dealt) }
+                                                p.heading { "Total" }
+                                                p.title { (model.period_damage_dealt_total) }
+                                            }
+                                        }
+                                        div.level-item.has-text-centered {
+                                            div {
+                                                p.heading { "Mean" }
+                                                p.title title=(model.period_damage_dealt_mean) { (format!("{:.0}", model.period_damage_dealt_mean)) }
                                             }
                                         }
                                     }
