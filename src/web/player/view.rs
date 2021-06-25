@@ -4,9 +4,8 @@ use tide::StatusCode;
 
 use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
-use crate::web::components::footer::Footer;
-use crate::web::components::icon_text;
-use crate::web::partials::header;
+use crate::web::partials::footer::Footer;
+use crate::web::partials::{header, icon_text};
 use crate::web::player::model::{PlayerViewModel, Since};
 use crate::web::responses::render_document;
 use crate::web::state::State;

@@ -8,7 +8,7 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::models::Account;
-use crate::web::components::SEARCH_QUERY_LENGTH;
+use crate::web::partials::SEARCH_QUERY_LENGTH;
 use crate::web::state::State;
 
 lazy_static! {

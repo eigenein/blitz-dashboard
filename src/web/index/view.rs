@@ -2,8 +2,8 @@ use maud::html;
 use tide::Redirect;
 use tide::StatusCode;
 
-use crate::web::components::account_search;
 use crate::web::index::model::IndexViewModel;
+use crate::web::partials::account_search;
 use crate::web::player::view::get_account_url;
 use crate::web::responses::render_document;
 use crate::web::state::State;
