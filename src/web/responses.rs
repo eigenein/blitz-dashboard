@@ -1,38 +1,62 @@
-use maud::{html, Markup};
+use maud::{html, Markup, DOCTYPE};
 use tide::http::mime;
 use tide::{Response, StatusCode};
 
-use crate::web::partials::document;
+use crate::web::partials::headers;
 
-/// Wraps the body into a complete HTML document.
-pub fn render_document(code: StatusCode, title: Option<&str>, body: Markup) -> Response {
+pub fn html(code: StatusCode, markup: Markup) -> Response {
     Response::builder(code)
-        .body(document(title, body).into_string())
+        .body(markup.into_string())
         .content_type(mime::HTML)
         .build()
 }
 
-pub fn render_error(sentry_id: &sentry::types::Uuid) -> Response {
-    render_document(
-        StatusCode::InternalServerError,
-        Some("Error"),
+/// Wraps the body into a complete HTML document.
+#[deprecated]
+pub fn render_document(code: StatusCode, title: Option<&str>, body: Markup) -> Response {
+    html(
+        code,
         html! {
-            section class="hero is-fullheight" {
-                div class="hero-body" {
-                    div class="container" {
-                        div class="columns" {
-                            div class="column is-6 is-offset-3" {
-                                div.box {
-                                    p.title."is-5" { "Internal error" }
-                                    p.content {
-                                        "Sometimes this happens because of a Wargaming.net error."
-                                        " So, you may try to refresh the page."
+            (DOCTYPE)
+            html lang="en" {
+                head {
+                    (headers())
+                    title { @if let Some(title) = title { (title) " – " } "Blitz Dashboard" }
+                }
+                body { (body) }
+            }
+        },
+    )
+}
+
+pub fn error(sentry_id: &sentry::types::Uuid) -> Response {
+    html(
+        StatusCode::InternalServerError,
+        html! {
+            html lang="en" {
+                head {
+                    (headers())
+                    title { "Error" }
+                }
+                body {
+                    section class="hero is-fullheight" {
+                        div class="hero-body" {
+                            div class="container" {
+                                div class="columns" {
+                                    div class="column is-6 is-offset-3" {
+                                        div.box {
+                                            p.title."is-5" { "Internal error" }
+                                            p.content {
+                                                "Sometimes this happens because of a Wargaming.net error."
+                                                " So, you may try to refresh the page."
+                                            }
+                                            p.content { "Anyway, the error is already reported." }
+                                            p.content {
+                                                "Here is the reference: " code { (sentry_id.to_simple()) } "."
+                                            }
+                                            p { a class="button is-info" href="/" { "Go to the Home page" } }
+                                        }
                                     }
-                                    p.content { "Anyway, the error is already reported." }
-                                    p.content {
-                                        "Here is the reference: " code { (sentry_id.to_simple()) } "."
-                                    }
-                                    p { a class="button is-info" href="/" { "Go to the Home page" } }
                                 }
                             }
                         }

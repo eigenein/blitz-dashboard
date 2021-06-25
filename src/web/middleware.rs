@@ -42,7 +42,7 @@ impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
                     error,
                     sentry_id.to_simple()
                 );
-                Ok(crate::web::responses::render_error(&sentry_id))
+                Ok(crate::web::responses::error(&sentry_id))
             }
             None => Ok(response),
         }
