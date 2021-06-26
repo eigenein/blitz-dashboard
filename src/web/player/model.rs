@@ -14,7 +14,7 @@ use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
 
 /// Defines the model cache lookup key. Consists of account ID and display period.
-type ModelCacheKey = (i32, Since);
+type ModelCacheKey = (i32, Period);
 
 lazy_static! {
     static ref MODEL_CACHE: Arc<Mutex<LruCache<ModelCacheKey, Arc<PlayerViewModel>>>> =
@@ -33,13 +33,14 @@ pub struct PlayerViewModel {
     pub is_inactive: bool,
     pub total_battles: i32,
     pub total_tanks: usize,
-    pub since: Since,
-    pub period_battles: i32,
-    pub period_wins: Option<ConfidenceInterval>,
-    pub period_survival: Option<ConfidenceInterval>,
-    pub period_hits: Option<ConfidenceInterval>,
-    pub period_damage_dealt_total: i32,
-    pub period_damage_dealt_mean: f32,
+    pub period: Period,
+    pub battles: i32,
+    pub wins: Option<ConfidenceInterval>,
+    pub survival: Option<ConfidenceInterval>,
+    pub hits: Option<ConfidenceInterval>,
+    pub damage_dealt: i32,
+    pub damage_dealt_mean: f32,
+    pub warn_no_old_account_info: bool,
 }
 
 impl PlayerViewModel {
@@ -49,15 +50,19 @@ impl PlayerViewModel {
             .query::<Query>()
             .map_err(|error| anyhow!(error))
             .context("failed to parse the query")?;
-        log::info!("Requested player #{} since {:?}.", account_id, query.since);
+        log::info!(
+            "Requested player #{} within {:?}.",
+            account_id,
+            query.period
+        );
 
         let mut cache = MODEL_CACHE.lock().await;
-        let model = match cache.get(&(account_id, query.since)) {
+        let model = match cache.get(&(account_id, query.period)) {
             Some(model) => model.clone(),
             None => {
                 let model =
-                    Arc::new(Self::new_uncached(request.state(), account_id, query.since).await?);
-                cache.insert((account_id, query.since), model.clone());
+                    Arc::new(Self::new_uncached(request.state(), account_id, query.period).await?);
+                cache.insert((account_id, query.period), model.clone());
                 model
             }
         };
@@ -65,7 +70,7 @@ impl PlayerViewModel {
     }
 
     /// Constructs a model from scratch.
-    async fn new_uncached(state: &State, account_id: i32, since: Since) -> crate::Result<Self> {
+    async fn new_uncached(state: &State, account_id: i32, period: Period) -> crate::Result<Self> {
         let account_info = Arc::new(
             state
                 .api
@@ -77,35 +82,35 @@ impl PlayerViewModel {
 
         let actual_statistics = &account_info.statistics.all;
         let tanks = state.api.get_merged_tanks(account_id).await?;
-        let old_statistics = {
+        let old_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
                 database
                     .lock()
                     .await
-                    .retrieve_latest_account_snapshot(account_id, &DateTime::<Utc>::from(&since))
+                    .retrieve_latest_account_snapshot(account_id, &DateTime::<Utc>::from(&period))
             })
             .await?
-            .map_or_else(Default::default, |info| info.statistics.all)
         };
+        let warn_no_old_account_info = old_account_info.is_none();
+        let old_statistics =
+            old_account_info.map_or_else(Default::default, |info| info.statistics.all);
 
-        let period_battles = actual_statistics.battles - old_statistics.battles;
-        let period_wins = ConfidenceInterval::from_proportion_90(
-            period_battles,
+        let battles = actual_statistics.battles - old_statistics.battles;
+        let wins = ConfidenceInterval::from_proportion_90(
+            battles,
             actual_statistics.wins - old_statistics.wins,
         );
-        let period_survival = ConfidenceInterval::from_proportion_90(
-            period_battles,
+        let survival = ConfidenceInterval::from_proportion_90(
+            battles,
             actual_statistics.survived_battles - old_statistics.survived_battles,
         );
-        let period_hits = ConfidenceInterval::from_proportion_90(
+        let hits = ConfidenceInterval::from_proportion_90(
             actual_statistics.shots - old_statistics.shots,
             actual_statistics.hits - old_statistics.hits,
         );
-        let period_damage_dealt_total =
-            actual_statistics.damage_dealt - old_statistics.damage_dealt;
-        let period_damage_dealt_mean =
-            period_damage_dealt_total as f32 / period_battles.max(1) as f32;
+        let damage_dealt = actual_statistics.damage_dealt - old_statistics.damage_dealt;
+        let damage_dealt_mean = damage_dealt as f32 / battles.max(1) as f32;
 
         Ok(Self {
             account_id: account_info.basic.id,
@@ -117,13 +122,14 @@ impl PlayerViewModel {
                 > (Utc::now() - Duration::hours(1)),
             is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
             total_tanks: tanks.len(),
-            since,
-            period_battles,
-            period_wins,
-            period_survival,
-            period_hits,
-            period_damage_dealt_total,
-            period_damage_dealt_mean,
+            period,
+            battles,
+            wins,
+            survival,
+            hits,
+            damage_dealt,
+            damage_dealt_mean,
+            warn_no_old_account_info,
         })
     }
 
@@ -150,11 +156,11 @@ impl PlayerViewModel {
 #[derive(Deserialize)]
 struct Query {
     #[serde(default)]
-    since: Since,
+    period: Period,
 }
 
 #[derive(Deserialize, PartialEq, Clone, Ord, PartialOrd, Eq, Copy, Debug)]
-pub enum Since {
+pub enum Period {
     #[serde(rename = "1h")]
     Hour,
 
@@ -180,29 +186,29 @@ pub enum Since {
     Year,
 }
 
-impl Default for Since {
+impl Default for Period {
     fn default() -> Self {
         Self::TwelveHours
     }
 }
 
-impl From<&Since> for Duration {
-    fn from(since: &Since) -> Self {
+impl From<&Period> for Duration {
+    fn from(since: &Period) -> Self {
         match since {
-            Since::Hour => Self::hours(1),
-            Since::FourHours => Self::hours(4),
-            Since::EightHours => Self::hours(8),
-            Since::TwelveHours => Self::hours(12),
-            Since::Day => Self::days(1),
-            Since::Week => Self::weeks(1),
-            Since::Month => Self::days(30),
-            Since::Year => Self::days(365),
+            Period::Hour => Self::hours(1),
+            Period::FourHours => Self::hours(4),
+            Period::EightHours => Self::hours(8),
+            Period::TwelveHours => Self::hours(12),
+            Period::Day => Self::days(1),
+            Period::Week => Self::weeks(1),
+            Period::Month => Self::days(30),
+            Period::Year => Self::days(365),
         }
     }
 }
 
-impl From<&Since> for DateTime<Utc> {
-    fn from(since: &Since) -> Self {
+impl From<&Period> for DateTime<Utc> {
+    fn from(since: &Period) -> Self {
         Utc::now() - Duration::from(since)
     }
 }

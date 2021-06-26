@@ -7,7 +7,7 @@ use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::model::{PlayerViewModel, Since};
+use crate::web::player::model::{Period, PlayerViewModel};
 use crate::web::responses::html;
 use crate::web::state::State;
 
@@ -94,29 +94,38 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
                             div.tabs.is-boxed {
                                 ul {
-                                    li.(if model.since == Since::Hour { "is-active" } else { "" }) {
-                                        a href="?since=1h" { "Hour" }
+                                    li.(if model.period == Period::Hour { "is-active" } else { "" }) {
+                                        a href="?period=1h" { "Hour" }
                                     }
-                                    li.(if model.since == Since::FourHours { "is-active" } else { "" }) {
-                                        a href="?since=4h" { "4 hours" }
+                                    li.(if model.period == Period::FourHours { "is-active" } else { "" }) {
+                                        a href="?period=4h" { "4 hours" }
                                     }
-                                    li.(if model.since == Since::EightHours { "is-active" } else { "" }) {
-                                        a href="?since=8h" { "8 hours" }
+                                    li.(if model.period == Period::EightHours { "is-active" } else { "" }) {
+                                        a href="?period=8h" { "8 hours" }
                                     }
-                                    li.(if model.since == Since::TwelveHours { "is-active" } else { "" }) {
-                                        a href="?since=12h" { "12 hours" }
+                                    li.(if model.period == Period::TwelveHours { "is-active" } else { "" }) {
+                                        a href="?period=12h" { "12 hours" }
                                     }
-                                    li.(if model.since == Since::Day { "is-active" } else { "" }) {
-                                        a href="?since=1d" { "24 hours" }
+                                    li.(if model.period == Period::Day { "is-active" } else { "" }) {
+                                        a href="?period=1d" { "24 hours" }
                                     }
-                                    li.(if model.since == Since::Week { "is-active" } else { "" }) {
-                                        a href="?since=1w" { "Week" }
+                                    li.(if model.period == Period::Week { "is-active" } else { "" }) {
+                                        a href="?period=1w" { "Week" }
                                     }
-                                    li.(if model.since == Since::Month { "is-active" } else { "" }) {
-                                        a href="?since=1m" { "Month" }
+                                    li.(if model.period == Period::Month { "is-active" } else { "" }) {
+                                        a href="?period=1m" { "Month" }
                                     }
-                                    li.(if model.since == Since::Year { "is-active" } else { "" }) {
-                                        a href="?since=1y" { "Year" }
+                                    li.(if model.period == Period::Year { "is-active" } else { "" }) {
+                                        a href="?period=1y" { "Year" }
+                                    }
+                                }
+                            }
+
+                            @if model.warn_no_old_account_info {
+                                article.message.is-warning {
+                                    div.message-body {
+                                        "We haven't crawled this account at that moment in past. "
+                                        strong { "Showing the all time information." }
                                     }
                                 }
                             }
@@ -132,7 +141,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Battles" }
-                                                        p.title { (model.period_battles) }
+                                                        p.title { (model.battles) }
                                                     }
                                                 }
                                             }
@@ -150,13 +159,13 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Total" }
-                                                        p.title { (model.period_damage_dealt_total) }
+                                                        p.title { (model.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Mean" }
-                                                        p.title title=(model.period_damage_dealt_mean) { (format!("{:.0}", model.period_damage_dealt_mean)) }
+                                                        p.title title=(model.damage_dealt_mean) { (format!("{:.0}", model.damage_dealt_mean)) }
                                                     }
                                                 }
                                             }
@@ -166,41 +175,55 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
 
                             div.tile.is-ancestor {
-                                @if let Some(period_wins) = &model.period_wins {
+                                @if let Some(wins) = &model.wins {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
                                                 p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
                                             }
                                             div.card-content {
-                                                (period_wins)
+                                                (wins)
                                             }
                                         }
                                     }
                                 }
 
-                                @if let Some(period_survival) = &model.period_survival {
+                                @if let Some(survival) = &model.survival {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
                                                 p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
                                             }
                                             div.card-content {
-                                                (period_survival)
+                                                (survival)
                                             }
                                         }
                                     }
                                 }
 
-                                @if let Some(period_hits) = &model.period_hits {
+                                @if let Some(hits) = &model.hits {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
                                                 p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
                                             }
                                             div.card-content {
-                                                (period_hits)
+                                                (hits)
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div.table-container {
+                                table.table.is-hoverable.is-striped {
+                                    thead {
+                                        tr {
+                                            th { "Vehicle" }
+                                            th { "Battles" }
+                                            th { "Wins" }
+                                            th { "Survival" }
+                                            th { "Damage dealt" }
                                         }
                                     }
                                 }
