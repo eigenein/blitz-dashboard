@@ -9,9 +9,10 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::logging::log_anyhow;
-use crate::models::AccountInfo;
+use crate::models::{AccountInfo, AllStatistics};
 use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
+use std::ops::Sub;
 
 /// Defines the model cache lookup key. Consists of account ID and display period.
 type ModelCacheKey = (i32, Period);
@@ -34,13 +35,12 @@ pub struct PlayerViewModel {
     pub total_battles: i32,
     pub total_tanks: usize,
     pub period: Period,
-    pub battles: i32,
     pub wins: Option<ConfidenceInterval>,
     pub survival: Option<ConfidenceInterval>,
     pub hits: Option<ConfidenceInterval>,
-    pub damage_dealt: i32,
     pub damage_dealt_mean: f32,
     pub warn_no_old_account_info: bool,
+    pub statistics: AllStatistics,
 }
 
 impl PlayerViewModel {
@@ -93,24 +93,14 @@ impl PlayerViewModel {
             .await?
         };
         let warn_no_old_account_info = old_account_info.is_none();
-        let old_statistics =
-            old_account_info.map_or_else(Default::default, |info| info.statistics.all);
+        let statistics = actual_statistics
+            .sub(&old_account_info.map_or_else(Default::default, |info| info.statistics.all));
 
-        let battles = actual_statistics.battles - old_statistics.battles;
-        let wins = ConfidenceInterval::from_proportion_90(
-            battles,
-            actual_statistics.wins - old_statistics.wins,
-        );
-        let survival = ConfidenceInterval::from_proportion_90(
-            battles,
-            actual_statistics.survived_battles - old_statistics.survived_battles,
-        );
-        let hits = ConfidenceInterval::from_proportion_90(
-            actual_statistics.shots - old_statistics.shots,
-            actual_statistics.hits - old_statistics.hits,
-        );
-        let damage_dealt = actual_statistics.damage_dealt - old_statistics.damage_dealt;
-        let damage_dealt_mean = damage_dealt as f32 / battles.max(1) as f32;
+        let wins = ConfidenceInterval::from_proportion_90(statistics.battles, statistics.wins);
+        let survival =
+            ConfidenceInterval::from_proportion_90(statistics.battles, statistics.survived_battles);
+        let hits = ConfidenceInterval::from_proportion_90(statistics.shots, statistics.shots);
+        let damage_dealt_mean = statistics.damage_dealt as f32 / statistics.battles.max(1) as f32;
 
         Ok(Self {
             account_id: account_info.basic.id,
@@ -123,13 +113,12 @@ impl PlayerViewModel {
             is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
             total_tanks: tanks.len(),
             period,
-            battles,
             wins,
             survival,
             hits,
-            damage_dealt,
             damage_dealt_mean,
             warn_no_old_account_info,
+            statistics,
         })
     }
 

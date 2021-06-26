@@ -141,7 +141,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Battles" }
-                                                        p.title { (model.battles) }
+                                                        p.title { (model.statistics.battles) }
                                                     }
                                                 }
                                             }
@@ -159,7 +159,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Total" }
-                                                        p.title { (model.damage_dealt) }
+                                                        p.title { (model.statistics.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
