@@ -301,7 +301,7 @@ dependencies = [
  "memchr",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -905,7 +905,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "waker-fn",
 ]
 
@@ -946,7 +946,7 @@ dependencies = [
  "futures-macro",
  "futures-task",
  "memchr",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "pin-utils",
  "proc-macro-hack",
  "proc-macro-nested",
@@ -1135,7 +1135,7 @@ checksum = "60daa14be0e0786db0f03a9e57cb404c9d756eed2b6c62b9ea98ec5743ec75a9"
 dependencies = [
  "bytes 1.0.1",
  "http",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
 ]
 
 [[package]]
@@ -1166,7 +1166,7 @@ dependencies = [
  "cookie",
  "futures-lite",
  "infer",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -1209,7 +1209,7 @@ dependencies = [
  "httparse",
  "httpdate 1.0.1",
  "itoa",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "socket2",
  "tokio",
  "tower-service",
@@ -1657,9 +1657,9 @@ checksum = "257b64915a082f7811703966789728173279bdebb956b143dbcd23f6f970a777"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc0e1f259c92177c30a4c9d177246edd0a3568b25756a977d0632cf8fa37e905"
+checksum = "8d31d11c69a6b52a174b42bdc0c30e5e11670f90788b2c471c31c1d17d449443"
 
 [[package]]
 name = "pin-utils"
@@ -1895,7 +1895,7 @@ dependencies = [
  "mime",
  "native-tls",
  "percent-encoding",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "serde",
  "serde_json",
  "serde_urlencoded",
@@ -2379,7 +2379,7 @@ dependencies = [
  "log",
  "mime_guess",
  "once_cell",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "serde",
  "serde_json",
  "web-sys",
@@ -2471,7 +2471,7 @@ dependencies = [
  "http-types",
  "kv-log-macro",
  "log",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "route-recognizer",
  "serde",
  "serde_json",
@@ -2553,7 +2553,7 @@ dependencies = [
  "memchr",
  "mio",
  "num_cpus",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "winapi",
 ]
 
@@ -2577,7 +2577,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "log",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "tokio",
 ]
 
@@ -2595,7 +2595,7 @@ checksum = "09adeb8c97449311ccd28a427f96fb563e7fd31aabf994189879d9da2394b89d"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
- "pin-project-lite 0.2.6",
+ "pin-project-lite 0.2.7",
  "tracing-attributes",
  "tracing-core",
 ]
