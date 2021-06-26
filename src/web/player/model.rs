@@ -1,3 +1,4 @@
+use std::ops::Sub;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
@@ -9,10 +10,9 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::logging::log_anyhow;
-use crate::models::{AccountInfo, AllStatistics};
+use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
 use crate::statistics::ConfidenceInterval;
 use crate::web::state::State;
-use std::ops::Sub;
 
 /// Defines the model cache lookup key. Consists of account ID and display period.
 type ModelCacheKey = (i32, Period);
@@ -33,7 +33,6 @@ pub struct PlayerViewModel {
     pub has_recently_played: bool,
     pub is_inactive: bool,
     pub total_battles: i32,
-    pub total_tanks: usize,
     pub period: Period,
     pub wins: Option<ConfidenceInterval>,
     pub survival: Option<ConfidenceInterval>,
@@ -41,6 +40,7 @@ pub struct PlayerViewModel {
     pub damage_dealt_mean: f32,
     pub warn_no_old_account_info: bool,
     pub statistics: AllStatistics,
+    pub tanks: Vec<TankSnapshot>,
 }
 
 impl PlayerViewModel {
@@ -53,7 +53,7 @@ impl PlayerViewModel {
         log::info!(
             "Requested player #{} within {:?}.",
             account_id,
-            query.period
+            query.period,
         );
 
         let mut cache = MODEL_CACHE.lock().await;
@@ -85,9 +85,8 @@ impl PlayerViewModel {
         let old_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
+                let database = database.lock().await;
                 database
-                    .lock()
-                    .await
                     .retrieve_latest_account_snapshot(account_id, &DateTime::<Utc>::from(&period))
             })
             .await?
@@ -111,7 +110,7 @@ impl PlayerViewModel {
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
-            total_tanks: tanks.len(),
+            tanks,
             period,
             wins,
             survival,

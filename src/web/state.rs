@@ -29,7 +29,6 @@ impl State {
     }
 
     /// Retrieves cached vehicle information.
-    #[allow(unused)]
     pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Option<Vehicle>>> {
         let mut cache = self.tankopedia_cache.lock().await;
         match cache.get(&tank_id) {

@@ -13,7 +13,8 @@ use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
-    let footer = Footer::new(&request.state()).await?;
+    let state = request.state();
+    let footer = Footer::new(state).await?;
 
     Ok(html(
         StatusCode::Ok,
@@ -68,7 +69,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Tanks played" }
-                                                        p.title { (model.total_tanks) }
+                                                        p.title { (model.tanks.len()) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -215,15 +216,30 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                             }
 
-                            div.table-container {
-                                table.table.is-hoverable.is-striped {
-                                    thead {
-                                        tr {
-                                            th { "Vehicle" }
-                                            th { "Battles" }
-                                            th { "Wins" }
-                                            th { "Survival" }
-                                            th { "Damage dealt" }
+                            div.box {
+                                div.table-container {
+                                    table.table.is-hoverable.is-striped {
+                                        thead {
+                                            tr {
+                                                th { "Vehicle" }
+                                                th { "Battles" }
+                                                th { "Wins" }
+                                                th { "Survival" }
+                                                th { "Damage dealt" }
+                                            }
+                                        }
+                                        tbody {
+                                            @for tank in &model.tanks {
+                                                @if let Some(vehicle) = state.get_vehicle(tank.tank_id).await?.as_ref() {
+                                                    tr {
+                                                        th { (vehicle) }
+                                                        td { }
+                                                        td { }
+                                                        td { }
+                                                        td { }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -250,7 +266,7 @@ pub fn get_account_url(account_id: i32) -> String {
     format!("/ru/{}", account_id)
 }
 
-impl Render for Vehicle {
+impl Render for &Vehicle {
     fn render(&self) -> Markup {
         let tier = match self.tier {
             1 => "Ⅰ",
