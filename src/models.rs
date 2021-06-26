@@ -21,7 +21,7 @@ pub struct BasicAccountInfo {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
-    #[serde(with = "chrono::serde::ts_seconds", default = "Utc::now")]
+    #[serde(with = "chrono::serde::ts_seconds", default = "epoch")]
     pub crawled_at: DateTime<Utc>,
 }
 
@@ -36,7 +36,7 @@ pub struct AccountInfo {
     #[serde(
         with = "chrono::serde::ts_seconds",
         skip_serializing,
-        default = "default_created_at"
+        default = "epoch"
     )]
     pub created_at: DateTime<Utc>,
 
@@ -137,7 +137,8 @@ pub struct TankSnapshot {
     pub battle_life_time: Duration,
 }
 
-fn default_created_at() -> DateTime<Utc> {
+#[inline(always)]
+fn epoch() -> DateTime<Utc> {
     Utc.timestamp(0, 0)
 }
 

@@ -30,7 +30,8 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
         let account_info = api.get_account_info(account.id).await?;
         let tx = database.start_transaction()?;
         match account_info {
-            Some(account_info) => {
+            Some(mut account_info) => {
+                account_info.basic.crawled_at = Utc::now();
                 database.upsert_account(&account_info.basic)?;
                 if account_info.basic.last_battle_time > account.crawled_at {
                     database.upsert_account_snapshot(&account_info)?;
