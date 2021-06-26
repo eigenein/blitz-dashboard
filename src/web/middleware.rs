@@ -10,7 +10,13 @@ pub struct SecurityMiddleware;
 #[tide::utils::async_trait]
 impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
     async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
-        let peer_addr = request.peer_addr().unwrap_or("-").to_string();
+        let peer_addr = request
+            .header("X-Real-IP")
+            .or_else(|| request.header("X-Forwarded-For"))
+            .map(|values| values.as_str())
+            .or_else(|| request.peer_addr())
+            .unwrap_or("-")
+            .to_string();
         let path = request.url().path().to_string();
         let method = request.method().to_string();
         debug!("{} → {} {}", peer_addr, method, path);
