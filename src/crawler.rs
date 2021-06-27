@@ -1,13 +1,10 @@
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Instant;
 
 use anyhow::anyhow;
-use async_std::task::sleep;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
-
-const ACCOUNT_STALE_TIMEOUT_SECS: i64 = 60;
 
 pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
     loop {
@@ -19,12 +16,6 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
             account.id,
             account.crawled_at,
         );
-        let age = Utc::now() - account.crawled_at;
-        let sleep_duration = (Duration::seconds(ACCOUNT_STALE_TIMEOUT_SECS) - age).num_seconds();
-        if sleep_duration > 0 {
-            log::info!("Sleeping for {} secs…", sleep_duration);
-            sleep(StdDuration::from_secs(sleep_duration.unsigned_abs())).await;
-        }
 
         let start_instant = Instant::now();
         let account_info = api.get_account_info(account.id).await?;
