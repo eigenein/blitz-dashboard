@@ -48,8 +48,8 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
             break;
         }
 
-        // FIXME
-        sleep(Duration::from_millis(100)).await;
+        // FIXME: https://github.com/eigenein/blitz-dashboard/issues/15.
+        sleep(Duration::from_secs(1)).await;
     }
 
     Ok(())
