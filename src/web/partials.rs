@@ -29,6 +29,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
                     autocapitalize="none"
                     minlength=(MIN_QUERY_LENGTH)
                     maxlength=(MAX_QUERY_LENGTH)
+                    onclick="this.select();"
                     autofocus[has_autofocus]
                     required;
                 span.icon.is-left.(class) {
