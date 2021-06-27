@@ -36,7 +36,7 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
     let database = Database::open(opts.database)?;
     match opts.subcommand {
         Subcommand::Web(web_opts) => web::run(&web_opts.host, web_opts.port, api, database).await,
-        Subcommand::Crawler(_) => crawler::run(api, database).await,
+        Subcommand::Crawler(crawler_opts) => crawler::run(api, database, crawler_opts.once).await,
         Subcommand::ImportTankopedia(_) => tankopedia::run(api, database).await,
     }
 }

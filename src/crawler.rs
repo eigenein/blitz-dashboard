@@ -7,7 +7,7 @@ use chrono::Utc;
 use crate::database::Database;
 use crate::wargaming::WargamingApi;
 
-pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
+pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Result {
     loop {
         let account = database
             .retrieve_oldest_account()?
@@ -40,7 +40,13 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
         tx.commit()?;
         log::info!("Elapsed: {:?}.", Instant::now() - start_instant);
 
+        if once {
+            break;
+        }
+
         // FIXME
         sleep(Duration::from_millis(100)).await;
     }
+
+    Ok(())
 }

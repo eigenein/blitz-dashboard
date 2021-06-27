@@ -50,7 +50,10 @@ pub struct WebOpts {
 #[clap(version = crate_version!())]
 #[clap(about = "Runs the account crawler")]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct CrawlerOpts;
+pub struct CrawlerOpts {
+    #[clap(long, about = "Crawl one account and exit")]
+    pub once: bool,
+}
 
 #[derive(Clap)]
 #[clap(name = crate_name!())]
