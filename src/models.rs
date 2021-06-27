@@ -158,6 +158,12 @@ impl Sub for &AllStatistics {
     }
 }
 
+impl AccountInfo {
+    pub fn is_active(&self) -> bool {
+        self.basic.last_battle_time > (Utc::now() - Duration::days(365))
+    }
+}
+
 #[inline(always)]
 fn epoch() -> DateTime<Utc> {
     Utc.timestamp(0, 0)

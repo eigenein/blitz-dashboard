@@ -31,7 +31,7 @@ pub struct PlayerViewModel {
     pub created_at: DateTime<Utc>,
     pub last_battle_time: DateTime<Utc>,
     pub has_recently_played: bool,
-    pub is_inactive: bool,
+    pub is_active: bool,
     pub total_battles: i32,
     pub period: Period,
     pub wins: Option<ConfidenceInterval>,
@@ -78,7 +78,9 @@ impl PlayerViewModel {
                 .await?
                 .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
         );
-        Self::upsert_account(&state, &account_info);
+        if account_info.is_active() {
+            Self::upsert_account(&state, &account_info);
+        }
 
         let actual_statistics = &account_info.statistics.all;
         let tanks = state.api.get_merged_tanks(account_id).await?;
@@ -109,7 +111,7 @@ impl PlayerViewModel {
             total_battles: account_info.statistics.all.battles,
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
-            is_inactive: account_info.basic.last_battle_time < (Utc::now() - Duration::days(365)),
+            is_active: account_info.is_active(),
             tanks,
             period,
             wins,

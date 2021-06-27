@@ -143,11 +143,9 @@ impl Database {
 
     /// Deletes all data related to the account.
     pub fn prune_account(&self, account_id: i32) -> crate::Result {
-        let tx = self.start_transaction()?;
         self.delete_account(account_id)?;
         self.delete_account_snapshots(account_id)?;
         self.delete_tank_snapshots(account_id)?;
-        tx.commit()?;
         Ok(())
     }
 

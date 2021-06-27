@@ -81,7 +81,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Last battle" }
-                                                        p.title.(if model.has_recently_played { "has-text-success" } else if model.is_inactive { "has-text-danger" } else { "" })
+                                                        p.title.(if model.has_recently_played { "has-text-success" } else if !model.is_active { "has-text-danger" } else { "" })
                                                             title=(model.last_battle_time) {
                                                             (HumanTime::from(model.last_battle_time))
                                                         }

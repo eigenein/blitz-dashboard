@@ -22,6 +22,10 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
         let account_info = api.get_account_info(account.id).await?;
         let tx = database.start_transaction()?;
         match account_info {
+            Some(account_info) if !account_info.is_active() => {
+                log::warn!("The account is inactive. Deleting…");
+                database.prune_account(account.id)?;
+            }
             Some(mut account_info) => {
                 account_info.basic.crawled_at = Utc::now();
                 database.upsert_account(&account_info.basic)?;
