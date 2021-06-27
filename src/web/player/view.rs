@@ -69,7 +69,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Tanks played" }
-                                                        p.title { (model.tanks.len()) }
+                                                        p.title { (model.total_tanks) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -122,7 +122,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                             }
 
-                            @if model.warn_no_old_account_info {
+                            @if model.warn_no_previous_account_info {
                                 article.message.is-warning {
                                     div.message-body {
                                         "We haven't crawled this account at that moment in past. "
@@ -183,7 +183,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
                                             }
                                             div.card-content {
-                                                (wins)
+                                                (render_confidence_interval_level(wins))
                                             }
                                         }
                                     }
@@ -196,7 +196,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
                                             }
                                             div.card-content {
-                                                (survival)
+                                                (render_confidence_interval_level(survival))
                                             }
                                         }
                                     }
@@ -209,34 +209,38 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
                                             }
                                             div.card-content {
-                                                (hits)
+                                                (render_confidence_interval_level(hits))
                                             }
                                         }
                                     }
                                 }
                             }
 
-                            div.box {
-                                div.table-container {
-                                    table.table.is-hoverable.is-striped {
-                                        thead {
-                                            tr {
-                                                th { "Vehicle" }
-                                                th { "Battles" }
-                                                th { "Wins" }
-                                                th { "Survival" }
-                                                th { "Damage dealt" }
+                            @if !model.tank_snapshots.is_empty() {
+                                div.box {
+                                    div.table-container {
+                                        table.table.is-hoverable.is-striped.is-fullwidth {
+                                            thead {
+                                                tr {
+                                                    th { (icon_text("fas fa-truck-monster", "Vehicle")) }
+                                                    th { "Battles" }
+                                                    th { "Lower wins" }
+                                                    th { "Wins" }
+                                                    th { "Upper wins" }
+                                                    th { "Damage dealt" }
+                                                    th { "Mean damage" }
+                                                }
                                             }
-                                        }
-                                        tbody {
-                                            @for tank in &model.tanks {
-                                                @if let Some(vehicle) = state.get_vehicle(tank.tank_id).await?.as_ref() {
-                                                    tr {
-                                                        th { (vehicle) }
-                                                        td { }
-                                                        td { }
-                                                        td { }
-                                                        td { }
+                                            tbody {
+                                                @for snapshot in &model.tank_snapshots {
+                                                    @if let Some(vehicle) = state.get_vehicle(snapshot.tank_id).await?.as_ref() {
+                                                        tr {
+                                                            th { (vehicle) }
+                                                            td { (snapshot.all_statistics.battles) }
+                                                            (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
+                                                            td { (snapshot.all_statistics.damage_dealt) }
+                                                            td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -282,41 +286,58 @@ impl Render for &Vehicle {
             _ => "?",
         };
         html! {
-            strong.(if self.is_premium { "has-text-warning-dark" } else { "" }) title=(self.tank_id) {
+            span.(if self.is_premium { "has-text-warning-dark" } else { "" }) title=(self.tank_id) {
                 (tier) " " (self.name)
             }
         }
     }
 }
 
-impl Render for &ConfidenceInterval {
-    fn render(&self) -> Markup {
+impl ConfidenceInterval {
+    fn get_percentages(&self) -> (f64, f64, f64) {
         let mean = self.mean * 100.0;
         let margin = self.margin * 100.0;
         let lower = (mean - margin).max(0.0);
         let upper = (mean + margin).min(100.0);
+        (lower, mean, upper)
+    }
+}
 
-        html! {
-            div.level {
-                div.level-item.has-text-centered {
-                    div {
-                        p.heading { "Lower" }
-                        p.title."is-5" title=(lower) { (format!("{:.1}%", lower)) }
-                    }
+fn render_confidence_interval_level(interval: &ConfidenceInterval) -> Markup {
+    let (lower, mean, upper) = interval.get_percentages();
+
+    html! {
+        div.level {
+            div.level-item.has-text-centered {
+                div {
+                    p.heading { "Lower" }
+                    p.title."is-5" title=(lower) { (format!("{:.1}%", lower)) }
                 }
-                div.level-item.has-text-centered {
-                    div {
-                        p.heading { "Mean" }
-                        p.title title=(mean) { (format!("{:.1}%", mean)) }
-                    }
+            }
+            div.level-item.has-text-centered {
+                div {
+                    p.heading { "Mean" }
+                    p.title title=(mean) { (format!("{:.1}%", mean)) }
                 }
-                div.level-item.has-text-centered {
-                    div {
-                        p.heading { "Upper" }
-                        p.title."is-5" title=(upper) { (format!("{:.1}%", upper)) }
-                    }
+            }
+            div.level-item.has-text-centered {
+                div {
+                    p.heading { "Upper" }
+                    p.title."is-5" title=(upper) { (format!("{:.1}%", upper)) }
                 }
             }
         }
+    }
+}
+
+fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
+    let (lower, mean, upper) = match ConfidenceInterval::from_proportion_90(n_trials, n_successes) {
+        Some(interval) => interval.get_percentages(),
+        None => (0.0, 0.0, 0.0),
+    };
+    html! {
+        td { (icon_text("fas fa-angle-down", &format!("{:.1}%", lower))) }
+        td { strong { (icon_text("fas fa-grip-lines", &format!("{:.1}%", mean))) } }
+        td { (icon_text("fas fa-angle-up", &format!("{:.1}%", upper)))  }
     }
 }

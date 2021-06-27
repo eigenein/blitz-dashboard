@@ -109,8 +109,8 @@ impl WargamingApi {
         let mut statistics = self.get_tanks_stats(account_id).await?;
         let mut achievements = self.get_tanks_achievements(account_id).await?;
 
-        statistics.sort_by_key(|tank| tank.tank_id);
-        achievements.sort_by_key(|tank| tank.tank_id);
+        statistics.sort_by_key(|snapshot| snapshot.tank_id);
+        achievements.sort_by_key(|achievements| achievements.tank_id);
 
         Ok(merge_join_by(statistics, achievements, |left, right| {
             left.tank_id.cmp(&right.tank_id)

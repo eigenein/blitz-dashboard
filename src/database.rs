@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::{Duration as StdDuration, Instant};
 
 use chrono::{DateTime, Utc};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
@@ -23,7 +23,7 @@ impl Database {
 
         log::info!("Connecting to the database…");
         let inner = rusqlite::Connection::open(&path)?;
-        inner.busy_timeout(Duration::from_secs(5))?;
+        inner.busy_timeout(StdDuration::from_secs(5))?;
 
         log::info!("Initializing the database schema…");
         inner.execute_batch(
@@ -119,8 +119,9 @@ impl Database {
     ) -> crate::Result<Option<AccountInfo>> {
         Ok(self
             .0
-            // language=SQL
+
             .prepare_cached(
+                // language=SQL
                 "SELECT document 
                 FROM account_snapshots
                 WHERE json_extract(document, '$.account_id') = ?1 AND json_extract(document, '$.last_battle_time') <= ?2
@@ -129,6 +130,25 @@ impl Database {
             )?
             .query_row(params![account_id, before.timestamp()], get_scalar)
             .optional()?)
+    }
+
+    pub fn retrieve_latest_tank_snapshots(
+        &self,
+        account_id: i32,
+        before: &DateTime<Utc>,
+    ) -> crate::Result<Vec<TankSnapshot>> {
+        Ok(self
+            .0
+            .prepare_cached(
+                // https://www.sqlite.org/lang_select.html#bareagg
+                // language=SQL
+                "SELECT document, max(json_extract(document, '$.last_battle_time'))
+                FROM tank_snapshots
+                WHERE json_extract(document, '$.account_id') = ?1 AND json_extract(document, '$.last_battle_time') <= ?2
+                GROUP BY json_extract(document, '$.tank_id')",
+            )?
+            .query_map(params![account_id, before.timestamp()], get_scalar)?
+            .collect::<rusqlite::Result<Vec<TankSnapshot>>>()?)
     }
 
     pub fn upsert_account(&self, info: &BasicAccountInfo) -> crate::Result {
@@ -221,7 +241,6 @@ impl Database {
         Ok(())
     }
 
-    #[allow(unused)]
     pub fn retrieve_vehicle(&self, tank_id: i32) -> crate::Result<Option<Vehicle>> {
         log::debug!("Retrieving vehicle #{}…", tank_id);
         Ok(self
@@ -298,6 +317,12 @@ impl FromSql for AccountInfo {
     }
 }
 
+impl FromSql for TankSnapshot {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        deserializable_from_sql(value)
+    }
+}
+
 fn serializable_to_sql<T: Serialize>(object: &T) -> rusqlite::Result<ToSqlOutput<'_>> {
     Ok(ToSqlOutput::from(serde_json::to_string(object).map_err(
         |error| rusqlite::Error::ToSqlConversionFailure(error.into()),
@@ -310,9 +335,11 @@ fn deserializable_from_sql<T: DeserializeOwned>(value: ValueRef<'_>) -> FromSqlR
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
+    use chrono::{Duration, TimeZone, Utc};
 
     use super::*;
+    use crate::models::AllStatistics;
+    use std::collections::HashMap;
 
     #[test]
     fn open_database_ok() -> crate::Result {
@@ -350,6 +377,45 @@ mod tests {
         })?;
         database.delete_account(1)?;
         assert_eq!(database.retrieve_account_count()?, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn retrieve_latest_tank_snaphots_ok() -> crate::Result {
+        let database = Database::open(":memory:")?;
+        database.upsert_tanks(&[
+            TankSnapshot {
+                account_id: 1,
+                tank_id: 42,
+                achievements: HashMap::new(),
+                max_series: HashMap::new(),
+                all_statistics: AllStatistics {
+                    battles: 1,
+                    ..Default::default()
+                },
+                last_battle_time: Utc.timestamp(1, 0),
+                battle_life_time: Duration::seconds(1),
+            },
+            TankSnapshot {
+                account_id: 1,
+                tank_id: 42,
+                achievements: HashMap::new(),
+                max_series: HashMap::new(),
+                all_statistics: AllStatistics {
+                    battles: 2,
+                    ..Default::default()
+                },
+                last_battle_time: Utc.timestamp(2, 0),
+                battle_life_time: Duration::seconds(1),
+            },
+        ])?;
+
+        let snapshots = database.retrieve_latest_tank_snapshots(1, &Utc.timestamp(2, 0))?;
+        assert_eq!(snapshots.len(), 1);
+        let snapshot = snapshots.get(0).unwrap();
+        assert_eq!(snapshot.last_battle_time, Utc.timestamp(2, 0));
+        assert_eq!(snapshot.all_statistics.battles, 2);
+
         Ok(())
     }
 
