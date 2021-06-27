@@ -1,6 +1,7 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
+use async_std::task::sleep;
 use chrono::Utc;
 
 use crate::database::Database;
@@ -38,5 +39,8 @@ pub async fn run(api: WargamingApi, database: Database) -> crate::Result {
         }
         tx.commit()?;
         log::info!("Elapsed: {:?}.", Instant::now() - start_instant);
+
+        // FIXME
+        sleep(Duration::from_millis(100)).await;
     }
 }
