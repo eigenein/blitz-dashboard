@@ -34,7 +34,7 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
             }
             None => {
                 log::warn!("The account does not exist. Deleting…");
-                database.delete_account(account.id)?;
+                database.prune_account(account.id)?;
             }
         }
         tx.commit()?;

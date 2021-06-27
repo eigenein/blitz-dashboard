@@ -141,11 +141,41 @@ impl Database {
         Ok(())
     }
 
+    /// Deletes all data related to the account.
+    pub fn prune_account(&self, account_id: i32) -> crate::Result {
+        let tx = self.start_transaction()?;
+        self.delete_account(account_id)?;
+        self.delete_account_snapshots(account_id)?;
+        self.delete_tank_snapshots(account_id)?;
+        tx.commit()?;
+        Ok(())
+    }
+
     pub fn delete_account(&self, account_id: i32) -> crate::Result {
         self.0
             .prepare_cached(
                 // language=SQL
                 "DELETE FROM accounts WHERE json_extract(document, '$.account_id') = ?1",
+            )?
+            .execute([account_id])?;
+        Ok(())
+    }
+
+    pub fn delete_account_snapshots(&self, account_id: i32) -> crate::Result {
+        self.0
+            .prepare_cached(
+                // language=SQL
+                "DELETE FROM account_snapshots WHERE json_extract(document, '$.account_id') = ?1",
+            )?
+            .execute([account_id])?;
+        Ok(())
+    }
+
+    pub fn delete_tank_snapshots(&self, account_id: i32) -> crate::Result {
+        self.0
+            .prepare_cached(
+                // language=SQL
+                "DELETE FROM tank_snapshots WHERE json_extract(document, '$.account_id') = ?1",
             )?
             .execute([account_id])?;
         Ok(())
