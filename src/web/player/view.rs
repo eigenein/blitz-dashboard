@@ -262,18 +262,21 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     th { "Survived" }
                                                     th { "Damage dealt" }
                                                     th { "Mean damage" }
+                                                    th.has-text-warning { abbr title="Mean gold booster earnings" { "MGBE" } }
                                                 }
                                             }
                                             tbody {
                                                 @for snapshot in &model.tank_snapshots {
+                                                    @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
                                                     tr {
-                                                        th { (state.get_vehicle(snapshot.tank_id).await?.as_ref()) }
+                                                        th { (vehicle.as_ref()) }
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
                                                         (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                         td { (snapshot.all_statistics.damage_dealt) }
                                                         td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
+                                                        td { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
                                                     }
                                                 }
                                             }
