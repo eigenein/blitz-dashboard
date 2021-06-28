@@ -4,6 +4,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use async_std::sync::Mutex;
 use chrono::{DateTime, Duration, Utc};
+use itertools::{merge_join_by, EitherOrBoth};
 use lazy_static::lazy_static;
 use lru_time_cache::LruCache;
 use serde::Deserialize;
@@ -12,16 +13,18 @@ use tide::Request;
 use crate::logging::log_anyhow;
 use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
 use crate::statistics::ConfidenceInterval;
+use crate::wargaming::WargamingApi;
 use crate::web::state::State;
-use itertools::{merge_join_by, EitherOrBoth};
-
-/// Defines the model cache lookup key. Consists of account ID and display period.
-type ModelCacheKey = (i32, Period);
 
 lazy_static! {
-    static ref MODEL_CACHE: Arc<Mutex<LruCache<ModelCacheKey, Arc<PlayerViewModel>>>> =
+    static ref ACCOUNT_INFO_CACHE: Arc<Mutex<LruCache<i32, Arc<AccountInfo>>>> =
         Arc::new(Mutex::new(LruCache::with_expiry_duration_and_capacity(
-            std::time::Duration::from_secs(90),
+            std::time::Duration::from_secs(60),
+            1000,
+        )));
+    static ref ACCOUNT_TANKS_CACHE: Arc<Mutex<LruCache<i32, Arc<Vec<TankSnapshot>>>>> =
+        Arc::new(Mutex::new(LruCache::with_expiry_duration_and_capacity(
+            std::time::Duration::from_secs(60),
             1000,
         )));
 }
@@ -46,7 +49,7 @@ pub struct PlayerViewModel {
 }
 
 impl PlayerViewModel {
-    pub async fn new(request: &Request<State>) -> crate::Result<Arc<PlayerViewModel>> {
+    pub async fn new(request: &Request<State>) -> crate::Result<PlayerViewModel> {
         let account_id = Self::parse_account_id(&request)?;
         let query = request
             .query::<Query>()
@@ -58,36 +61,16 @@ impl PlayerViewModel {
             query.period,
         );
 
-        let mut cache = MODEL_CACHE.lock().await;
-        let model = match cache.get(&(account_id, query.period)) {
-            Some(model) => model.clone(),
-            None => {
-                let model =
-                    Arc::new(Self::new_uncached(request.state(), account_id, query.period).await?);
-                cache.insert((account_id, query.period), model.clone());
-                model
-            }
-        };
-        Ok(model)
-    }
-
-    /// Constructs a model from scratch.
-    async fn new_uncached(state: &State, account_id: i32, period: Period) -> crate::Result<Self> {
-        let account_info = Arc::new(
-            state
-                .api
-                .get_account_info(account_id)
-                .await?
-                .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
-        );
+        let state = request.state();
+        let account_info = Self::get_cached_account_info(&state.api, account_id).await?;
         if account_info.is_active() {
             Self::upsert_account(&state, &account_info);
         }
 
         let actual_statistics = &account_info.statistics.all;
-        let actual_tanks = state.api.get_merged_tanks(account_id).await?;
+        let actual_tanks = Self::get_cached_tank_snapshots(&state.api, account_id).await?;
         let total_tanks = actual_tanks.len();
-        let before = DateTime::<Utc>::from(&period);
+        let before = DateTime::<Utc>::from(&query.period);
         let previous_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
@@ -106,7 +89,8 @@ impl PlayerViewModel {
         } else {
             Vec::new()
         };
-        let mut tank_snapshots = Self::subtract_tank_snapshots(actual_tanks, previous_tanks);
+        let mut tank_snapshots =
+            Self::subtract_tank_snapshots(actual_tanks.to_vec(), previous_tanks);
         tank_snapshots.sort_by_key(|snapshot| -snapshot.all_statistics.battles);
         let warn_no_previous_account_info = previous_account_info.is_none();
         let statistics = actual_statistics
@@ -121,7 +105,7 @@ impl PlayerViewModel {
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_active: account_info.is_active(),
-            period,
+            period: query.period,
             wins: ConfidenceInterval::from_proportion_90(statistics.battles, statistics.wins),
             survival: ConfidenceInterval::from_proportion_90(
                 statistics.battles,
@@ -134,6 +118,46 @@ impl PlayerViewModel {
             tank_snapshots,
             total_tanks,
         })
+    }
+
+    async fn get_cached_account_info(
+        api: &WargamingApi,
+        account_id: i32,
+    ) -> crate::Result<Arc<AccountInfo>> {
+        let mut cache = ACCOUNT_INFO_CACHE.lock().await;
+        match cache.get(&account_id) {
+            Some(account_info) => {
+                log::debug!("Cache hit on account #{} info.", account_id);
+                Ok(account_info.clone())
+            }
+            None => {
+                let account_info = Arc::new(
+                    api.get_account_info(account_id)
+                        .await?
+                        .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
+                );
+                cache.insert(account_id, account_info.clone());
+                Ok(account_info)
+            }
+        }
+    }
+
+    async fn get_cached_tank_snapshots(
+        api: &WargamingApi,
+        account_id: i32,
+    ) -> crate::Result<Arc<Vec<TankSnapshot>>> {
+        let mut cache = ACCOUNT_TANKS_CACHE.lock().await;
+        match cache.get(&account_id) {
+            Some(snapshots) => {
+                log::debug!("Cache hit on account #{} tanks.", account_id);
+                Ok(snapshots.clone())
+            }
+            None => {
+                let snapshots = Arc::new(api.get_merged_tanks(account_id).await?);
+                cache.insert(account_id, snapshots.clone());
+                Ok(snapshots)
+            }
+        }
     }
 
     fn subtract_tank_snapshots(

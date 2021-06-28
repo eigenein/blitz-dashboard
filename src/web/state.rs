@@ -33,7 +33,10 @@ impl State {
     pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Vehicle>> {
         let mut cache = self.tankopedia_cache.lock().await;
         match cache.get(&tank_id) {
-            Some(vehicle) => Ok(vehicle.clone()),
+            Some(vehicle) => {
+                log::debug!("Cache hit on tank #{}.", tank_id);
+                Ok(vehicle.clone())
+            }
             None => {
                 let vehicle = match self.database.lock().await.retrieve_vehicle(tank_id)? {
                     Some(vehicle) => Arc::new(vehicle),
