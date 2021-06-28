@@ -29,6 +29,7 @@ pub fn init(debug: bool) -> anyhow::Result<()> {
 }
 
 /// Check the result and log an error, if any.
+#[allow(dead_code)]
 pub fn log_anyhow<T, R: Borrow<crate::Result<T>>>(result: R) {
     if let Err(ref error) = result.borrow() {
         log::error!(

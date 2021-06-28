@@ -11,7 +11,6 @@ use lru_time_cache::LruCache;
 use serde::Deserialize;
 use tide::Request;
 
-use crate::logging::log_anyhow;
 use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
 use crate::statistics::ConfidenceInterval;
 use crate::wargaming::WargamingApi;
@@ -65,7 +64,7 @@ impl PlayerViewModel {
         let state = request.state();
         let account_info = Self::get_cached_account_info(&state.api, account_id).await?;
         if account_info.is_active() {
-            Self::upsert_account(&state, &account_info);
+            Self::insert_account_or_ignore(&state, &account_info).await?;
         }
 
         let actual_statistics = &account_info.statistics.all;
@@ -133,8 +132,10 @@ impl PlayerViewModel {
             }
             None => {
                 let account_info = Arc::new(
-                    api.get_account_info(account_id)
+                    api.get_account_info([account_id])
                         .await?
+                        .remove(&account_id.to_string())
+                        .flatten()
                         .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
                 );
                 cache.insert(account_id, account_info.clone());
@@ -191,13 +192,21 @@ impl PlayerViewModel {
         .collect::<Vec<TankSnapshot>>()
     }
 
-    /// Upserts account info in background so that it could be picked up by the crawler.
-    fn upsert_account(state: &State, account_info: &Arc<AccountInfo>) {
+    /// Inserts account if it doesn't exist. The rest is updated by [`crate::crawler`].
+    async fn insert_account_or_ignore(
+        state: &State,
+        account_info: &Arc<AccountInfo>,
+    ) -> crate::Result {
         let account_info = account_info.clone();
         let database = state.database.clone();
         async_std::task::spawn(async move {
-            log_anyhow(database.lock().await.upsert_account(&account_info.basic));
-        });
+            database
+                .lock()
+                .await
+                .insert_account_or_ignore(&account_info.basic)
+        })
+        .await?;
+        Ok(())
     }
 
     /// Parses account ID URL segment.

@@ -101,14 +101,13 @@ impl Database {
             .query_row([], get_scalar)?)
     }
 
-    pub fn retrieve_oldest_account(&self) -> crate::Result<Option<BasicAccountInfo>> {
+    pub fn retrieve_oldest_accounts(&self, limit: i32) -> crate::Result<Vec<BasicAccountInfo>> {
         Ok(self
             .0
-            .prepare_cached(
-                // language=SQL
-                "SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT 1")?
-            .query_row([], get_scalar)
-            .optional()?
+            // language=SQL
+            .prepare_cached("SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT ?1")?
+            .query_map([limit], get_scalar)?
+            .collect::<rusqlite::Result<Vec<BasicAccountInfo>>>()?
         )
     }
 
@@ -151,11 +150,21 @@ impl Database {
             .collect::<rusqlite::Result<Vec<TankSnapshot>>>()?)
     }
 
-    pub fn upsert_account(&self, info: &BasicAccountInfo) -> crate::Result {
+    pub fn insert_account_or_replace(&self, info: &BasicAccountInfo) -> crate::Result {
         self.0
             .prepare_cached(
                 // language=SQL
                 "INSERT OR REPLACE INTO accounts (document) VALUES (?1)",
+            )?
+            .execute([info])?;
+        Ok(())
+    }
+
+    pub fn insert_account_or_ignore(&self, info: &BasicAccountInfo) -> crate::Result {
+        self.0
+            .prepare_cached(
+                // language=SQL
+                "INSERT OR IGNORE INTO accounts (document) VALUES (?1)",
             )?
             .execute([info])?;
         Ok(())
@@ -347,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn upsert_account_ok() -> crate::Result {
+    fn insert_account_or_replace_ok() -> crate::Result {
         let info = BasicAccountInfo {
             id: 42,
             last_battle_time: Utc::now(),
@@ -355,8 +364,8 @@ mod tests {
         };
 
         let database = Database::open(":memory:")?;
-        database.upsert_account(&info)?;
-        database.upsert_account(&info)?;
+        database.insert_account_or_replace(&info)?;
+        database.insert_account_or_replace(&info)?;
         assert_eq!(database.retrieve_account_count()?, 1);
         Ok(())
     }
@@ -364,12 +373,12 @@ mod tests {
     #[test]
     fn delete_account_ok() -> crate::Result {
         let database = Database::open(":memory:")?;
-        database.upsert_account(&BasicAccountInfo {
+        database.insert_account_or_replace(&BasicAccountInfo {
             id: 1,
             last_battle_time: Utc::now(),
             crawled_at: Utc::now(),
         })?;
-        database.upsert_account(&BasicAccountInfo {
+        database.insert_account_or_replace(&BasicAccountInfo {
             id: 2,
             last_battle_time: Utc::now(),
             crawled_at: Utc::now(),
@@ -428,7 +437,7 @@ mod tests {
         };
         let database = Database::open(":memory:")?;
         let tx = database.start_transaction()?;
-        database.upsert_account(&info)?;
+        database.insert_account_or_replace(&info)?;
         tx.commit()?;
         assert_eq!(database.retrieve_account_count()?, 1);
         Ok(())
@@ -444,7 +453,7 @@ mod tests {
         let database = Database::open(":memory:")?;
         {
             let _tx = database.start_transaction()?;
-            database.upsert_account(&info)?;
+            database.insert_account_or_replace(&info)?;
         }
         assert_eq!(database.retrieve_account_count()?, 0);
         Ok(())

@@ -1,11 +1,10 @@
 use std::time::{Duration, Instant};
 
-use anyhow::anyhow;
 use async_std::task::sleep;
 use chrono::Utc;
 
 use crate::database::Database;
-use crate::models::{BasicAccountInfo, TankSnapshot};
+use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot};
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
@@ -17,7 +16,7 @@ pub struct Crawler {
 impl Crawler {
     pub async fn run(&self) -> crate::Result {
         loop {
-            self.make_step().await?;
+            self.crawl_batch().await?;
             if self.once {
                 break;
             }
@@ -29,48 +28,73 @@ impl Crawler {
         Ok(())
     }
 
-    async fn make_step(&self) -> crate::Result {
-        let account = self
-            .database
-            .retrieve_oldest_account()?
-            .ok_or_else(|| anyhow!("the database is empty"))?;
+    async fn crawl_batch(&self) -> crate::Result {
+        let start_instant = Instant::now();
+        let stored_accounts = self.database.retrieve_oldest_accounts(100)?;
+        let mut account_infos = self
+            .api
+            .get_account_info(stored_accounts.iter().map(|account| account.id))
+            .await?;
+        let mut n_snapshots: usize = 0;
+        for stored_account in stored_accounts.iter() {
+            let account_info = account_infos
+                .remove(&stored_account.id.to_string())
+                .flatten();
+            n_snapshots += self.crawl_account(stored_account, account_info).await?;
+        }
+        log::info!(
+            "{} accounts processed in {:?}. {} tank snapshots upserted.",
+            stored_accounts.len(),
+            Instant::now() - start_instant,
+            n_snapshots,
+        );
+        Ok(())
+    }
+
+    async fn crawl_account(
+        &self,
+        stored_account: &BasicAccountInfo,
+        account_info: Option<AccountInfo>,
+    ) -> crate::Result<usize> {
         log::info!(
             "Account #{}, last crawled at {}.",
-            account.id,
-            account.crawled_at,
+            stored_account.id,
+            stored_account.crawled_at,
         );
 
-        let start_instant = Instant::now();
-        let account_info = self.api.get_account_info(account.id).await?;
         let tx = self.database.start_transaction()?;
-        match account_info {
+        let n_snapshots = match account_info {
             Some(account_info) if !account_info.is_active() => {
                 log::debug!("Nickname: {}.", account_info.nickname);
                 log::warn!("The account is inactive. Deleting…");
-                self.database.prune_account(account.id)?;
+                self.database.prune_account(stored_account.id)?;
+                0
             }
             Some(mut account_info) => {
                 log::debug!("Nickname: {}.", account_info.nickname);
                 account_info.basic.crawled_at = Utc::now();
-                self.database.upsert_account(&account_info.basic)?;
-                if account_info.basic.last_battle_time >= account.crawled_at {
+                self.database
+                    .insert_account_or_replace(&account_info.basic)?;
+                if account_info.basic.last_battle_time >= stored_account.crawled_at {
                     self.database.upsert_account_snapshot(&account_info)?;
-                    let tank_snapshots = self.get_tank_snapshots(&account).await?;
+                    let tank_snapshots = self.get_tank_snapshots(&stored_account).await?;
                     self.database.upsert_tank_snapshots(&tank_snapshots)?;
+                    tank_snapshots.len()
                 } else {
                     log::info!("No new battles.");
+                    0
                 }
             }
             None => {
                 log::warn!("The account does not exist. Deleting…");
-                self.database.prune_account(account.id)?;
+                self.database.prune_account(stored_account.id)?;
+                0
             }
-        }
+        };
+
         log::debug!("Committing…");
         tx.commit()?;
-        log::info!("Elapsed: {:?}.", Instant::now() - start_instant);
-
-        Ok(())
+        Ok(n_snapshots)
     }
 
     async fn get_tank_snapshots(

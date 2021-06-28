@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
-use itertools::{merge_join_by, EitherOrBoth};
+use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use surf::Url;
@@ -48,12 +48,22 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    pub async fn get_account_info(
+    pub async fn get_account_info<A: IntoIterator<Item = i32>>(
         &self,
-        account_id: i32,
-    ) -> crate::Result<Option<models::AccountInfo>> {
-        self.call_by_account("https://api.wotblitz.ru/wotb/account/info/", account_id)
-            .await
+        account_ids: A,
+    ) -> crate::Result<HashMap<String, Option<models::AccountInfo>>> {
+        let account_id = account_ids
+            .into_iter()
+            .map(|account_id| account_id.to_string())
+            .join(",");
+        self.call(&Url::parse_with_params(
+            "https://api.wotblitz.ru/wotb/account/info/",
+            &[
+                ("application_id", self.application_id.as_str()),
+                ("account_id", account_id.as_str()),
+            ],
+        )?)
+        .await
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
