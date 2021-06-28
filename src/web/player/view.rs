@@ -151,7 +151,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
 
                             div.tile.is-ancestor {
-                                div.tile."is-2".is-parent {
+                                div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Battles")) }
@@ -162,6 +162,18 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     div {
                                                         p.heading { "Total" }
                                                         p.title { (model.statistics.battles) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Wins" }
+                                                        p.title { (model.statistics.wins) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Survived" }
+                                                        p.title { (model.statistics.survived_battles) }
                                                     }
                                                 }
                                             }
@@ -199,7 +211,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-percentage", "Wins")) }
+                                                p.card-header-title { (icon_text("fas fa-percentage", "Win ratio")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(wins))
@@ -212,7 +224,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-heart", "Survival")) }
+                                                p.card-header-title { (icon_text("fas fa-heart", "Survival ratio")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(survival))
@@ -225,7 +237,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hits")) }
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hit ratio")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(hits))
@@ -243,9 +255,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 tr {
                                                     th { (icon_text("fas fa-truck-monster", "Vehicle")) }
                                                     th { "Battles" }
-                                                    th { "Lower wins" }
                                                     th { "Wins" }
-                                                    th { "Upper wins" }
+                                                    th { "Lower win ratio" }
+                                                    th.has-text-info { "Win ratio" }
+                                                    th { "Upper win ratio" }
+                                                    th { "Survived" }
                                                     th { "Damage dealt" }
                                                     th { "Mean damage" }
                                                 }
@@ -255,7 +269,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     tr {
                                                         th { (state.get_vehicle(snapshot.tank_id).await?.as_ref()) }
                                                         td { (snapshot.all_statistics.battles) }
+                                                        td { (snapshot.all_statistics.wins) }
                                                         (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
+                                                        td { (snapshot.all_statistics.survived_battles) }
                                                         td { (snapshot.all_statistics.damage_dealt) }
                                                         td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
                                                     }
@@ -364,7 +380,7 @@ fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
     };
     html! {
         td { (icon_text("fas fa-angle-down", &format!("{:.1}%", lower))) }
-        td { strong { (icon_text("fas fa-grip-lines", &format!("{:.1}%", mean))) } }
-        td { (icon_text("fas fa-angle-up", &format!("{:.1}%", upper)))  }
+        td { strong.has-text-info { (format!("{:.1}%", mean)) } }
+        td { (icon_text("fas fa-angle-up", &format!("{:.1}%", upper))) }
     }
 }

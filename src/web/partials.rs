@@ -45,7 +45,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
 
 pub fn icon_text(class: &str, text: &str) -> Markup {
     html! {
-        span class="icon-text" {
+        span.icon-text {
             span.icon { i class=(class) {} }
             span { (text) }
         }
