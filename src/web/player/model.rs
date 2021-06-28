@@ -1,5 +1,6 @@
 use std::ops::Sub;
 use std::sync::Arc;
+use std::time::Duration as StdDuration;
 
 use anyhow::{anyhow, Context};
 use async_std::sync::Mutex;
@@ -38,7 +39,7 @@ pub struct PlayerViewModel {
     pub is_active: bool,
     pub total_battles: i32,
     pub total_tanks: usize,
-    pub period: Period,
+    pub period: StdDuration,
     pub wins: Option<ConfidenceInterval>,
     pub survival: Option<ConfidenceInterval>,
     pub hits: Option<ConfidenceInterval>,
@@ -70,7 +71,7 @@ impl PlayerViewModel {
         let actual_statistics = &account_info.statistics.all;
         let actual_tanks = Self::get_cached_tank_snapshots(&state.api, account_id).await?;
         let total_tanks = actual_tanks.len();
-        let before = DateTime::<Utc>::from(&query.period);
+        let before = Utc::now() - Duration::from_std(query.period)?;
         let previous_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
@@ -212,60 +213,13 @@ impl PlayerViewModel {
 
 #[derive(Deserialize)]
 struct Query {
-    #[serde(default)]
-    period: Period,
+    #[serde(default = "default_period")]
+    #[serde(with = "humantime_serde")]
+    period: StdDuration,
 }
 
-#[derive(Deserialize, PartialEq, Clone, Ord, PartialOrd, Eq, Copy, Debug)]
-pub enum Period {
-    #[serde(rename = "1h")]
-    Hour,
+const DAY_PERIOD: StdDuration = StdDuration::from_secs(86400);
 
-    #[serde(rename = "4h")]
-    FourHours,
-
-    #[serde(rename = "8h")]
-    EightHours,
-
-    #[serde(rename = "12h")]
-    TwelveHours,
-
-    #[serde(rename = "1d")]
-    Day,
-
-    #[serde(rename = "1w")]
-    Week,
-
-    #[serde(rename = "1m")]
-    Month,
-
-    #[serde(rename = "1y")]
-    Year,
-}
-
-impl Default for Period {
-    fn default() -> Self {
-        Self::TwelveHours
-    }
-}
-
-impl From<&Period> for Duration {
-    fn from(since: &Period) -> Self {
-        match since {
-            Period::Hour => Self::hours(1),
-            Period::FourHours => Self::hours(4),
-            Period::EightHours => Self::hours(8),
-            Period::TwelveHours => Self::hours(12),
-            Period::Day => Self::days(1),
-            Period::Week => Self::weeks(1),
-            Period::Month => Self::days(30),
-            Period::Year => Self::days(365),
-        }
-    }
-}
-
-impl From<&Period> for DateTime<Utc> {
-    fn from(since: &Period) -> Self {
-        Utc::now() - Duration::from(since)
-    }
+fn default_period() -> StdDuration {
+    DAY_PERIOD
 }

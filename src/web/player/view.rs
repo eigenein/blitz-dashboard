@@ -1,3 +1,5 @@
+use std::time::Duration as StdDuration;
+
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_name;
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
@@ -7,9 +9,19 @@ use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::model::{Period, PlayerViewModel};
+use crate::web::player::model::PlayerViewModel;
 use crate::web::responses::html;
 use crate::web::state::State;
+
+const PERIOD_HOUR: StdDuration = StdDuration::from_secs(3600);
+const PERIOD_4_HOURS: StdDuration = StdDuration::from_secs(4 * 3600);
+const PERIOD_8_HOURS: StdDuration = StdDuration::from_secs(8 * 3600);
+const PERIOD_12_HOURS: StdDuration = StdDuration::from_secs(12 * 3600);
+const PERIOD_DAY: StdDuration = StdDuration::from_secs(86400);
+const PERIOD_48_HOURS: StdDuration = StdDuration::from_secs(2 * 86400);
+const PERIOD_WEEK: StdDuration = StdDuration::from_secs(7 * 86400);
+const PERIOD_MONTH: StdDuration = StdDuration::from_secs(2630016);
+const PERIOD_YEAR: StdDuration = StdDuration::from_secs(31557600);
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
@@ -95,28 +107,31 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
                             div.tabs.is-boxed {
                                 ul {
-                                    li.(if model.period == Period::Hour { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_HOUR { "is-active" } else { "" }) {
                                         a href="?period=1h" { "Hour" }
                                     }
-                                    li.(if model.period == Period::FourHours { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_4_HOURS { "is-active" } else { "" }) {
                                         a href="?period=4h" { "4 hours" }
                                     }
-                                    li.(if model.period == Period::EightHours { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_8_HOURS { "is-active" } else { "" }) {
                                         a href="?period=8h" { "8 hours" }
                                     }
-                                    li.(if model.period == Period::TwelveHours { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_12_HOURS { "is-active" } else { "" }) {
                                         a href="?period=12h" { "12 hours" }
                                     }
-                                    li.(if model.period == Period::Day { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_DAY { "is-active" } else { "" }) {
                                         a href="?period=1d" { "24 hours" }
                                     }
-                                    li.(if model.period == Period::Week { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_48_HOURS { "is-active" } else { "" }) {
+                                        a href="?period=2d" { "48 hours" }
+                                    }
+                                    li.(if model.period == PERIOD_WEEK { "is-active" } else { "" }) {
                                         a href="?period=1w" { "Week" }
                                     }
-                                    li.(if model.period == Period::Month { "is-active" } else { "" }) {
-                                        a href="?period=1m" { "Month" }
+                                    li.(if model.period == PERIOD_MONTH { "is-active" } else { "" }) {
+                                        a href="?period=1M" { "Month" }
                                     }
-                                    li.(if model.period == Period::Year { "is-active" } else { "" }) {
+                                    li.(if model.period == PERIOD_YEAR { "is-active" } else { "" }) {
                                         a href="?period=1y" { "Year" }
                                     }
                                 }
