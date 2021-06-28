@@ -141,7 +141,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             div.level {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Battles" }
+                                                        p.heading { "Total" }
                                                         p.title { (model.statistics.battles) }
                                                     }
                                                 }
@@ -248,10 +248,17 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
 
                             article.message.is-info {
-                                div.message-body {
-                                    "Lower and upper bounds above refer to 90% "
-                                    a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
-                                    "."
+                                div.message-body.content {
+                                    ul."mt-0" {
+                                        li {
+                                            "Lower and upper bounds above refer to 90% "
+                                            a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
+                                            "."
+                                        }
+                                        li {
+                                            "Information is cached for a minute."
+                                        }
+                                    }
                                 }
                             }
                         }
