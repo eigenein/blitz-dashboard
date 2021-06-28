@@ -126,7 +126,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 article.message.is-warning {
                                     div.message-body {
                                         "We haven't crawled this account at that moment in past. "
-                                        strong { "Showing the all time information." }
+                                        strong { "Showing the all-time information." }
                                     }
                                 }
                             }
