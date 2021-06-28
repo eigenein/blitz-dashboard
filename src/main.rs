@@ -1,6 +1,7 @@
 use clap::{crate_name, crate_version};
 use sentry::integrations::anyhow::capture_anyhow;
 
+use crate::crawler::Crawler;
 use crate::database::Database;
 use crate::opts::{Opts, Subcommand};
 use crate::wargaming::WargamingApi;
@@ -36,7 +37,15 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
     let database = Database::open(opts.database)?;
     match opts.subcommand {
         Subcommand::Web(web_opts) => web::run(&web_opts.host, web_opts.port, api, database).await,
-        Subcommand::Crawler(crawler_opts) => crawler::run(api, database, crawler_opts.once).await,
+        Subcommand::Crawler(crawler_opts) => {
+            Crawler {
+                api,
+                database,
+                once: crawler_opts.once,
+            }
+            .run()
+            .await
+        }
         Subcommand::ImportTankopedia(_) => tankopedia::run(api, database).await,
     }
 }

@@ -210,16 +210,20 @@ impl Database {
         Ok(())
     }
 
-    pub fn upsert_tank_snapshot(&self, snapshot: &TankSnapshot) -> crate::Result {
-        log::info!(
-            "Upserting tank #{}/#{} snapshot…",
-            snapshot.account_id,
-            snapshot.tank_id
-        );
-        self.0
+    pub fn upsert_tank_snapshots(&self, snapshots: &[TankSnapshot]) -> crate::Result {
+        log::info!("Upserting {} tank snapshots…", snapshots.len());
+        let mut statement = self
+            .0
             // language=SQL
-            .prepare_cached("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)")?
-            .execute(&[snapshot])?;
+            .prepare_cached("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)")?;
+        for snapshot in snapshots {
+            log::debug!(
+                "Upserting #{}/#{} tank snapshot…",
+                snapshot.account_id,
+                snapshot.tank_id
+            );
+            statement.execute(&[snapshot])?;
+        }
         Ok(())
     }
 
@@ -379,30 +383,32 @@ mod tests {
     fn retrieve_latest_tank_snaphots_ok() -> crate::Result {
         let database = Database::open(":memory:")?;
 
-        database.upsert_tank_snapshot(&TankSnapshot {
-            account_id: 1,
-            tank_id: 42,
-            achievements: HashMap::new(),
-            max_series: HashMap::new(),
-            all_statistics: AllStatistics {
-                battles: 1,
-                ..Default::default()
+        database.upsert_tank_snapshots(&[
+            TankSnapshot {
+                account_id: 1,
+                tank_id: 42,
+                achievements: HashMap::new(),
+                max_series: HashMap::new(),
+                all_statistics: AllStatistics {
+                    battles: 1,
+                    ..Default::default()
+                },
+                last_battle_time: Utc.timestamp(1, 0),
+                battle_life_time: Duration::seconds(1),
             },
-            last_battle_time: Utc.timestamp(1, 0),
-            battle_life_time: Duration::seconds(1),
-        })?;
-        database.upsert_tank_snapshot(&TankSnapshot {
-            account_id: 1,
-            tank_id: 42,
-            achievements: HashMap::new(),
-            max_series: HashMap::new(),
-            all_statistics: AllStatistics {
-                battles: 2,
-                ..Default::default()
+            TankSnapshot {
+                account_id: 1,
+                tank_id: 42,
+                achievements: HashMap::new(),
+                max_series: HashMap::new(),
+                all_statistics: AllStatistics {
+                    battles: 2,
+                    ..Default::default()
+                },
+                last_battle_time: Utc.timestamp(2, 0),
+                battle_life_time: Duration::seconds(1),
             },
-            last_battle_time: Utc.timestamp(2, 0),
-            battle_life_time: Duration::seconds(1),
-        })?;
+        ])?;
 
         let snapshots = database.retrieve_latest_tank_snapshots(1, &Utc.timestamp(2, 0))?;
         assert_eq!(snapshots.len(), 1);
