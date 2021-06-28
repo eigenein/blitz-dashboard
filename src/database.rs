@@ -378,32 +378,31 @@ mod tests {
     #[test]
     fn retrieve_latest_tank_snaphots_ok() -> crate::Result {
         let database = Database::open(":memory:")?;
-        database.upsert_tanks(&[
-            TankSnapshot {
-                account_id: 1,
-                tank_id: 42,
-                achievements: HashMap::new(),
-                max_series: HashMap::new(),
-                all_statistics: AllStatistics {
-                    battles: 1,
-                    ..Default::default()
-                },
-                last_battle_time: Utc.timestamp(1, 0),
-                battle_life_time: Duration::seconds(1),
+
+        database.upsert_tank_snapshot(&TankSnapshot {
+            account_id: 1,
+            tank_id: 42,
+            achievements: HashMap::new(),
+            max_series: HashMap::new(),
+            all_statistics: AllStatistics {
+                battles: 1,
+                ..Default::default()
             },
-            TankSnapshot {
-                account_id: 1,
-                tank_id: 42,
-                achievements: HashMap::new(),
-                max_series: HashMap::new(),
-                all_statistics: AllStatistics {
-                    battles: 2,
-                    ..Default::default()
-                },
-                last_battle_time: Utc.timestamp(2, 0),
-                battle_life_time: Duration::seconds(1),
+            last_battle_time: Utc.timestamp(1, 0),
+            battle_life_time: Duration::seconds(1),
+        })?;
+        database.upsert_tank_snapshot(&TankSnapshot {
+            account_id: 1,
+            tank_id: 42,
+            achievements: HashMap::new(),
+            max_series: HashMap::new(),
+            all_statistics: AllStatistics {
+                battles: 2,
+                ..Default::default()
             },
-        ])?;
+            last_battle_time: Utc.timestamp(2, 0),
+            battle_life_time: Duration::seconds(1),
+        })?;
 
         let snapshots = database.retrieve_latest_tank_snapshots(1, &Utc.timestamp(2, 0))?;
         assert_eq!(snapshots.len(), 1);
