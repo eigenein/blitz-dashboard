@@ -14,6 +14,7 @@ use crate::web::responses::html;
 use crate::web::state::State;
 
 const PERIOD_HOUR: StdDuration = StdDuration::from_secs(3600);
+const PERIOD_2_HOURS: StdDuration = StdDuration::from_secs(2 * 3600);
 const PERIOD_4_HOURS: StdDuration = StdDuration::from_secs(4 * 3600);
 const PERIOD_8_HOURS: StdDuration = StdDuration::from_secs(8 * 3600);
 const PERIOD_12_HOURS: StdDuration = StdDuration::from_secs(12 * 3600);
@@ -109,6 +110,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 ul {
                                     li.(if model.period == PERIOD_HOUR { "is-active" } else { "" }) {
                                         a href="?period=1h" { "Hour" }
+                                    }
+                                    li.(if model.period == PERIOD_2_HOURS { "is-active" } else { "" }) {
+                                        a href="?period=2h" { "2 hours" }
                                     }
                                     li.(if model.period == PERIOD_4_HOURS { "is-active" } else { "" }) {
                                         a href="?period=4h" { "4 hours" }
