@@ -2,7 +2,7 @@ use std::time::Duration as StdDuration;
 
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_name;
-use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
+use maud::{html, Markup, Render, DOCTYPE};
 use tide::StatusCode;
 
 use crate::models::Vehicle;
@@ -296,19 +296,21 @@ pub fn get_account_url(account_id: i32) -> String {
 
 impl Render for &Vehicle {
     fn render(&self) -> Markup {
-        let tier = PreEscaped(match self.tier {
-            1 => "Ⅰ&nbsp;",
-            2 => "Ⅱ&nbsp;",
-            3 => "Ⅲ&nbsp;",
-            4 => "Ⅳ&nbsp;",
-            5 => "Ⅴ&nbsp;",
-            6 => "Ⅵ&nbsp;",
-            7 => "Ⅶ&nbsp;",
-            8 => "Ⅷ&nbsp;",
-            9 => "Ⅸ&nbsp;",
-            10 => "Ⅹ&nbsp;",
-            _ => "",
-        });
+        let tier = html! {
+            @match self.tier {
+                1 => "Ⅰ ",
+                2 => "Ⅱ ",
+                3 => "Ⅲ ",
+                4 => "Ⅳ ",
+                5 => "Ⅴ ",
+                6 => "Ⅵ ",
+                7 => "Ⅶ ",
+                8 => "Ⅷ ",
+                9 => "Ⅸ ",
+                10 => "Ⅹ ",
+                _ => "",
+            }
+        };
         let class = if self.is_premium {
             "has-text-warning-dark"
         } else {
