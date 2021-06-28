@@ -25,6 +25,7 @@ lazy_static = "1.4.0"
 log = "0.4.14"
 lru_time_cache = "0.11.11"
 maud = "0.22.2"
+openssl = { version = "0.10", features = ["vendored"] }
 rusqlite = "0.25.3"
 sentry = { version = "0.22.0", features = ["anyhow", "log"] }
 serde = { version = "1.0", features = ["derive"] }
