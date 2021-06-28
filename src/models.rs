@@ -118,6 +118,9 @@ pub enum TankType {
 
     #[serde(rename = "AT-SPG")]
     AT,
+
+    #[serde(rename = "unknown")]
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

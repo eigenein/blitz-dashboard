@@ -1,6 +1,6 @@
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_name;
-use maud::{html, Markup, Render, DOCTYPE};
+use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
 use tide::StatusCode;
 
 use crate::models::Vehicle;
@@ -233,14 +233,12 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             }
                                             tbody {
                                                 @for snapshot in &model.tank_snapshots {
-                                                    @if let Some(vehicle) = state.get_vehicle(snapshot.tank_id).await?.as_ref() {
-                                                        tr {
-                                                            th { (vehicle) }
-                                                            td { (snapshot.all_statistics.battles) }
-                                                            (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
-                                                            td { (snapshot.all_statistics.damage_dealt) }
-                                                            td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
-                                                        }
+                                                    tr {
+                                                        th { (state.get_vehicle(snapshot.tank_id).await?.as_ref()) }
+                                                        td { (snapshot.all_statistics.battles) }
+                                                        (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
+                                                        td { (snapshot.all_statistics.damage_dealt) }
+                                                        td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
                                                     }
                                                 }
                                             }
@@ -272,24 +270,25 @@ pub fn get_account_url(account_id: i32) -> String {
 
 impl Render for &Vehicle {
     fn render(&self) -> Markup {
-        let tier = match self.tier {
-            1 => "Ⅰ",
-            2 => "Ⅱ",
-            3 => "Ⅲ",
-            4 => "Ⅳ",
-            5 => "Ⅴ",
-            6 => "Ⅵ",
-            7 => "Ⅶ",
-            8 => "Ⅷ",
-            9 => "Ⅸ",
-            10 => "Ⅹ",
-            _ => "?",
+        let tier = PreEscaped(match self.tier {
+            1 => "Ⅰ&nbsp;",
+            2 => "Ⅱ&nbsp;",
+            3 => "Ⅲ&nbsp;",
+            4 => "Ⅳ&nbsp;",
+            5 => "Ⅴ&nbsp;",
+            6 => "Ⅵ&nbsp;",
+            7 => "Ⅶ&nbsp;",
+            8 => "Ⅷ&nbsp;",
+            9 => "Ⅸ&nbsp;",
+            10 => "Ⅹ&nbsp;",
+            _ => "",
+        });
+        let class = if self.is_premium {
+            "has-text-warning-dark"
+        } else {
+            ""
         };
-        html! {
-            span.(if self.is_premium { "has-text-warning-dark" } else { "" }) title=(self.tank_id) {
-                (tier) " " (self.name)
-            }
-        }
+        html! { span.(class) title=(self.tank_id) { (tier) (self.name) } }
     }
 }
 
