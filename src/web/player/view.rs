@@ -211,7 +211,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-percentage", "Win ratio")) }
+                                                p.card-header-title { (icon_text("fas fa-percentage", "Win rate")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(wins))
@@ -224,7 +224,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-heart", "Survival ratio")) }
+                                                p.card-header-title { (icon_text("fas fa-heart", "Survival rate")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(survival))
@@ -237,7 +237,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hit ratio")) }
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hit rate")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(hits))
@@ -256,9 +256,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     th { (icon_text("fas fa-truck-monster", "Vehicle")) }
                                                     th { "Battles" }
                                                     th { "Wins" }
-                                                    th { "Lower win ratio" }
-                                                    th.has-text-info { "Win ratio" }
-                                                    th { "Upper win ratio" }
+                                                    th { "Lower win rate" }
+                                                    th.has-text-info { "Win rate" }
+                                                    th { "Upper win rate" }
                                                     th { "Survived" }
                                                     th { "Damage dealt" }
                                                     th { "Mean damage" }
@@ -276,7 +276,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                         td { (snapshot.all_statistics.damage_dealt) }
                                                         td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
-                                                        td { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
+                                                        td.has-text-warning { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
                                                     }
                                                 }
                                             }
