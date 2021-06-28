@@ -1,4 +1,4 @@
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, Utc};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
@@ -210,21 +210,16 @@ impl Database {
         Ok(())
     }
 
-    pub fn upsert_tanks(&self, tanks: &[TankSnapshot]) -> crate::Result {
-        log::info!("Upserting {} tanks…", tanks.len());
-        let start_instant = Instant::now();
-        let mut statement = self.0.prepare_cached(
-            // language=SQL
-            "INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)",
-        )?;
-        for tank in tanks {
-            statement.execute(&[tank])?;
-        }
+    pub fn upsert_tank_snapshot(&self, snapshot: &TankSnapshot) -> crate::Result {
         log::info!(
-            "{} tanks upserted in {:?}.",
-            tanks.len(),
-            Instant::now() - start_instant,
+            "Upserting tank #{}/#{} snapshot…",
+            snapshot.account_id,
+            snapshot.tank_id
         );
+        self.0
+            // language=SQL
+            .prepare_cached("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)")?
+            .execute(&[snapshot])?;
         Ok(())
     }
 

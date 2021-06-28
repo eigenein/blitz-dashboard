@@ -2,9 +2,10 @@ use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
 use async_std::task::sleep;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 
 use crate::database::Database;
+use crate::models::TankSnapshot;
 use crate::wargaming::WargamingApi;
 
 pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Result {
@@ -23,15 +24,22 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
         let tx = database.start_transaction()?;
         match account_info {
             Some(account_info) if !account_info.is_active() => {
+                log::debug!("Nickname: {}.", account_info.nickname);
                 log::warn!("The account is inactive. Deleting…");
                 database.prune_account(account.id)?;
             }
             Some(mut account_info) => {
+                log::debug!("Nickname: {}.", account_info.nickname);
                 account_info.basic.crawled_at = Utc::now();
                 database.upsert_account(&account_info.basic)?;
-                if account_info.basic.last_battle_time > account.crawled_at {
+                if account_info.basic.last_battle_time >= account.crawled_at {
                     database.upsert_account_snapshot(&account_info)?;
-                    database.upsert_tanks(&api.get_merged_tanks(account.id).await?)?;
+                    upsert_tank_snapshots(
+                        &database,
+                        account.crawled_at,
+                        &api.get_merged_tanks(account.id).await?,
+                    )
+                    .await?;
                 } else {
                     log::info!("No new battles.");
                 }
@@ -41,6 +49,7 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
                 database.prune_account(account.id)?;
             }
         }
+        log::debug!("Committing…");
         tx.commit()?;
         log::info!("Elapsed: {:?}.", Instant::now() - start_instant);
 
@@ -52,5 +61,18 @@ pub async fn run(api: WargamingApi, database: Database, once: bool) -> crate::Re
         sleep(Duration::from_secs(1)).await;
     }
 
+    Ok(())
+}
+
+async fn upsert_tank_snapshots(
+    database: &Database,
+    since: DateTime<Utc>,
+    snapshots: &[TankSnapshot],
+) -> crate::Result {
+    for snapshot in snapshots {
+        if snapshot.last_battle_time >= since {
+            database.upsert_tank_snapshot(&snapshot)?;
+        }
+    }
     Ok(())
 }
