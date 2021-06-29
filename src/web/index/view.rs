@@ -1,4 +1,3 @@
-use clap::crate_name;
 use maud::{html, DOCTYPE};
 use tide::Redirect;
 use tide::StatusCode;
@@ -26,7 +25,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             html lang="en" {
                 head {
                     (headers())
-                    title { (crate_name!()) }
+                    title { "Я статист!" }
                 }
                 body {
                     section class="hero is-fullheight" {

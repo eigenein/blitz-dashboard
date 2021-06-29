@@ -1,7 +1,6 @@
 use std::time::Duration as StdDuration;
 
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use clap::crate_name;
 use maud::{html, Markup, Render, DOCTYPE};
 use tide::StatusCode;
 
@@ -36,7 +35,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             html lang="en" {
                 head {
                     (headers())
-                    title { (model.nickname) " – " (crate_name!()) }
+                    title { (model.nickname) " – Я статист!" }
                 }
                 body {
                     nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
