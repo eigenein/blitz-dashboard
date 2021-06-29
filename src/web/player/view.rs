@@ -262,7 +262,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     th { "Survived" }
                                                     th { "Damage dealt" }
                                                     th { "Mean damage" }
-                                                    th.has-text-warning { abbr title="Mean gold booster earnings" { "MGBE" } }
+                                                    th.has-text-warning-dark { abbr title="Mean gold booster earnings" { "MGBE" } }
                                                 }
                                             }
                                             tbody {
@@ -276,7 +276,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                         td { (snapshot.all_statistics.damage_dealt) }
                                                         td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
-                                                        td.has-text-warning { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
+                                                        td.has-text-warning-dark { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
                                                     }
                                                 }
                                             }
