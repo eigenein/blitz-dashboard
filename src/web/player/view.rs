@@ -73,7 +73,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             div.level {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Account age" }
+                                                        p.heading { "Возраст" }
                                                         p.title title=(model.created_at) {
                                                             (HumanTime::from(model.created_at).to_text_en(Accuracy::Rough, Tense::Present))
                                                         }
@@ -81,19 +81,19 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Tanks played" }
+                                                        p.heading { "Танков" }
                                                         p.title { (model.total_tanks) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Battles" }
+                                                        p.heading { "Боев" }
                                                         p.title { (model.total_battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Last battle" }
+                                                        p.heading { "Последний бой" }
                                                         p.title.(if model.has_recently_played { "has-text-success" } else if !model.is_active { "has-text-danger" } else { "" })
                                                             title=(model.last_battle_time) {
                                                             (HumanTime::from(model.last_battle_time))
@@ -109,34 +109,34 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             div.tabs.is-boxed {
                                 ul {
                                     li.(if model.period == PERIOD_HOUR { "is-active" } else { "" }) {
-                                        a href="?period=1h" { "Hour" }
+                                        a href="?period=1h" { "Час" }
                                     }
                                     li.(if model.period == PERIOD_2_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2h" { "2 hours" }
+                                        a href="?period=2h" { "2 часа" }
                                     }
                                     li.(if model.period == PERIOD_4_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=4h" { "4 hours" }
+                                        a href="?period=4h" { "4 часа" }
                                     }
                                     li.(if model.period == PERIOD_8_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=8h" { "8 hours" }
+                                        a href="?period=8h" { "8 часов" }
                                     }
                                     li.(if model.period == PERIOD_12_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=12h" { "12 hours" }
+                                        a href="?period=12h" { "12 часов" }
                                     }
                                     li.(if model.period == PERIOD_DAY { "is-active" } else { "" }) {
-                                        a href="?period=1d" { "24 hours" }
+                                        a href="?period=1d" { "24 часа" }
                                     }
                                     li.(if model.period == PERIOD_48_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2d" { "48 hours" }
+                                        a href="?period=2d" { "48 часов" }
                                     }
                                     li.(if model.period == PERIOD_WEEK { "is-active" } else { "" }) {
-                                        a href="?period=1w" { "Week" }
+                                        a href="?period=1w" { "Неделя" }
                                     }
                                     li.(if model.period == PERIOD_MONTH { "is-active" } else { "" }) {
-                                        a href="?period=1M" { "Month" }
+                                        a href="?period=1M" { "Месяц" }
                                     }
                                     li.(if model.period == PERIOD_YEAR { "is-active" } else { "" }) {
-                                        a href="?period=1y" { "Year" }
+                                        a href="?period=1y" { "Год" }
                                     }
                                 }
                             }
@@ -144,8 +144,8 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             @if model.warn_no_previous_account_info {
                                 article.message.is-warning {
                                     div.message-body {
-                                        "We haven't crawled this account at that moment in past. "
-                                        strong { "Showing the all-time information." }
+                                        strong { "Отображается статистика за все время." }
+                                        " У нас нет сведений об аккаунте за этот период."
                                     }
                                 }
                             }
@@ -154,25 +154,25 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Battles")) }
+                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
                                         }
                                         div.card-content {
                                             div.level {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Total" }
+                                                        p.heading { "Всего" }
                                                         p.title { (model.statistics.battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Wins" }
+                                                        p.heading { "Победы" }
                                                         p.title { (model.statistics.wins) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Survived" }
+                                                        p.heading { "Выжил" }
                                                         p.title { (model.statistics.survived_battles) }
                                                     }
                                                 }
@@ -184,19 +184,19 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-house-damage", "Damage dealt")) }
+                                            p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
                                         }
                                         div.card-content {
                                             div.level {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Total" }
+                                                        p.heading { "Всего" }
                                                         p.title { (model.statistics.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Mean" }
+                                                        p.heading { "Средний" }
                                                         p.title title=(model.damage_dealt_mean) { (format!("{:.0}", model.damage_dealt_mean)) }
                                                     }
                                                 }
@@ -211,7 +211,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-percentage", "Win rate")) }
+                                                p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(wins))
@@ -224,7 +224,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-heart", "Survival rate")) }
+                                                p.card-header-title { (icon_text("fas fa-heart", "Выживание")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(survival))
@@ -237,7 +237,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-bullseye", "Hit rate")) }
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(hits))
@@ -253,16 +253,16 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         table.table.is-hoverable.is-striped.is-fullwidth {
                                             thead {
                                                 tr {
-                                                    th { (icon_text("fas fa-truck-monster", "Vehicle")) }
-                                                    th { "Battles" }
-                                                    th { "Wins" }
-                                                    th { "Lower win rate" }
-                                                    th.has-text-info { "Win rate" }
-                                                    th { "Upper win rate" }
-                                                    th { "Survived" }
-                                                    th { "Damage dealt" }
-                                                    th { "Mean damage" }
-                                                    th.has-text-warning-dark { abbr title="Mean gold booster earnings" { "MGBE" } }
+                                                    th { (icon_text("fas fa-truck-monster", "Техника")) }
+                                                    th { "Бои" }
+                                                    th { "Победы" }
+                                                    th { "Нижний " abbr title="Процент побед" { "ПП" } }
+                                                    th.has-text-info { "Процент побед" }
+                                                    th { "Верхний " abbr title="Процент побед" { "ПП" } }
+                                                    th { "Выжил" }
+                                                    th { "Нанесенный ущерб" }
+                                                    th { "Средний ущерб" }
+                                                    th.has-text-warning-dark { abbr title="Средняя доходность золотого бустера" { "ЗБ" } }
                                                 }
                                             }
                                             tbody {
@@ -289,12 +289,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.message-body.content {
                                     ul."mt-0" {
                                         li {
-                                            "Lower and upper bounds above refer to 90% "
-                                            a href="https://en.wikipedia.org/wiki/Confidence_interval" { "confidence intervals" }
+                                            "Нижние и верхние значения – это границы 90%-го "
+                                            a href="https://ru.wikipedia.org/wiki/%D0%94%D0%BE%D0%B2%D0%B5%D1%80%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9_%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%B2%D0%B0%D0%BB" { "доверительного интервала" }
                                             "."
-                                        }
-                                        li {
-                                            "Information is cached for a minute."
                                         }
                                     }
                                 }
@@ -356,19 +353,19 @@ fn render_confidence_interval_level(interval: &ConfidenceInterval) -> Markup {
         div.level {
             div.level-item.has-text-centered {
                 div {
-                    p.heading { "Lower" }
+                    p.heading { "Нижнее" }
                     p.title."is-5" title=(lower) { (format!("{:.1}%", lower)) }
                 }
             }
             div.level-item.has-text-centered {
                 div {
-                    p.heading { "Mean" }
+                    p.heading { "Среднее" }
                     p.title title=(mean) { (format!("{:.1}%", mean)) }
                 }
             }
             div.level-item.has-text-centered {
                 div {
-                    p.heading { "Upper" }
+                    p.heading { "Верхнее" }
                     p.title."is-5" title=(upper) { (format!("{:.1}%", upper)) }
                 }
             }

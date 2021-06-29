@@ -14,7 +14,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
             div class="control" {
                 span."select"."is-rounded".(class) {
                     select {
-                        option { "🇷🇺 RU" }
+                        option { "🇷🇺 Россия" }
                     }
                 }
             }
@@ -23,7 +23,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
                     type="text"
                     name="search"
                     value=(nickname)
-                    placeholder="Nickname"
+                    placeholder="Никнейм"
                     autocomplete="nickname"
                     pattern="\\w+"
                     autocapitalize="none"
@@ -37,7 +37,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
                 }
             }
             div.control {
-                input.button.is-rounded.is-link.(class) type="submit" value="Search";
+                input.button.is-rounded.is-link.(class) type="submit" value="Поиск";
             }
         }
     }
