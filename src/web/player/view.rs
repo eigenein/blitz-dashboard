@@ -252,7 +252,6 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.table-container {
                                         table.table.is-hoverable.is-striped.is-fullwidth {
                                             thead { (thead()) }
-                                            tfoot { (thead()) }
                                             tbody {
                                                 @for snapshot in &model.tank_snapshots {
                                                     @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
