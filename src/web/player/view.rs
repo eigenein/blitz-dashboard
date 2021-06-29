@@ -6,6 +6,7 @@ use tide::StatusCode;
 
 use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
+use crate::web::helpers::format_f64;
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
 use crate::web::player::model::PlayerViewModel;
@@ -196,7 +197,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title title=(model.damage_dealt_mean) { (format!("{:.0}", model.damage_dealt_mean)) }
+                                                        p.title { (format_f64(model.damage_dealt_mean, 0)) }
                                                     }
                                                 }
                                             }
@@ -262,13 +263,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td.has-text-warning-dark {
                                                             span.icon-text {
                                                                 span.icon { i.fas.fa-coins {} }
-                                                                span {
-                                                                    (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles)))
-                                                                }
+                                                                span { (format_f64(10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles), 1)) "%" }
                                                             }
                                                         }
                                                         td { (snapshot.all_statistics.damage_dealt) }
-                                                        td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
+                                                        td { (format_f64(f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles), 0)) }
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                     }
                                                 }
@@ -351,19 +350,19 @@ fn render_confidence_interval_level(interval: &ConfidenceInterval) -> Markup {
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Нижнее" }
-                    p.title."is-5" title=(lower) { (format!("{:.1}%", lower)) }
+                    p.title."is-5" { (format_f64(lower, 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Среднее" }
-                    p.title title=(mean) { (format!("{:.1}%", mean)) }
+                    p.title { (format_f64(mean, 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Верхнее" }
-                    p.title."is-5" title=(upper) { (format!("{:.1}%", upper)) }
+                    p.title."is-5" { (format_f64(upper, 1)) "%" }
                 }
             }
         }
@@ -376,12 +375,12 @@ fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
         None => (0.0, 0.0, 0.0),
     };
     html! {
-        td { strong.has-text-info { (format!("{:.1}%", mean)) } }
+        td { strong.has-text-info { (format_f64(mean, 1)) } }
         td.has-text-centered {
             span.icon-text {
-                span { (format!("{:.1}%", lower)) }
+                span { (format_f64(lower, 1)) "%" }
                 span.icon.has-text-grey { i.fas.fa-ellipsis-h {} }
-                span { (format!("{:.1}%", upper)) }
+                span { (format_f64(upper, 1)) "%" }
             }
         }
     }

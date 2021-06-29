@@ -4,6 +4,7 @@ use crate::database::Database;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
 
+mod helpers;
 mod index;
 mod middleware;
 mod partials;
