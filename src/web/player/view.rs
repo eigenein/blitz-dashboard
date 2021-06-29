@@ -18,7 +18,8 @@ const PERIOD_4_HOURS: StdDuration = StdDuration::from_secs(4 * 3600);
 const PERIOD_8_HOURS: StdDuration = StdDuration::from_secs(8 * 3600);
 const PERIOD_12_HOURS: StdDuration = StdDuration::from_secs(12 * 3600);
 const PERIOD_DAY: StdDuration = StdDuration::from_secs(86400);
-const PERIOD_48_HOURS: StdDuration = StdDuration::from_secs(2 * 86400);
+const PERIOD_2_DAYS: StdDuration = StdDuration::from_secs(2 * 86400);
+const PERIOD_3_DAYS: StdDuration = StdDuration::from_secs(3 * 86400);
 const PERIOD_WEEK: StdDuration = StdDuration::from_secs(7 * 86400);
 const PERIOD_MONTH: StdDuration = StdDuration::from_secs(2630016);
 const PERIOD_YEAR: StdDuration = StdDuration::from_secs(31557600);
@@ -125,8 +126,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     li.(if model.period == PERIOD_DAY { "is-active" } else { "" }) {
                                         a href="?period=1d#period" { "24 часа" }
                                     }
-                                    li.(if model.period == PERIOD_48_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2d#period" { "48 часов" }
+                                    li.(if model.period == PERIOD_2_DAYS { "is-active" } else { "" }) {
+                                        a href="?period=2d#period" { "2 дня" }
+                                    }
+                                    li.(if model.period == PERIOD_3_DAYS { "is-active" } else { "" }) {
+                                        a href="?period=3d#period" { "3 дня" }
                                     }
                                     li.(if model.period == PERIOD_WEEK { "is-active" } else { "" }) {
                                         a href="?period=1w#period" { "Неделя" }
