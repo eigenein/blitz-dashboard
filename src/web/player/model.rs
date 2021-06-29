@@ -12,7 +12,6 @@ use serde::Deserialize;
 use tide::Request;
 
 use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
-use crate::statistics::ConfidenceInterval;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
 
@@ -39,9 +38,6 @@ pub struct PlayerViewModel {
     pub total_battles: i32,
     pub total_tanks: usize,
     pub period: StdDuration,
-    pub wins: Option<ConfidenceInterval>,
-    pub survival: Option<ConfidenceInterval>,
-    pub hits: Option<ConfidenceInterval>,
     pub damage_dealt_mean: f64,
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
@@ -106,12 +102,6 @@ impl PlayerViewModel {
                 > (Utc::now() - Duration::hours(1)),
             is_active: account_info.is_active(),
             period: query.period,
-            wins: ConfidenceInterval::from_proportion_90(statistics.battles, statistics.wins),
-            survival: ConfidenceInterval::from_proportion_90(
-                statistics.battles,
-                statistics.survived_battles,
-            ),
-            hits: ConfidenceInterval::from_proportion_90(statistics.shots, statistics.hits),
             damage_dealt_mean: statistics.damage_dealt as f64 / statistics.battles.max(1) as f64,
             warn_no_previous_account_info,
             statistics,

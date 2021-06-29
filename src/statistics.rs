@@ -1,32 +1,25 @@
 /// `z*` for 90% confidence level.
 pub const Z_90: f64 = 1.645;
 
-pub struct ConfidenceInterval {
-    pub mean: f64,
-    pub margin: f64,
+/// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
+pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> (f64, f64) {
+    if n_trials == 0 {
+        return (0.0, 0.0);
+    }
+    let n_trials = n_trials as f64;
+    let n_successes = n_successes as f64;
+
+    let p_hat = n_successes / n_trials;
+
+    let a = z * z / n_trials;
+    let b = 1.0 / (1.0 + a);
+
+    let p = b * (p_hat + a / 2.0);
+    let margin = z * b * (p_hat * (1.0 - p_hat) / n_trials + a / n_trials / 4.0).sqrt();
+
+    (p, margin)
 }
 
-impl ConfidenceInterval {
-    pub fn from_proportion(n_trials: i32, n_successes: i32, z: f64) -> Option<Self> {
-        if n_trials == 0 {
-            return None;
-        }
-        let n_trials = n_trials as f64;
-        let n_successes = n_successes as f64;
-        let mean = n_successes / n_trials;
-        let margin = z * (mean * (1.0 - mean) / n_trials).sqrt();
-        Some(Self { mean, margin })
-    }
-
-    pub fn from_proportion_90(n_trials: i32, n_successes: i32) -> Option<Self> {
-        Self::from_proportion(n_trials, n_successes, Z_90)
-    }
-
-    pub fn get_percentages(&self) -> (f64, f64, f64) {
-        let mean = self.mean * 100.0;
-        let margin = self.margin * 100.0;
-        let lower = (mean - margin).max(0.0);
-        let upper = (mean + margin).min(100.0);
-        (lower, mean, upper)
-    }
+pub fn wilson_score_interval_90(n_trials: i32, n_successes: i32) -> (f64, f64) {
+    wilson_score_interval(n_trials, n_successes, Z_90)
 }

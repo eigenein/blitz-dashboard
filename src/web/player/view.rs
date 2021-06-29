@@ -4,7 +4,7 @@ use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
-use crate::statistics::ConfidenceInterval;
+use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{format_f64, format_tier, format_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
@@ -210,41 +210,35 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
 
                             div.tile.is-ancestor {
-                                @if let Some(wins) = &model.wins {
-                                    div.tile."is-4".is-parent {
-                                        div.tile.is-child.card {
-                                            header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
-                                            }
-                                            div.card-content {
-                                                (render_confidence_interval_level(wins))
-                                            }
+                                div.tile."is-4".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
+                                        }
+                                        div.card-content {
+                                            (render_confidence_interval_level(model.statistics.battles, model.statistics.wins))
                                         }
                                     }
                                 }
 
-                                @if let Some(survival) = &model.survival {
-                                    div.tile."is-4".is-parent {
-                                        div.tile.is-child.card {
-                                            header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
-                                            }
-                                            div.card-content {
-                                                (render_confidence_interval_level(survival))
-                                            }
+                                div.tile."is-4".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
+                                        }
+                                        div.card-content {
+                                            (render_confidence_interval_level(model.statistics.battles, model.statistics.survived_battles))
                                         }
                                     }
                                 }
 
-                                @if let Some(hits) = &model.hits {
-                                    div.tile."is-4".is-parent {
-                                        div.tile.is-child.card {
-                                            header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
-                                            }
-                                            div.card-content {
-                                                (render_confidence_interval_level(hits))
-                                            }
+                                div.tile."is-4".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
+                                        }
+                                        div.card-content {
+                                            (render_confidence_interval_level(model.statistics.shots, model.statistics.hits))
                                         }
                                     }
                                 }
@@ -254,10 +248,33 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.box {
                                     div.table-container {
                                         table.table.is-hoverable.is-striped.is-fullwidth {
-                                            thead { (thead()) }
+                                            thead {
+                                                tr {
+                                                    th { a { "Техника" } }
+                                                    th { a { "Уровень" } }
+                                                    th { a { "Нация" } }
+                                                    th { a { "Тип" } }
+                                                    th { a { "Бои" } }
+                                                    th { a { "Победы" } }
+                                                    th { a { "Текущий " abbr title="Процент побед" { "ПП" } } }
+                                                    th { a { "Ожидаемый " abbr title="Процент побед" { "ПП" } } }
+                                                    th { a { abbr title="Текущий доход от золотых бустеров, если они были установлены" { "Заработанное золото" } }}
+                                                    th { a { abbr title="Средняя ожидаемая доходность золотого бустера" { "Ожидаемое золото" } } }
+                                                    th { a { "Ущерб" } }
+                                                    th { a { "Ср. ущерб" } }
+                                                    th { a { "Выжил" } }
+                                                    th { a { "Выживаемость" } }
+                                                }
+                                            }
                                             tbody {
                                                 @for snapshot in &model.tank_snapshots {
                                                     @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
+                                                    @let statistics = &snapshot.all_statistics;
+                                                    @let win_rate = statistics.wins as f64 / statistics.battles as f64;
+                                                    @let (estimated_win_rate, win_rate_margin) = wilson_score_interval_90(snapshot.all_statistics.battles, snapshot.all_statistics.wins);
+                                                    @let survival_percentage = 100.0 * (statistics.survived_battles as f64) / (statistics.battles as f64);
+                                                    @let mean_damage_dealt = statistics.damage_dealt as f64 / statistics.battles as f64;
+
                                                     tr {
                                                         th { (format_vehicle_name(&vehicle)) }
                                                         td.has-text-centered { strong { (format_tier(vehicle.tier)) } }
@@ -265,20 +282,35 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (format!("{:?}", vehicle.type_)) }
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
-                                                        (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
-                                                        td.has-text-warning-dark {
+                                                        td.has-text-info { strong { (format_f64(100.0 * win_rate, 1)) "%" } }
+                                                        td.has-text-centered.is-flex-wrap-nowrap {
+                                                            strong { (format_f64(100.0 * estimated_win_rate, 0)) "%" }
+                                                            " ±"
+                                                            (format_f64(win_rate_margin * 100.0, 1))
+                                                        }
+                                                        td {
                                                             span.icon-text.is-flex-wrap-nowrap {
-                                                                span.icon { i.fas.fa-coins {} }
-                                                                span { (format_f64(10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles), 1)) }
+                                                                span.icon.has-text-warning-dark { i.fas.fa-coins {} }
+                                                                span { strong { (format_f64(10.0 + vehicle.tier as f64 * win_rate, 0)) } }
+                                                            }
+                                                        }
+                                                        td {
+                                                            span.icon-text.is-flex-wrap-nowrap {
+                                                                span.icon.has-text-warning-dark { i.fas.fa-coins {} }
+                                                                span {
+                                                                    strong { (format_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 0)) }
+                                                                    " ±"
+                                                                    (format_f64(vehicle.tier as f64 * win_rate_margin, 0))
+                                                                }
                                                             }
                                                         }
                                                         td { (snapshot.all_statistics.damage_dealt) }
-                                                        td { (format_f64(snapshot.all_statistics.mean_damage_dealt(), 0)) }
+                                                        td { (format_f64(mean_damage_dealt, 0)) }
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
-                                                                span.icon { i.far.fa-heart.has-text-danger {} }
-                                                                span { (format_f64(snapshot.all_statistics.survival_percentage(), 0)) "%" }
+                                                                span.icon { i.fas.fa-heart.has-text-danger {} }
+                                                                span { (format_f64(survival_percentage, 0)) "%" }
                                                             }
                                                         }
                                                     }
@@ -302,28 +334,11 @@ pub fn get_account_url(account_id: i32) -> String {
     format!("/ru/{}", account_id)
 }
 
-fn thead() -> Markup {
-    html! {
-        tr {
-            th { a { "Техника" } }
-            th { a { "Уровень" } }
-            th { a { "Нация" } }
-            th { a { "Тип" } }
-            th { a { "Бои" } }
-            th { a { "Победы" } }
-            th { a { "Процент побед" } }
-            th { a { "Интервал % побед" } }
-            th { a { abbr title="Средняя доходность золотого бустера" { "ЗБ" } } }
-            th { a { "Ущерб" } }
-            th { a { "Ср. ущерб" } }
-            th { a { "Выжил" } }
-            th { a { "Выживаемость" } }
-        }
-    }
-}
-
-fn render_confidence_interval_level(interval: &ConfidenceInterval) -> Markup {
-    let (lower, mean, upper) = interval.get_percentages();
+fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
+    let mean = 100.0 * n_successes as f64 / n_trials as f64;
+    let (p, margin) = wilson_score_interval_90(n_trials, n_successes);
+    let lower = 100.0 * (p - margin);
+    let upper = 100.0 * (p + margin);
 
     html! {
         div.level {
@@ -344,23 +359,6 @@ fn render_confidence_interval_level(interval: &ConfidenceInterval) -> Markup {
                     p.heading { "Верхнее" }
                     p.title."is-5" { (format_f64(upper, 1)) "%" }
                 }
-            }
-        }
-    }
-}
-
-fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
-    let (lower, mean, upper) = match ConfidenceInterval::from_proportion_90(n_trials, n_successes) {
-        Some(interval) => interval.get_percentages(),
-        None => (0.0, 0.0, 0.0),
-    };
-    html! {
-        td { strong.has-text-info { (format_f64(mean, 1)) "%" } }
-        td.has-text-centered {
-            span.icon-text.is-flex-wrap-nowrap {
-                span { (format_f64(lower, 1)) "%" }
-                span.icon.has-text-grey { i.fas.fa-ellipsis-h {} }
-                span { (format_f64(upper, 1)) "%" }
             }
         }
     }

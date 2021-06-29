@@ -172,16 +172,6 @@ pub struct TankSnapshot {
     pub battle_life_time: Duration,
 }
 
-impl AllStatistics {
-    pub fn survival_percentage(&self) -> f64 {
-        100.0 * (self.survived_battles as f64) / (self.battles as f64)
-    }
-
-    pub fn mean_damage_dealt(&self) -> f64 {
-        self.damage_dealt as f64 / self.battles as f64
-    }
-}
-
 impl Sub for &AllStatistics {
     type Output = AllStatistics;
 
