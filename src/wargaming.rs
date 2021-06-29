@@ -96,10 +96,7 @@ impl WargamingApi {
         Ok(self
             .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
-                &[
-                    ("application_id", self.application_id.as_str()),
-                    ("language", "en"),
-                ],
+                &[("application_id", self.application_id.as_str())],
             )?)
             .await?
             .into_iter()
