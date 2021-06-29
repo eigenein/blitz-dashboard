@@ -106,37 +106,37 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                             }
 
-                            div.tabs.is-boxed {
+                            #period.tabs.is-boxed {
                                 ul {
                                     li.(if model.period == PERIOD_HOUR { "is-active" } else { "" }) {
-                                        a href="?period=1h" { "Час" }
+                                        a href="?period=1h#period" { "Час" }
                                     }
                                     li.(if model.period == PERIOD_2_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2h" { "2 часа" }
+                                        a href="?period=2h#period" { "2 часа" }
                                     }
                                     li.(if model.period == PERIOD_4_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=4h" { "4 часа" }
+                                        a href="?period=4h#period" { "4 часа" }
                                     }
                                     li.(if model.period == PERIOD_8_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=8h" { "8 часов" }
+                                        a href="?period=8h#period" { "8 часов" }
                                     }
                                     li.(if model.period == PERIOD_12_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=12h" { "12 часов" }
+                                        a href="?period=12h#period" { "12 часов" }
                                     }
                                     li.(if model.period == PERIOD_DAY { "is-active" } else { "" }) {
-                                        a href="?period=1d" { "24 часа" }
+                                        a href="?period=1d#period" { "24 часа" }
                                     }
                                     li.(if model.period == PERIOD_48_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2d" { "48 часов" }
+                                        a href="?period=2d#period" { "48 часов" }
                                     }
                                     li.(if model.period == PERIOD_WEEK { "is-active" } else { "" }) {
-                                        a href="?period=1w" { "Неделя" }
+                                        a href="?period=1w#period" { "Неделя" }
                                     }
                                     li.(if model.period == PERIOD_MONTH { "is-active" } else { "" }) {
-                                        a href="?period=1M" { "Месяц" }
+                                        a href="?period=1M#period" { "Месяц" }
                                     }
                                     li.(if model.period == PERIOD_YEAR { "is-active" } else { "" }) {
-                                        a href="?period=1y" { "Год" }
+                                        a href="?period=1y#period" { "Год" }
                                     }
                                 }
                             }
