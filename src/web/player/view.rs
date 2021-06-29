@@ -196,7 +196,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Средний" }
+                                                        p.heading { "За бой" }
                                                         p.title title=(model.damage_dealt_mean) { (format!("{:.0}", model.damage_dealt_mean)) }
                                                     }
                                                 }
@@ -251,20 +251,8 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 div.box {
                                     div.table-container {
                                         table.table.is-hoverable.is-striped.is-fullwidth {
-                                            thead {
-                                                tr {
-                                                    th { (icon_text("fas fa-truck-monster", "Техника")) }
-                                                    th { "Бои" }
-                                                    th { "Победы" }
-                                                    th { "Нижний " abbr title="Процент побед" { "ПП" } }
-                                                    th.has-text-info { "Процент побед" }
-                                                    th { "Верхний " abbr title="Процент побед" { "ПП" } }
-                                                    th { "Выжил" }
-                                                    th { "Нанесенный ущерб" }
-                                                    th { "Средний ущерб" }
-                                                    th.has-text-warning-dark { abbr title="Средняя доходность золотого бустера" { "ЗБ" } }
-                                                }
-                                            }
+                                            thead { (thead()) }
+                                            tfoot { (thead()) }
                                             tbody {
                                                 @for snapshot in &model.tank_snapshots {
                                                     @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
@@ -273,25 +261,20 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
                                                         (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
-                                                        td { (snapshot.all_statistics.survived_battles) }
+                                                        td.has-text-warning-dark {
+                                                            span.icon-text {
+                                                                span.icon { i.fas.fa-coins {} }
+                                                                span {
+                                                                    (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles)))
+                                                                }
+                                                            }
+                                                        }
                                                         td { (snapshot.all_statistics.damage_dealt) }
                                                         td { (format!("{:.0}", f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles))) }
-                                                        td.has-text-warning-dark { (format!("{:.1}", 10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles))) }
+                                                        td { (snapshot.all_statistics.survived_battles) }
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-                            }
-
-                            article.message.is-info {
-                                div.message-body.content {
-                                    ul."mt-0" {
-                                        li {
-                                            "Нижние и верхние значения – это границы 90%-го "
-                                            a href="https://ru.wikipedia.org/wiki/%D0%94%D0%BE%D0%B2%D0%B5%D1%80%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9_%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%B2%D0%B0%D0%BB" { "доверительного интервала" }
-                                            "."
                                         }
                                     }
                                 }
@@ -308,6 +291,22 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
 pub fn get_account_url(account_id: i32) -> String {
     format!("/ru/{}", account_id)
+}
+
+fn thead() -> Markup {
+    html! {
+        tr {
+            th { "Техника" }
+            th { "Бои" }
+            th { "Победы" }
+            th.has-text-info { "Процент побед" }
+            th.has-text-centered { "Интервал % побед" }
+            th.has-text-warning-dark.has-text-centered { abbr title="Средняя доходность золотого бустера" { "ЗБ" } }
+            th { "Ущерб" }
+            th { "Ср. ущерб" }
+            th { "Выжил" }
+        }
+    }
 }
 
 impl Render for &Vehicle {
@@ -379,8 +378,13 @@ fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
         None => (0.0, 0.0, 0.0),
     };
     html! {
-        td { (icon_text("fas fa-angle-down", &format!("{:.1}%", lower))) }
         td { strong.has-text-info { (format!("{:.1}%", mean)) } }
-        td { (icon_text("fas fa-angle-up", &format!("{:.1}%", upper))) }
+        td.has-text-centered {
+            span.icon-text {
+                span { (format!("{:.1}%", lower)) }
+                span.icon.has-text-grey { i.fas.fa-ellipsis-h {} }
+                span { (format!("{:.1}%", upper)) }
+            }
+        }
     }
 }
