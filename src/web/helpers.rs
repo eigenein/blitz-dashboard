@@ -1,9 +1,9 @@
 use maud::{html, Markup};
 
-use crate::models::Vehicle;
+use crate::models::{Nation, Vehicle};
 
 #[inline(always)]
-pub fn format_f64(value: f64, precision: usize) -> Markup {
+pub fn render_f64(value: f64, precision: usize) -> Markup {
     html! {
         span title=(value) {
             (format!("{:.1$}", value, precision))
@@ -11,7 +11,7 @@ pub fn format_f64(value: f64, precision: usize) -> Markup {
     }
 }
 
-pub fn format_tier(tier: i8) -> Markup {
+pub fn render_tier(tier: i8) -> Markup {
     html! {
         @match tier {
             1 => "Ⅰ",
@@ -29,10 +29,26 @@ pub fn format_tier(tier: i8) -> Markup {
     }
 }
 
-pub fn format_vehicle_name(vehicle: &Vehicle) -> Markup {
+pub fn render_vehicle_name(vehicle: &Vehicle) -> Markup {
     html! {
         span.(if vehicle.is_premium { "has-text-warning-dark" } else { "" }) {
             (vehicle.name)
+        }
+    }
+}
+
+pub fn render_nation(nation: &Nation) -> Markup {
+    html! {
+        @match nation {
+            Nation::China => "🇨🇳",
+            Nation::Europe => "🇪🇺",
+            Nation::France => "🇫🇷",
+            Nation::Germany => "🇩🇪",
+            Nation::Japan => "🇯🇵",
+            Nation::Other => "🏳",
+            Nation::Uk => "🇬🇧",
+            Nation::Usa => "🇺🇸",
+            Nation::Ussr => "🇷🇺",
         }
     }
 }

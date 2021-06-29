@@ -5,7 +5,7 @@ use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
 use crate::statistics::wilson_score_interval_90;
-use crate::web::helpers::{format_f64, format_tier, format_vehicle_name};
+use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
 use crate::web::player::model::PlayerViewModel;
@@ -200,7 +200,31 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (format_f64(model.damage_dealt_mean, 0)) }
+                                                        p.title { (render_f64(model.statistics.damage_dealt as f64 / model.statistics.battles.max(1) as f64, 0)) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div.tile."is-4".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
+                                        }
+                                        div.card-content {
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Всего" }
+                                                        p.title { (model.statistics.frags) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "За бой" }
+                                                        p.title { (render_f64(model.statistics.frags as f64 / model.statistics.battles.max(1) as f64, 1)) }
                                                     }
                                                 }
                                             }
@@ -251,19 +275,20 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             thead {
                                                 tr {
                                                     th { a { "Техника" } }
-                                                    th { a { "Уровень" } }
-                                                    th { a { "Нация" } }
-                                                    th { a { "Тип" } }
+                                                    th.has-text-centered { a { "Уровень" } }
+                                                    th.has-text-centered { a { "Нация" } }
+                                                    th.has-text-centered { a { "Тип" } }
                                                     th { a { "Бои" } }
                                                     th { a { "Победы" } }
-                                                    th { a { "Текущий " abbr title="Процент побед" { "ПП" } } }
-                                                    th { a { "Ожидаемый " abbr title="Процент побед" { "ПП" } } }
+                                                    th { a { "Текущий процент побед" } }
+                                                    th { a { "Ожидаемый процент побед" } }
                                                     th { a { abbr title="Текущий доход от золотых бустеров, если они были установлены" { "Заработанное золото" } }}
                                                     th { a { abbr title="Средняя ожидаемая доходность золотого бустера" { "Ожидаемое золото" } } }
                                                     th { a { "Ущерб" } }
-                                                    th { a { "Ср. ущерб" } }
+                                                    th { a { "Ущерб за бой" } }
                                                     th { a { "Выжил" } }
                                                     th { a { "Выживаемость" } }
+                                                    th { a { "Техника" } }
                                                 }
                                             }
                                             tbody {
@@ -276,43 +301,44 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     @let mean_damage_dealt = statistics.damage_dealt as f64 / statistics.battles as f64;
 
                                                     tr {
-                                                        th { (format_vehicle_name(&vehicle)) }
-                                                        td.has-text-centered { strong { (format_tier(vehicle.tier)) } }
-                                                        td { (format!("{:?}", vehicle.nation)) }
+                                                        th { (render_vehicle_name(&vehicle)) }
+                                                        td.has-text-centered { strong { (render_tier(vehicle.tier)) } }
+                                                        td.has-text-centered { (render_nation(&vehicle.nation)) }
                                                         td { (format!("{:?}", vehicle.type_)) }
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
-                                                        td.has-text-info { strong { (format_f64(100.0 * win_rate, 1)) "%" } }
+                                                        td.has-text-info { strong { (render_f64(100.0 * win_rate, 1)) "%" } }
                                                         td.has-text-centered.is-flex-wrap-nowrap {
-                                                            strong { (format_f64(100.0 * estimated_win_rate, 0)) "%" }
+                                                            strong { (render_f64(100.0 * estimated_win_rate, 0)) "%" }
                                                             " ±"
-                                                            (format_f64(win_rate_margin * 100.0, 1))
+                                                            (render_f64(win_rate_margin * 100.0, 1))
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                                span { strong { (format_f64(10.0 + vehicle.tier as f64 * win_rate, 0)) } }
+                                                                span { strong { (render_f64(10.0 + vehicle.tier as f64 * win_rate, 0)) } }
                                                             }
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
-                                                                    strong { (format_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 0)) }
+                                                                    strong { (render_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 0)) }
                                                                     " ±"
-                                                                    (format_f64(vehicle.tier as f64 * win_rate_margin, 0))
+                                                                    (render_f64(vehicle.tier as f64 * win_rate_margin, 0))
                                                                 }
                                                             }
                                                         }
                                                         td { (snapshot.all_statistics.damage_dealt) }
-                                                        td { (format_f64(mean_damage_dealt, 0)) }
+                                                        td { (render_f64(mean_damage_dealt, 0)) }
                                                         td { (snapshot.all_statistics.survived_battles) }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                                span { (format_f64(survival_percentage, 0)) "%" }
+                                                                span { (render_f64(survival_percentage, 0)) "%" }
                                                             }
                                                         }
+                                                        th { (render_vehicle_name(&vehicle)) }
                                                     }
                                                 }
                                             }
@@ -345,19 +371,19 @@ fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Нижнее" }
-                    p.title."is-5" { (format_f64(lower, 1)) "%" }
+                    p.title."is-5" { (render_f64(lower, 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Среднее" }
-                    p.title { (format_f64(mean, 1)) "%" }
+                    p.title { (render_f64(mean, 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Верхнее" }
-                    p.title."is-5" { (format_f64(upper, 1)) "%" }
+                    p.title."is-5" { (render_f64(upper, 1)) "%" }
                 }
             }
         }
