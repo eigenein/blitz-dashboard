@@ -45,7 +45,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.buttons {
                                         a.button.is-link href="/" {
                                             span.icon { i.fas.fa-home {} }
-                                            span { "Home" }
+                                            span { "На главную" }
                                         }
                                     }
                                 }
