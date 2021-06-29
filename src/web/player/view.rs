@@ -1,12 +1,11 @@
 use std::time::Duration as StdDuration;
 
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup, Render, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
-use crate::models::Vehicle;
 use crate::statistics::ConfidenceInterval;
-use crate::web::helpers::format_f64;
+use crate::web::helpers::{format_f64, format_tier, format_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
 use crate::web::player::model::PlayerViewModel;
@@ -224,7 +223,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     div.tile."is-4".is-parent {
                                         div.tile.is-child.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-heart", "Выживание")) }
+                                                p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
                                             }
                                             div.card-content {
                                                 (render_confidence_interval_level(survival))
@@ -256,19 +255,28 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 @for snapshot in &model.tank_snapshots {
                                                     @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
                                                     tr {
-                                                        th { (vehicle.as_ref()) }
+                                                        th { (format_vehicle_name(&vehicle)) }
+                                                        td.has-text-centered { strong { (format_tier(vehicle.tier)) } }
+                                                        td { (format!("{:?}", vehicle.nation)) }
+                                                        td { (format!("{:?}", vehicle.type_)) }
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
                                                         (render_confidence_interval_td(snapshot.all_statistics.battles, snapshot.all_statistics.wins))
                                                         td.has-text-warning-dark {
-                                                            span.icon-text {
+                                                            span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon { i.fas.fa-coins {} }
-                                                                span { (format_f64(10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles), 1)) "%" }
+                                                                span { (format_f64(10.0 + f64::from(vehicle.tier) * f64::from(snapshot.all_statistics.wins) / f64::from(snapshot.all_statistics.battles), 1)) }
                                                             }
                                                         }
                                                         td { (snapshot.all_statistics.damage_dealt) }
-                                                        td { (format_f64(f64::from(snapshot.all_statistics.damage_dealt) / f64::from(snapshot.all_statistics.battles), 0)) }
+                                                        td { (format_f64(snapshot.all_statistics.mean_damage_dealt(), 0)) }
                                                         td { (snapshot.all_statistics.survived_battles) }
+                                                        td {
+                                                            span.icon-text.is-flex-wrap-nowrap {
+                                                                span.icon { i.far.fa-heart.has-text-danger {} }
+                                                                span { (format_f64(snapshot.all_statistics.survival_percentage(), 0)) "%" }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -293,52 +301,20 @@ pub fn get_account_url(account_id: i32) -> String {
 fn thead() -> Markup {
     html! {
         tr {
-            th { "Техника" }
-            th { "Бои" }
-            th { "Победы" }
-            th.has-text-info { "Процент побед" }
-            th.has-text-centered { "Интервал % побед" }
-            th.has-text-warning-dark.has-text-centered { abbr title="Средняя доходность золотого бустера" { "ЗБ" } }
-            th { "Ущерб" }
-            th { "Ср. ущерб" }
-            th { "Выжил" }
+            th { a { "Техника" } }
+            th { a { "Уровень" } }
+            th { a { "Нация" } }
+            th { a { "Тип" } }
+            th { a { "Бои" } }
+            th { a { "Победы" } }
+            th { a { "Процент побед" } }
+            th { a { "Интервал % побед" } }
+            th { a { abbr title="Средняя доходность золотого бустера" { "ЗБ" } } }
+            th { a { "Ущерб" } }
+            th { a { "Ср. ущерб" } }
+            th { a { "Выжил" } }
+            th { a { "Выживаемость" } }
         }
-    }
-}
-
-impl Render for &Vehicle {
-    fn render(&self) -> Markup {
-        let tier = html! {
-            @match self.tier {
-                1 => "Ⅰ ",
-                2 => "Ⅱ ",
-                3 => "Ⅲ ",
-                4 => "Ⅳ ",
-                5 => "Ⅴ ",
-                6 => "Ⅵ ",
-                7 => "Ⅶ ",
-                8 => "Ⅷ ",
-                9 => "Ⅸ ",
-                10 => "Ⅹ ",
-                _ => "",
-            }
-        };
-        let class = if self.is_premium {
-            "has-text-warning-dark"
-        } else {
-            ""
-        };
-        html! { span.(class) title=(self.tank_id) { (tier) (self.name) } }
-    }
-}
-
-impl ConfidenceInterval {
-    fn get_percentages(&self) -> (f64, f64, f64) {
-        let mean = self.mean * 100.0;
-        let margin = self.margin * 100.0;
-        let lower = (mean - margin).max(0.0);
-        let upper = (mean + margin).min(100.0);
-        (lower, mean, upper)
     }
 }
 
@@ -375,9 +351,9 @@ fn render_confidence_interval_td(n_trials: i32, n_successes: i32) -> Markup {
         None => (0.0, 0.0, 0.0),
     };
     html! {
-        td { strong.has-text-info { (format_f64(mean, 1)) } }
+        td { strong.has-text-info { (format_f64(mean, 1)) "%" } }
         td.has-text-centered {
-            span.icon-text {
+            span.icon-text.is-flex-wrap-nowrap {
                 span { (format_f64(lower, 1)) "%" }
                 span.icon.has-text-grey { i.fas.fa-ellipsis-h {} }
                 span { (format_f64(upper, 1)) "%" }

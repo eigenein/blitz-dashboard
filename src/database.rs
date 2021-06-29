@@ -343,11 +343,13 @@ fn deserializable_from_sql<T: DeserializeOwned>(value: ValueRef<'_>) -> FromSqlR
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use chrono::{Duration, TimeZone, Utc};
 
-    use super::*;
     use crate::models::AllStatistics;
-    use std::collections::HashMap;
+
+    use super::*;
 
     #[test]
     fn open_database_ok() -> crate::Result {

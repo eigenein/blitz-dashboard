@@ -6,7 +6,7 @@ use chrono::Utc;
 use lru_time_cache::LruCache;
 
 use crate::database::Database;
-use crate::models::{TankType, Vehicle};
+use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
 
 /// Web application global state.
@@ -47,8 +47,9 @@ impl State {
                             name: format!("#{}", tank_id),
                             tier: 0,
                             is_premium: false,
-                            type_: TankType::Unknown,
+                            type_: TankType::Other,
                             imported_at: Utc::now(),
+                            nation: Nation::Other,
                         })
                     }
                 };

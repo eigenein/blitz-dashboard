@@ -97,6 +97,7 @@ pub struct Vehicle {
     pub name: String,
     pub tier: i8,
     pub is_premium: bool,
+    pub nation: Nation,
 
     #[serde(rename = "type")]
     pub type_: TankType,
@@ -105,7 +106,37 @@ pub struct Vehicle {
     pub imported_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub enum Nation {
+    #[serde(rename = "ussr")]
+    Ussr,
+
+    #[serde(rename = "germany")]
+    Germany,
+
+    #[serde(rename = "usa")]
+    Usa,
+
+    #[serde(rename = "china")]
+    China,
+
+    #[serde(rename = "france")]
+    France,
+
+    #[serde(rename = "uk")]
+    Uk,
+
+    #[serde(rename = "japan")]
+    Japan,
+
+    #[serde(rename = "european")]
+    Europe,
+
+    #[serde(other, rename = "other")]
+    Other,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum TankType {
     #[serde(rename = "lightTank")]
     Light,
@@ -119,8 +150,8 @@ pub enum TankType {
     #[serde(rename = "AT-SPG")]
     AT,
 
-    #[serde(rename = "unknown")]
-    Unknown,
+    #[serde(other, rename(serialize = "other"))]
+    Other,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -139,6 +170,16 @@ pub struct TankSnapshot {
         deserialize_with = "deserialize_duration_seconds"
     )]
     pub battle_life_time: Duration,
+}
+
+impl AllStatistics {
+    pub fn survival_percentage(&self) -> f64 {
+        100.0 * (self.survived_battles as f64) / (self.battles as f64)
+    }
+
+    pub fn mean_damage_dealt(&self) -> f64 {
+        self.damage_dealt as f64 / self.battles as f64
+    }
 }
 
 impl Sub for &AllStatistics {
