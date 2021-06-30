@@ -8,7 +8,7 @@ use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::model::PlayerViewModel;
+use crate::web::player::models::PlayerViewModel;
 use crate::web::responses::html;
 use crate::web::state::State;
 

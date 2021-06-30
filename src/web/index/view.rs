@@ -2,7 +2,7 @@ use maud::{html, DOCTYPE};
 use tide::Redirect;
 use tide::StatusCode;
 
-use crate::web::index::model::IndexViewModel;
+use crate::web::index::models::IndexViewModel;
 use crate::web::partials::{account_search, headers};
 use crate::web::player::view::get_account_url;
 use crate::web::responses::html;
