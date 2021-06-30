@@ -281,24 +281,24 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             @if !model.tank_snapshots.is_empty() {
                                 div.box {
                                     div.table-container {
-                                        table.table.is-hoverable.is-striped.is-fullwidth {
+                                        table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
                                             thead {
                                                 tr {
-                                                    th { a { "Техника" } }
-                                                    th.has-text-centered { a { "Уровень" } }
-                                                    th.has-text-centered { a { "Нация" } }
-                                                    th.has-text-centered { a { "Тип" } }
-                                                    th { a { "Бои" } }
-                                                    th { a { "Победы" } }
-                                                    th { a { "Текущий процент побед" } }
-                                                    th { a { "Ожидаемый процент побед" } }
-                                                    th { a { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }}
-                                                    th { a { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
-                                                    th { a { "Ущерб" } }
-                                                    th { a { "Ущерб за бой" } }
-                                                    th { a { "Выжил" } }
-                                                    th { a { "Выживаемость" } }
-                                                    th { a { "Техника" } }
+                                                    th { a href="#vehicles" { "Техника" } }
+                                                    th.has-text-centered { a href="#vehicles" { "Уровень" } }
+                                                    th.has-text-centered { a href="#vehicles" { "Нация" } }
+                                                    th.has-text-centered { a href="#vehicles" { "Тип" } }
+                                                    th { a href="#vehicles" { "Бои" } }
+                                                    th { a href="#vehicles" { "Победы" } }
+                                                    th { a href="#vehicles" { "Текущий процент побед" } }
+                                                    th { a href="#vehicles" { "Ожидаемый процент побед" } }
+                                                    th { a href="#vehicles" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }}
+                                                    th { a href="#vehicles" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
+                                                    th { a href="#vehicles" { "Ущерб" } }
+                                                    th { a href="#vehicles" { "Ущерб за бой" } }
+                                                    th { a href="#vehicles" { "Выжил" } }
+                                                    th { a href="#vehicles" { "Выживаемость" } }
+                                                    th { a href="#vehicles" { "Техника" } }
                                                 }
                                             }
                                             tbody {
@@ -319,7 +319,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (snapshot.all_statistics.wins) }
                                                         td.has-text-info { strong { (render_f64(100.0 * win_rate, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
-                                                            strong { (render_f64(100.0 * estimated_win_rate, 0)) "%" }
+                                                            strong { (render_f64(100.0 * estimated_win_rate, 1)) "%" }
                                                             " ±"
                                                             (render_f64(win_rate_margin * 100.0, 1))
                                                         }
