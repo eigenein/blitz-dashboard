@@ -8,9 +8,13 @@ use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::models::{PlayerViewModel, Query};
+use crate::web::player::models::{PlayerViewModel, Query, SortBy};
 use crate::web::responses::html;
 use crate::web::state::State;
+
+pub fn get_account_url(account_id: i32) -> String {
+    format!("/ru/{}", account_id)
+}
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
@@ -252,11 +256,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                         table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
                                             thead {
                                                 tr {
-                                                    th { a href="#vehicles" { "Техника" } }
+                                                    (render_vehicles_th(&model.query, SortBy::Vehicle, html! { "Техника" })?)
                                                     th.has-text-centered { a href="#vehicles" { "Уровень" } }
                                                     th.has-text-centered { a href="#vehicles" { "Нация" } }
                                                     th.has-text-centered { a href="#vehicles" { "Тип" } }
-                                                    th { a href="#vehicles" { "Бои" } }
+                                                    (render_vehicles_th(&model.query, SortBy::Battles, html! { "Бои" })?)
                                                     th { a href="#vehicles" { "Победы" } }
                                                     th { a href="#vehicles" { "Текущий процент побед" } }
                                                     th { a href="#vehicles" { "Ожидаемый процент побед" } }
@@ -346,8 +350,19 @@ fn render_period_li(
     })
 }
 
-pub fn get_account_url(account_id: i32) -> String {
-    format!("/ru/{}", account_id)
+fn render_vehicles_th(query: &Query, sort_by: SortBy, markup: Markup) -> crate::Result<Markup> {
+    Ok(html! {
+        th {
+            a href=(format!("?{}#vehicles", serde_qs::to_string(&query.with_sort_by(sort_by))?)) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    @if query.sort_by == sort_by {
+                        span.icon { i.fas.fa-angle-down {} }
+                    }
+                    span { (markup) }
+                }
+            }
+        }
+    })
 }
 
 fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {

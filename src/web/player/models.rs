@@ -241,8 +241,11 @@ impl Query {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum SortBy {
+    #[serde(rename = "vehicle")]
+    Vehicle,
+
     #[serde(rename = "battles")]
     Battles,
 }
