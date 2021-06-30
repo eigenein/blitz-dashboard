@@ -184,23 +184,25 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
 
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
-                                        }
-                                        div.card-content {
-                                            div.level {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "Всего" }
-                                                        p.title { (model.statistics.damage_dealt) }
+                                @if model.statistics.battles != 0 {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
+                                            }
+                                            div.card-content {
+                                                div.level {
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "Всего" }
+                                                            p.title { (model.statistics.damage_dealt) }
+                                                        }
                                                     }
-                                                }
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "За бой" }
-                                                        p.title { (render_f64(model.statistics.damage_dealt as f64 / model.statistics.battles.max(1) as f64, 0)) }
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "За бой" }
+                                                            p.title { (render_f64(model.statistics.damage_dealt as f64 / model.statistics.battles as f64, 0)) }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -208,23 +210,25 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
 
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
-                                        }
-                                        div.card-content {
-                                            div.level {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "Всего" }
-                                                        p.title { (model.statistics.frags) }
+                                @if model.statistics.battles != 0 {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
+                                            }
+                                            div.card-content {
+                                                div.level {
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "Всего" }
+                                                            p.title { (model.statistics.frags) }
+                                                        }
                                                     }
-                                                }
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "За бой" }
-                                                        p.title { (render_f64(model.statistics.frags as f64 / model.statistics.battles.max(1) as f64, 1)) }
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "За бой" }
+                                                            p.title { (render_f64(model.statistics.frags as f64 / model.statistics.battles as f64, 1)) }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -234,35 +238,41 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             }
 
                             div.tile.is-ancestor {
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
-                                        }
-                                        div.card-content {
-                                            (render_confidence_interval_level(model.statistics.battles, model.statistics.wins))
-                                        }
-                                    }
-                                }
-
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
-                                        }
-                                        div.card-content {
-                                            (render_confidence_interval_level(model.statistics.battles, model.statistics.survived_battles))
+                                @if model.statistics.battles != 0 {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
+                                            }
+                                            div.card-content {
+                                                (render_confidence_interval_level(model.statistics.battles, model.statistics.wins))
+                                            }
                                         }
                                     }
                                 }
 
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
+                                @if model.statistics.battles != 0 {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
+                                            }
+                                            div.card-content {
+                                                (render_confidence_interval_level(model.statistics.battles, model.statistics.survived_battles))
+                                            }
                                         }
-                                        div.card-content {
-                                            (render_confidence_interval_level(model.statistics.shots, model.statistics.hits))
+                                    }
+                                }
+
+                                @if model.statistics.shots != 0 {
+                                    div.tile."is-4".is-parent {
+                                        div.tile.is-child.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
+                                            }
+                                            div.card-content {
+                                                (render_confidence_interval_level(model.statistics.shots, model.statistics.hits))
+                                            }
                                         }
                                     }
                                 }
