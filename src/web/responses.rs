@@ -19,7 +19,7 @@ pub fn error(sentry_id: &sentry::types::Uuid) -> Response {
             html lang="en" {
                 head {
                     (headers())
-                    title { "Error" }
+                    title { "Ошибка – Я не статист :(" }
                 }
                 body {
                     section class="hero is-fullheight" {
@@ -28,16 +28,16 @@ pub fn error(sentry_id: &sentry::types::Uuid) -> Response {
                                 div class="columns" {
                                     div class="column is-6 is-offset-3" {
                                         div.box {
-                                            p.title."is-5" { "Internal error" }
+                                            p.title."is-5" { "Внутренняя ошибка сервера" }
                                             p.content {
-                                                "Sometimes this happens because of a Wargaming.net error."
-                                                " So, you may try to refresh the page."
+                                                "Иногда это происходит из-за ошибки на стороне Wargaming.net."
+                                                " Поэтому, можете попробовать обновить страницу."
                                             }
-                                            p.content { "Anyway, the error is already reported." }
+                                            p.content { "В любом случае, отчет уже отправлен разработчикам." }
                                             p.content {
-                                                "Here is the reference: " code { (sentry_id.to_simple()) } "."
+                                                "Вот ссылка на всякий случай: " code { (sentry_id.to_simple()) } "."
                                             }
-                                            p { a class="button is-info" href="/" { "Go to the Home page" } }
+                                            p { a class="button is-info" href="/" { "Вернуться на главную" } }
                                         }
                                     }
                                 }
