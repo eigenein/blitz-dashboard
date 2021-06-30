@@ -242,10 +242,20 @@ impl Query {
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[serde(rename_all = "kebab-case")]
 pub enum SortBy {
-    #[serde(rename = "vehicle")]
     Vehicle,
-
-    #[serde(rename = "battles")]
     Battles,
+    Tier,
+    Nation,
+    VehicleType,
+    WonBattles,
+    WinRate,
+    TrueWinRate,
+    Gold,
+    TrueGold,
+    Damage,
+    DamagePerBattle,
+    SurvivedBattles,
+    SurvivalRate,
 }

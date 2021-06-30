@@ -257,20 +257,19 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             thead {
                                                 tr {
                                                     (render_vehicles_th(&model.query, SortBy::Vehicle, html! { "Техника" })?)
-                                                    th.has-text-centered { a href="#vehicles" { "Уровень" } }
-                                                    th.has-text-centered { a href="#vehicles" { "Нация" } }
-                                                    th.has-text-centered { a href="#vehicles" { "Тип" } }
+                                                    (render_vehicles_th(&model.query, SortBy::Tier, html! { "Уровень" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::Nation, html! { "Нация" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::VehicleType, html! { "Тип" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Battles, html! { "Бои" })?)
-                                                    th { a href="#vehicles" { "Победы" } }
-                                                    th { a href="#vehicles" { "Текущий процент побед" } }
-                                                    th { a href="#vehicles" { "Ожидаемый процент побед" } }
-                                                    th { a href="#vehicles" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }}
-                                                    th { a href="#vehicles" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
-                                                    th { a href="#vehicles" { "Ущерб" } }
-                                                    th { a href="#vehicles" { "Ущерб за бой" } }
-                                                    th { a href="#vehicles" { "Выжил" } }
-                                                    th { a href="#vehicles" { "Выживаемость" } }
-                                                    th { a href="#vehicles" { "Техника" } }
+                                                    (render_vehicles_th(&model.query, SortBy::WonBattles, html! { "Победы" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::WinRate, html! { "Текущий процент побед" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Ожидаемый процент побед" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::Gold, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } })?)
+                                                    (render_vehicles_th(&model.query, SortBy::TrueGold, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } })?)
+                                                    (render_vehicles_th(&model.query, SortBy::Damage, html! { "Ущерб" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::DamagePerBattle, html! { "Ущерб за бой" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::SurvivedBattles, html! { "Выжил" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::SurvivalRate, html! { "Выживаемость" })?)
                                                 }
                                             }
                                             tbody {
@@ -320,7 +319,6 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                                 span { (render_f64(survival_percentage, 0)) "%" }
                                                             }
                                                         }
-                                                        th.is-white-space-nowrap { (render_vehicle_name(&vehicle)) }
                                                     }
                                                 }
                                             }
