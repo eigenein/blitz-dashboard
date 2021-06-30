@@ -55,6 +55,9 @@ impl PlayerViewModel {
             account_id,
             query.period,
         );
+        let period = query
+            .period
+            .unwrap_or_else(|| StdDuration::from_secs(86400));
 
         let state = request.state();
         let account_info = Self::get_cached_account_info(&state.api, account_id).await?;
@@ -65,7 +68,7 @@ impl PlayerViewModel {
         let actual_statistics = &account_info.statistics.all;
         let actual_tanks = Self::get_cached_tank_snapshots(&state.api, account_id).await?;
         let total_tanks = actual_tanks.len();
-        let before = Utc::now() - Duration::from_std(query.period)?;
+        let before = Utc::now() - Duration::from_std(period)?;
         let previous_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
@@ -100,7 +103,7 @@ impl PlayerViewModel {
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_active: account_info.is_active(),
-            period: query.period,
+            period,
             warn_no_previous_account_info,
             statistics,
             tank_snapshots,
@@ -210,13 +213,7 @@ impl PlayerViewModel {
 
 #[derive(Deserialize)]
 struct Query {
-    #[serde(default = "default_period")]
+    #[serde(default)]
     #[serde(with = "humantime_serde")]
-    period: StdDuration,
-}
-
-const DAY_PERIOD: StdDuration = StdDuration::from_secs(86400);
-
-fn default_period() -> StdDuration {
-    DAY_PERIOD
+    period: Option<StdDuration>,
 }

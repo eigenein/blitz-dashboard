@@ -52,7 +52,6 @@ impl State {
     }
 
     fn get_hardcoded_vehicle(tank_id: i32) -> Vehicle {
-        log::warn!("Vehicle #{} is hard-coded.", tank_id);
         match tank_id {
             23057 => Vehicle {
                 tank_id,
