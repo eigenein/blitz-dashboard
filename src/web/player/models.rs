@@ -8,7 +8,7 @@ use chrono::{DateTime, Duration, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use lazy_static::lazy_static;
 use lru_time_cache::LruCache;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tide::Request;
 
 use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
@@ -37,7 +37,7 @@ pub struct PlayerViewModel {
     pub is_active: bool,
     pub total_battles: i32,
     pub total_tanks: usize,
-    pub period: StdDuration,
+    pub query: Query,
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
     pub tank_snapshots: Vec<TankSnapshot>,
@@ -55,9 +55,6 @@ impl PlayerViewModel {
             account_id,
             query.period,
         );
-        let period = query
-            .period
-            .unwrap_or_else(|| StdDuration::from_secs(86400));
 
         let state = request.state();
         let account_info = Self::get_cached_account_info(&state.api, account_id).await?;
@@ -68,7 +65,7 @@ impl PlayerViewModel {
         let actual_statistics = &account_info.statistics.all;
         let actual_tanks = Self::get_cached_tank_snapshots(&state.api, account_id).await?;
         let total_tanks = actual_tanks.len();
-        let before = Utc::now() - Duration::from_std(period)?;
+        let before = Utc::now() - Duration::from_std(query.period)?;
         let previous_account_info = {
             let database = state.database.clone();
             async_std::task::spawn(async move {
@@ -103,7 +100,7 @@ impl PlayerViewModel {
             has_recently_played: account_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_active: account_info.is_active(),
-            period,
+            query,
             warn_no_previous_account_info,
             statistics,
             tank_snapshots,
@@ -211,9 +208,23 @@ impl PlayerViewModel {
     }
 }
 
-#[derive(Deserialize)]
-struct Query {
+#[derive(Deserialize, Serialize, Clone)]
+pub struct Query {
     #[serde(default)]
     #[serde(with = "humantime_serde")]
-    period: Option<StdDuration>,
+    pub period: StdDuration,
+}
+
+impl Default for Query {
+    fn default() -> Self {
+        Self {
+            period: StdDuration::from_secs(86400),
+        }
+    }
+}
+
+impl Query {
+    pub fn with_period(&self, period: StdDuration) -> Self {
+        Self { period }
+    }
 }

@@ -8,21 +8,9 @@ use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::models::PlayerViewModel;
+use crate::web::player::models::{PlayerViewModel, Query};
 use crate::web::responses::html;
 use crate::web::state::State;
-
-const PERIOD_HOUR: StdDuration = StdDuration::from_secs(3600);
-const PERIOD_2_HOURS: StdDuration = StdDuration::from_secs(2 * 3600);
-const PERIOD_4_HOURS: StdDuration = StdDuration::from_secs(4 * 3600);
-const PERIOD_8_HOURS: StdDuration = StdDuration::from_secs(8 * 3600);
-const PERIOD_12_HOURS: StdDuration = StdDuration::from_secs(12 * 3600);
-const PERIOD_DAY: StdDuration = StdDuration::from_secs(86400);
-const PERIOD_2_DAYS: StdDuration = StdDuration::from_secs(2 * 86400);
-const PERIOD_3_DAYS: StdDuration = StdDuration::from_secs(3 * 86400);
-const PERIOD_WEEK: StdDuration = StdDuration::from_secs(7 * 86400);
-const PERIOD_MONTH: StdDuration = StdDuration::from_secs(2630016);
-const PERIOD_YEAR: StdDuration = StdDuration::from_secs(31557600);
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = PlayerViewModel::new(&request).await?;
@@ -108,39 +96,19 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
 
                             #period.tabs.is-boxed {
                                 ul {
-                                    li.(if model.period == PERIOD_HOUR { "is-active" } else { "" }) {
-                                        a href="?period=1h#period" { "Час" }
-                                    }
-                                    li.(if model.period == PERIOD_2_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=2h#period" { "2 часа" }
-                                    }
-                                    li.(if model.period == PERIOD_4_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=4h#period" { "4 часа" }
-                                    }
-                                    li.(if model.period == PERIOD_8_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=8h#period" { "8 часов" }
-                                    }
-                                    li.(if model.period == PERIOD_12_HOURS { "is-active" } else { "" }) {
-                                        a href="?period=12h#period" { "12 часов" }
-                                    }
-                                    li.(if model.period == PERIOD_DAY { "is-active" } else { "" }) {
-                                        a href="?period=1d#period" { "24 часа" }
-                                    }
-                                    li.(if model.period == PERIOD_2_DAYS { "is-active" } else { "" }) {
-                                        a href="?period=2d#period" { "2 дня" }
-                                    }
-                                    li.(if model.period == PERIOD_3_DAYS { "is-active" } else { "" }) {
-                                        a href="?period=3d#period" { "3 дня" }
-                                    }
-                                    li.(if model.period == PERIOD_WEEK { "is-active" } else { "" }) {
-                                        a href="?period=1w#period" { "Неделя" }
-                                    }
-                                    li.(if model.period == PERIOD_MONTH { "is-active" } else { "" }) {
-                                        a href="?period=1M#period" { "Месяц" }
-                                    }
-                                    li.(if model.period == PERIOD_YEAR { "is-active" } else { "" }) {
-                                        a href="?period=1y#period" { "Год" }
-                                    }
+                                    (render_period_li(&model.query, StdDuration::from_secs(3600), "Час")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(2 * 3600), "2 часа")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(4 * 3600), "4 часа")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(8 * 3600), "8 часов")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(12 * 3600), "12 часов")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(86400), "24 часа")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(2 * 86400), "2 дня")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(3 * 86400), "3 дня")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(7 * 86400), "Неделя")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(2630016), "Месяц")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(2 * 2630016), "2 месяца")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(3 * 2630016), "3 месяца")?)
+                                    (render_period_li(&model.query, StdDuration::from_secs(31557600), "Год")?)
                                 }
                             }
 
@@ -364,6 +332,18 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             }
         },
     ))
+}
+
+fn render_period_li(
+    query: &Query,
+    period: StdDuration,
+    text: &'static str,
+) -> crate::Result<Markup> {
+    Ok(html! {
+        li.(if query.period == period { "is-active" } else { "" }) {
+            a href=(format!("?{}#period", serde_qs::to_string(&query.with_period(period))?)) { (text) }
+        }
+    })
 }
 
 pub fn get_account_url(account_id: i32) -> String {
