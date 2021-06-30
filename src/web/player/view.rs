@@ -1,7 +1,7 @@
 use std::time::Duration as StdDuration;
 
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use tide::StatusCode;
 
 use crate::statistics::wilson_score_interval_90;
@@ -310,22 +310,22 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td.has-text-info { strong { (render_f64(100.0 * win_rate, 1)) "%" } }
                                                         td.has-text-centered.is-flex-wrap-nowrap {
                                                             strong { (render_f64(100.0 * estimated_win_rate, 0)) "%" }
-                                                            " ±"
+                                                            (PreEscaped("&nbsp;±"))
                                                             (render_f64(win_rate_margin * 100.0, 1))
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                                span { strong { (render_f64(10.0 + vehicle.tier as f64 * win_rate, 0)) } }
+                                                                span { strong { (render_f64(10.0 + vehicle.tier as f64 * win_rate, 1)) } }
                                                             }
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
-                                                                    strong { (render_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 0)) }
-                                                                    " ±"
-                                                                    (render_f64(vehicle.tier as f64 * win_rate_margin, 0))
+                                                                    strong { (render_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 1)) }
+                                                                    (PreEscaped("&nbsp;±"))
+                                                                    (render_f64(vehicle.tier as f64 * win_rate_margin, 1))
                                                                 }
                                                             }
                                                         }
