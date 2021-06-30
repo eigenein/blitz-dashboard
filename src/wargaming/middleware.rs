@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
+use anyhow::Context;
 use async_std::future::timeout;
 use clap::{crate_name, crate_version};
 use surf::middleware::{Middleware, Next};
@@ -29,7 +30,9 @@ impl Middleware for UserAgent {
 #[surf::utils::async_trait]
 impl Middleware for Timeout {
     async fn handle(&self, request: Request, client: Client, next: Next<'_>) -> surf::Result {
-        timeout(self.0, next.run(request, client)).await?
+        timeout(self.0, next.run(request, client))
+            .await
+            .context("Wargaming.net API has timed out")?
     }
 }
 
