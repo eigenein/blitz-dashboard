@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use log::{debug, error, log, Level};
 use sentry::integrations::anyhow::capture_anyhow;
@@ -6,6 +6,8 @@ use tide::{Middleware, Request};
 
 pub struct LoggerMiddleware;
 pub struct SecurityMiddleware;
+
+const REQUEST_DURATION_THRESHOLD: Duration = Duration::from_secs(1);
 
 #[tide::utils::async_trait]
 impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
@@ -23,7 +25,8 @@ impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
         let start = Instant::now();
         let mut response = next.run(request).await;
         let duration = Instant::now() - start;
-        let level = if response.status().is_client_error() {
+        let level = if response.status().is_client_error() || duration >= REQUEST_DURATION_THRESHOLD
+        {
             Level::Warn
         } else {
             Level::Info
