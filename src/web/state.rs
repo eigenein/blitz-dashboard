@@ -38,24 +38,40 @@ impl State {
                 Ok(vehicle.clone())
             }
             None => {
-                let vehicle = match self.database.lock().await.retrieve_vehicle(tank_id)? {
-                    Some(vehicle) => Arc::new(vehicle),
-                    None => {
-                        log::warn!("Tank #{} is not found in the tankopedia.", tank_id);
-                        Arc::new(Vehicle {
-                            tank_id,
-                            name: format!("#{}", tank_id),
-                            tier: 0,
-                            is_premium: false,
-                            type_: TankType::Other,
-                            imported_at: Utc::now(),
-                            nation: Nation::Other,
-                        })
-                    }
-                };
+                let vehicle = Arc::new(
+                    self.database
+                        .lock()
+                        .await
+                        .retrieve_vehicle(tank_id)?
+                        .unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)),
+                );
                 cache.insert(tank_id, vehicle.clone());
                 Ok(vehicle)
             }
+        }
+    }
+
+    fn get_hardcoded_vehicle(tank_id: i32) -> Vehicle {
+        log::warn!("Vehicle #{} is hard-coded.", tank_id);
+        match tank_id {
+            23057 => Vehicle {
+                tank_id,
+                name: "Kunze Panzer".to_string(),
+                tier: 7,
+                is_premium: true,
+                nation: Nation::Germany,
+                type_: TankType::Light,
+                imported_at: Utc::now(),
+            },
+            _ => Vehicle {
+                tank_id,
+                name: format!("#{}", tank_id),
+                tier: 0,
+                is_premium: false,
+                type_: TankType::Other,
+                imported_at: Utc::now(),
+                nation: Nation::Other,
+            },
         }
     }
 }
