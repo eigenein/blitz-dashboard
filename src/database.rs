@@ -6,6 +6,7 @@ use rusqlite::{params, OptionalExtension, Row, ToSql};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot, Vehicle};
 
 pub struct Database(rusqlite::Connection);
@@ -26,43 +27,7 @@ impl Database {
         inner.busy_timeout(StdDuration::from_secs(5))?;
 
         log::info!("Initializing the database schema…");
-        inner.execute_batch(
-            // language=SQL
-            r#"
-            -- noinspection SqlSignatureForFile
-            -- noinspection SqlResolveForFile @ routine/"json_extract"
-            
-            PRAGMA journal_mode = WAL;
-            PRAGMA synchronous = normal;
-
-            CREATE TABLE IF NOT EXISTS accounts (document JSON NOT NULL);
-            CREATE UNIQUE INDEX IF NOT EXISTS accounts_account_id
-                ON accounts(json_extract(document, '$.account_id') ASC);
-            CREATE INDEX IF NOT EXISTS accounts_crawled_at
-                ON accounts(json_extract(document, '$.crawled_at') ASC);
-
-            CREATE TABLE IF NOT EXISTS account_snapshots (document JSON NOT NULL);
-            CREATE UNIQUE INDEX IF NOT EXISTS account_snapshots_account_id_last_battle_time
-                ON account_snapshots(
-                    json_extract(document, '$.last_battle_time') DESC,
-                    json_extract(document, '$.account_id') ASC
-                );
-
-            CREATE TABLE IF NOT EXISTS tank_snapshots (document JSON NOT NULL);
-            CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_account_id_tank_id_last_battle_time
-                ON tank_snapshots(
-                    json_extract(document, '$.last_battle_time') DESC,
-                    json_extract(document, '$.account_id') ASC,
-                    json_extract(document, '$.tank_id') ASC
-                );
-
-            CREATE TABLE IF NOT EXISTS tankopedia (document JSON NOT NULL);
-            CREATE UNIQUE INDEX IF NOT EXISTS tankopedia_tank_id
-                ON tankopedia(json_extract(document, '$.tank_id'));
-
-            VACUUM;
-            "#,
-        )?;
+        inner.execute_batch(SCRIPT)?;
 
         Ok(Self(inner))
     }
@@ -136,6 +101,7 @@ impl Database {
         account_id: i32,
         before: &DateTime<Utc>,
     ) -> crate::Result<Vec<TankSnapshot>> {
+        let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(30);
         Ok(self
             .0
             .prepare_cached(
@@ -250,7 +216,7 @@ impl Database {
     }
 
     pub fn retrieve_vehicle(&self, tank_id: i32) -> crate::Result<Option<Vehicle>> {
-        log::debug!("Retrieving vehicle #{}…", tank_id);
+        let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(1);
         Ok(self
             .0
             .prepare_cached(
@@ -282,6 +248,42 @@ impl Transaction<'_> {
         Ok(self.0.commit()?)
     }
 }
+
+// language=SQL
+const SCRIPT: &str = r#"
+    -- noinspection SqlSignatureForFile
+    -- noinspection SqlResolveForFile @ routine/"json_extract"
+    
+    PRAGMA journal_mode = WAL;
+    PRAGMA synchronous = normal;
+
+    CREATE TABLE IF NOT EXISTS accounts (document JSON NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS accounts_account_id
+        ON accounts(json_extract(document, '$.account_id') ASC);
+    CREATE INDEX IF NOT EXISTS accounts_crawled_at
+        ON accounts(json_extract(document, '$.crawled_at') ASC);
+
+    CREATE TABLE IF NOT EXISTS account_snapshots (document JSON NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS account_snapshots_account_id_last_battle_time
+        ON account_snapshots(
+            json_extract(document, '$.last_battle_time') DESC,
+            json_extract(document, '$.account_id') ASC
+        );
+
+    CREATE TABLE IF NOT EXISTS tank_snapshots (document JSON NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_account_id_tank_id_last_battle_time
+        ON tank_snapshots(
+            json_extract(document, '$.last_battle_time') DESC,
+            json_extract(document, '$.account_id') ASC,
+            json_extract(document, '$.tank_id') ASC
+        );
+
+    CREATE TABLE IF NOT EXISTS tankopedia (document JSON NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS tankopedia_tank_id
+        ON tankopedia(json_extract(document, '$.tank_id'));
+
+    VACUUM;
+"#;
 
 impl ToSql for BasicAccountInfo {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {

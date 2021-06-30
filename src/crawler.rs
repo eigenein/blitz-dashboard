@@ -1,9 +1,11 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use async_std::task::sleep;
 use chrono::Utc;
+use log::Level;
 
 use crate::database::Database;
+use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot};
 use crate::wargaming::WargamingApi;
 
@@ -29,7 +31,7 @@ impl Crawler {
     }
 
     async fn crawl_batch(&self) -> crate::Result {
-        let start_instant = Instant::now();
+        let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
         let stored_accounts = self.database.retrieve_oldest_accounts(100)?;
         let mut account_infos = self
             .api
@@ -43,9 +45,8 @@ impl Crawler {
             n_snapshots += self.crawl_account(stored_account, account_info).await?;
         }
         log::info!(
-            "{} accounts processed in {:?}. {} tank snapshots upserted.",
+            "Processed {} accounts, upserted {} tank snapshots.",
             stored_accounts.len(),
-            Instant::now() - start_instant,
             n_snapshots,
         );
         Ok(())

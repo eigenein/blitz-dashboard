@@ -9,6 +9,7 @@ use crate::wargaming::WargamingApi;
 mod crawler;
 mod database;
 mod logging;
+mod metrics;
 mod models;
 mod opts;
 mod serde;
