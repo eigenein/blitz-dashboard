@@ -11,9 +11,11 @@ use lru_time_cache::LruCache;
 use serde::{Deserialize, Serialize};
 use tide::Request;
 
-use crate::models::{AccountInfo, AllStatistics, TankSnapshot};
+use crate::models::{AccountInfo, AllStatistics, TankSnapshot, Vehicle};
+use crate::statistics::wilson_score_interval_90;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
+use std::cmp::Ordering;
 
 lazy_static! {
     static ref ACCOUNT_INFO_CACHE: Arc<Mutex<LruCache<i32, Arc<AccountInfo>>>> =
@@ -40,7 +42,7 @@ pub struct PlayerViewModel {
     pub query: Query,
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
-    pub tank_snapshots: Vec<TankSnapshot>,
+    pub rows: Vec<TankRow>,
 }
 
 impl PlayerViewModel {
@@ -84,9 +86,27 @@ impl PlayerViewModel {
         } else {
             Vec::new()
         };
-        let mut tank_snapshots =
-            Self::subtract_tank_snapshots(actual_tanks.to_vec(), previous_tanks);
-        tank_snapshots.sort_by_key(|snapshot| -snapshot.all_statistics.battles);
+        let tank_snapshots = Self::subtract_tank_snapshots(actual_tanks.to_vec(), previous_tanks);
+
+        let mut rows: Vec<TankRow> = Vec::new();
+        for snapshot in tank_snapshots.into_iter() {
+            let stats = &snapshot.all_statistics;
+            let vehicle = state.get_vehicle(snapshot.tank_id).await?;
+            let win_rate = stats.wins as f64 / stats.battles as f64;
+            let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
+            rows.push(TankRow {
+                win_rate,
+                true_win_rate,
+                damage_per_battle: stats.damage_dealt as f64 / stats.battles as f64,
+                survival_rate: stats.survived_battles as f64 / stats.battles as f64,
+                all_statistics: snapshot.all_statistics,
+                gold_per_battle: 10.0 + vehicle.tier as f64 * win_rate,
+                true_gold_per_battle: 10.0 + vehicle.tier as f64 * true_win_rate.0,
+                vehicle,
+            });
+        }
+        Self::sort_vehicles(&mut rows, query.sort_by);
+
         let warn_no_previous_account_info = previous_account_info.is_none();
         let statistics = actual_statistics
             .sub(&previous_account_info.map_or_else(Default::default, |info| info.statistics.all));
@@ -103,7 +123,7 @@ impl PlayerViewModel {
             query,
             warn_no_previous_account_info,
             statistics,
-            tank_snapshots,
+            rows,
             total_tanks,
         })
     }
@@ -180,6 +200,59 @@ impl PlayerViewModel {
         .collect::<Vec<TankSnapshot>>()
     }
 
+    fn sort_vehicles(rows: &mut Vec<TankRow>, sort_by: SortBy) {
+        match sort_by {
+            SortBy::Battles => rows.sort_unstable_by_key(|row| -row.all_statistics.battles),
+            SortBy::Wins => rows.sort_unstable_by_key(|row| -row.all_statistics.wins),
+            SortBy::Nation => rows.sort_unstable_by_key(|row| row.vehicle.nation),
+            SortBy::DamageDealt => {
+                rows.sort_unstable_by_key(|row| -row.all_statistics.damage_dealt)
+            }
+            SortBy::DamagePerBattle => rows.sort_unstable_by(|left, right| {
+                right
+                    .damage_per_battle
+                    .partial_cmp(&left.damage_per_battle)
+                    .unwrap_or(Ordering::Equal)
+            }),
+            SortBy::Tier => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
+            SortBy::VehicleType => rows.sort_unstable_by_key(|row| row.vehicle.type_),
+            SortBy::WinRate => rows.sort_unstable_by(|left, right| {
+                right
+                    .win_rate
+                    .partial_cmp(&left.win_rate)
+                    .unwrap_or(Ordering::Equal)
+            }),
+            SortBy::TrueWinRate => rows.sort_unstable_by(|left, right| {
+                right
+                    .true_win_rate
+                    .0
+                    .partial_cmp(&left.true_win_rate.0)
+                    .unwrap_or(Ordering::Equal)
+            }),
+            SortBy::Gold => rows.sort_unstable_by(|left, right| {
+                right
+                    .gold_per_battle
+                    .partial_cmp(&left.gold_per_battle)
+                    .unwrap_or(Ordering::Equal)
+            }),
+            SortBy::TrueGold => rows.sort_unstable_by(|left, right| {
+                right
+                    .true_gold_per_battle
+                    .partial_cmp(&left.true_gold_per_battle)
+                    .unwrap_or(Ordering::Equal)
+            }),
+            SortBy::SurvivedBattles => {
+                rows.sort_unstable_by_key(|row| -row.all_statistics.survived_battles)
+            }
+            SortBy::SurvivalRate => rows.sort_unstable_by(|left, right| {
+                right
+                    .survival_rate
+                    .partial_cmp(&left.survival_rate)
+                    .unwrap_or(Ordering::Equal)
+            }),
+        }
+    }
+
     /// Inserts account if it doesn't exist. The rest is updated by [`crate::crawler`].
     async fn insert_account_or_ignore(
         state: &State,
@@ -206,6 +279,17 @@ impl PlayerViewModel {
             .parse()
             .context("invalid account ID")
     }
+}
+
+pub struct TankRow {
+    pub vehicle: Arc<Vehicle>,
+    pub all_statistics: AllStatistics,
+    pub win_rate: f64,
+    pub true_win_rate: (f64, f64),
+    pub damage_per_battle: f64,
+    pub survival_rate: f64,
+    pub gold_per_battle: f64,
+    pub true_gold_per_battle: f64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]
@@ -244,17 +328,16 @@ impl Query {
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum SortBy {
-    Vehicle,
     Battles,
     Tier,
     Nation,
     VehicleType,
-    WonBattles,
+    Wins,
     WinRate,
     TrueWinRate,
     Gold,
     TrueGold,
-    Damage,
+    DamageDealt,
     DamagePerBattle,
     SurvivedBattles,
     SurvivalRate,

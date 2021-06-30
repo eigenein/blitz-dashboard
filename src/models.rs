@@ -106,7 +106,7 @@ pub struct Vehicle {
     pub imported_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Copy)]
+#[derive(Deserialize, Serialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
 pub enum Nation {
     #[serde(rename = "ussr")]
     Ussr,
@@ -136,7 +136,7 @@ pub enum Nation {
     Other,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Copy)]
+#[derive(Deserialize, Serialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
 pub enum TankType {
     #[serde(rename = "lightTank")]
     Light,

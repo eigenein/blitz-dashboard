@@ -250,73 +250,66 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                 }
                             }
 
-                            @if !model.tank_snapshots.is_empty() {
+                            @if !model.rows.is_empty() {
                                 div.box {
                                     div.table-container {
                                         table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
                                             thead {
                                                 tr {
-                                                    (render_vehicles_th(&model.query, SortBy::Vehicle, html! { "Техника" })?)
+                                                    th { "Техника" }
                                                     (render_vehicles_th(&model.query, SortBy::Tier, html! { "Уровень" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Nation, html! { "Нация" })?)
                                                     (render_vehicles_th(&model.query, SortBy::VehicleType, html! { "Тип" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Battles, html! { "Бои" })?)
-                                                    (render_vehicles_th(&model.query, SortBy::WonBattles, html! { "Победы" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::Wins, html! { "Победы" })?)
                                                     (render_vehicles_th(&model.query, SortBy::WinRate, html! { "Текущий процент побед" })?)
                                                     (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Ожидаемый процент побед" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Gold, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } })?)
                                                     (render_vehicles_th(&model.query, SortBy::TrueGold, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } })?)
-                                                    (render_vehicles_th(&model.query, SortBy::Damage, html! { "Ущерб" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::DamageDealt, html! { "Ущерб" })?)
                                                     (render_vehicles_th(&model.query, SortBy::DamagePerBattle, html! { "Ущерб за бой" })?)
                                                     (render_vehicles_th(&model.query, SortBy::SurvivedBattles, html! { "Выжил" })?)
                                                     (render_vehicles_th(&model.query, SortBy::SurvivalRate, html! { "Выживаемость" })?)
                                                 }
                                             }
                                             tbody {
-                                                @for snapshot in &model.tank_snapshots {
-                                                    @let vehicle = state.get_vehicle(snapshot.tank_id).await?;
-                                                    @let statistics = &snapshot.all_statistics;
-                                                    @let win_rate = statistics.wins as f64 / statistics.battles as f64;
-                                                    @let (estimated_win_rate, win_rate_margin) = wilson_score_interval_90(snapshot.all_statistics.battles, snapshot.all_statistics.wins);
-                                                    @let survival_percentage = 100.0 * (statistics.survived_battles as f64) / (statistics.battles as f64);
-                                                    @let mean_damage_dealt = statistics.damage_dealt as f64 / statistics.battles as f64;
-
+                                                @for row in &model.rows {
                                                     tr {
-                                                        th.is-white-space-nowrap { (render_vehicle_name(&vehicle)) }
-                                                        td.has-text-centered { strong { (render_tier(vehicle.tier)) } }
-                                                        td.has-text-centered { (render_nation(&vehicle.nation)) }
-                                                        td { (format!("{:?}", vehicle.type_)) }
-                                                        td { (snapshot.all_statistics.battles) }
-                                                        td { (snapshot.all_statistics.wins) }
-                                                        td.has-text-info { strong { (render_f64(100.0 * win_rate, 1)) "%" } }
+                                                        th.is-white-space-nowrap { (render_vehicle_name(&row.vehicle)) }
+                                                        td.has-text-centered { strong { (render_tier(row.vehicle.tier)) } }
+                                                        td.has-text-centered { (render_nation(&row.vehicle.nation)) }
+                                                        td { (format!("{:?}", row.vehicle.type_)) }
+                                                        td { (row.all_statistics.battles) }
+                                                        td { (row.all_statistics.wins) }
+                                                        td.has-text-info { strong { (render_f64(100.0 * row.win_rate, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
-                                                            strong { (render_f64(100.0 * estimated_win_rate, 1)) "%" }
+                                                            strong { (render_f64(100.0 * row.true_win_rate.0, 1)) "%" }
                                                             " ±"
-                                                            (render_f64(win_rate_margin * 100.0, 1))
+                                                            (render_f64(row.true_win_rate.1 * 100.0, 1))
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                                span { strong { (render_f64(10.0 + vehicle.tier as f64 * win_rate, 1)) } }
+                                                                span { strong { (render_f64(row.gold_per_battle, 1)) } }
                                                             }
                                                         }
                                                         td.is-white-space-nowrap {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
-                                                                    strong { (render_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 1)) }
+                                                                    strong { (render_f64(row.true_gold_per_battle, 1)) }
                                                                     " ±"
-                                                                    (render_f64(vehicle.tier as f64 * win_rate_margin, 1))
+                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate.1, 1))
                                                                 }
                                                             }
                                                         }
-                                                        td { (snapshot.all_statistics.damage_dealt) }
-                                                        td { (render_f64(mean_damage_dealt, 0)) }
-                                                        td { (snapshot.all_statistics.survived_battles) }
+                                                        td { (row.all_statistics.damage_dealt) }
+                                                        td { (render_f64(row.damage_per_battle, 0)) }
+                                                        td { (row.all_statistics.survived_battles) }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                                span { (render_f64(survival_percentage, 0)) "%" }
+                                                                span { (render_f64(100.0 * row.survival_rate, 0)) "%" }
                                                             }
                                                         }
                                                     }
