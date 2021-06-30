@@ -1,7 +1,7 @@
 use std::time::Duration as StdDuration;
 
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
 use crate::statistics::wilson_score_interval_90;
@@ -301,16 +301,16 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     @let mean_damage_dealt = statistics.damage_dealt as f64 / statistics.battles as f64;
 
                                                     tr {
-                                                        th { (render_vehicle_name(&vehicle)) }
+                                                        th.is-white-space-nowrap { (render_vehicle_name(&vehicle)) }
                                                         td.has-text-centered { strong { (render_tier(vehicle.tier)) } }
                                                         td.has-text-centered { (render_nation(&vehicle.nation)) }
                                                         td { (format!("{:?}", vehicle.type_)) }
                                                         td { (snapshot.all_statistics.battles) }
                                                         td { (snapshot.all_statistics.wins) }
                                                         td.has-text-info { strong { (render_f64(100.0 * win_rate, 1)) "%" } }
-                                                        td.has-text-centered.is-flex-wrap-nowrap {
+                                                        td.has-text-centered.is-white-space-nowrap {
                                                             strong { (render_f64(100.0 * estimated_win_rate, 0)) "%" }
-                                                            (PreEscaped("&nbsp;±"))
+                                                            " ±"
                                                             (render_f64(win_rate_margin * 100.0, 1))
                                                         }
                                                         td {
@@ -319,12 +319,12 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                                 span { strong { (render_f64(10.0 + vehicle.tier as f64 * win_rate, 1)) } }
                                                             }
                                                         }
-                                                        td {
+                                                        td.is-white-space-nowrap {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
                                                                     strong { (render_f64(10.0 + vehicle.tier as f64 * estimated_win_rate, 1)) }
-                                                                    (PreEscaped("&nbsp;±"))
+                                                                    " ±"
                                                                     (render_f64(vehicle.tier as f64 * win_rate_margin, 1))
                                                                 }
                                                             }
@@ -338,7 +338,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                                 span { (render_f64(survival_percentage, 0)) "%" }
                                                             }
                                                         }
-                                                        th { (render_vehicle_name(&vehicle)) }
+                                                        th.is-white-space-nowrap { (render_vehicle_name(&vehicle)) }
                                                     }
                                                 }
                                             }
