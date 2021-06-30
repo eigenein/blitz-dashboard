@@ -10,17 +10,17 @@ const MAX_QUERY_LENGTH: usize = 24;
 
 pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Markup {
     html! {
-        div class="field has-addons" {
-            div class="control" {
-                span."select"."is-rounded".(class) {
+        div.field.has-addons {
+            div.control {
+                span.select.is-rounded.(class) {
                     select {
-                        option { "🇷🇺 Россия" }
+                        option title="Россия" { "🇷🇺" }
                     }
                 }
             }
-            div class="control has-icons-left is-expanded" {
-                input."input"."is-rounded".(class)
-                    type="text"
+            div.control.has-icons-left.is-expanded {
+                input.input.is-rounded.(class)
+                    type="search"
                     name="search"
                     value=(nickname)
                     placeholder="Никнейм"
@@ -30,14 +30,19 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
                     minlength=(MIN_QUERY_LENGTH)
                     maxlength=(MAX_QUERY_LENGTH)
                     onclick="this.select();"
+                    spellcheck="false"
+                    autocorrect="off"
+                    aria-label="search"
+                    aria-haspopup="false"
                     autofocus[has_autofocus]
                     required;
-                span.icon.is-left.(class) {
-                    i class="fas fa-user" {}
-                }
+                span.icon.is-left.(class) { i class="fas fa-user" {} }
             }
             div.control {
-                input.button.is-rounded.is-link.(class) type="submit" value="Поиск";
+                button.button.is-rounded.is-link.(class) type="submit" {
+                    span.icon.is-hidden-desktop { i.fas.fa-search {} }
+                    span.is-hidden-touch { "Поиск" }
+                };
             }
         }
     }
