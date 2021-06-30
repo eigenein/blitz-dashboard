@@ -208,23 +208,41 @@ impl PlayerViewModel {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct Query {
-    #[serde(default)]
-    #[serde(with = "humantime_serde")]
+    #[serde(default = "default_period", with = "humantime_serde")]
     pub period: StdDuration,
+
+    #[serde(default = "default_sort_by", rename = "sort-by")]
+    pub sort_by: SortBy,
 }
 
-impl Default for Query {
-    fn default() -> Self {
-        Self {
-            period: StdDuration::from_secs(86400),
-        }
-    }
+fn default_period() -> StdDuration {
+    StdDuration::from_secs(86400)
+}
+
+fn default_sort_by() -> SortBy {
+    SortBy::Battles
 }
 
 impl Query {
     pub fn with_period(&self, period: StdDuration) -> Self {
-        Self { period }
+        Self {
+            period,
+            sort_by: self.sort_by,
+        }
     }
+
+    pub fn with_sort_by(&self, sort_by: SortBy) -> Self {
+        Self {
+            sort_by,
+            period: self.period,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy)]
+pub enum SortBy {
+    #[serde(rename = "battles")]
+    Battles,
 }
