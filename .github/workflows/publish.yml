@@ -31,6 +31,8 @@ jobs:
 
       - name: Install Cross
         run: cargo install cross
+        env:
+          CARGO_TARGET_DIR: ./target
 
       - name: Checkout code
         uses: actions/checkout@v2
