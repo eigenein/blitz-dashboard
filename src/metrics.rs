@@ -1,7 +1,7 @@
+use std::borrow::Cow;
 use std::time::{Duration, Instant};
 
 use log::Level;
-use std::borrow::Cow;
 
 pub struct Stopwatch {
     message: Cow<'static, str>,
