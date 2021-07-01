@@ -2,6 +2,10 @@
 [![Build status](https://github.com/eigenein/blitz-dashboard/actions/workflows/check.yml/badge.svg)](https://github.com/eigenein/blitz-dashboard/actions)
 ![Tag](https://img.shields.io/github/v/tag/eigenein/blitz-dashboard)
 
+## Blitz Dashboard
+
+![Screenshot](screenshot.png)
+
 ## Installation
 
 ```shell
