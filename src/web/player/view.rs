@@ -281,35 +281,35 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (format!("{:?}", row.vehicle.type_)) }
                                                         td { (row.all_statistics.battles) }
                                                         td { (row.all_statistics.wins) }
-                                                        td.has-text-info { strong { (render_f64(100.0 * row.win_rate, 1)) "%" } }
+                                                        td.has-text-info { strong { (render_f64(100.0 * row.win_rate.0, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
-                                                            strong { (render_f64(100.0 * row.true_win_rate.0, 1)) "%" }
+                                                            strong { (render_f64(100.0 * row.true_win_rate.0.0, 1)) "%" }
                                                             " ±"
-                                                            (render_f64(row.true_win_rate.1 * 100.0, 1))
+                                                            (render_f64(row.true_win_rate.1.0 * 100.0, 1))
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                                span { strong { (render_f64(row.gold_per_battle, 1)) } }
+                                                                span { strong { (render_f64(row.gold_per_battle.0, 1)) } }
                                                             }
                                                         }
                                                         td.is-white-space-nowrap {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
-                                                                    strong { (render_f64(row.true_gold_per_battle, 1)) }
+                                                                    strong { (render_f64(row.true_gold_per_battle.0, 1)) }
                                                                     " ±"
-                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate.1, 1))
+                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate.1.0, 1))
                                                                 }
                                                             }
                                                         }
                                                         td { (row.all_statistics.damage_dealt) }
-                                                        td { (render_f64(row.damage_per_battle, 0)) }
+                                                        td { (render_f64(row.damage_per_battle.0, 0)) }
                                                         td { (row.all_statistics.survived_battles) }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                                span { (render_f64(100.0 * row.survival_rate, 0)) "%" }
+                                                                span { (render_f64(100.0 * row.survival_rate.0, 0)) "%" }
                                                             }
                                                         }
                                                     }

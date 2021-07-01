@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::ops::Sub;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
@@ -16,6 +15,7 @@ use crate::models::{AccountInfo, AllStatistics, TankSnapshot, Vehicle};
 use crate::statistics::wilson_score_interval_90;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
+use ordered_float::OrderedFloat;
 
 lazy_static! {
     static ref ACCOUNT_INFO_CACHE: Cache<i32, Arc<AccountInfo>> = CacheBuilder::new(1_000)
@@ -120,13 +120,13 @@ impl PlayerViewModel {
         let win_rate = stats.wins as f64 / stats.battles as f64;
         let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
         Ok(DisplayRow {
-            win_rate,
-            true_win_rate,
-            damage_per_battle: stats.damage_dealt as f64 / stats.battles as f64,
-            survival_rate: stats.survived_battles as f64 / stats.battles as f64,
+            win_rate: OrderedFloat(win_rate),
+            true_win_rate: (OrderedFloat(true_win_rate.0), OrderedFloat(true_win_rate.1)),
+            damage_per_battle: OrderedFloat(stats.damage_dealt as f64 / stats.battles as f64),
+            survival_rate: OrderedFloat(stats.survived_battles as f64 / stats.battles as f64),
             all_statistics: snapshot.all_statistics,
-            gold_per_battle: 10.0 + vehicle.tier as f64 * win_rate,
-            true_gold_per_battle: 10.0 + vehicle.tier as f64 * true_win_rate.0,
+            gold_per_battle: OrderedFloat(10.0 + vehicle.tier as f64 * win_rate),
+            true_gold_per_battle: OrderedFloat(10.0 + vehicle.tier as f64 * true_win_rate.0),
             vehicle,
         })
     }
@@ -213,48 +213,17 @@ impl PlayerViewModel {
             SortBy::DamageDealt => {
                 rows.sort_unstable_by_key(|row| -row.all_statistics.damage_dealt)
             }
-            SortBy::DamagePerBattle => rows.sort_unstable_by(|left, right| {
-                right
-                    .damage_per_battle
-                    .partial_cmp(&left.damage_per_battle)
-                    .unwrap_or(Ordering::Equal)
-            }),
+            SortBy::DamagePerBattle => rows.sort_unstable_by_key(|row| -row.damage_per_battle),
             SortBy::Tier => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
             SortBy::VehicleType => rows.sort_unstable_by_key(|row| row.vehicle.type_),
-            SortBy::WinRate => rows.sort_unstable_by(|left, right| {
-                right
-                    .win_rate
-                    .partial_cmp(&left.win_rate)
-                    .unwrap_or(Ordering::Equal)
-            }),
-            SortBy::TrueWinRate => rows.sort_unstable_by(|left, right| {
-                right
-                    .true_win_rate
-                    .0
-                    .partial_cmp(&left.true_win_rate.0)
-                    .unwrap_or(Ordering::Equal)
-            }),
-            SortBy::Gold => rows.sort_unstable_by(|left, right| {
-                right
-                    .gold_per_battle
-                    .partial_cmp(&left.gold_per_battle)
-                    .unwrap_or(Ordering::Equal)
-            }),
-            SortBy::TrueGold => rows.sort_unstable_by(|left, right| {
-                right
-                    .true_gold_per_battle
-                    .partial_cmp(&left.true_gold_per_battle)
-                    .unwrap_or(Ordering::Equal)
-            }),
+            SortBy::WinRate => rows.sort_unstable_by_key(|row| -row.win_rate),
+            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.true_win_rate.0),
+            SortBy::Gold => rows.sort_unstable_by_key(|row| -row.gold_per_battle),
+            SortBy::TrueGold => rows.sort_unstable_by_key(|row| -row.true_gold_per_battle),
             SortBy::SurvivedBattles => {
                 rows.sort_unstable_by_key(|row| -row.all_statistics.survived_battles)
             }
-            SortBy::SurvivalRate => rows.sort_unstable_by(|left, right| {
-                right
-                    .survival_rate
-                    .partial_cmp(&left.survival_rate)
-                    .unwrap_or(Ordering::Equal)
-            }),
+            SortBy::SurvivalRate => rows.sort_unstable_by_key(|row| -row.survival_rate),
         }
     }
 
@@ -272,12 +241,12 @@ impl PlayerViewModel {
 pub struct DisplayRow {
     pub vehicle: Arc<Vehicle>,
     pub all_statistics: AllStatistics,
-    pub win_rate: f64,
-    pub true_win_rate: (f64, f64),
-    pub damage_per_battle: f64,
-    pub survival_rate: f64,
-    pub gold_per_battle: f64,
-    pub true_gold_per_battle: f64,
+    pub win_rate: OrderedFloat<f64>,
+    pub true_win_rate: (OrderedFloat<f64>, OrderedFloat<f64>),
+    pub damage_per_battle: OrderedFloat<f64>,
+    pub survival_rate: OrderedFloat<f64>,
+    pub gold_per_battle: OrderedFloat<f64>,
+    pub true_gold_per_battle: OrderedFloat<f64>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]
