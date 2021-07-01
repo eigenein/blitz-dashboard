@@ -3,11 +3,10 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::{anyhow, Context};
-use async_std::sync::Mutex;
 use chrono::{DateTime, Duration, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use lazy_static::lazy_static;
-use lru_time_cache::LruCache;
+use moka::future::{Cache, CacheBuilder};
 use serde::{Deserialize, Serialize};
 use tide::Request;
 
@@ -18,16 +17,12 @@ use crate::web::state::State;
 use std::cmp::Ordering;
 
 lazy_static! {
-    static ref ACCOUNT_INFO_CACHE: Arc<Mutex<LruCache<i32, Arc<AccountInfo>>>> =
-        Arc::new(Mutex::new(LruCache::with_expiry_duration_and_capacity(
-            std::time::Duration::from_secs(60),
-            1000,
-        )));
-    static ref ACCOUNT_TANKS_CACHE: Arc<Mutex<LruCache<i32, Arc<Vec<TankSnapshot>>>>> =
-        Arc::new(Mutex::new(LruCache::with_expiry_duration_and_capacity(
-            std::time::Duration::from_secs(60),
-            1000,
-        )));
+    static ref ACCOUNT_INFO_CACHE: Cache<i32, Arc<AccountInfo>> = CacheBuilder::new(1_000)
+        .time_to_live(StdDuration::from_secs(60))
+        .build();
+    static ref ACCOUNT_TANKS_CACHE: Cache<i32, Arc<Vec<TankSnapshot>>> = CacheBuilder::new(1_000)
+        .time_to_live(StdDuration::from_secs(60))
+        .build();
 }
 
 pub struct PlayerViewModel {
@@ -132,11 +127,10 @@ impl PlayerViewModel {
         api: &WargamingApi,
         account_id: i32,
     ) -> crate::Result<Arc<AccountInfo>> {
-        let mut cache = ACCOUNT_INFO_CACHE.lock().await;
-        match cache.get(&account_id) {
+        match ACCOUNT_INFO_CACHE.get(&account_id) {
             Some(account_info) => {
                 log::debug!("Cache hit on account #{} info.", account_id);
-                Ok(account_info.clone())
+                Ok(account_info)
             }
             None => {
                 let account_info = Arc::new(
@@ -146,7 +140,9 @@ impl PlayerViewModel {
                         .flatten()
                         .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
                 );
-                cache.insert(account_id, account_info.clone());
+                ACCOUNT_INFO_CACHE
+                    .insert(account_id, account_info.clone())
+                    .await;
                 Ok(account_info)
             }
         }
@@ -156,15 +152,16 @@ impl PlayerViewModel {
         api: &WargamingApi,
         account_id: i32,
     ) -> crate::Result<Arc<Vec<TankSnapshot>>> {
-        let mut cache = ACCOUNT_TANKS_CACHE.lock().await;
-        match cache.get(&account_id) {
+        match ACCOUNT_TANKS_CACHE.get(&account_id) {
             Some(snapshots) => {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
-                Ok(snapshots.clone())
+                Ok(snapshots)
             }
             None => {
                 let snapshots = Arc::new(api.get_merged_tanks(account_id).await?);
-                cache.insert(account_id, snapshots.clone());
+                ACCOUNT_TANKS_CACHE
+                    .insert(account_id, snapshots.clone())
+                    .await;
                 Ok(snapshots)
             }
         }

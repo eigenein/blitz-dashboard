@@ -1,9 +1,9 @@
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::Duration as StdDuration;
 
 use async_std::sync::Mutex;
 use chrono::Utc;
-use lru_time_cache::LruCache;
+use moka::future::{Cache, CacheBuilder};
 
 use crate::database::Database;
 use crate::models::{Nation, TankType, Vehicle};
@@ -15,7 +15,7 @@ pub struct State {
     pub api: WargamingApi,
     pub database: Arc<Mutex<Database>>,
 
-    tankopedia_cache: Arc<Mutex<LruCache<i32, Arc<Vehicle>>>>,
+    tankopedia_cache: Cache<i32, Arc<Vehicle>>,
 }
 
 impl State {
@@ -23,20 +23,16 @@ impl State {
         State {
             api,
             database: Arc::new(Mutex::new(database)),
-            tankopedia_cache: Arc::new(Mutex::new(LruCache::with_expiry_duration(
-                Duration::from_secs(86400),
-            ))),
+            tankopedia_cache: CacheBuilder::new(1_000_000)
+                .time_to_live(StdDuration::from_secs(86400))
+                .build(),
         }
     }
 
     /// Retrieves cached vehicle information.
     pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Vehicle>> {
-        let mut cache = self.tankopedia_cache.lock().await;
-        match cache.get(&tank_id) {
-            Some(vehicle) => {
-                log::debug!("Cache hit on tank #{}.", tank_id);
-                Ok(vehicle.clone())
-            }
+        match self.tankopedia_cache.get(&tank_id) {
+            Some(vehicle) => Ok(vehicle),
             None => {
                 let vehicle = Arc::new(
                     self.database
@@ -45,7 +41,7 @@ impl State {
                         .retrieve_vehicle(tank_id)?
                         .unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)),
                 );
-                cache.insert(tank_id, vehicle.clone());
+                self.tankopedia_cache.insert(tank_id, vehicle.clone()).await;
                 Ok(vehicle)
             }
         }
