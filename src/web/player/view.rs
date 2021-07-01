@@ -283,9 +283,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (row.all_statistics.wins) }
                                                         td.has-text-info { strong { (render_f64(100.0 * row.win_rate.0, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
-                                                            strong { (render_f64(100.0 * row.true_win_rate.0.0, 1)) "%" }
+                                                            strong { (render_f64(100.0 * row.true_win_rate.0, 1)) "%" }
                                                             " ±"
-                                                            (render_f64(row.true_win_rate.1.0 * 100.0, 1))
+                                                            (render_f64(row.true_win_rate_margin.0 * 100.0, 1))
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
@@ -299,7 +299,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                                 span {
                                                                     strong { (render_f64(row.true_gold_per_battle.0, 1)) }
                                                                     " ±"
-                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate.1.0, 1))
+                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate_margin.0, 1))
                                                                 }
                                                             }
                                                         }

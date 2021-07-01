@@ -121,7 +121,8 @@ impl PlayerViewModel {
         let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
         Ok(DisplayRow {
             win_rate: OrderedFloat(win_rate),
-            true_win_rate: (OrderedFloat(true_win_rate.0), OrderedFloat(true_win_rate.1)),
+            true_win_rate: OrderedFloat(true_win_rate.0),
+            true_win_rate_margin: OrderedFloat(true_win_rate.1),
             damage_per_battle: OrderedFloat(stats.damage_dealt as f64 / stats.battles as f64),
             survival_rate: OrderedFloat(stats.survived_battles as f64 / stats.battles as f64),
             all_statistics: snapshot.all_statistics,
@@ -217,7 +218,7 @@ impl PlayerViewModel {
             SortBy::Tier => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
             SortBy::VehicleType => rows.sort_unstable_by_key(|row| row.vehicle.type_),
             SortBy::WinRate => rows.sort_unstable_by_key(|row| -row.win_rate),
-            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.true_win_rate.0),
+            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.true_win_rate),
             SortBy::Gold => rows.sort_unstable_by_key(|row| -row.gold_per_battle),
             SortBy::TrueGold => rows.sort_unstable_by_key(|row| -row.true_gold_per_battle),
             SortBy::SurvivedBattles => {
@@ -242,7 +243,8 @@ pub struct DisplayRow {
     pub vehicle: Arc<Vehicle>,
     pub all_statistics: AllStatistics,
     pub win_rate: OrderedFloat<f64>,
-    pub true_win_rate: (OrderedFloat<f64>, OrderedFloat<f64>),
+    pub true_win_rate: OrderedFloat<f64>,
+    pub true_win_rate_margin: OrderedFloat<f64>,
     pub damage_per_battle: OrderedFloat<f64>,
     pub survival_rate: OrderedFloat<f64>,
     pub gold_per_battle: OrderedFloat<f64>,
