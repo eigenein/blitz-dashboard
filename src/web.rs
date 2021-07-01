@@ -10,6 +10,7 @@ mod middleware;
 mod partials;
 mod player;
 mod responses;
+mod search;
 mod state;
 
 /// Run the web app.
@@ -22,7 +23,8 @@ pub async fn run(
     let mut app = tide::with_state(State::new(api, database));
     app.with(middleware::LoggerMiddleware);
     app.with(middleware::SecurityMiddleware);
-    app.at("/").get(index::view::get);
+    app.at("/").get(index::get);
+    app.at("/search").get(search::view::get);
     app.at("/ru/:account_id").get(player::view::get);
     app.at("/error").get(|_| async {
         Err::<tide::Response, _>(tide::Error::from_str(

@@ -51,13 +51,13 @@ impl State {
         async_std::task::spawn(async move { callable(database.lock().await) }).await
     }
 
-    pub async fn search_accounts(&self, query: String) -> crate::Result<Arc<Vec<Account>>> {
-        match self.search_accounts_cache.get(&query) {
+    pub async fn search_accounts(&self, query: &String) -> crate::Result<Arc<Vec<Account>>> {
+        match self.search_accounts_cache.get(query) {
             Some(accounts) => Ok(accounts),
             None => {
-                let accounts = Arc::new(self.api.search_accounts(&query).await?);
+                let accounts = Arc::new(self.api.search_accounts(query).await?);
                 self.search_accounts_cache
-                    .insert(query, accounts.clone())
+                    .insert(query.clone(), accounts.clone())
                     .await;
                 Ok(accounts)
             }

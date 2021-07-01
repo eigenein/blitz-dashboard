@@ -12,7 +12,7 @@ use crate::models::{AllStatistics, TankSnapshot, Vehicle};
 use crate::statistics::wilson_score_interval_90;
 use crate::web::state::State;
 
-pub struct PlayerViewModel {
+pub struct ViewModel {
     pub account_id: i32,
     pub nickname: String,
     pub created_at: DateTime<Utc>,
@@ -27,11 +27,11 @@ pub struct PlayerViewModel {
     pub rows: Vec<DisplayRow>,
 }
 
-impl PlayerViewModel {
-    pub async fn new(request: &Request<State>) -> crate::Result<PlayerViewModel> {
+impl ViewModel {
+    pub async fn new(request: &Request<State>) -> crate::Result<ViewModel> {
         let account_id = Self::parse_account_id(&request)?;
-        let query = request
-            .query::<Query>()
+        let query: Query = request
+            .query()
             .map_err(|error| anyhow!(error))
             .context("failed to parse the query")?;
         log::info!(

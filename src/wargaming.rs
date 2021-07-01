@@ -48,7 +48,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    pub async fn get_account_info<A: IntoIterator<Item = i32>>(
+    pub async fn get_account_info<A: IntoIterator<Item = I>, I: ToString>(
         &self,
         account_ids: A,
     ) -> crate::Result<HashMap<String, Option<models::AccountInfo>>> {

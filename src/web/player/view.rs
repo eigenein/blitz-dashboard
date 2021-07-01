@@ -8,7 +8,7 @@ use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, headers, icon_text};
-use crate::web::player::models::{PlayerViewModel, Query, SortBy};
+use crate::web::player::models::{Query, SortBy, ViewModel};
 use crate::web::responses::html;
 use crate::web::state::State;
 
@@ -17,7 +17,7 @@ pub fn get_account_url(account_id: i32) -> String {
 }
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
-    let model = PlayerViewModel::new(&request).await?;
+    let model = ViewModel::new(&request).await?;
     let state = request.state();
     let footer = Footer::new(state).await?;
 
@@ -43,9 +43,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
                             }
-                            div."navbar-menu" {
+                            div.navbar-menu {
                                 div.navbar-end {
-                                    form.navbar-item action="/" method="GET" {
+                                    form.navbar-item action="/search" method="GET" {
                                         (account_search("", &model.nickname, false))
                                     }
                                 }
@@ -263,7 +263,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     (render_vehicles_th(&model.query, SortBy::Battles, html! { "Бои" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Wins, html! { "Победы" })?)
                                                     (render_vehicles_th(&model.query, SortBy::WinRate, html! { "Текущий процент побед" })?)
-                                                    (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Ожидаемый процент побед" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Истинный процент побед" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Gold, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } })?)
                                                     (render_vehicles_th(&model.query, SortBy::TrueGold, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } })?)
                                                     (render_vehicles_th(&model.query, SortBy::DamageDealt, html! { "Ущерб" })?)

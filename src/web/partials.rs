@@ -8,7 +8,7 @@ pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGT
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;
 
-pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Markup {
+pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
     html! {
         div.field.has-addons {
             div.control {
@@ -21,8 +21,8 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
             div.control.has-icons-left.is-expanded {
                 input.input.is-rounded.(class)
                     type="search"
-                    name="search"
-                    value=(nickname)
+                    name="query"
+                    value=(value)
                     placeholder="Никнейм"
                     autocomplete="nickname"
                     pattern="\\w+"
@@ -34,6 +34,7 @@ pub fn account_search(class: &str, nickname: &str, has_autofocus: bool) -> Marku
                     autocorrect="off"
                     aria-label="search"
                     aria-haspopup="false"
+                    size=(MAX_QUERY_LENGTH)
                     autofocus[has_autofocus]
                     required;
                 span.icon.is-left.(class) { i class="fas fa-user" {} }
