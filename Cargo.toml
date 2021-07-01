@@ -10,6 +10,10 @@ repository = "https://github.com/eigenein/blitz-dashboard"
 homepage = "https://github.com/eigenein/blitz-dashboard"
 readme = "README.md"
 
+[profile.release]
+lto = "fat"
+codegen-units = 1
+
 [profile.dev]
 split-debuginfo = "unpacked"
 
