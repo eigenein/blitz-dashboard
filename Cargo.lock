@@ -439,7 +439,6 @@ dependencies = [
  "http-types",
  "humantime-serde",
  "itertools",
- "lazy_static",
  "log",
  "maud",
  "moka",
