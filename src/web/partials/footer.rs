@@ -28,7 +28,7 @@ impl Render for Footer {
                         div.column."is-3" {
                             p.title."is-6" { "О проекте" }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-home.has-text-info {} }
                                     span {
                                         a href="https://github.com/eigenein/blitz-dashboard" {
@@ -40,7 +40,7 @@ impl Render for Footer {
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-heart.has-text-danger {} }
                                     span {
                                         "Создан с помощью " a href="https://www.rust-lang.org/" { "Rust" }
@@ -49,7 +49,7 @@ impl Render for Footer {
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-id-badge.has-text-success {} }
                                     span { "Исходный код лицензирован " a href="https://opensource.org/licenses/MIT" { "MIT" } }
                                 }
@@ -59,19 +59,19 @@ impl Render for Footer {
                         div.column."is-2" {
                             p.title."is-6" { "Поддержка" }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-comments.has-text-info {} }
                                     span { a href="https://github.com/eigenein/blitz-dashboard/discussions" { "Обсуждения" } }
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fab.fa-github.has-text-danger {} }
                                     span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Задачи и баги" } }
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-code-branch.has-text-success {} }
                                     span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Пул-реквесты" } }
                                 }
@@ -81,19 +81,19 @@ impl Render for Footer {
                         div.column."is-3" {
                             p.title."is-6" { "Статистика" }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-user.has-text-info {} }
                                     span { strong { (self.database_statistics.account_count) } " аккаунтов" }
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-portrait.has-text-info {} }
                                     span { strong { (self.database_statistics.account_snapshot_count) } " снимков аккаунтов" }
                                 }
                             }
                             p."mt-1" {
-                                span.icon-text {
+                                span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-truck-monster.has-text-info {} }
                                     span { strong { (self.database_statistics.tank_snapshot_count) } " снимков танков" }
                                 }
