@@ -1,5 +1,8 @@
+use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
+use async_std::sync::{Mutex, MutexGuard};
+use async_std::task::spawn;
 use chrono::{DateTime, Utc};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::{params, OptionalExtension, Row, ToSql};
@@ -247,6 +250,15 @@ impl Transaction<'_> {
     pub fn commit(self) -> crate::Result {
         Ok(self.0.commit()?)
     }
+}
+
+pub async fn async_db<T, C>(database: &Arc<Mutex<Database>>, callable: C) -> T
+where
+    T: Send + 'static,
+    C: FnOnce(MutexGuard<'_, Database>) -> T + Send + 'static,
+{
+    let database = database.clone();
+    spawn(async move { callable(database.lock().await) }).await
 }
 
 // language=SQL

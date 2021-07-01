@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::ops::Sub;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
@@ -10,11 +11,11 @@ use moka::future::{Cache, CacheBuilder};
 use serde::{Deserialize, Serialize};
 use tide::Request;
 
+use crate::database::async_db;
 use crate::models::{AccountInfo, AllStatistics, TankSnapshot, Vehicle};
 use crate::statistics::wilson_score_interval_90;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
-use std::cmp::Ordering;
 
 lazy_static! {
     static ref ACCOUNT_INFO_CACHE: Cache<i32, Arc<AccountInfo>> = CacheBuilder::new(1_000)
@@ -37,7 +38,7 @@ pub struct PlayerViewModel {
     pub query: Query,
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
-    pub rows: Vec<TankRow>,
+    pub rows: Vec<DisplayRow>,
 }
 
 impl PlayerViewModel {
@@ -56,25 +57,23 @@ impl PlayerViewModel {
         let state = request.state();
         let account_info = Self::get_cached_account_info(&state.api, account_id).await?;
         if account_info.is_active() {
-            Self::insert_account_or_ignore(&state, &account_info).await?;
+            let account_info = account_info.clone();
+            async_db(&state.database, move |database| {
+                database.insert_account_or_ignore(&account_info.basic)
+            })
+            .await?;
         }
 
         let actual_statistics = &account_info.statistics.all;
         let actual_tanks = Self::get_cached_tank_snapshots(&state.api, account_id).await?;
         let total_tanks = actual_tanks.len();
         let before = Utc::now() - Duration::from_std(query.period)?;
-        let previous_account_info = {
-            let database = state.database.clone();
-            async_std::task::spawn(async move {
-                let database = database.lock().await;
-                database.retrieve_latest_account_snapshot(account_id, &before)
-            })
-            .await?
-        };
+        let previous_account_info = async_db(&state.database, move |database| {
+            database.retrieve_latest_account_snapshot(account_id, &before)
+        })
+        .await?;
         let previous_tanks = if previous_account_info.is_some() {
-            let database = state.database.clone();
-            async_std::task::spawn(async move {
-                let database = database.lock().await;
+            async_db(&state.database, move |database| {
                 database.retrieve_latest_tank_snapshots(account_id, &before)
             })
             .await?
@@ -83,22 +82,12 @@ impl PlayerViewModel {
         };
         let tank_snapshots = Self::subtract_tank_snapshots(actual_tanks.to_vec(), previous_tanks);
 
-        let mut rows: Vec<TankRow> = Vec::new();
+        let mut rows: Vec<DisplayRow> = Vec::new();
         for snapshot in tank_snapshots.into_iter() {
-            let stats = &snapshot.all_statistics;
-            let vehicle = state.get_vehicle(snapshot.tank_id).await?;
-            let win_rate = stats.wins as f64 / stats.battles as f64;
-            let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
-            rows.push(TankRow {
-                win_rate,
-                true_win_rate,
-                damage_per_battle: stats.damage_dealt as f64 / stats.battles as f64,
-                survival_rate: stats.survived_battles as f64 / stats.battles as f64,
-                all_statistics: snapshot.all_statistics,
-                gold_per_battle: 10.0 + vehicle.tier as f64 * win_rate,
-                true_gold_per_battle: 10.0 + vehicle.tier as f64 * true_win_rate.0,
-                vehicle,
-            });
+            rows.push(Self::make_display_row(
+                state.get_vehicle(snapshot.tank_id).await?.clone(),
+                snapshot,
+            )?);
         }
         Self::sort_vehicles(&mut rows, query.sort_by);
 
@@ -120,6 +109,25 @@ impl PlayerViewModel {
             statistics,
             rows,
             total_tanks,
+        })
+    }
+
+    fn make_display_row(
+        vehicle: Arc<Vehicle>,
+        snapshot: TankSnapshot,
+    ) -> crate::Result<DisplayRow> {
+        let stats = &snapshot.all_statistics;
+        let win_rate = stats.wins as f64 / stats.battles as f64;
+        let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
+        Ok(DisplayRow {
+            win_rate,
+            true_win_rate,
+            damage_per_battle: stats.damage_dealt as f64 / stats.battles as f64,
+            survival_rate: stats.survived_battles as f64 / stats.battles as f64,
+            all_statistics: snapshot.all_statistics,
+            gold_per_battle: 10.0 + vehicle.tier as f64 * win_rate,
+            true_gold_per_battle: 10.0 + vehicle.tier as f64 * true_win_rate.0,
+            vehicle,
         })
     }
 
@@ -197,7 +205,7 @@ impl PlayerViewModel {
         .collect::<Vec<TankSnapshot>>()
     }
 
-    fn sort_vehicles(rows: &mut Vec<TankRow>, sort_by: SortBy) {
+    fn sort_vehicles(rows: &mut Vec<DisplayRow>, sort_by: SortBy) {
         match sort_by {
             SortBy::Battles => rows.sort_unstable_by_key(|row| -row.all_statistics.battles),
             SortBy::Wins => rows.sort_unstable_by_key(|row| -row.all_statistics.wins),
@@ -250,23 +258,6 @@ impl PlayerViewModel {
         }
     }
 
-    /// Inserts account if it doesn't exist. The rest is updated by [`crate::crawler`].
-    async fn insert_account_or_ignore(
-        state: &State,
-        account_info: &Arc<AccountInfo>,
-    ) -> crate::Result {
-        let account_info = account_info.clone();
-        let database = state.database.clone();
-        async_std::task::spawn(async move {
-            database
-                .lock()
-                .await
-                .insert_account_or_ignore(&account_info.basic)
-        })
-        .await?;
-        Ok(())
-    }
-
     /// Parses account ID URL segment.
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
         request
@@ -278,7 +269,7 @@ impl PlayerViewModel {
     }
 }
 
-pub struct TankRow {
+pub struct DisplayRow {
     pub vehicle: Arc<Vehicle>,
     pub all_statistics: AllStatistics,
     pub win_rate: f64,

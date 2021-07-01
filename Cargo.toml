@@ -27,6 +27,7 @@ log = "0.4.14"
 maud = "0.22.2"
 moka = { version = "0.4.0", features = ["future"] }
 openssl = { version = "0.10", features = ["vendored"] }
+ordered-float = "2.5.1"
 rusqlite = { version = "0.25.3", features = ["bundled"] }
 sentry = { version = "0.22.0", features = ["anyhow", "log"] }
 serde = { version = "1.0", features = ["derive"] }

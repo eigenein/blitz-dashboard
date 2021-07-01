@@ -5,7 +5,7 @@ use async_std::sync::Mutex;
 use chrono::Utc;
 use moka::future::{Cache, CacheBuilder};
 
-use crate::database::Database;
+use crate::database::{async_db, Database};
 use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
 
@@ -34,13 +34,12 @@ impl State {
         match self.tankopedia_cache.get(&tank_id) {
             Some(vehicle) => Ok(vehicle),
             None => {
-                let vehicle = Arc::new(
-                    self.database
-                        .lock()
-                        .await
-                        .retrieve_vehicle(tank_id)?
-                        .unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)),
-                );
+                let vehicle = async_db(&self.database, move |database| {
+                    database.retrieve_vehicle(tank_id)
+                })
+                .await?;
+                let vehicle =
+                    Arc::new(vehicle.unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)));
                 self.tankopedia_cache.insert(tank_id, vehicle.clone()).await;
                 Ok(vehicle)
             }

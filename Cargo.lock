@@ -444,6 +444,7 @@ dependencies = [
  "maud",
  "moka",
  "openssl",
+ "ordered-float",
  "rusqlite",
  "sentry",
  "serde",
@@ -1842,6 +1843,15 @@ dependencies = [
  "openssl-src",
  "pkg-config",
  "vcpkg",
+]
+
+[[package]]
+name = "ordered-float"
+version = "2.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f100fcfb41e5385e0991f74981732049f9b896821542a219420491046baafdc2"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
