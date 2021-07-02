@@ -154,7 +154,7 @@ pub enum TankType {
     Other,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TankSnapshot {
     pub account_id: i32,
     pub tank_id: i32,

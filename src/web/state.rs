@@ -51,6 +51,7 @@ impl State {
         async_std::task::spawn(async move { callable(database.lock().await) }).await
     }
 
+    #[allow(clippy::ptr_arg)]
     pub async fn search_accounts(&self, query: &String) -> crate::Result<Arc<Vec<Account>>> {
         match self.search_accounts_cache.get(query) {
             Some(accounts) => Ok(accounts),

@@ -133,17 +133,17 @@ impl ViewModel {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
-            EitherOrBoth::Both(actual, previous)
-                if actual.all_statistics.battles > previous.all_statistics.battles =>
+            EitherOrBoth::Both(current, previous)
+                if current.all_statistics.battles > previous.all_statistics.battles =>
             {
                 Some(TankSnapshot {
-                    account_id: actual.account_id,
-                    tank_id: actual.tank_id,
+                    account_id: current.account_id,
+                    tank_id: current.tank_id,
                     achievements: Default::default(), // TODO
                     max_series: Default::default(),   // TODO
-                    all_statistics: &actual.all_statistics - &previous.all_statistics,
-                    last_battle_time: actual.last_battle_time,
-                    battle_life_time: actual.battle_life_time - previous.battle_life_time,
+                    all_statistics: &current.all_statistics - &previous.all_statistics,
+                    last_battle_time: current.last_battle_time,
+                    battle_life_time: current.battle_life_time - previous.battle_life_time,
                 })
             }
             EitherOrBoth::Left(actual) => Some(actual),
