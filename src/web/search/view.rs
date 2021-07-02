@@ -1,3 +1,4 @@
+use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, DOCTYPE};
 use tide::{Redirect, StatusCode};
 
@@ -31,7 +32,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             body {
                 nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
                     div.container {
-                        div."navbar-brand" {
+                        div.navbar-brand {
                             div.navbar-item {
                                 div.buttons {
                                     a.button.is-link href="/" {
@@ -40,23 +41,57 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
                             }
-                            form.navbar-item action="/search" method="GET" {
-                                (account_search("", &model.query, false))
+                        }
+                        div.navbar-menu {
+                            div.navbar-end {
+                                form.navbar-item action="/search" method="GET" {
+                                    (account_search("", &model.query, false))
+                                }
                             }
                         }
                     }
                 }
 
-                section.section {
-                    div.container {
-                        div.columns {
-                            div.column."is-6"."is-offset-3" {
-                                @for account in &model.accounts {
-                                    div.box {
-                                        p.title."is-5" {
-                                            a href=(get_account_url(account.basic.id)) { (account.nickname) }
+                @for account in &model.accounts {
+                    section.section."p-0"."m-4" {
+                        div.container {
+                            div.columns.is-centered {
+                                div.column."is-6-widescreen"."is-10-tablet" {
+                                    div.card {
+                                        div.card-content {
+                                            p.title."is-5" {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon { i.fas.fa-user {} }
+                                                    span { a href=(get_account_url(account.basic.id)) { (account.nickname) } }
+                                                }
+                                            }
                                         }
-                                        p.subtitle.has-text-grey."is-6" { "#" (account.basic.id) }
+                                        footer.card-footer {
+                                            p.card-footer-item {
+                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
+                                                    span.icon { i.fas.fa-sort-numeric-up-alt {} }
+                                                    span { (account.statistics.all.battles) " боев" }
+                                                }
+                                            }
+                                            p.card-footer-item {
+                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
+                                                    span.icon { i.fas.fa-calendar-day {} }
+                                                    span { (HumanTime::from(account.basic.last_battle_time)) }
+                                                }
+                                            }
+                                            p.card-footer-item {
+                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
+                                                    span.icon { i.fas.fa-birthday-cake {} }
+                                                    span { (HumanTime::from(account.created_at).to_text_en(Accuracy::Rough, Tense::Present)) }
+                                                }
+                                            }
+                                            p.card-footer-item {
+                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
+                                                    span.icon { i.far.fa-id-badge {} }
+                                                    span { (account.basic.id) }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

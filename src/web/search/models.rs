@@ -24,7 +24,12 @@ impl ViewModel {
             .search_accounts(&query.query)
             .await?
             .to_vec();
-        accounts.sort_unstable_by(|left, right| left.nickname.cmp(&right.nickname));
+        accounts.sort_unstable_by(|left, right| {
+            right
+                .basic
+                .last_battle_time
+                .cmp(&left.basic.last_battle_time)
+        });
         Ok(Self {
             accounts,
             query: query.query,

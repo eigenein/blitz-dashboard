@@ -33,7 +33,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                 body {
                     nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
                         div.container {
-                            div."navbar-brand" {
+                            div.navbar-brand {
                                 div.navbar-item {
                                     div.buttons {
                                         a.button.is-link href="/" {
@@ -86,9 +86,12 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Последний бой" }
-                                                        p.title.(if model.has_recently_played { "has-text-success" } else if !model.is_active { "has-text-danger" } else { "" })
-                                                            title=(model.last_battle_time) {
-                                                            (HumanTime::from(model.last_battle_time))
+                                                        p.title.(if model.has_recently_played { "has-text-success" } else if !model.is_active { "has-text-danger" } else { "" }) {
+                                                            time
+                                                                datetime=(model.last_battle_time.to_rfc3339())
+                                                                title=(model.last_battle_time) {
+                                                                    (HumanTime::from(model.last_battle_time))
+                                                                }
                                                         }
                                                     }
                                                 }
