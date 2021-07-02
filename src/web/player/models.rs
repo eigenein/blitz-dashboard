@@ -53,7 +53,7 @@ impl ViewModel {
                 .await?;
         }
 
-        let current_tanks = state.retrieve_tanks(account_id).await?;
+        let current_tanks = state.retrieve_tanks(&current_info).await?;
         let total_tanks = current_tanks.len();
         let before = Utc::now() - Duration::from_std(query.period)?;
         let previous_info = state

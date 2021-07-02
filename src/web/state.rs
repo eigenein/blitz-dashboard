@@ -3,7 +3,7 @@ use std::time::Duration as StdDuration;
 
 use anyhow::anyhow;
 use async_std::sync::{Mutex, MutexGuard};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use moka::future::{Cache, CacheBuilder};
 
 use crate::database::Database;
@@ -16,15 +16,15 @@ pub struct State {
     pub api: WargamingApi,
     database: Arc<Mutex<Database>>,
 
-    /// Caches search query to accounts IDs, refreshes seldom.
+    /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
 
-    /// Caches search query to search results, refreshes more often.
+    /// Caches search query to search results, expires way sooner but provides more accurate data.
     search_accounts_info_cache: Cache<String, Arc<Vec<AccountInfo>>>,
 
     tankopedia_cache: Cache<i32, Arc<Vehicle>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
-    account_tanks_cache: Cache<i32, Arc<Vec<TankSnapshot>>>,
+    account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<TankSnapshot>>)>,
 }
 
 impl State {
@@ -38,14 +38,14 @@ impl State {
             search_accounts_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(300))
                 .build(),
-            tankopedia_cache: CacheBuilder::new(1_000_000)
+            tankopedia_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
                 .build(),
             account_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(60))
                 .build(),
             account_tanks_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(60))
+                .time_to_idle(StdDuration::from_secs(3600))
                 .build(),
         }
     }
@@ -125,16 +125,25 @@ impl State {
         }
     }
 
-    pub async fn retrieve_tanks(&self, account_id: i32) -> crate::Result<Arc<Vec<TankSnapshot>>> {
+    pub async fn retrieve_tanks(
+        &self,
+        account_info: &AccountInfo,
+    ) -> crate::Result<Arc<Vec<TankSnapshot>>> {
+        let account_id = account_info.basic.id;
         match self.account_tanks_cache.get(&account_id) {
-            Some(snapshots) => {
+            Some((last_battle_time, snapshots))
+                if last_battle_time == account_info.basic.last_battle_time =>
+            {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
                 Ok(snapshots)
             }
-            None => {
+            _ => {
                 let snapshots = Arc::new(self.api.get_merged_tanks(account_id).await?);
                 self.account_tanks_cache
-                    .insert(account_id, snapshots.clone())
+                    .insert(
+                        account_id,
+                        (account_info.basic.last_battle_time, snapshots.clone()),
+                    )
                     .await;
                 Ok(snapshots)
             }
