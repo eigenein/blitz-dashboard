@@ -1,9 +1,9 @@
-use chrono_humanize::{Accuracy, HumanTime, Tense};
+use chrono_humanize::Tense;
 use maud::{html, DOCTYPE};
 use tide::{Redirect, StatusCode};
 
 use crate::web::partials::footer::Footer;
-use crate::web::partials::{account_search, headers};
+use crate::web::partials::{account_search, datetime, headers};
 use crate::web::player::view::get_account_url;
 use crate::web::responses::html;
 use crate::web::search::models::ViewModel;
@@ -76,13 +76,13 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                             p.card-footer-item {
                                                 span.icon-text.has-text-grey.is-flex-wrap-nowrap {
                                                     span.icon { i.fas.fa-calendar-day {} }
-                                                    span { (HumanTime::from(account.basic.last_battle_time)) }
+                                                    span { (datetime(account.basic.last_battle_time, Tense::Past)) }
                                                 }
                                             }
                                             p.card-footer-item {
                                                 span.icon-text.has-text-grey.is-flex-wrap-nowrap {
                                                     span.icon { i.fas.fa-birthday-cake {} }
-                                                    span { (HumanTime::from(account.created_at).to_text_en(Accuracy::Rough, Tense::Present)) }
+                                                    span { (datetime(account.created_at, Tense::Present)) }
                                                 }
                                             }
                                             p.card-footer-item {

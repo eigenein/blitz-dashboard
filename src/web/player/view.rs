@@ -1,13 +1,13 @@
 use std::time::Duration as StdDuration;
 
-use chrono_humanize::{Accuracy, HumanTime, Tense};
+use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
 use crate::statistics::wilson_score_interval_90;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
-use crate::web::partials::{account_search, headers, icon_text};
+use crate::web::partials::{account_search, datetime, headers, icon_text};
 use crate::web::player::models::{Query, SortBy, ViewModel};
 use crate::web::responses::html;
 use crate::web::state::State;
@@ -67,7 +67,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     div {
                                                         p.heading { "Возраст" }
                                                         p.title title=(model.created_at) {
-                                                            (HumanTime::from(model.created_at).to_text_en(Accuracy::Rough, Tense::Present))
+                                                            (datetime(model.created_at, Tense::Present))
                                                         }
                                                     }
                                                 }
@@ -90,7 +90,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                             time
                                                                 datetime=(model.last_battle_time.to_rfc3339())
                                                                 title=(model.last_battle_time) {
-                                                                    (HumanTime::from(model.last_battle_time))
+                                                                    (datetime(model.last_battle_time, Tense::Past))
                                                                 }
                                                         }
                                                     }

@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use chrono::{DateTime, Utc};
+use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
 
 pub mod footer;
@@ -58,7 +60,6 @@ pub fn icon_text(class: &str, text: &str) -> Markup {
     }
 }
 
-#[inline(always)]
 pub fn headers() -> Markup {
     html! {
         meta name="viewport" content="width=device-width, initial-scale=1";
@@ -71,5 +72,13 @@ pub fn headers() -> Markup {
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
         style { ".is-white-space-nowrap { white-space: nowrap !important; }" }
+    }
+}
+
+pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
+    html! {
+        time
+            datetime=(value.to_rfc3339())
+            title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
     }
 }
