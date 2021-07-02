@@ -287,8 +287,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td.has-text-info { strong { (render_f64(100.0 * row.win_rate.0, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
                                                             strong { (render_f64(100.0 * row.true_win_rate.0, 1)) "%" }
-                                                            " ±"
-                                                            (render_f64(row.true_win_rate_margin.0 * 100.0, 1))
+                                                            span.(if row.true_win_rate_margin.0 > 0.25 { "has-text-danger" } else { "" }) {
+                                                                " ±" (render_f64(row.true_win_rate_margin.0 * 100.0, 1))
+                                                            }
                                                         }
                                                         td {
                                                             span.icon-text.is-flex-wrap-nowrap {
