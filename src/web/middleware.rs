@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use log::{debug, error, log, Level};
 use sentry::integrations::anyhow::capture_anyhow;
+use std::borrow::Cow;
 use tide::{Middleware, Request};
 
 pub struct LoggerMiddleware;
@@ -12,16 +13,11 @@ const REQUEST_DURATION_THRESHOLD: Duration = Duration::from_secs(1);
 #[tide::utils::async_trait]
 impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
     async fn handle(&self, request: Request<T>, next: tide::Next<'_, T>) -> tide::Result {
-        let peer_addr = request
-            .header("X-Real-IP")
-            .or_else(|| request.header("X-Forwarded-For"))
-            .map(|values| values.as_str())
-            .or_else(|| request.peer_addr())
-            .unwrap_or("-")
-            .to_string();
+        let peer_address =
+            get_peer_address(&request).map_or_else(|| Cow::Borrowed("-"), Cow::Owned);
         let path = request.url().path().to_string();
         let method = request.method().to_string();
-        debug!("{} → {} {}", peer_addr, method, path);
+        debug!("{} → {} {}", peer_address, method, path);
         let start = Instant::now();
         let mut response = next.run(request).await;
         let duration = Instant::now() - start;
@@ -33,8 +29,8 @@ impl<T: Clone + Send + Sync + 'static> Middleware<T> for LoggerMiddleware {
         };
         log!(
             level,
-            r#"{peer_addr} ← {method} {path} [{status}] ({duration:#?})"#,
-            peer_addr = peer_addr,
+            r#"{peer_address} ← {method} {path} [{status}] ({duration:#?})"#,
+            peer_address = peer_address,
             method = method,
             path = path,
             status = response.status(),
@@ -65,4 +61,13 @@ impl<T: Clone + Send + Sync + 'static> Middleware<T> for SecurityMiddleware {
         http_types::security::default(&mut response);
         Ok(response)
     }
+}
+
+pub fn get_peer_address<T>(request: &Request<T>) -> Option<String> {
+    request
+        .header("X-Real-IP")
+        .or_else(|| request.header("X-Forwarded-For"))
+        .map(|values| values.as_str())
+        .or_else(|| request.peer_addr())
+        .map(ToString::to_string)
 }

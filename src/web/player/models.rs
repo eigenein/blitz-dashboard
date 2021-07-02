@@ -8,6 +8,7 @@ use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 use tide::Request;
 
+use crate::logging::set_user;
 use crate::models::{AllStatistics, TankSnapshot, Vehicle};
 use crate::statistics::wilson_score_interval_90;
 use crate::web::state::State;
@@ -42,6 +43,7 @@ impl ViewModel {
 
         let state = request.state();
         let current_info = state.retrieve_account_info(account_id).await?;
+        set_user(&current_info.nickname);
         if current_info.is_active() {
             let account_info = current_info.clone();
             state

@@ -18,6 +18,8 @@ pub struct Crawler {
 
 impl Crawler {
     pub async fn run(&self) -> crate::Result {
+        sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
+
         loop {
             self.crawl_batch().await?;
             if self.opts.once {

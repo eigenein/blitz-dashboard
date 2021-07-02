@@ -20,6 +20,8 @@ pub async fn run(
     api: WargamingApi,
     database: Database,
 ) -> anyhow::Result<()> {
+    sentry::configure_scope(|scope| scope.set_tag("app", "web"));
+
     let mut app = tide::with_state(State::new(api, database));
     app.with(middleware::LoggerMiddleware);
     app.with(middleware::SecurityMiddleware);

@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context};
 use serde::Deserialize;
 use tide::Request;
 
+use crate::logging::clear_user;
 use crate::models::AccountInfo;
 use crate::web::partials::SEARCH_QUERY_LENGTH;
 use crate::web::state::State;
@@ -13,6 +14,8 @@ pub struct ViewModel {
 
 impl ViewModel {
     pub async fn new(request: &Request<State>) -> crate::Result<Self> {
+        clear_user();
+
         let query: Query = request
             .query()
             .map_err(|error| anyhow!(error))

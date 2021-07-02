@@ -1,12 +1,14 @@
 use maud::{html, DOCTYPE};
-
 use tide::StatusCode;
 
+use crate::logging::clear_user;
 use crate::web::partials::{account_search, headers};
 use crate::web::responses::html;
 use crate::web::state::State;
 
 pub async fn get(_: tide::Request<State>) -> tide::Result {
+    clear_user();
+
     Ok(html(
         StatusCode::Ok,
         html! {
