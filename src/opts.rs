@@ -53,6 +53,9 @@ pub struct WebOpts {
 pub struct CrawlerOpts {
     #[clap(long, about = "Crawl one account and exit")]
     pub once: bool,
+
+    #[clap(long, about = "Override the last battle time check")]
+    pub force: bool,
 }
 
 #[derive(Clap)]

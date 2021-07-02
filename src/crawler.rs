@@ -7,19 +7,20 @@ use log::Level;
 use crate::database::Database;
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BasicAccountInfo};
+use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
     pub api: WargamingApi,
     pub database: Database,
-    pub once: bool,
+    pub opts: CrawlerOpts,
 }
 
 impl Crawler {
     pub async fn run(&self) -> crate::Result {
         loop {
             self.crawl_batch().await?;
-            if self.once {
+            if self.opts.once {
                 break;
             }
 
@@ -78,7 +79,9 @@ impl Crawler {
                 current_info.basic.crawled_at = Utc::now();
                 self.database
                     .insert_account_or_replace(&current_info.basic)?;
-                if current_info.basic.last_battle_time != previous_info.last_battle_time {
+                if self.opts.force
+                    || current_info.basic.last_battle_time != previous_info.last_battle_time
+                {
                     self.database.upsert_account_snapshot(&current_info)?;
                     self.database.upsert_tank_snapshots(
                         &self.api.get_merged_tanks(previous_info.id).await?,
