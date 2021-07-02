@@ -5,7 +5,6 @@ use tide::Request;
 use crate::models::AccountInfo;
 use crate::web::partials::SEARCH_QUERY_LENGTH;
 use crate::web::state::State;
-use itertools::Itertools;
 
 pub struct ViewModel {
     pub query: String,
@@ -20,21 +19,12 @@ impl ViewModel {
             .context("failed to parse the query")?;
         query.validate()?;
 
-        let state = request.state();
-        let accounts = state
-            .api
-            .get_account_info(
-                state
-                    .search_accounts(&query.query)
-                    .await?
-                    .iter()
-                    .map(|account| account.id),
-            )
+        let mut accounts = request
+            .state()
+            .search_accounts(&query.query)
             .await?
-            .drain()
-            .filter_map(|(_, info)| info)
-            .sorted_unstable_by(|left, right| left.nickname.cmp(&right.nickname))
-            .collect();
+            .to_vec();
+        accounts.sort_unstable_by(|left, right| left.nickname.cmp(&right.nickname));
         Ok(Self {
             accounts,
             query: query.query,

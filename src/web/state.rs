@@ -7,7 +7,7 @@ use chrono::Utc;
 use moka::future::{Cache, CacheBuilder};
 
 use crate::database::Database;
-use crate::models::{Account, AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
+use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
 
 /// Web application global state.
@@ -16,7 +16,12 @@ pub struct State {
     pub api: WargamingApi,
     database: Arc<Mutex<Database>>,
 
-    search_accounts_cache: Cache<String, Arc<Vec<Account>>>,
+    /// Caches search query to accounts IDs, refreshes seldom.
+    search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
+
+    /// Caches search query to search results, refreshes more often.
+    search_accounts_info_cache: Cache<String, Arc<Vec<AccountInfo>>>,
+
     tankopedia_cache: Cache<i32, Arc<Vehicle>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
     account_tanks_cache: Cache<i32, Arc<Vec<TankSnapshot>>>,
@@ -27,8 +32,11 @@ impl State {
         State {
             api,
             database: Arc::new(Mutex::new(database)),
-            search_accounts_cache: CacheBuilder::new(1_000)
+            search_accounts_ids_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
+                .build(),
+            search_accounts_info_cache: CacheBuilder::new(1_000)
+                .time_to_live(StdDuration::from_secs(300))
                 .build(),
             tankopedia_cache: CacheBuilder::new(1_000_000)
                 .time_to_live(StdDuration::from_secs(86400))
@@ -52,15 +60,44 @@ impl State {
     }
 
     #[allow(clippy::ptr_arg)]
-    pub async fn search_accounts(&self, query: &String) -> crate::Result<Arc<Vec<Account>>> {
-        match self.search_accounts_cache.get(query) {
-            Some(accounts) => Ok(accounts),
+    pub async fn search_accounts(&self, query: &String) -> crate::Result<Arc<Vec<AccountInfo>>> {
+        match self.search_accounts_info_cache.get(query) {
+            // Check if we already have up-to-date search results.
+            Some(infos) => Ok(infos),
+
             None => {
-                let accounts = Arc::new(self.api.search_accounts(query).await?);
-                self.search_accounts_cache
-                    .insert(query.clone(), accounts.clone())
+                let account_ids = match self.search_accounts_ids_cache.get(query) {
+                    // Check if we already have account IDs for this query.
+                    Some(account_ids) => account_ids,
+
+                    None => {
+                        let account_ids: Vec<i32> = self
+                            .api
+                            .search_accounts(query)
+                            .await?
+                            .iter()
+                            .map(|account| account.id)
+                            .collect();
+                        let account_ids = Arc::new(account_ids);
+                        self.search_accounts_ids_cache
+                            .insert(query.clone(), account_ids.clone())
+                            .await;
+                        account_ids
+                    }
+                };
+
+                let account_infos: Vec<AccountInfo> = self
+                    .api
+                    .get_account_info(account_ids.iter())
+                    .await?
+                    .into_iter()
+                    .filter_map(|(_, info)| info)
+                    .collect();
+                let account_infos = Arc::new(account_infos);
+                self.search_accounts_info_cache
+                    .insert(query.clone(), account_infos.clone())
                     .await;
-                Ok(accounts)
+                Ok(account_infos)
             }
         }
     }
