@@ -35,8 +35,10 @@ pub struct AccountInfo {
     #[serde(flatten)]
     pub basic: BasicAccountInfo,
 
+    // TODO: move to `BasicAccountInfo` and add to the database.
     pub nickname: String,
 
+    // TODO: move to `BasicAccountInfo` and add to the database.
     #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
 
