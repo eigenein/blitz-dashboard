@@ -123,14 +123,12 @@ impl WargamingApi {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
-            EitherOrBoth::Both(statistics, achievements) => Some(models::TankSnapshot {
+            EitherOrBoth::Both(statistics, _achievements) => Some(models::TankSnapshot {
                 account_id,
                 tank_id: statistics.tank_id,
                 all_statistics: statistics.all,
                 last_battle_time: statistics.last_battle_time,
                 battle_life_time: statistics.battle_life_time,
-                max_series: achievements.max_series,
-                achievements: achievements.achievements,
             }),
             _ => None,
         })

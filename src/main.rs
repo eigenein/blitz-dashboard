@@ -2,7 +2,6 @@ use clap::{crate_name, crate_version};
 use sentry::integrations::anyhow::capture_anyhow;
 
 use crate::crawler::Crawler;
-use crate::database::Database;
 use crate::opts::{Opts, Subcommand};
 use crate::wargaming::WargamingApi;
 
@@ -35,7 +34,7 @@ async fn main() -> crate::Result {
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let api = WargamingApi::new(&opts.application_id);
-    let database = Database::open(opts.database)?;
+    let database = crate::database::open(&opts.database).await?;
     match opts.subcommand {
         Subcommand::Web(opts) => web::run(&opts.host, opts.port, api, database).await,
         Subcommand::Crawler(opts) => {

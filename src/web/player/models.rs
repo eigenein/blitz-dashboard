@@ -8,6 +8,7 @@ use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 use tide::Request;
 
+use crate::database;
 use crate::logging::set_user;
 use crate::models::{AllStatistics, TankSnapshot, Vehicle};
 use crate::statistics::wilson_score_interval_90;
@@ -45,28 +46,17 @@ impl ViewModel {
         let current_info = state.retrieve_account_info(account_id).await?;
         set_user(&current_info.nickname);
         if current_info.is_active() {
-            let account_info = current_info.clone();
-            state
-                .query_database(move |database| {
-                    database.insert_account_or_ignore(&account_info.basic)
-                })
-                .await?;
+            database::insert_account_or_ignore(&state.database, &current_info.basic).await?;
         }
 
         let current_tanks = state.retrieve_tanks(&current_info).await?;
         let total_tanks = current_tanks.len();
         let before = Utc::now() - Duration::from_std(query.period)?;
-        let previous_info = state
-            .query_database(move |database| {
-                database.retrieve_latest_account_snapshot(account_id, &before)
-            })
-            .await?;
+        let previous_info =
+            database::retrieve_latest_account_snapshot(&state.database, account_id, &before)
+                .await?;
         let previous_tanks = if previous_info.is_some() {
-            state
-                .query_database(move |database| {
-                    database.retrieve_latest_tank_snapshots(account_id, &before)
-                })
-                .await?
+            database::retrieve_latest_tank_snapshots(&state.database, account_id, &before).await?
         } else {
             Vec::new()
         };
@@ -141,8 +131,6 @@ impl ViewModel {
                 Some(TankSnapshot {
                     account_id: current.account_id,
                     tank_id: current.tank_id,
-                    achievements: Default::default(), // TODO
-                    max_series: Default::default(),   // TODO
                     all_statistics: &current.all_statistics - &previous.all_statistics,
                     last_battle_time: current.last_battle_time,
                     battle_life_time: current.battle_life_time - previous.battle_life_time,

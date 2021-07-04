@@ -11,7 +11,7 @@ pub fn render_f64(value: f64, precision: usize) -> Markup {
     }
 }
 
-pub fn render_tier(tier: i8) -> Markup {
+pub fn render_tier(tier: i32) -> Markup {
     html! {
         @match tier {
             1 => "Ⅰ",

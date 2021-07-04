@@ -2,11 +2,11 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::anyhow;
-use async_std::sync::{Mutex, MutexGuard};
 use chrono::{DateTime, Utc};
 use moka::future::{Cache, CacheBuilder};
+use sqlx::PgPool;
 
-use crate::database::Database;
+use crate::database;
 use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
 
@@ -14,7 +14,7 @@ use crate::wargaming::WargamingApi;
 #[derive(Clone)]
 pub struct State {
     pub api: WargamingApi,
-    database: Arc<Mutex<Database>>,
+    pub database: PgPool,
 
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
@@ -28,10 +28,10 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(api: WargamingApi, database: Database) -> Self {
+    pub fn new(api: WargamingApi, database: PgPool) -> Self {
         State {
             api,
-            database: Arc::new(Mutex::new(database)),
+            database,
             search_accounts_ids_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
                 .build(),
@@ -48,15 +48,6 @@ impl State {
                 .time_to_idle(StdDuration::from_secs(3600))
                 .build(),
         }
-    }
-
-    pub async fn query_database<T, C>(&self, callable: C) -> T
-    where
-        T: Send + 'static,
-        C: FnOnce(MutexGuard<'_, Database>) -> T + Send + 'static,
-    {
-        let database = self.database.clone();
-        async_std::task::spawn(async move { callable(database.lock().await) }).await
     }
 
     #[allow(clippy::ptr_arg)]
@@ -155,9 +146,7 @@ impl State {
         match self.tankopedia_cache.get(&tank_id) {
             Some(vehicle) => Ok(vehicle),
             None => {
-                let vehicle = self
-                    .query_database(move |database| database.retrieve_vehicle(tank_id))
-                    .await?;
+                let vehicle = database::retrieve_vehicle(&self.database, tank_id).await?;
                 let vehicle =
                     Arc::new(vehicle.unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)));
                 self.tankopedia_cache.insert(tank_id, vehicle.clone()).await;
@@ -175,15 +164,13 @@ impl State {
                 is_premium: true,
                 nation: Nation::Germany,
                 type_: TankType::Light,
-                imported_at: Utc::now(),
             },
             _ => Vehicle {
                 tank_id,
                 name: format!("#{}", tank_id),
                 tier: 0,
                 is_premium: false,
-                type_: TankType::Other,
-                imported_at: Utc::now(),
+                type_: TankType::Light, // FIXME
                 nation: Nation::Other,
             },
         }

@@ -1,6 +1,6 @@
+use sqlx::PgPool;
 use tide::{Response, StatusCode};
 
-use crate::database::Database;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
 
@@ -14,12 +14,7 @@ mod search;
 mod state;
 
 /// Run the web app.
-pub async fn run(
-    host: &str,
-    port: u16,
-    api: WargamingApi,
-    database: Database,
-) -> anyhow::Result<()> {
+pub async fn run(host: &str, port: u16, api: WargamingApi, database: PgPool) -> anyhow::Result<()> {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
     let mut app = tide::with_state(State::new(api, database));

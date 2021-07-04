@@ -3,8 +3,9 @@ use std::time::Duration as StdDuration;
 use async_std::task::sleep;
 use chrono::Utc;
 use log::Level;
+use sqlx::PgPool;
 
-use crate::database::Database;
+use crate::database;
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BasicAccountInfo};
 use crate::opts::CrawlerOpts;
@@ -12,7 +13,7 @@ use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
     pub api: WargamingApi,
-    pub database: Database,
+    pub database: PgPool,
     pub opts: CrawlerOpts,
 }
 
@@ -35,7 +36,7 @@ impl Crawler {
 
     async fn crawl_batch(&self) -> crate::Result {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
-        let previous_infos = self.database.retrieve_oldest_accounts(100)?;
+        let previous_infos = database::retrieve_oldest_accounts(&self.database, 100).await?;
         let mut current_infos = self
             .api
             .get_account_info(previous_infos.iter().map(|account| account.id))
@@ -63,31 +64,33 @@ impl Crawler {
         current_info: Option<AccountInfo>,
     ) -> crate::Result<bool> {
         log::info!(
-            "Account #{}, last crawled at {}.",
+            "Account #{}, last crawled at {:?}.",
             previous_info.id,
             previous_info.crawled_at,
         );
 
-        let tx = self.database.start_transaction()?;
+        let mut transaction = self.database.begin().await?;
         let is_updated = match current_info {
             Some(current_info) if !current_info.is_active() => {
                 log::debug!("Nickname: {}.", current_info.nickname);
                 log::warn!("The account is inactive. Deleting…");
-                self.database.prune_account(previous_info.id)?;
+                database::delete_account(&mut transaction, previous_info.id).await?;
                 true
             }
             Some(mut current_info) => {
                 log::debug!("Nickname: {}.", current_info.nickname);
-                current_info.basic.crawled_at = Utc::now();
-                self.database
-                    .insert_account_or_replace(&current_info.basic)?;
+                current_info.basic.crawled_at = Some(Utc::now());
+                database::insert_account_or_replace(&mut transaction, &current_info.basic).await?;
                 if self.opts.force
                     || current_info.basic.last_battle_time != previous_info.last_battle_time
+                    || previous_info.crawled_at.is_none()
                 {
-                    self.database.upsert_account_snapshot(&current_info)?;
-                    self.database.upsert_tank_snapshots(
+                    database::insert_account_snapshot(&mut transaction, &current_info).await?;
+                    database::insert_tank_snapshots(
+                        &mut transaction,
                         &self.api.get_merged_tanks(previous_info.id).await?,
-                    )?;
+                    )
+                    .await?;
                     true
                 } else {
                     log::info!("No new battles.");
@@ -96,13 +99,13 @@ impl Crawler {
             }
             None => {
                 log::warn!("The account does not exist. Deleting…");
-                self.database.prune_account(previous_info.id)?;
+                database::delete_account(&self.database, previous_info.id).await?;
                 true
             }
         };
 
         log::debug!("Committing…");
-        tx.commit()?;
+        transaction.commit().await?;
         Ok(is_updated)
     }
 }

@@ -1,15 +1,15 @@
-use std::time::Duration as StdDuration;
+use std::str::FromStr;
 
-use chrono::{DateTime, Utc};
-use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
-use rusqlite::{params, OptionalExtension, Row, ToSql};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use anyhow::Context;
+use chrono::{DateTime, Duration, Utc};
+use sqlx::postgres::{PgPoolOptions, PgRow};
+use sqlx::{Executor, FromRow, PgPool, Postgres, Row, Transaction};
 
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot, Vehicle};
-
-pub struct Database(rusqlite::Connection);
+use crate::models::{
+    AccountInfo, AccountInfoStatistics, AllStatistics, BasicAccountInfo, Nation, TankSnapshot,
+    TankType, Vehicle,
+};
 
 pub struct Statistics {
     pub account_count: i64,
@@ -17,449 +17,446 @@ pub struct Statistics {
     pub tank_snapshot_count: i64,
 }
 
-impl Database {
-    /// Open and initialize the database.
-    pub fn open<P: Into<String>>(path: P) -> crate::Result<Self> {
-        let path = path.into();
+/// Open and initialize the database.
+pub async fn open(uri: &str) -> crate::Result<PgPool> {
+    log::info!("Connecting to the database…");
+    let inner = PgPoolOptions::new()
+        .connect(uri)
+        .await
+        .context("failed to connect")?;
 
-        log::info!("Connecting to the database…");
-        let inner = rusqlite::Connection::open(&path)?;
-        inner.busy_timeout(StdDuration::from_secs(5))?;
+    log::info!("Initializing the database schema…");
+    inner
+        .execute(SCRIPT)
+        .await
+        .context("failed to run the script")?;
 
-        log::info!("Initializing the database schema…");
-        inner.execute_batch(SCRIPT)?;
+    Ok(inner)
+}
 
-        Ok(Self(inner))
+pub async fn retrieve_account_count(executor: &PgPool) -> crate::Result<i64> {
+    // language=SQL
+    const QUERY: &str = "SELECT count(*) FROM accounts";
+    Ok(sqlx::query_scalar(QUERY)
+        .fetch_one(executor)
+        .await
+        .context("failed to select count from accounts")?)
+}
+
+pub async fn retrieve_account_snapshot_count(executor: &PgPool) -> crate::Result<i64> {
+    // language=SQL
+    const QUERY: &str = "SELECT count(*) FROM account_snapshots";
+    Ok(sqlx::query_scalar(QUERY)
+        .fetch_one(executor)
+        .await
+        .context("failed to select count from account snapshots")?)
+}
+
+pub async fn retrieve_tank_snapshot_count(executor: &PgPool) -> crate::Result<i64> {
+    // language=SQL
+    const QUERY: &str = "SELECT count(*) FROM tank_snapshots";
+    Ok(sqlx::query_scalar(QUERY)
+        .fetch_one(executor)
+        .await
+        .context("failed to select count from tank snapshots")?)
+}
+
+pub async fn retrieve_oldest_accounts(
+    executor: &PgPool,
+    limit: i32,
+) -> crate::Result<Vec<BasicAccountInfo>> {
+    // language=SQL
+    const QUERY: &str = "
+        SELECT * FROM accounts
+        ORDER BY crawled_at NULLS FIRST
+        LIMIT $1
+    ";
+    let accounts = sqlx::query_as(QUERY)
+        .bind(limit)
+        .fetch_all(executor)
+        .await
+        .context("failed to retrieve the oldest accounts")?;
+    Ok(accounts)
+}
+
+pub async fn retrieve_latest_account_snapshot(
+    executor: &PgPool,
+    account_id: i32,
+    before: &DateTime<Utc>,
+) -> crate::Result<Option<AccountInfo>> {
+    // language=SQL
+    const QUERY: &str = "
+        SELECT *
+        FROM account_snapshots
+        WHERE account_id = $1 AND last_battle_time <= $2
+        ORDER BY last_battle_time DESC
+        LIMIT 1
+    ";
+    let account_info = sqlx::query_as(QUERY)
+        .bind(account_id)
+        .bind(before)
+        .fetch_optional(executor)
+        .await
+        .context("failed to retrieve the latest account snapshot")?;
+    Ok(account_info)
+}
+
+pub async fn retrieve_latest_tank_snapshots(
+    executor: &PgPool,
+    account_id: i32,
+    before: &DateTime<Utc>,
+) -> crate::Result<Vec<TankSnapshot>> {
+    // language=SQL
+    const QUERY: &str = "
+        SELECT DISTINCT ON (tank_id) *
+        FROM tank_snapshots
+        WHERE account_id = $1 AND last_battle_time <= $2
+        ORDER BY tank_id, last_battle_time DESC
+    ";
+
+    let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(30);
+    Ok(sqlx::query_as(QUERY)
+        .bind(account_id)
+        .bind(before)
+        .fetch_all(executor)
+        .await
+        .context("failed to retrieve the latest tank snapshots")?)
+}
+
+pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
+    info: &BasicAccountInfo,
+) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = "
+        INSERT INTO accounts (account_id, last_battle_time, crawled_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (account_id) DO UPDATE SET
+            last_battle_time = EXCLUDED.last_battle_time,
+            crawled_at = EXCLUDED.crawled_at
+    ";
+    sqlx::query(QUERY)
+        .bind(info.id)
+        .bind(info.last_battle_time)
+        .bind(info.crawled_at)
+        .execute(executor)
+        .await
+        .context("failed to insert the account or replace")?;
+    Ok(())
+}
+
+pub async fn insert_account_or_ignore(executor: &PgPool, info: &BasicAccountInfo) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = "
+        INSERT INTO accounts (account_id, last_battle_time, crawled_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (account_id) DO NOTHING
+    ";
+    sqlx::query(QUERY)
+        .bind(info.id)
+        .bind(info.last_battle_time)
+        .bind(info.crawled_at)
+        .execute(executor)
+        .await
+        .context("failed to insert the account or ignore")?;
+    Ok(())
+}
+
+pub async fn delete_account<'e, E>(executor: E, account_id: i32) -> crate::Result
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    // language=SQL
+    const QUERY: &str = "DELETE FROM accounts WHERE account_id = $1";
+    sqlx::query(QUERY)
+        .bind(account_id)
+        .execute(executor)
+        .await
+        .context("failed to delete account")?;
+    Ok(())
+}
+
+pub async fn insert_account_snapshot(
+    executor: &mut Transaction<'_, Postgres>,
+    info: &AccountInfo,
+) -> crate::Result {
+    log::info!("Inserting account #{} snapshot…", info.basic.id);
+    // language=SQL
+    const QUERY: &str = "
+        INSERT INTO account_snapshots (
+            account_id,
+            last_battle_time,
+            crawled_at,
+            battles,
+            wins,
+            survived_battles,
+            win_and_survived,
+            damage_dealt,
+            damage_received,
+            shots,
+            hits,
+            frags,
+            xp
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (account_id, last_battle_time) DO NOTHING
+    ";
+    sqlx::query(QUERY)
+        .bind(info.basic.id)
+        .bind(info.basic.last_battle_time)
+        .bind(info.basic.crawled_at)
+        .bind(info.statistics.all.battles)
+        .bind(info.statistics.all.wins)
+        .bind(info.statistics.all.survived_battles)
+        .bind(info.statistics.all.win_and_survived)
+        .bind(info.statistics.all.damage_dealt)
+        .bind(info.statistics.all.damage_received)
+        .bind(info.statistics.all.shots)
+        .bind(info.statistics.all.hits)
+        .bind(info.statistics.all.frags)
+        .bind(info.statistics.all.xp)
+        .execute(executor)
+        .await
+        .context("failed to insert account snapshot")?;
+    Ok(())
+}
+
+pub async fn insert_tank_snapshots(
+    executor: &mut Transaction<'_, Postgres>,
+    snapshots: &[TankSnapshot],
+) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = "
+        INSERT INTO tank_snapshots (
+            account_id,
+            tank_id,
+            last_battle_time,
+            battle_life_time,
+            battles,
+            wins,
+            survived_battles,
+            win_and_survived,
+            damage_dealt,
+            damage_received,
+            shots,
+            hits,
+            frags,
+            xp
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ON CONFLICT (account_id, tank_id, last_battle_time) DO NOTHING
+    ";
+
+    log::info!("Inserting {} tank snapshots…", snapshots.len());
+    for snapshot in snapshots {
+        let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(10);
+        log::debug!(
+            "Inserting #{}/#{} tank snapshot…",
+            snapshot.account_id,
+            snapshot.tank_id
+        );
+        sqlx::query(QUERY)
+            .bind(snapshot.account_id)
+            .bind(snapshot.tank_id)
+            .bind(snapshot.last_battle_time)
+            .bind(snapshot.battle_life_time.num_seconds())
+            .bind(snapshot.all_statistics.battles)
+            .bind(snapshot.all_statistics.wins)
+            .bind(snapshot.all_statistics.survived_battles)
+            .bind(snapshot.all_statistics.win_and_survived)
+            .bind(snapshot.all_statistics.damage_dealt)
+            .bind(snapshot.all_statistics.damage_received)
+            .bind(snapshot.all_statistics.shots)
+            .bind(snapshot.all_statistics.hits)
+            .bind(snapshot.all_statistics.frags)
+            .bind(snapshot.all_statistics.xp)
+            .execute(&mut *executor)
+            .await
+            .context("failed to insert tank snapshots")?;
     }
+    Ok(())
+}
 
-    pub fn start_transaction(&self) -> crate::Result<Transaction> {
-        Ok(Transaction(self.0.unchecked_transaction()?))
+pub async fn insert_vehicles(
+    executor: &mut Transaction<'_, Postgres>,
+    vehicles: &[Vehicle],
+) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = r#"
+        INSERT INTO tankopedia (tank_id, "name", tier, is_premium, nation, "type")
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (tank_id) DO UPDATE SET
+            "name" = EXCLUDED."name",
+            "is_premium" = EXCLUDED.is_premium,
+            "type" = EXCLUDED."type"
+    "#;
+
+    log::info!("Inserting {} vehicles…", vehicles.len());
+    for vehicle in vehicles {
+        sqlx::query(QUERY)
+            .bind(vehicle.tank_id)
+            .bind(vehicle.name.clone())
+            .bind(vehicle.tier)
+            .bind(vehicle.is_premium)
+            .bind(vehicle.nation.to_string())
+            .bind(vehicle.type_.to_string())
+            .execute(&mut *executor)
+            .await
+            .context("failed to insert the vehicles")?;
     }
+    log::info!("Inserted {} vehicles.", vehicles.len());
+    Ok(())
+}
 
-    pub fn retrieve_account_count(&self) -> crate::Result<i64> {
-        Ok(self
-            .0
-            .prepare_cached(
-                // language=SQL
-                "SELECT count(*) FROM accounts",
-            )?
-            .query_row([], get_scalar)?)
-    }
+pub async fn retrieve_vehicle(executor: &PgPool, tank_id: i32) -> crate::Result<Option<Vehicle>> {
+    // language=SQL
+    const QUERY: &str = "SELECT * FROM tankopedia WHERE tank_id = $1";
 
-    pub fn retrieve_account_snapshot_count(&self) -> crate::Result<i64> {
-        Ok(self
-            .0
-            .prepare_cached(
-                // language=SQL
-                "SELECT count(*) FROM account_snapshots",
-            )?
-            .query_row([], get_scalar)?)
-    }
+    let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(10);
+    Ok(sqlx::query_as(QUERY)
+        .bind(tank_id)
+        .fetch_optional(executor)
+        .await
+        .with_context(|| format!("failed to retrieve the vehicle #{}", tank_id))?)
+}
 
-    pub fn retrieve_tank_snapshot_count(&self) -> crate::Result<i64> {
-        Ok(self
-            .0
-            .prepare_cached(
-                // language=SQL
-                "SELECT count(*) FROM tank_snapshots",
-            )?
-            .query_row([], get_scalar)?)
-    }
+pub async fn retrieve_statistics(executor: &PgPool) -> crate::Result<Statistics> {
+    let account_count = retrieve_account_count(&executor).await?;
+    let account_snapshot_count = retrieve_account_snapshot_count(&executor).await?;
+    let tank_snapshot_count = retrieve_tank_snapshot_count(&executor).await?;
+    Ok(Statistics {
+        account_count,
+        account_snapshot_count,
+        tank_snapshot_count,
+    })
+}
 
-    pub fn retrieve_oldest_accounts(&self, limit: i32) -> crate::Result<Vec<BasicAccountInfo>> {
-        Ok(self
-            .0
-            // language=SQL
-            .prepare_cached("SELECT document FROM accounts ORDER BY json_extract(document, '$.crawled_at') LIMIT ?1")?
-            .query_map([limit], get_scalar)?
-            .collect::<rusqlite::Result<Vec<BasicAccountInfo>>>()?
-        )
-    }
-
-    pub fn retrieve_latest_account_snapshot(
-        &self,
-        account_id: i32,
-        before: &DateTime<Utc>,
-    ) -> crate::Result<Option<AccountInfo>> {
-        Ok(self
-            .0
-
-            .prepare_cached(
-                // language=SQL
-                "SELECT document 
-                FROM account_snapshots
-                WHERE json_extract(document, '$.account_id') = ?1 AND json_extract(document, '$.last_battle_time') <= ?2
-                ORDER BY json_extract(document, '$.last_battle_time') DESC
-                LIMIT 1",
-            )?
-            .query_row(params![account_id, before.timestamp()], get_scalar)
-            .optional()?)
-    }
-
-    pub fn retrieve_latest_tank_snapshots(
-        &self,
-        account_id: i32,
-        before: &DateTime<Utc>,
-    ) -> crate::Result<Vec<TankSnapshot>> {
-        let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(30);
-        Ok(self
-            .0
-            .prepare_cached(
-                // https://www.sqlite.org/lang_select.html#bareagg
-                // language=SQL
-                "SELECT document, max(json_extract(document, '$.last_battle_time'))
-                FROM tank_snapshots
-                WHERE json_extract(document, '$.account_id') = ?1 AND json_extract(document, '$.last_battle_time') <= ?2
-                GROUP BY json_extract(document, '$.tank_id')",
-            )?
-            .query_map(params![account_id, before.timestamp()], get_scalar)?
-            .collect::<rusqlite::Result<Vec<TankSnapshot>>>()?)
-    }
-
-    pub fn insert_account_or_replace(&self, info: &BasicAccountInfo) -> crate::Result {
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "INSERT OR REPLACE INTO accounts (document) VALUES (?1)",
-            )?
-            .execute([info])?;
-        Ok(())
-    }
-
-    pub fn insert_account_or_ignore(&self, info: &BasicAccountInfo) -> crate::Result {
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "INSERT OR IGNORE INTO accounts (document) VALUES (?1)",
-            )?
-            .execute([info])?;
-        Ok(())
-    }
-
-    /// Deletes all data related to the account.
-    pub fn prune_account(&self, account_id: i32) -> crate::Result {
-        self.delete_account(account_id)?;
-        self.delete_account_snapshots(account_id)?;
-        self.delete_tank_snapshots(account_id)?;
-        Ok(())
-    }
-
-    pub fn delete_account(&self, account_id: i32) -> crate::Result {
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "DELETE FROM accounts WHERE json_extract(document, '$.account_id') = ?1",
-            )?
-            .execute([account_id])?;
-        Ok(())
-    }
-
-    pub fn delete_account_snapshots(&self, account_id: i32) -> crate::Result {
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "DELETE FROM account_snapshots WHERE json_extract(document, '$.account_id') = ?1",
-            )?
-            .execute([account_id])?;
-        Ok(())
-    }
-
-    pub fn delete_tank_snapshots(&self, account_id: i32) -> crate::Result {
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "DELETE FROM tank_snapshots WHERE json_extract(document, '$.account_id') = ?1",
-            )?
-            .execute([account_id])?;
-        Ok(())
-    }
-
-    pub fn upsert_account_snapshot(&self, info: &AccountInfo) -> crate::Result {
-        log::info!("Upserting account #{} snapshot…", info.basic.id);
-        self.0
-            .prepare_cached(
-                // language=SQL
-                "INSERT OR REPLACE INTO account_snapshots (document) VALUES (?1)",
-            )?
-            .execute([info])?;
-        Ok(())
-    }
-
-    pub fn upsert_tank_snapshots(&self, snapshots: &[TankSnapshot]) -> crate::Result {
-        log::info!("Upserting {} tank snapshots…", snapshots.len());
-        let mut statement = self
-            .0
-            // language=SQL
-            .prepare_cached("INSERT OR IGNORE INTO tank_snapshots (document) VALUES (?1)")?;
-        for snapshot in snapshots {
-            log::debug!(
-                "Upserting #{}/#{} tank snapshot…",
-                snapshot.account_id,
-                snapshot.tank_id
-            );
-            statement.execute(&[snapshot])?;
-        }
-        Ok(())
-    }
-
-    pub fn upsert_vehicles(&self, vehicles: &[Vehicle]) -> crate::Result {
-        log::info!("Upserting {} vehicles…", vehicles.len());
-        let mut statement = self.0.prepare_cached(
-            // language=SQL
-            "INSERT OR REPLACE INTO tankopedia (document) VALUES (?1)",
-        )?;
-        for vehicle in vehicles {
-            statement.execute(&[vehicle])?;
-        }
-        log::info!("Upserted {} vehicles.", vehicles.len());
-        Ok(())
-    }
-
-    pub fn retrieve_vehicle(&self, tank_id: i32) -> crate::Result<Option<Vehicle>> {
-        let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(1);
-        Ok(self
-            .0
-            .prepare_cached(
-                // language=SQL
-                "SELECT document FROM tankopedia WHERE json_extract(document, '$.tank_id') = ?1",
-            )?
-            .query_row([tank_id], get_scalar)
-            .optional()?)
-    }
-
-    pub fn retrieve_statistics(&self) -> crate::Result<Statistics> {
-        Ok(Statistics {
-            account_count: self.retrieve_account_count()?,
-            account_snapshot_count: self.retrieve_account_snapshot_count()?,
-            tank_snapshot_count: self.retrieve_tank_snapshot_count()?,
+impl<'r> FromRow<'r, PgRow> for Vehicle {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            tank_id: row.try_get("tank_id")?,
+            name: row.try_get("name")?,
+            tier: row.try_get("tier")?,
+            is_premium: row.try_get("is_premium")?,
+            nation: Nation::from_str(&row.try_get::<String, _>("nation")?).map_err(|error| {
+                sqlx::Error::ColumnDecode {
+                    index: "nation".to_string(),
+                    source: error.into(),
+                }
+            })?,
+            type_: TankType::from_str(&row.try_get::<String, _>("type")?).map_err(|error| {
+                sqlx::Error::ColumnDecode {
+                    index: "type".to_string(),
+                    source: error.into(),
+                }
+            })?,
         })
     }
 }
 
-#[inline]
-fn get_scalar<T: FromSql>(row: &Row) -> rusqlite::Result<T> {
-    row.get(0)
+impl<'r> FromRow<'r, PgRow> for TankSnapshot {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        let battle_life_time: i64 = row.try_get("battle_life_time")?;
+        Ok(Self {
+            account_id: row.try_get("account_id")?,
+            tank_id: row.try_get("tank_id")?,
+            last_battle_time: row.try_get("last_battle_time")?,
+            battle_life_time: Duration::seconds(battle_life_time),
+            all_statistics: AllStatistics::from_row(row)?,
+        })
+    }
 }
 
-pub struct Transaction<'c>(rusqlite::Transaction<'c>);
+impl<'r> FromRow<'r, PgRow> for AccountInfo {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            basic: BasicAccountInfo::from_row(row)?,
+            nickname: "".to_string(), // FIXME
+            created_at: Utc::now(),   // FIXME
+            statistics: AccountInfoStatistics {
+                all: AllStatistics::from_row(row)?,
+            },
+        })
+    }
+}
 
-impl Transaction<'_> {
-    pub fn commit(self) -> crate::Result {
-        Ok(self.0.commit()?)
+impl<'r> FromRow<'r, PgRow> for BasicAccountInfo {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            id: row.try_get("account_id")?,
+            last_battle_time: row.try_get("last_battle_time")?,
+            crawled_at: row.try_get("crawled_at")?,
+        })
+    }
+}
+
+impl<'r> FromRow<'r, PgRow> for AllStatistics {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            battles: row.try_get("battles")?,
+            wins: row.try_get("wins")?,
+            survived_battles: row.try_get("survived_battles")?,
+            win_and_survived: row.try_get("win_and_survived")?,
+            damage_dealt: row.try_get("damage_dealt")?,
+            damage_received: row.try_get("damage_received")?,
+            shots: row.try_get("shots")?,
+            hits: row.try_get("hits")?,
+            frags: row.try_get("frags")?,
+            xp: row.try_get("xp")?,
+        })
     }
 }
 
 // language=SQL
 const SCRIPT: &str = r#"
-    -- noinspection SqlSignatureForFile
-    -- noinspection SqlResolveForFile @ routine/"json_extract"
-    
-    PRAGMA journal_mode = WAL;
-    PRAGMA synchronous = normal;
+    CREATE TABLE IF NOT EXISTS accounts (
+        account_id INTEGER PRIMARY KEY,
+        last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        crawled_at TIMESTAMP WITH TIME ZONE NULL
+    );
+    CREATE INDEX IF NOT EXISTS accounts_crawled_at ON accounts(crawled_at);
 
-    CREATE TABLE IF NOT EXISTS accounts (document JSON NOT NULL);
-    CREATE UNIQUE INDEX IF NOT EXISTS accounts_account_id
-        ON accounts(json_extract(document, '$.account_id') ASC);
-    CREATE INDEX IF NOT EXISTS accounts_crawled_at
-        ON accounts(json_extract(document, '$.crawled_at') ASC);
+    CREATE TABLE IF NOT EXISTS account_snapshots (
+        account_id INTEGER NOT NULL REFERENCES accounts (account_id) ON DELETE CASCADE,
+        last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        crawled_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        battles INTEGER NOT NULL,
+        wins INTEGER NOT NULL,
+        survived_battles INTEGER NOT NULL,
+        win_and_survived INTEGER NOT NULL,
+        damage_dealt INTEGER NOT NULL,
+        damage_received INTEGER NOT NULL,
+        shots INTEGER NOT NULL,
+        hits INTEGER NOT NULL,
+        frags INTEGER NOT NULL,
+        xp INTEGER NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS account_snapshots_key
+        ON account_snapshots(account_id ASC, last_battle_time DESC);
 
-    CREATE TABLE IF NOT EXISTS account_snapshots (document JSON NOT NULL);
-    CREATE UNIQUE INDEX IF NOT EXISTS account_snapshots_account_id_last_battle_time
-        ON account_snapshots(
-            json_extract(document, '$.last_battle_time') DESC,
-            json_extract(document, '$.account_id') ASC
-        );
+    CREATE TABLE IF NOT EXISTS tank_snapshots (
+        account_id INTEGER NOT NULL REFERENCES accounts (account_id) ON DELETE CASCADE,
+        tank_id INTEGER NOT NULL,
+        last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        battle_life_time BIGINT NOT NULL,
+        battles INTEGER NOT NULL,
+        wins INTEGER NOT NULL,
+        survived_battles INTEGER NOT NULL,
+        win_and_survived INTEGER NOT NULL,
+        damage_dealt INTEGER NOT NULL,
+        damage_received INTEGER NOT NULL,
+        shots INTEGER NOT NULL,
+        hits INTEGER NOT NULL,
+        frags INTEGER NOT NULL,
+        xp INTEGER NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_key
+        ON tank_snapshots(account_id ASC, tank_id ASC, last_battle_time DESC);
 
-    CREATE TABLE IF NOT EXISTS tank_snapshots (document JSON NOT NULL);
-    CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_account_id_tank_id_last_battle_time
-        ON tank_snapshots(
-            json_extract(document, '$.last_battle_time') DESC,
-            json_extract(document, '$.account_id') ASC,
-            json_extract(document, '$.tank_id') ASC
-        );
-
-    CREATE TABLE IF NOT EXISTS tankopedia (document JSON NOT NULL);
-    CREATE UNIQUE INDEX IF NOT EXISTS tankopedia_tank_id
-        ON tankopedia(json_extract(document, '$.tank_id'));
-
-    VACUUM;
+    CREATE TABLE IF NOT EXISTS tankopedia (
+        tank_id INTEGER PRIMARY KEY,
+        "name" TEXT NOT NULL,
+        tier INTEGER NOT NULL,
+        is_premium BOOLEAN NOT NULL,
+        nation TEXT NOT NULL,
+        "type" TEXT NOT NULL
+    );
 "#;
-
-impl ToSql for BasicAccountInfo {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        serializable_to_sql(self)
-    }
-}
-
-impl ToSql for AccountInfo {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        serializable_to_sql(self)
-    }
-}
-
-impl ToSql for TankSnapshot {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        serializable_to_sql(self)
-    }
-}
-
-impl ToSql for Vehicle {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        serializable_to_sql(self)
-    }
-}
-
-impl FromSql for BasicAccountInfo {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        deserializable_from_sql(value)
-    }
-}
-
-impl FromSql for Vehicle {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        deserializable_from_sql(value)
-    }
-}
-
-impl FromSql for AccountInfo {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        deserializable_from_sql(value)
-    }
-}
-
-impl FromSql for TankSnapshot {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        deserializable_from_sql(value)
-    }
-}
-
-fn serializable_to_sql<T: Serialize>(object: &T) -> rusqlite::Result<ToSqlOutput<'_>> {
-    Ok(ToSqlOutput::from(serde_json::to_string(object).map_err(
-        |error| rusqlite::Error::ToSqlConversionFailure(error.into()),
-    )?))
-}
-
-fn deserializable_from_sql<T: DeserializeOwned>(value: ValueRef<'_>) -> FromSqlResult<T> {
-    serde_json::from_str(value.as_str()?).map_err(|error| FromSqlError::Other(error.into()))
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::HashMap;
-
-    use chrono::{Duration, TimeZone, Utc};
-
-    use crate::models::AllStatistics;
-
-    use super::*;
-
-    #[test]
-    fn open_database_ok() -> crate::Result {
-        Database::open(":memory:")?;
-        Ok(())
-    }
-
-    #[test]
-    fn insert_account_or_replace_ok() -> crate::Result {
-        let info = BasicAccountInfo {
-            id: 42,
-            last_battle_time: Utc::now(),
-            crawled_at: Utc::now(),
-        };
-
-        let database = Database::open(":memory:")?;
-        database.insert_account_or_replace(&info)?;
-        database.insert_account_or_replace(&info)?;
-        assert_eq!(database.retrieve_account_count()?, 1);
-        Ok(())
-    }
-
-    #[test]
-    fn delete_account_ok() -> crate::Result {
-        let database = Database::open(":memory:")?;
-        database.insert_account_or_replace(&BasicAccountInfo {
-            id: 1,
-            last_battle_time: Utc::now(),
-            crawled_at: Utc::now(),
-        })?;
-        database.insert_account_or_replace(&BasicAccountInfo {
-            id: 2,
-            last_battle_time: Utc::now(),
-            crawled_at: Utc::now(),
-        })?;
-        database.delete_account(1)?;
-        assert_eq!(database.retrieve_account_count()?, 1);
-        Ok(())
-    }
-
-    #[test]
-    fn retrieve_latest_tank_snaphots_ok() -> crate::Result {
-        let database = Database::open(":memory:")?;
-
-        database.upsert_tank_snapshots(&[
-            TankSnapshot {
-                account_id: 1,
-                tank_id: 42,
-                achievements: HashMap::new(),
-                max_series: HashMap::new(),
-                all_statistics: AllStatistics {
-                    battles: 1,
-                    ..Default::default()
-                },
-                last_battle_time: Utc.timestamp(1, 0),
-                battle_life_time: Duration::seconds(1),
-            },
-            TankSnapshot {
-                account_id: 1,
-                tank_id: 42,
-                achievements: HashMap::new(),
-                max_series: HashMap::new(),
-                all_statistics: AllStatistics {
-                    battles: 2,
-                    ..Default::default()
-                },
-                last_battle_time: Utc.timestamp(2, 0),
-                battle_life_time: Duration::seconds(1),
-            },
-        ])?;
-
-        let snapshots = database.retrieve_latest_tank_snapshots(1, &Utc.timestamp(2, 0))?;
-        assert_eq!(snapshots.len(), 1);
-        let snapshot = snapshots.get(0).unwrap();
-        assert_eq!(snapshot.last_battle_time, Utc.timestamp(2, 0));
-        assert_eq!(snapshot.all_statistics.battles, 2);
-
-        Ok(())
-    }
-
-    #[test]
-    fn commit_transaction() -> crate::Result {
-        let info = BasicAccountInfo {
-            id: 42,
-            last_battle_time: Utc::now(),
-            crawled_at: Utc::now(),
-        };
-        let database = Database::open(":memory:")?;
-        let tx = database.start_transaction()?;
-        database.insert_account_or_replace(&info)?;
-        tx.commit()?;
-        assert_eq!(database.retrieve_account_count()?, 1);
-        Ok(())
-    }
-
-    #[test]
-    fn drop_transaction() -> crate::Result {
-        let info = BasicAccountInfo {
-            id: 42,
-            last_battle_time: Utc::now(),
-            crawled_at: Utc::now(),
-        };
-        let database = Database::open(":memory:")?;
-        {
-            let _tx = database.start_transaction()?;
-            database.insert_account_or_replace(&info)?;
-        }
-        assert_eq!(database.retrieve_account_count()?, 0);
-        Ok(())
-    }
-}

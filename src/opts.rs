@@ -13,7 +13,7 @@ pub struct Opts {
     #[clap(short, long, about = "Sentry DSN")]
     pub sentry_dsn: Option<String>,
 
-    #[clap(short, long, about = "Database path")]
+    #[clap(short, long, about = "Database URI")]
     pub database: String,
 
     #[clap(long, about = "Enable debugging")]

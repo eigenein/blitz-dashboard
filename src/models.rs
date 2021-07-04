@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 use std::ops::Sub;
+use std::str::FromStr;
 
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::serde::{deserialize_duration_seconds, serialize_duration_seconds};
+use crate::serde::deserialize_duration_seconds;
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Account {
@@ -14,7 +15,7 @@ pub struct Account {
     pub id: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct BasicAccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
@@ -22,34 +23,32 @@ pub struct BasicAccountInfo {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
-    #[serde(with = "chrono::serde::ts_seconds", default = "epoch")]
-    pub crawled_at: DateTime<Utc>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde::deserialize_optional_timestamp"
+    )]
+    pub crawled_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(flatten)]
     pub basic: BasicAccountInfo,
 
-    #[serde(skip_serializing, default)]
     pub nickname: String,
 
-    #[serde(
-        with = "chrono::serde::ts_seconds",
-        skip_serializing,
-        default = "epoch"
-    )]
+    #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
 
     pub statistics: AccountInfoStatistics,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+#[derive(Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
@@ -71,10 +70,7 @@ pub struct AllStatistics {
 pub struct TankStatistics {
     pub tank_id: i32,
 
-    #[serde(
-        serialize_with = "serialize_duration_seconds",
-        deserialize_with = "deserialize_duration_seconds"
-    )]
+    #[serde(deserialize_with = "deserialize_duration_seconds")]
     pub battle_life_time: Duration,
 
     #[serde(with = "chrono::serde::ts_seconds")]
@@ -91,22 +87,19 @@ pub struct TankAchievements {
 }
 
 /// Tankopedia entry.
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct Vehicle {
     pub tank_id: i32,
     pub name: String,
-    pub tier: i8,
+    pub tier: i32,
     pub is_premium: bool,
     pub nation: Nation,
 
     #[serde(rename = "type")]
     pub type_: TankType,
-
-    #[serde(with = "chrono::serde::ts_seconds", default = "Utc::now")]
-    pub imported_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
 pub enum Nation {
     #[serde(rename = "ussr")]
     Ussr,
@@ -136,7 +129,42 @@ pub enum Nation {
     Other,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
+impl FromStr for Nation {
+    type Err = anyhow::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "CHINA" => Ok(Self::China),
+            "EUROPE" => Ok(Self::Europe),
+            "FRANCE" => Ok(Self::France),
+            "GERMANY" => Ok(Self::Germany),
+            "JAPAN" => Ok(Self::Japan),
+            "OTHER" => Ok(Self::Other),
+            "UK" => Ok(Self::Uk),
+            "USA" => Ok(Self::Usa),
+            "USSR" => Ok(Self::Ussr),
+            _ => Err(anyhow::anyhow!("`{}` is not a valid nation", value)),
+        }
+    }
+}
+
+impl ToString for Nation {
+    fn to_string(&self) -> String {
+        match self {
+            Nation::China => "CHINA".to_string(),
+            Nation::Europe => "EUROPE".to_string(),
+            Nation::France => "FRANCE".to_string(),
+            Nation::Germany => "GERMANY".to_string(),
+            Nation::Japan => "JAPAN".to_string(),
+            Nation::Other => "OTHER".to_string(),
+            Nation::Uk => "UK".to_string(),
+            Nation::Usa => "USA".to_string(),
+            Nation::Ussr => "USSR".to_string(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
 pub enum TankType {
     #[serde(rename = "lightTank")]
     Light,
@@ -149,26 +177,39 @@ pub enum TankType {
 
     #[serde(rename = "AT-SPG")]
     AT,
-
-    #[serde(other, rename(serialize = "other"))]
-    Other,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+impl FromStr for TankType {
+    type Err = anyhow::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "AT" => Ok(Self::AT),
+            "LIGHT" => Ok(Self::Light),
+            "MEDIUM" => Ok(Self::Medium),
+            "HEAVY" => Ok(Self::Heavy),
+            _ => Err(anyhow::anyhow!("`{}` is not a valid vehicle type", value)),
+        }
+    }
+}
+
+impl ToString for TankType {
+    fn to_string(&self) -> String {
+        match self {
+            TankType::Light => "LIGHT".to_string(),
+            TankType::Medium => "MEDIUM".to_string(),
+            TankType::Heavy => "HEAVY".to_string(),
+            TankType::AT => "AT".to_string(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct TankSnapshot {
     pub account_id: i32,
     pub tank_id: i32,
-    pub achievements: HashMap<String, i32>,
-    pub max_series: HashMap<String, i32>,
     pub all_statistics: AllStatistics,
-
-    #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
-
-    #[serde(
-        serialize_with = "serialize_duration_seconds",
-        deserialize_with = "deserialize_duration_seconds"
-    )]
     pub battle_life_time: Duration,
 }
 
@@ -196,11 +237,6 @@ impl AccountInfo {
     pub fn is_active(&self) -> bool {
         self.basic.last_battle_time > (Utc::now() - Duration::days(365))
     }
-}
-
-#[inline(always)]
-fn epoch() -> DateTime<Utc> {
-    Utc.timestamp(0, 0)
 }
 
 #[cfg(test)]

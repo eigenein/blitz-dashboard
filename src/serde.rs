@@ -1,4 +1,4 @@
-use chrono::Duration;
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use serde::Deserialize;
 
 pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
@@ -7,9 +7,8 @@ pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
 }
 
-pub fn serialize_duration_seconds<S: serde::Serializer>(
-    value: &Duration,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    serializer.serialize_i64(value.num_seconds())
+pub fn deserialize_optional_timestamp<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<DateTime<Utc>>, D::Error> {
+    Ok(Option::<i64>::deserialize(deserializer)?.map(|timestamp| Utc.timestamp(timestamp, 0)))
 }
