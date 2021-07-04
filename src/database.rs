@@ -224,6 +224,9 @@ pub async fn insert_tank_snapshots(
     executor: &mut Transaction<'_, Postgres>,
     snapshots: &[TankSnapshot],
 ) -> crate::Result {
+    log::info!("Inserting {} tank snapshots…", snapshots.len());
+    let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(1000);
+
     // language=SQL
     const QUERY: &str = "
         INSERT INTO tank_snapshots (
@@ -244,10 +247,7 @@ pub async fn insert_tank_snapshots(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         ON CONFLICT (account_id, tank_id, last_battle_time) DO NOTHING
     ";
-
-    log::info!("Inserting {} tank snapshots…", snapshots.len());
     for snapshot in snapshots {
-        let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(10);
         log::debug!(
             "Inserting #{}/#{} tank snapshot…",
             snapshot.account_id,
