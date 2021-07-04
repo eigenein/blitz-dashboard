@@ -310,7 +310,7 @@ pub async fn retrieve_vehicle(executor: &PgPool, tank_id: i32) -> crate::Result<
     // language=SQL
     const QUERY: &str = "SELECT * FROM tankopedia WHERE tank_id = $1";
 
-    let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(10);
+    let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(50);
     Ok(sqlx::query_as(QUERY)
         .bind(tank_id)
         .fetch_optional(executor)

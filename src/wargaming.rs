@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration as StdDuration;
 
 use anyhow::{anyhow, Context};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
@@ -28,8 +29,11 @@ impl WargamingApi {
         Self {
             application_id: Arc::new(application_id.to_string()),
             client: surf::client()
-                .with(middleware::Timeout(std::time::Duration::from_secs(3)))
                 .with(middleware::UserAgent)
+                .with(middleware::TimeoutAndRetry {
+                    timeout: StdDuration::from_millis(1000),
+                    n_retries: 3,
+                })
                 .with(middleware::Logger),
         }
     }
