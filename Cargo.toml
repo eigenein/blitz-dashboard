@@ -38,7 +38,7 @@ features = ["h1-server"]
 [dependencies.surf]
 version = "2.2.0"
 default-features = false
-features = ["h1-client-rustls"]
+features = ["curl-client"]
 
 [dependencies.http-types]
 version = "2.11.1"
