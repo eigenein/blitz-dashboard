@@ -66,7 +66,7 @@ impl ViewModel {
             Self::subtract_tank_snapshots(current_tanks.to_vec(), previous_tanks).into_iter()
         {
             rows.push(Self::make_display_row(
-                state.get_vehicle(snapshot.tank_id).await?.clone(),
+                state.get_vehicle(snapshot.tank_id).clone(),
                 snapshot,
             )?);
         }

@@ -306,16 +306,14 @@ pub async fn insert_vehicles(
     Ok(())
 }
 
-pub async fn retrieve_vehicle(executor: &PgPool, tank_id: i32) -> crate::Result<Option<Vehicle>> {
-    // language=SQL
-    const QUERY: &str = "SELECT * FROM tankopedia WHERE tank_id = $1";
-
-    let _stopwatch = Stopwatch::new("Retrieved tank").threshold_millis(50);
-    Ok(sqlx::query_as(QUERY)
-        .bind(tank_id)
-        .fetch_optional(executor)
-        .await
-        .with_context(|| format!("failed to retrieve the vehicle #{}", tank_id))?)
+pub async fn retrieve_vehicles(executor: &PgPool) -> crate::Result<Vec<Vehicle>> {
+    Ok(sqlx::query_as(
+        // language=SQL
+        "SELECT * FROM tankopedia",
+    )
+    .fetch_all(executor)
+    .await
+    .context("failed to retrieve the tankopedia")?)
 }
 
 pub async fn retrieve_statistics(executor: &PgPool) -> crate::Result<Statistics> {

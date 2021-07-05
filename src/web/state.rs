@@ -9,6 +9,7 @@ use sqlx::PgPool;
 use crate::database;
 use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
+use std::collections::HashMap;
 
 /// Web application global state.
 #[derive(Clone)]
@@ -22,14 +23,31 @@ pub struct State {
     /// Caches search query to search results, expires way sooner but provides more accurate data.
     search_accounts_info_cache: Cache<String, Arc<Vec<AccountInfo>>>,
 
-    tankopedia_cache: Cache<i32, Arc<Vehicle>>,
+    tankopedia: HashMap<i32, Arc<Vehicle>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
     account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<TankSnapshot>>)>,
 }
 
 impl State {
-    pub fn new(api: WargamingApi, database: PgPool) -> Self {
-        State {
+    pub async fn new(api: WargamingApi, database: PgPool) -> crate::Result<Self> {
+        let mut tankopedia: HashMap<i32, Arc<Vehicle>> = database::retrieve_vehicles(&database)
+            .await?
+            .into_iter()
+            .map(|vehicle| (vehicle.tank_id, Arc::new(vehicle)))
+            .collect();
+        tankopedia.insert(
+            23057,
+            Arc::new(Vehicle {
+                tank_id: 23057,
+                name: "Kunze Panzer".to_string(),
+                tier: 7,
+                is_premium: true,
+                nation: Nation::Germany,
+                type_: TankType::Light,
+            }),
+        );
+
+        let state = State {
             api,
             database,
             search_accounts_ids_cache: CacheBuilder::new(1_000)
@@ -38,16 +56,15 @@ impl State {
             search_accounts_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(300))
                 .build(),
-            tankopedia_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(86400))
-                .build(),
+            tankopedia,
             account_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(60))
                 .build(),
             account_tanks_cache: CacheBuilder::new(1_000)
                 .time_to_idle(StdDuration::from_secs(3600))
                 .build(),
-        }
+        };
+        Ok(state)
     }
 
     #[allow(clippy::ptr_arg)]
@@ -141,38 +158,21 @@ impl State {
         }
     }
 
-    /// Retrieves cached vehicle information.
-    pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Arc<Vehicle>> {
-        match self.tankopedia_cache.get(&tank_id) {
-            Some(vehicle) => Ok(vehicle),
-            None => {
-                let vehicle = database::retrieve_vehicle(&self.database, tank_id).await?;
-                let vehicle =
-                    Arc::new(vehicle.unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id)));
-                self.tankopedia_cache.insert(tank_id, vehicle.clone()).await;
-                Ok(vehicle)
-            }
-        }
+    pub fn get_vehicle(&self, tank_id: i32) -> Arc<Vehicle> {
+        self.tankopedia
+            .get(&tank_id)
+            .cloned()
+            .unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id))
     }
 
-    fn get_hardcoded_vehicle(tank_id: i32) -> Vehicle {
-        match tank_id {
-            23057 => Vehicle {
-                tank_id,
-                name: "Kunze Panzer".to_string(),
-                tier: 7,
-                is_premium: true,
-                nation: Nation::Germany,
-                type_: TankType::Light,
-            },
-            _ => Vehicle {
-                tank_id,
-                name: format!("#{}", tank_id),
-                tier: 0,
-                is_premium: false,
-                type_: TankType::Light, // FIXME
-                nation: Nation::Other,
-            },
-        }
+    fn get_hardcoded_vehicle(tank_id: i32) -> Arc<Vehicle> {
+        Arc::new(Vehicle {
+            tank_id,
+            name: format!("#{}", tank_id),
+            tier: 0,
+            is_premium: false,
+            type_: TankType::Light, // FIXME
+            nation: Nation::Other,
+        })
     }
 }
