@@ -34,7 +34,7 @@ tide = "0.16.0"
 [dependencies.surf]
 version = "2.2.0"
 default-features = false
-features = ["h1-client-rustls", "middleware-logger", "encoding"]
+features = ["h1-client-rustls"]
 
 [dependencies.http-types]
 version = "2.11.1"
