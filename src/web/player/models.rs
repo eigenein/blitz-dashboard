@@ -168,7 +168,7 @@ impl ViewModel {
     fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
         request
             .param("account_id")
-            .map_err(surf::Error::into_inner)
+            .map_err(tide::Error::into_inner)
             .context("missing account ID")?
             .parse()
             .context("invalid account ID")

@@ -1,21 +1,23 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
-use std::time::Duration as StdDuration;
+use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::{anyhow, Context};
+use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::Url;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use surf::Url;
 
 use crate::models;
-
-mod middleware;
 
 #[derive(Clone)]
 pub struct WargamingApi {
     application_id: Arc<String>,
-    client: surf::Client,
+    client: reqwest::Client,
+    request_counter: Arc<AtomicU32>,
 }
 
 /// Generic Wargaming.net API response.
@@ -25,17 +27,21 @@ struct Response<T> {
 }
 
 impl WargamingApi {
-    pub fn new(application_id: &str) -> WargamingApi {
-        Self {
+    pub fn new(application_id: &str) -> crate::Result<WargamingApi> {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            HeaderValue::from_static(concat!(crate_name!(), "/", crate_version!())),
+        );
+        Ok(Self {
             application_id: Arc::new(application_id.to_string()),
-            client: surf::client()
-                .with(middleware::UserAgent)
-                .with(middleware::TimeoutAndRetry {
-                    timeout: StdDuration::from_millis(1000),
-                    n_retries: 3,
-                })
-                .with(middleware::Logger),
-        }
+            client: reqwest::ClientBuilder::new()
+                .default_headers(headers)
+                .https_only(true)
+                .timeout(StdDuration::from_secs(3))
+                .build()?,
+            request_counter: Arc::new(AtomicU32::new(1)),
+        })
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
@@ -171,15 +177,26 @@ impl WargamingApi {
     }
 
     async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
-        Ok(self
+        let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
+        log::debug!("Sending #{} {}", request_id, url);
+        let start_instant = Instant::now();
+        let response = self
             .client
             .get(url.as_str())
+            .send()
             .await
-            .map_err(surf::Error::into_inner)
+            .context("failed to send the Wargaming.net API request")?;
+        log::debug!(
+            "Done #{} [{}] {:?}",
+            request_id,
+            response.status(),
+            Instant::now() - start_instant,
+        );
+        Ok(response
+            .error_for_status()
             .context("Wargaming.net API request has failed")?
-            .body_json::<Response<T>>()
+            .json::<Response<T>>()
             .await
-            .map_err(surf::Error::into_inner)
             .context("failed to parse JSON")?
             .data)
     }

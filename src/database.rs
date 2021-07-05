@@ -1,9 +1,11 @@
 use std::str::FromStr;
+use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
-use sqlx::postgres::{PgPoolOptions, PgRow};
-use sqlx::{Executor, FromRow, PgPool, Postgres, Row, Transaction};
+use log::LevelFilter;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
+use sqlx::{ConnectOptions, Executor, FromRow, PgPool, Postgres, Row, Transaction};
 
 use crate::metrics::Stopwatch;
 use crate::models::{
@@ -20,8 +22,11 @@ pub struct Statistics {
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
     log::info!("Connecting to the database…");
+    let mut options = PgConnectOptions::from_str(uri)?;
+    options.log_statements(LevelFilter::Trace);
+    options.log_slow_statements(LevelFilter::Warn, StdDuration::from_secs(1));
     let inner = PgPoolOptions::new()
-        .connect(uri)
+        .connect_with(options)
         .await
         .context("failed to connect")?;
 

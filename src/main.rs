@@ -33,7 +33,7 @@ async fn main() -> crate::Result {
 }
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
-    let api = WargamingApi::new(&opts.application_id);
+    let api = WargamingApi::new(&opts.application_id)?;
     let database = crate::database::open(&opts.database).await?;
     match opts.subcommand {
         Subcommand::Web(opts) => web::run(&opts.host, opts.port, api, database).await,

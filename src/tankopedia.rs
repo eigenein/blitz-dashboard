@@ -19,6 +19,7 @@ pub async fn run(api: WargamingApi, database: PgPool) -> crate::Result {
             .collect::<Vec<Vehicle>>(),
     )
     .await?;
+    log::info!("Committing…");
     transaction.commit().await?;
     Ok(())
 }
