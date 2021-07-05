@@ -49,6 +49,7 @@ impl WargamingApi {
             ],
         )?)
         .await
+        .with_context(|| format!("failed to search for accounts: `{}`", query))
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
@@ -68,6 +69,7 @@ impl WargamingApi {
             ],
         )?)
         .await
+        .with_context(|| format!("failed to get account infos: `{}`", account_id))
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
@@ -77,7 +79,8 @@ impl WargamingApi {
     ) -> crate::Result<Vec<models::TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
-            .await?
+            .await
+            .with_context(|| format!("failed to get tanks stats for account #{}", account_id))?
             .unwrap_or_else(Vec::new))
     }
 
@@ -91,7 +94,13 @@ impl WargamingApi {
                 "https://api.wotblitz.ru/wotb/tanks/achievements/",
                 account_id,
             )
-            .await?
+            .await
+            .with_context(|| {
+                format!(
+                    "failed to get tanks achievements for account #{}",
+                    account_id,
+                )
+            })?
             .unwrap_or_else(Vec::new))
     }
 
@@ -102,7 +111,8 @@ impl WargamingApi {
                 "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
                 &[("application_id", self.application_id.as_str())],
             )?)
-            .await?
+            .await
+            .context("failed to get the tankopedia")?
             .into_iter()
             .map(|(tank_id, vehicle)| {
                 tank_id
@@ -110,7 +120,8 @@ impl WargamingApi {
                     .map(|tank_id| (tank_id, vehicle))
                     .map_err(|error| anyhow!(error))
             })
-            .collect::<crate::Result<HashMap<i32, models::Vehicle>>>()?)
+            .collect::<crate::Result<HashMap<i32, models::Vehicle>>>()
+            .context("failed to parse the tankopedia")?)
     }
 
     pub async fn get_merged_tanks(
@@ -165,11 +176,11 @@ impl WargamingApi {
             .get(url.as_str())
             .await
             .map_err(surf::Error::into_inner)
-            .context("request has failed")?
+            .context("Wargaming.net API request has failed")?
             .body_json::<Response<T>>()
             .await
             .map_err(surf::Error::into_inner)
-            .context("could not parse JSON")?
+            .context("failed to parse JSON")?
             .data)
     }
 }
