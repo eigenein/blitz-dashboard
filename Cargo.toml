@@ -29,7 +29,11 @@ ordered-float = "2.5.1"
 serde_json = "1.0.59"
 serde_qs = "0.8.4"
 simplelog = "0.10.0"
-tide = "0.16.0"
+
+[dependencies.tide]
+version = "0.16.0"
+default-features = false
+features = ["h1-server"]
 
 [dependencies.surf]
 version = "2.2.0"
