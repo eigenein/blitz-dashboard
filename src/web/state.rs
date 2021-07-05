@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
@@ -9,13 +10,13 @@ use sqlx::PgPool;
 use crate::database;
 use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
 use crate::wargaming::WargamingApi;
-use std::collections::HashMap;
 
 /// Web application global state.
 #[derive(Clone)]
 pub struct State {
     pub api: WargamingApi,
     pub database: PgPool,
+    pub yandex_metrika: Option<String>,
 
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
@@ -29,7 +30,11 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(api: WargamingApi, database: PgPool) -> crate::Result<Self> {
+    pub async fn new(
+        api: WargamingApi,
+        database: PgPool,
+        yandex_metrika: Option<String>,
+    ) -> crate::Result<Self> {
         let mut tankopedia: HashMap<i32, Arc<Vehicle>> = database::retrieve_vehicles(&database)
             .await?
             .into_iter()
@@ -50,13 +55,14 @@ impl State {
         let state = State {
             api,
             database,
+            yandex_metrika,
+            tankopedia,
             search_accounts_ids_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
                 .build(),
             search_accounts_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(300))
                 .build(),
-            tankopedia,
             account_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(60))
                 .build(),

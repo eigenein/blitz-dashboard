@@ -6,7 +6,7 @@ use crate::web::partials::{account_search, headers};
 use crate::web::responses::html;
 use crate::web::state::State;
 
-pub async fn get(_: tide::Request<State>) -> tide::Result {
+pub async fn get(request: tide::Request<State>) -> tide::Result {
     clear_user();
 
     Ok(html(
@@ -15,7 +15,7 @@ pub async fn get(_: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers())
+                    (headers(request.state().yandex_metrika.as_deref()))
                     title { "Я статист!" }
                 }
                 body {

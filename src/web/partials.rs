@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup};
+use maud::{html, Markup, PreEscaped};
 
 pub mod footer;
 
@@ -60,7 +60,7 @@ pub fn icon_text(class: &str, text: &str) -> Markup {
     }
 }
 
-pub fn headers() -> Markup {
+pub fn headers(yandex_metrika: Option<&str>) -> Markup {
     html! {
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta charset="UTF-8";
@@ -72,6 +72,14 @@ pub fn headers() -> Markup {
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
         style { ".is-white-space-nowrap { white-space: nowrap !important; }" }
+
+        @if let Some(yandex_metrika) = yandex_metrika {
+            (PreEscaped(format!(
+                r#"<!-- Yandex.Metrika counter --> <script type="text/javascript" > (function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym({}, "init", {{ clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true, trackHash:true }}); </script> <noscript><div><img src="https://mc.yandex.ru/watch/{}" style="position:absolute; left:-9999px;" alt=""/></div></noscript> <!-- /Yandex.Metrika counter -->"#,
+                yandex_metrika,
+                yandex_metrika,
+            )))
+        }
     }
 }
 

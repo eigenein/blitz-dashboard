@@ -11,7 +11,8 @@ use crate::web::state::State;
 
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = ViewModel::new(&request).await?;
-    let footer = Footer::new(request.state()).await?;
+    let state = request.state();
+    let footer = Footer::new(state).await?;
 
     if model.accounts.len() == 1 {
         return Ok(
@@ -25,7 +26,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers())
+                    (headers(state.yandex_metrika.as_deref()))
                     title { (model.query) " – Поиск статистов" }
                 }
             }

@@ -42,6 +42,9 @@ pub struct WebOpts {
 
     #[clap(short, long, default_value = "8081", about = "Web app port")]
     pub port: u16,
+
+    #[clap(long, about = "Yandex.Metrika counter number")]
+    pub yandex_metrika: Option<String>,
 }
 
 #[derive(Clap)]

@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use tide::{Response, StatusCode};
 
+use crate::opts::WebOpts;
 use crate::wargaming::WargamingApi;
 use crate::web::state::State;
 
@@ -14,10 +15,10 @@ mod search;
 mod state;
 
 /// Run the web app.
-pub async fn run(host: &str, port: u16, api: WargamingApi, database: PgPool) -> anyhow::Result<()> {
+pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> anyhow::Result<()> {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
-    let mut app = tide::with_state(State::new(api, database).await?);
+    let mut app = tide::with_state(State::new(api, database, opts.yandex_metrika).await?);
     app.with(middleware::LoggerMiddleware);
     app.with(middleware::SecurityMiddleware);
     app.at("/").get(index::get);
@@ -71,8 +72,8 @@ pub async fn run(host: &str, port: u16, api: WargamingApi, database: PgPool) -> 
             "image/png",
         ))
     });
-    log::info!("Listening on {}:{}.", host, port);
-    app.listen((host, port)).await?;
+    log::info!("Listening on {}:{}.", opts.host, opts.port);
+    app.listen((opts.host, opts.port)).await?;
     Ok(())
 }
 

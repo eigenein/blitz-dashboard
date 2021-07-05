@@ -27,7 +27,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers())
+                    (headers(state.yandex_metrika.as_deref()))
                     title { (model.nickname) " – Я статист!" }
                 }
                 body {
