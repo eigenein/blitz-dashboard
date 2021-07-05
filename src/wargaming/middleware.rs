@@ -1,11 +1,10 @@
-use std::borrow::Cow;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration as StdDuration, Instant};
 
 use async_std::future::timeout;
 use clap::{crate_name, crate_version};
 use surf::middleware::{Middleware, Next};
-use surf::{Body, Client, Request};
+use surf::{Client, Request};
 
 static COUNTER: AtomicU32 = AtomicU32::new(1);
 
@@ -58,21 +57,15 @@ impl Middleware for Logger {
         let start_instant = Instant::now();
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);
         log::debug!("{} #{} → {}", request.method(), id, request.url());
-        let mut response = next.run(request, client).await?;
+        let response = next.run(request, client).await?;
         let time_elapsed = Instant::now() - start_instant;
-        let body = response.take_body().into_string().await?;
         log::debug!(
-            "#{} → [{}] ({:#?}): {}",
+            "#{} → [{}] ({:#?}): {:?} bytes",
             id,
             response.status(),
             time_elapsed,
-            if body.len() < 100 {
-                Cow::Borrowed(&body)
-            } else {
-                Cow::Owned(format!("[{} chars]", body.len()))
-            }
+            response.len(),
         );
-        response.set_body(Body::from(body));
         Ok(response)
     }
 }
