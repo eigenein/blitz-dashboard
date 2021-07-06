@@ -6,8 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
-    name: publish
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Create a GitHub Release
@@ -24,8 +23,8 @@ jobs:
       - name: Rustup
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
-          override: true
+          profile: minimal
+          toolchain: stable
 
       - uses: Swatinem/rust-cache@v1
 
