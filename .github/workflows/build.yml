@@ -3,8 +3,7 @@ name: Build
 on: [push]
 
 jobs:
-  check:
-    name: check
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
