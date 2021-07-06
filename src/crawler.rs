@@ -69,10 +69,8 @@ impl Crawler {
                 log::debug!("Nickname: {}.", current_info.nickname);
                 current_info.basic.crawled_at = Some(Utc::now());
                 database::insert_account_or_replace(&mut transaction, &current_info.basic).await?;
-                if self.opts.force
-                    || current_info.basic.last_battle_time != previous_info.last_battle_time
-                    || previous_info.crawled_at.is_none()
-                {
+                let force = self.opts.force || previous_info.crawled_at.is_none();
+                if force || current_info.basic.last_battle_time != previous_info.last_battle_time {
                     database::insert_account_snapshot(&mut transaction, &current_info).await?;
                     let tanks: Vec<TankSnapshot> = self
                         .api
@@ -80,8 +78,7 @@ impl Crawler {
                         .await?
                         .into_iter()
                         .filter(|tank| {
-                            self.opts.force
-                                || tank.last_battle_time >= previous_info.last_battle_time
+                            force || tank.last_battle_time >= previous_info.last_battle_time
                         })
                         .collect();
                     database::insert_tank_snapshots(&mut transaction, &tanks).await?;

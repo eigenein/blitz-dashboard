@@ -138,7 +138,7 @@ impl ViewModel {
                     battle_life_time: current.battle_life_time - previous.battle_life_time,
                 })
             }
-            EitherOrBoth::Left(actual) => Some(actual),
+            EitherOrBoth::Left(current) => Some(current),
             _ => None,
         })
         .collect::<Vec<TankSnapshot>>()
