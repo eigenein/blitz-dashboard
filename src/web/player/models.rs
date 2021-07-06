@@ -100,16 +100,18 @@ impl ViewModel {
     ) -> crate::Result<DisplayRow> {
         let stats = &snapshot.all_statistics;
         let win_rate = stats.wins as f64 / stats.battles as f64;
-        let true_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
+        let expected_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
         Ok(DisplayRow {
             win_rate: OrderedFloat(win_rate),
-            true_win_rate: OrderedFloat(true_win_rate.0),
-            true_win_rate_margin: OrderedFloat(true_win_rate.1),
+            expected_win_rate: OrderedFloat(expected_win_rate.0),
+            expected_win_rate_margin: OrderedFloat(expected_win_rate.1),
             damage_per_battle: OrderedFloat(stats.damage_dealt as f64 / stats.battles as f64),
             survival_rate: OrderedFloat(stats.survived_battles as f64 / stats.battles as f64),
             all_statistics: snapshot.all_statistics,
             gold_per_battle: OrderedFloat(10.0 + vehicle.tier as f64 * win_rate),
-            true_gold_per_battle: OrderedFloat(10.0 + vehicle.tier as f64 * true_win_rate.0),
+            expected_gold_per_battle: OrderedFloat(
+                10.0 + vehicle.tier as f64 * expected_win_rate.0,
+            ),
             vehicle,
         })
     }
@@ -154,9 +156,9 @@ impl ViewModel {
             SortBy::Tier => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
             SortBy::VehicleType => rows.sort_unstable_by_key(|row| row.vehicle.type_),
             SortBy::WinRate => rows.sort_unstable_by_key(|row| -row.win_rate),
-            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.true_win_rate),
+            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.expected_win_rate),
             SortBy::Gold => rows.sort_unstable_by_key(|row| -row.gold_per_battle),
-            SortBy::TrueGold => rows.sort_unstable_by_key(|row| -row.true_gold_per_battle),
+            SortBy::TrueGold => rows.sort_unstable_by_key(|row| -row.expected_gold_per_battle),
             SortBy::SurvivedBattles => {
                 rows.sort_unstable_by_key(|row| -row.all_statistics.survived_battles)
             }
@@ -179,12 +181,12 @@ pub struct DisplayRow {
     pub vehicle: Arc<Vehicle>,
     pub all_statistics: AllStatistics,
     pub win_rate: OrderedFloat<f64>,
-    pub true_win_rate: OrderedFloat<f64>,
-    pub true_win_rate_margin: OrderedFloat<f64>,
+    pub expected_win_rate: OrderedFloat<f64>,
+    pub expected_win_rate_margin: OrderedFloat<f64>,
     pub damage_per_battle: OrderedFloat<f64>,
     pub survival_rate: OrderedFloat<f64>,
     pub gold_per_battle: OrderedFloat<f64>,
-    pub true_gold_per_battle: OrderedFloat<f64>,
+    pub expected_gold_per_battle: OrderedFloat<f64>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]

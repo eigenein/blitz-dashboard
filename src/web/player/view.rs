@@ -266,7 +266,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                     (render_vehicles_th(&model.query, SortBy::Battles, html! { "Бои" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Wins, html! { "Победы" })?)
                                                     (render_vehicles_th(&model.query, SortBy::WinRate, html! { "Текущий процент побед" })?)
-                                                    (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Истинный процент побед" })?)
+                                                    (render_vehicles_th(&model.query, SortBy::TrueWinRate, html! { "Ожидаемый процент побед" })?)
                                                     (render_vehicles_th(&model.query, SortBy::Gold, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } })?)
                                                     (render_vehicles_th(&model.query, SortBy::TrueGold, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } })?)
                                                     (render_vehicles_th(&model.query, SortBy::DamageDealt, html! { "Ущерб" })?)
@@ -286,9 +286,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                         td { (row.all_statistics.wins) }
                                                         td.has-text-info { strong { (render_f64(100.0 * row.win_rate.0, 1)) "%" } }
                                                         td.has-text-centered.is-white-space-nowrap {
-                                                            strong { (render_f64(100.0 * row.true_win_rate.0, 1)) "%" }
-                                                            span.(if row.true_win_rate_margin.0 > 0.25 { "has-text-danger" } else { "" }) {
-                                                                " ±" (render_f64(row.true_win_rate_margin.0 * 100.0, 1))
+                                                            strong { (render_f64(100.0 * row.expected_win_rate.0, 1)) "%" }
+                                                            span.(if row.expected_win_rate_margin.0 > 0.25 { "has-text-danger" } else { "" }) {
+                                                                " ±" (render_f64(row.expected_win_rate_margin.0 * 100.0, 1))
                                                             }
                                                         }
                                                         td {
@@ -301,9 +301,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                                 span {
-                                                                    strong { (render_f64(row.true_gold_per_battle.0, 1)) }
+                                                                    strong { (render_f64(row.expected_gold_per_battle.0, 1)) }
                                                                     " ±"
-                                                                    (render_f64(row.vehicle.tier as f64 * row.true_win_rate_margin.0, 1))
+                                                                    (render_f64(row.vehicle.tier as f64 * row.expected_win_rate_margin.0, 1))
                                                                 }
                                                             }
                                                         }
