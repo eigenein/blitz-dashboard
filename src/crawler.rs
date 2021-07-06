@@ -65,11 +65,6 @@ impl Crawler {
 
         let mut transaction = self.database.begin().await?;
         match current_info {
-            Some(current_info) if !current_info.is_active() => {
-                log::debug!("Nickname: {}.", current_info.nickname);
-                log::warn!("The account is not active anymore. Deleting…");
-                database::delete_account(&mut transaction, previous_info.id).await?;
-            }
             Some(mut current_info) => {
                 log::debug!("Nickname: {}.", current_info.nickname);
                 current_info.basic.crawled_at = Some(Utc::now());

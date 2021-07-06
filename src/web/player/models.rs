@@ -45,9 +45,7 @@ impl ViewModel {
         let state = request.state();
         let current_info = state.retrieve_account_info(account_id).await?;
         set_user(&current_info.nickname);
-        if current_info.is_active() {
-            database::insert_account_or_ignore(&state.database, &current_info.basic).await?;
-        }
+        database::insert_account_or_ignore(&state.database, &current_info.basic).await?;
 
         let current_tanks = state.retrieve_tanks(&current_info).await?;
         let total_tanks = current_tanks.len();
