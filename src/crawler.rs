@@ -81,7 +81,7 @@ impl Crawler {
                         .into_iter()
                         .filter(|tank| {
                             self.opts.force
-                                || tank.last_battle_time > previous_info.last_battle_time
+                                || tank.last_battle_time >= previous_info.last_battle_time
                         })
                         .collect();
                     database::insert_tank_snapshots(&mut transaction, &tanks).await?;
