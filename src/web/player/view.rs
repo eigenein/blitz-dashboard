@@ -127,6 +127,14 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                     }
                                 }
                             }
+                            @if model.last_battle_time >= model.before && model.statistics.battles == 0 {
+                                article.message.is-warning {
+                                    div.message-body {
+                                        strong { "Нет случайных боев за этот период." }
+                                        " Вероятно, игрок проводил время в других режимах."
+                                    }
+                                }
+                            }
 
                             div.tile.is-ancestor {
                                 div.tile."is-4".is-parent {

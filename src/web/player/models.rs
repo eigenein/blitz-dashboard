@@ -27,6 +27,7 @@ pub struct ViewModel {
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
     pub rows: Vec<DisplayRow>,
+    pub before: DateTime<Utc>,
 }
 
 impl ViewModel {
@@ -84,11 +85,12 @@ impl ViewModel {
             has_recently_played: current_info.basic.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_active: current_info.is_active(),
-            query,
             warn_no_previous_account_info: previous_info.is_none(),
+            query,
             statistics,
             rows,
             total_tanks,
+            before,
         })
     }
 
