@@ -45,6 +45,9 @@ pub struct WebOpts {
 
     #[clap(long, about = "Yandex.Metrika counter number")]
     pub yandex_metrika: Option<String>,
+
+    #[clap(long, about = "Google Analytics measurement ID")]
+    pub gtag: Option<String>,
 }
 
 #[derive(Clap)]

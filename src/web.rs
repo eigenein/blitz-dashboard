@@ -18,7 +18,7 @@ mod state;
 pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> anyhow::Result<()> {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
-    let mut app = tide::with_state(State::new(api, database, opts.yandex_metrika).await?);
+    let mut app = tide::with_state(State::new(api, database, &opts).await?);
     app.with(middleware::LoggerMiddleware);
     app.with(middleware::SecurityMiddleware);
     app.at("/").get(index::get);

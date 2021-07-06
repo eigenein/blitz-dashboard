@@ -9,6 +9,7 @@ use sqlx::PgPool;
 
 use crate::database;
 use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
+use crate::opts::WebOpts;
 use crate::wargaming::WargamingApi;
 
 /// Web application global state.
@@ -16,7 +17,7 @@ use crate::wargaming::WargamingApi;
 pub struct State {
     pub api: WargamingApi,
     pub database: PgPool,
-    pub yandex_metrika: Option<String>,
+    pub extra_html_headers: String,
 
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
@@ -30,32 +31,13 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(
-        api: WargamingApi,
-        database: PgPool,
-        yandex_metrika: Option<String>,
-    ) -> crate::Result<Self> {
-        let mut tankopedia: HashMap<i32, Arc<Vehicle>> = database::retrieve_vehicles(&database)
-            .await?
-            .into_iter()
-            .map(|vehicle| (vehicle.tank_id, Arc::new(vehicle)))
-            .collect();
-        tankopedia.insert(
-            23057,
-            Arc::new(Vehicle {
-                tank_id: 23057,
-                name: "Kunze Panzer".to_string(),
-                tier: 7,
-                is_premium: true,
-                nation: Nation::Germany,
-                type_: TankType::Light,
-            }),
-        );
+    pub async fn new(api: WargamingApi, database: PgPool, opts: &WebOpts) -> crate::Result<Self> {
+        let tankopedia: HashMap<i32, Arc<Vehicle>> = Self::retrieve_tankopedia(&database).await?;
 
         let state = State {
             api,
             database,
-            yandex_metrika,
+            extra_html_headers: Self::make_extra_html_headers(&opts),
             tankopedia,
             search_accounts_ids_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
@@ -168,10 +150,30 @@ impl State {
         self.tankopedia
             .get(&tank_id)
             .cloned()
-            .unwrap_or_else(|| Self::get_hardcoded_vehicle(tank_id))
+            .unwrap_or_else(|| Self::new_hardcoded_vehicle(tank_id))
     }
 
-    fn get_hardcoded_vehicle(tank_id: i32) -> Arc<Vehicle> {
+    async fn retrieve_tankopedia(database: &PgPool) -> crate::Result<HashMap<i32, Arc<Vehicle>>> {
+        let mut tankopedia: HashMap<i32, Arc<Vehicle>> = database::retrieve_vehicles(&database)
+            .await?
+            .into_iter()
+            .map(|vehicle| (vehicle.tank_id, Arc::new(vehicle)))
+            .collect();
+        tankopedia.insert(
+            23057,
+            Arc::new(Vehicle {
+                tank_id: 23057,
+                name: "Kunze Panzer".to_string(),
+                tier: 7,
+                is_premium: true,
+                nation: Nation::Germany,
+                type_: TankType::Light,
+            }),
+        );
+        Ok(tankopedia)
+    }
+
+    fn new_hardcoded_vehicle(tank_id: i32) -> Arc<Vehicle> {
         Arc::new(Vehicle {
             tank_id,
             name: format!("#{}", tank_id),
@@ -180,5 +182,22 @@ impl State {
             type_: TankType::Light, // FIXME
             nation: Nation::Other,
         })
+    }
+
+    fn make_extra_html_headers(opts: &WebOpts) -> String {
+        let mut extra_html_headers = Vec::new();
+        if let Some(counter) = &opts.yandex_metrika {
+            extra_html_headers.push(format!(
+                r#"<!-- Yandex.Metrika counter --> <script type="text/javascript" > (function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym({}, "init", {{ clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true, trackHash:true }}); </script> <noscript><div><img src="https://mc.yandex.ru/watch/{}" style="position:absolute; left:-9999px;" alt=""/></div></noscript> <!-- /Yandex.Metrika counter -->"#,
+                counter, counter,
+            ));
+        };
+        if let Some(measurement_id) = &opts.gtag {
+            extra_html_headers.push(format!(
+                r#"<!-- Global site tag (gtag.js) - Google Analytics --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-S1HXCH4JPZ"></script> <script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{}'); </script>"#,
+                measurement_id,
+            ));
+        };
+        extra_html_headers.join("")
     }
 }

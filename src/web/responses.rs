@@ -18,7 +18,7 @@ pub fn error(sentry_id: &sentry::types::Uuid) -> Response {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers(None))
+                    (headers(""))
                     title { "Ошибка – Я не статист :(" }
                 }
                 body {

@@ -26,7 +26,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers(state.yandex_metrika.as_deref()))
+                    (headers(&state.extra_html_headers))
                     title { (model.query) " – Поиск статистов" }
                 }
             }
