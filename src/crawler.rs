@@ -84,8 +84,9 @@ impl Crawler {
                         .get_merged_tanks(previous_info.id)
                         .await?
                         .into_iter()
-                        .filter(|snapshot| {
-                            snapshot.last_battle_time > previous_info.last_battle_time
+                        .filter(|tank| {
+                            self.opts.force
+                                || tank.last_battle_time > previous_info.last_battle_time
                         })
                         .collect();
                     database::insert_tank_snapshots(&mut transaction, &tanks).await?;
