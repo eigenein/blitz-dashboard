@@ -42,6 +42,9 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                                                 p.control {
                                                     a.button.is-rounded.is-small href="/ru/103809874" { "Invincible_Beast" }
                                                 }
+                                                p.control {
+                                                    a.button.is-rounded.is-small href="/ru/123484971" { "Chunya_Dobryak" }
+                                                }
                                             }
                                         }
                                     }
