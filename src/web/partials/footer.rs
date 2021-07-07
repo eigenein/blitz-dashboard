@@ -1,19 +1,25 @@
 use clap::crate_version;
 use maud::{html, Markup, Render};
 
-use crate::database;
-use crate::database::Statistics as DatabaseStatistics;
-use crate::web::state::State;
+use crate::web::state::{RetrieveCount, State};
 
 pub struct Footer {
-    database_statistics: DatabaseStatistics,
+    account_count: i64,
+    account_snapshot_count: i64,
+    tank_snapshot_count: i64,
 }
 
 impl Footer {
     pub async fn new(state: &State) -> crate::Result<Self> {
-        let database_statistics = database::retrieve_statistics(&state.database).await?;
+        let account_count = state.retrieve_count(RetrieveCount::Accounts).await?;
+        let account_snapshot_count = state
+            .retrieve_count(RetrieveCount::AccountSnapshots)
+            .await?;
+        let tank_snapshot_count = state.retrieve_count(RetrieveCount::TankSnapshots).await?;
         Ok(Self {
-            database_statistics,
+            account_count,
+            account_snapshot_count,
+            tank_snapshot_count,
         })
     }
 }
@@ -82,19 +88,19 @@ impl Render for Footer {
                             p."mt-1" {
                                 span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-user.has-text-info {} }
-                                    span { strong { (self.database_statistics.account_count) } " аккаунтов" }
+                                    span { strong { (self.account_count) } " аккаунтов" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-portrait.has-text-info {} }
-                                    span { strong { (self.database_statistics.account_snapshot_count) } " снимков аккаунтов" }
+                                    span { strong { (self.account_snapshot_count) } " снимков аккаунтов" }
                                 }
                             }
                             p."mt-1" {
                                 span.icon-text.is-flex-wrap-nowrap {
                                     span.icon { i.fas.fa-truck-monster.has-text-info {} }
-                                    span { strong { (self.database_statistics.tank_snapshot_count) } " снимков танков" }
+                                    span { strong { (self.tank_snapshot_count) } " снимков танков" }
                                 }
                             }
                         }

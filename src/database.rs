@@ -13,12 +13,6 @@ use crate::models::{
     TankType, Vehicle,
 };
 
-pub struct Statistics {
-    pub account_count: i64,
-    pub account_snapshot_count: i64,
-    pub tank_snapshot_count: i64,
-}
-
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
     log::info!("Connecting to the database…");
@@ -319,17 +313,6 @@ pub async fn retrieve_vehicles(executor: &PgPool) -> crate::Result<Vec<Vehicle>>
     .fetch_all(executor)
     .await
     .context("failed to retrieve the tankopedia")?)
-}
-
-pub async fn retrieve_statistics(executor: &PgPool) -> crate::Result<Statistics> {
-    let account_count = retrieve_account_count(&executor).await?;
-    let account_snapshot_count = retrieve_account_snapshot_count(&executor).await?;
-    let tank_snapshot_count = retrieve_tank_snapshot_count(&executor).await?;
-    Ok(Statistics {
-        account_count,
-        account_snapshot_count,
-        tank_snapshot_count,
-    })
 }
 
 impl<'r> FromRow<'r, PgRow> for Vehicle {

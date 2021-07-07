@@ -23,11 +23,19 @@ pub struct State {
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
 
     /// Caches search query to search results, expires way sooner but provides more accurate data.
-    search_accounts_info_cache: Cache<String, Arc<Vec<AccountInfo>>>,
+    search_accounts_infos_cache: Cache<String, Arc<Vec<AccountInfo>>>,
 
     tankopedia: HashMap<i32, Arc<Vehicle>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
     account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<TankSnapshot>>)>,
+    retrieve_count_cache: Cache<RetrieveCount, i64>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub enum RetrieveCount {
+    Accounts,
+    AccountSnapshots,
+    TankSnapshots,
 }
 
 impl State {
@@ -42,22 +50,44 @@ impl State {
             search_accounts_ids_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(86400))
                 .build(),
-            search_accounts_info_cache: CacheBuilder::new(1_000)
+            search_accounts_infos_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(300))
                 .build(),
             account_info_cache: CacheBuilder::new(1_000)
                 .time_to_live(StdDuration::from_secs(60))
                 .build(),
-            account_tanks_cache: CacheBuilder::new(1_000)
-                .time_to_idle(StdDuration::from_secs(3600))
+            account_tanks_cache: CacheBuilder::new(1_000).build(),
+            retrieve_count_cache: CacheBuilder::new(1_000)
+                .time_to_live(StdDuration::from_secs(300))
                 .build(),
         };
         Ok(state)
     }
 
+    pub async fn retrieve_count(&self, key: RetrieveCount) -> crate::Result<i64> {
+        match self.retrieve_count_cache.get(&key) {
+            Some(count) => Ok(count),
+            None => {
+                let count = match key {
+                    RetrieveCount::Accounts => {
+                        database::retrieve_account_count(&self.database).await?
+                    }
+                    RetrieveCount::AccountSnapshots => {
+                        database::retrieve_account_snapshot_count(&self.database).await?
+                    }
+                    RetrieveCount::TankSnapshots => {
+                        database::retrieve_tank_snapshot_count(&self.database).await?
+                    }
+                };
+                self.retrieve_count_cache.insert(key, count).await;
+                Ok(count)
+            }
+        }
+    }
+
     #[allow(clippy::ptr_arg)]
     pub async fn search_accounts(&self, query: &String) -> crate::Result<Arc<Vec<AccountInfo>>> {
-        match self.search_accounts_info_cache.get(query) {
+        match self.search_accounts_infos_cache.get(query) {
             // Check if we already have up-to-date search results.
             Some(infos) => Ok(infos),
 
@@ -90,7 +120,7 @@ impl State {
                     .filter_map(|(_, info)| info)
                     .collect();
                 let account_infos = Arc::new(account_infos);
-                self.search_accounts_info_cache
+                self.search_accounts_infos_cache
                     .insert(query.clone(), account_infos.clone())
                     .await;
                 Ok(account_infos)
