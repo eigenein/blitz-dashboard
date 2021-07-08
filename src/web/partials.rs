@@ -2,9 +2,11 @@ use std::ops::Range;
 
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
+use clap::crate_version;
+use humantime::format_duration;
 use maud::{html, Markup, PreEscaped};
 
-pub mod footer;
+use crate::web::state::State;
 
 pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 const MIN_QUERY_LENGTH: usize = 3;
@@ -83,4 +85,102 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
             datetime=(value.to_rfc3339())
             title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
     }
+}
+
+pub async fn footer(state: &State) -> crate::Result<Markup> {
+    let account_count = state.retrieve_account_count().await?;
+    let account_snapshot_count = state.retrieve_account_snapshot_count().await?;
+    let tank_snapshot_count = state.retrieve_tank_snapshot_count().await?;
+    let crawler_lag = state.retrieve_crawler_lag().await?;
+
+    let markup = html! {
+        footer.footer {
+            div.container {
+                div.columns {
+                    div.column."is-3" {
+                        p.title."is-6" { "О проекте" }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-home.has-text-info {} }
+                                span {
+                                    a href="https://github.com/eigenein/blitz-dashboard" {
+                                        "Blitz Dashboard " (crate_version!())
+                                    }
+                                    " © "
+                                    a href="https://github.com/eigenein" { "@eigenein" }
+                                }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-heart.has-text-danger {} }
+                                span {
+                                    "Создан с помощью " a href="https://www.rust-lang.org/" { "Rust" }
+                                    " и " a href="https://bulma.io/" { "Bulma" }
+                                }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-id-badge.has-text-success {} }
+                                span { "Исходный код лицензирован " a href="https://opensource.org/licenses/MIT" { "MIT" } }
+                            }
+                        }
+                    }
+
+                    div.column."is-2" {
+                        p.title."is-6" { "Поддержка" }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-comments.has-text-info {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/discussions" { "Обсуждения" } }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fab.fa-github.has-text-danger {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Задачи и баги" } }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-code-branch.has-text-success {} }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Пул-реквесты" } }
+                            }
+                        }
+                    }
+
+                    div.column."is-3" {
+                        p.title."is-6" { "Статистика" }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-user.has-text-info {} }
+                                span { strong { (account_count) } " аккаунтов" }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-portrait.has-text-info {} }
+                                span { strong { (account_snapshot_count) } " снимков аккаунтов" }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-truck-monster.has-text-info {} }
+                                span { strong { (tank_snapshot_count) } " снимков танков" }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-clock.has-text-info {} }
+                                span { "Лаг робота " strong { (format_duration(crawler_lag.to_std()?)) } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    Ok(markup)
 }

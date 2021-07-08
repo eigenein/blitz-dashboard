@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Executor, FromRow, PgPool, Postgres, Row, Transaction};
@@ -58,6 +58,16 @@ pub async fn retrieve_tank_snapshot_count(executor: &PgPool) -> crate::Result<i6
         .fetch_one(executor)
         .await
         .context("failed to select count from tank snapshots")?)
+}
+
+pub async fn retrieve_oldest_crawled_at(executor: &PgPool) -> crate::Result<DateTime<Utc>> {
+    // language=SQL
+    const QUERY: &str = "SELECT MIN(crawled_at) FROM accounts WHERE crawled_at IS NOT NULL";
+    Ok(sqlx::query_scalar(QUERY)
+        .fetch_optional(executor)
+        .await
+        .context("failed to select the oldest `crawled_at`")?
+        .unwrap_or_else(|| Utc.timestamp(0, 0)))
 }
 
 pub async fn retrieve_oldest_accounts(

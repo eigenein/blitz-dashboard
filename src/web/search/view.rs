@@ -2,8 +2,7 @@ use chrono_humanize::Tense;
 use maud::{html, DOCTYPE};
 use tide::{Redirect, StatusCode};
 
-use crate::web::partials::footer::Footer;
-use crate::web::partials::{account_search, datetime, headers};
+use crate::web::partials::{account_search, datetime, footer, headers};
 use crate::web::player::view::get_account_url;
 use crate::web::responses::html;
 use crate::web::search::models::ViewModel;
@@ -12,7 +11,7 @@ use crate::web::state::State;
 pub async fn get(request: tide::Request<State>) -> tide::Result {
     let model = ViewModel::new(&request).await?;
     let state = request.state();
-    let footer = Footer::new(state).await?;
+    let footer = footer(state).await?;
 
     if model.accounts.len() == 1 {
         return Ok(
