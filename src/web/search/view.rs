@@ -36,7 +36,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                         div.navbar-brand {
                             div.navbar-item {
                                 div.buttons {
-                                    a.button.is-link href="/" {
+                                    a.button.is-link.is-rounded href="/" {
                                         span.icon { i.fas.fa-home {} }
                                         span { "На главную" }
                                     }
@@ -58,39 +58,15 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                         div.container {
                             div.columns.is-centered {
                                 div.column."is-6-widescreen"."is-10-tablet" {
-                                    div.card {
-                                        div.card-content {
-                                            p.title."is-5" {
-                                                span.icon-text.is-flex-wrap-nowrap {
-                                                    span.icon { i.fas.fa-user {} }
-                                                    span { a href=(get_account_url(account.basic.id)) { (account.nickname) } }
-                                                }
-                                            }
+                                    div.box {
+                                        p.title."is-5" {
+                                            a href=(get_account_url(account.basic.id)) { (account.nickname) }
                                         }
-                                        footer.card-footer {
-                                            p.card-footer-item {
-                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
-                                                    span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                                                    span { (account.statistics.all.battles) " боев" }
-                                                }
-                                            }
-                                            p.card-footer-item {
-                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
-                                                    span.icon { i.fas.fa-calendar-day {} }
-                                                    span { (datetime(account.basic.last_battle_time, Tense::Past)) }
-                                                }
-                                            }
-                                            p.card-footer-item {
-                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
-                                                    span.icon { i.fas.fa-birthday-cake {} }
-                                                    span { (datetime(account.created_at, Tense::Present)) }
-                                                }
-                                            }
-                                            p.card-footer-item {
-                                                span.icon-text.has-text-grey.is-flex-wrap-nowrap {
-                                                    span.icon { i.far.fa-id-badge {} }
-                                                    span { (account.basic.id) }
-                                                }
+                                        p.subtitle."is-6" {
+                                            span.icon-text.has-text-grey {
+                                                span { (account.statistics.all.battles) " боев" }
+                                                span.icon { i.far.fa-dot-circle {} }
+                                                span { (datetime(account.basic.last_battle_time, Tense::Past)) }
                                             }
                                         }
                                     }

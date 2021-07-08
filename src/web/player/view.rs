@@ -36,7 +36,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                             div.navbar-brand {
                                 div.navbar-item {
                                     div.buttons {
-                                        a.button.is-link href="/" {
+                                        a.button.is-link.is-rounded href="/" {
                                             span.icon { i.fas.fa-home {} }
                                             span { "На главную" }
                                         }
