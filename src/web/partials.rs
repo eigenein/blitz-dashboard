@@ -37,7 +37,7 @@ pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
                     autocorrect="off"
                     aria-label="search"
                     aria-haspopup="false"
-                    size=(MAX_QUERY_LENGTH)
+                    size=(&(MAX_QUERY_LENGTH + 2))
                     autofocus[has_autofocus]
                     required;
                 span.icon.is-left.(class) { i class="fas fa-user" {} }
