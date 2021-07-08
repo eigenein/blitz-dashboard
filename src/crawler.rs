@@ -3,6 +3,7 @@ use std::time::Duration as StdDuration;
 use async_std::task::sleep;
 use chrono::Utc;
 use log::Level;
+use sentry::integrations::anyhow::capture_anyhow;
 use sqlx::PgPool;
 
 use crate::database;
@@ -22,7 +23,10 @@ impl Crawler {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
         loop {
-            self.crawl_batch().await?;
+            if let Err(error) = self.crawl_batch().await {
+                let sentry_id = capture_anyhow(&error);
+                log::error!("Failed to crawl a batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
+            }
             if self.opts.once {
                 break;
             }

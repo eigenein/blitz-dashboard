@@ -1,6 +1,3 @@
-use std::borrow::Borrow;
-
-use sentry::integrations::anyhow::capture_anyhow;
 use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 
@@ -26,18 +23,6 @@ pub fn init(debug: bool) -> anyhow::Result<()> {
     ))?;
     log::set_max_level(LevelFilter::Debug);
     Ok(())
-}
-
-/// Check the result and log an error, if any.
-#[allow(dead_code)]
-pub fn log_anyhow<T, R: Borrow<crate::Result<T>>>(result: R) {
-    if let Err(ref error) = result.borrow() {
-        log::error!(
-            "{:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})",
-            error,
-            capture_anyhow(error).to_simple()
-        );
-    }
 }
 
 pub fn clear_user() {
