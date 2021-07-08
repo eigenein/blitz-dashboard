@@ -11,7 +11,7 @@ use tide::Request;
 use crate::database;
 use crate::logging::set_user;
 use crate::models::{AllStatistics, TankSnapshot, Vehicle};
-use crate::statistics::wilson_score_interval_90;
+use crate::statistics::wilson_score_interval;
 use crate::web::state::State;
 
 pub struct ViewModel {
@@ -100,7 +100,7 @@ impl ViewModel {
     ) -> crate::Result<DisplayRow> {
         let stats = &snapshot.all_statistics;
         let win_rate = stats.wins as f64 / stats.battles as f64;
-        let expected_win_rate = wilson_score_interval_90(stats.battles, stats.wins);
+        let expected_win_rate = wilson_score_interval(stats.battles, stats.wins);
         Ok(DisplayRow {
             win_rate: OrderedFloat(win_rate),
             expected_win_rate: OrderedFloat(expected_win_rate.0),

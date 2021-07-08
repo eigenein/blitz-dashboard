@@ -1,8 +1,10 @@
-/// `z*` for 90% confidence level.
+#[allow(dead_code)]
 pub const Z_90: f64 = 1.645;
 
+pub const Z_85: f64 = 1.44;
+
 /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
-pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> (f64, f64) {
+pub fn custom_wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> (f64, f64) {
     let n_trials = n_trials as f64;
     let n_successes = n_successes as f64;
 
@@ -17,6 +19,6 @@ pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> (f64, f
     (p, margin)
 }
 
-pub fn wilson_score_interval_90(n_trials: i32, n_successes: i32) -> (f64, f64) {
-    wilson_score_interval(n_trials, n_successes, Z_90)
+pub fn wilson_score_interval(n_trials: i32, n_successes: i32) -> (f64, f64) {
+    custom_wilson_score_interval(n_trials, n_successes, Z_85)
 }

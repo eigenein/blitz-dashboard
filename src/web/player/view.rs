@@ -4,7 +4,7 @@ use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
 use tide::StatusCode;
 
-use crate::statistics::wilson_score_interval_90;
+use crate::statistics::wilson_score_interval;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::footer::Footer;
 use crate::web::partials::{account_search, datetime, headers, icon_text};
@@ -370,7 +370,7 @@ fn render_vehicles_th(query: &Query, sort_by: SortBy, markup: Markup) -> crate::
 
 fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
     let mean = 100.0 * n_successes as f64 / n_trials as f64;
-    let (p, margin) = wilson_score_interval_90(n_trials, n_successes);
+    let (p, margin) = wilson_score_interval(n_trials, n_successes);
     let lower = 100.0 * (p - margin);
     let upper = 100.0 * (p + margin);
 
