@@ -1,6 +1,7 @@
 #[allow(dead_code)]
 pub const Z_90: f64 = 1.645;
 
+#[allow(dead_code)]
 pub const Z_85: f64 = 1.44;
 
 /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
@@ -20,5 +21,5 @@ pub fn custom_wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> 
 }
 
 pub fn wilson_score_interval(n_trials: i32, n_successes: i32) -> (f64, f64) {
-    custom_wilson_score_interval(n_trials, n_successes, Z_85)
+    custom_wilson_score_interval(n_trials, n_successes, Z_90)
 }
