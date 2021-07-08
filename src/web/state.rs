@@ -4,6 +4,7 @@ use std::time::Duration as StdDuration;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Duration, Utc};
+use maud::PreEscaped;
 use moka::future::{Cache, CacheBuilder};
 use sqlx::PgPool;
 
@@ -17,7 +18,7 @@ use crate::wargaming::WargamingApi;
 pub struct State {
     pub api: WargamingApi,
     pub database: PgPool,
-    pub extra_html_headers: String,
+    pub tracking_code: PreEscaped<String>,
 
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
@@ -43,7 +44,7 @@ impl State {
         let state = State {
             api,
             database,
-            extra_html_headers: Self::make_extra_html_headers(&opts),
+            tracking_code: Self::make_tracking_code(&opts),
             tankopedia: CacheBuilder::new(1).time_to_live(DAY).build(),
             search_accounts_ids_cache: CacheBuilder::new(1_000).time_to_live(DAY).build(),
             search_accounts_infos_cache: CacheBuilder::new(1_000)
@@ -232,7 +233,7 @@ impl State {
         }
     }
 
-    fn make_extra_html_headers(opts: &WebOpts) -> String {
+    fn make_tracking_code(opts: &WebOpts) -> PreEscaped<String> {
         let mut extra_html_headers = Vec::new();
         if let Some(counter) = &opts.yandex_metrika {
             extra_html_headers.push(format!(
@@ -246,6 +247,6 @@ impl State {
                 measurement_id,
             ));
         };
-        extra_html_headers.join("")
+        PreEscaped(extra_html_headers.join(""))
     }
 }

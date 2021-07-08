@@ -26,10 +26,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers(&state.extra_html_headers))
+                    (headers())
                     title { (model.nickname) " – Я статист!" }
                 }
                 body {
+                    (state.tracking_code)
                     nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
                         div.container {
                             div.navbar-brand {

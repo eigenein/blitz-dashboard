@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_version;
 use humantime::format_duration;
-use maud::{html, Markup, PreEscaped};
+use maud::{html, Markup};
 
 use crate::web::state::State;
 
@@ -62,7 +62,7 @@ pub fn icon_text(class: &str, text: &str) -> Markup {
     }
 }
 
-pub fn headers(extra: &str) -> Markup {
+pub fn headers() -> Markup {
     html! {
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta charset="UTF-8";
@@ -74,8 +74,6 @@ pub fn headers(extra: &str) -> Markup {
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
         style { ".is-white-space-nowrap { white-space: nowrap !important; }" }
-
-        (PreEscaped(extra))
     }
 }
 

@@ -15,10 +15,11 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             (DOCTYPE)
             html lang="en" {
                 head {
-                    (headers(&request.state().extra_html_headers))
+                    (headers())
                     title { "Я статист!" }
                 }
                 body {
+                    (request.state().tracking_code)
                     section.hero.is-fullheight {
                         div.hero-body {
                             div.container {
