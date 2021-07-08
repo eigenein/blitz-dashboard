@@ -1,9 +1,8 @@
 use std::ops::Range;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_version;
-use humantime::format_duration;
 use maud::{html, Markup};
 
 use crate::web::state::State;
@@ -82,6 +81,12 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
         time
             datetime=(value.to_rfc3339())
             title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
+    }
+}
+
+pub fn duration(value: Duration, tense: Tense) -> Markup {
+    html! {
+        span title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
     }
 }
 
@@ -171,7 +176,7 @@ pub async fn footer(state: &State) -> crate::Result<Markup> {
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-clock.has-text-info {} }
-                                span { "Лаг робота " strong { (format_duration(crawler_lag.to_std()?)) } }
+                                span { "Обход робота " strong { (duration(crawler_lag, Tense::Past)) } }
                             }
                         }
                     }
