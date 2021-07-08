@@ -20,13 +20,14 @@ pub struct State {
     pub database: PgPool,
     pub tracking_code: PreEscaped<String>,
 
+    tankopedia: HashMap<i32, Vehicle>,
+
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
 
     /// Caches search query to search results, expires way sooner but provides more accurate data.
     search_accounts_infos_cache: Cache<String, Arc<Vec<AccountInfo>>>,
 
-    tankopedia: Cache<(), Arc<HashMap<i32, Vehicle>>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
     account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<Tank>>)>,
     account_count_cache: Cache<(), i64>,
@@ -41,11 +42,24 @@ impl State {
         const MINUTE: StdDuration = StdDuration::from_secs(60);
         const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
 
+        let mut tankopedia = api.get_tankopedia().await?;
+        tankopedia.insert(
+            23057,
+            Vehicle {
+                tank_id: 23057,
+                name: "Kunze Panzer".to_string(),
+                tier: 7,
+                is_premium: true,
+                nation: Nation::Germany,
+                type_: TankType::Light,
+            },
+        );
+
         let state = State {
             api,
             database,
+            tankopedia,
             tracking_code: Self::make_tracking_code(&opts),
-            tankopedia: CacheBuilder::new(1).time_to_live(DAY).build(),
             search_accounts_ids_cache: CacheBuilder::new(1_000).time_to_live(DAY).build(),
             search_accounts_infos_cache: CacheBuilder::new(1_000)
                 .time_to_live(FIVE_MINUTES)
@@ -196,27 +210,8 @@ impl State {
     }
 
     pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Vehicle> {
-        let tankopedia = match self.tankopedia.get(&()) {
-            Some(tankopedia) => tankopedia,
-            None => {
-                let mut tankopedia = self.api.get_tankopedia().await?;
-                tankopedia.insert(
-                    23057,
-                    Vehicle {
-                        tank_id: 23057,
-                        name: "Kunze Panzer".to_string(),
-                        tier: 7,
-                        is_premium: true,
-                        nation: Nation::Germany,
-                        type_: TankType::Light,
-                    },
-                );
-                let tankopedia = Arc::new(tankopedia);
-                self.tankopedia.insert((), tankopedia.clone()).await;
-                tankopedia
-            }
-        };
-        Ok(tankopedia
+        Ok(self
+            .tankopedia
             .get(&tank_id)
             .cloned() // FIXME: avoid `cloned()`.
             .unwrap_or_else(|| Self::new_hardcoded_vehicle(tank_id)))

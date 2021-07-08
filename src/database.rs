@@ -405,13 +405,4 @@ const SCRIPT: &str = r#"
     );
     CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_key
         ON tank_snapshots(account_id ASC, tank_id ASC, last_battle_time DESC);
-
-    CREATE TABLE IF NOT EXISTS tankopedia (
-        tank_id INTEGER PRIMARY KEY,
-        "name" TEXT NOT NULL,
-        tier INTEGER NOT NULL,
-        is_premium BOOLEAN NOT NULL,
-        nation TEXT NOT NULL,
-        "type" TEXT NOT NULL
-    );
 "#;
