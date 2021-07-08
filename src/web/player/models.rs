@@ -10,7 +10,7 @@ use tide::Request;
 
 use crate::database;
 use crate::logging::set_user;
-use crate::models::{AllStatistics, TankSnapshot, Vehicle};
+use crate::models::{AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::web::state::State;
 
@@ -94,10 +94,7 @@ impl ViewModel {
         })
     }
 
-    fn make_display_row(
-        vehicle: Arc<Vehicle>,
-        snapshot: TankSnapshot,
-    ) -> crate::Result<DisplayRow> {
+    fn make_display_row(vehicle: Arc<Vehicle>, snapshot: Tank) -> crate::Result<DisplayRow> {
         let stats = &snapshot.all_statistics;
         let win_rate = stats.wins as f64 / stats.battles as f64;
         let expected_win_rate = wilson_score_interval(stats.battles, stats.wins);
@@ -117,9 +114,9 @@ impl ViewModel {
     }
 
     fn subtract_tank_snapshots(
-        mut actual_snapshots: Vec<TankSnapshot>,
-        mut previous_snapshots: Vec<TankSnapshot>,
-    ) -> Vec<TankSnapshot> {
+        mut actual_snapshots: Vec<Tank>,
+        mut previous_snapshots: Vec<Tank>,
+    ) -> Vec<Tank> {
         actual_snapshots.sort_unstable_by_key(|snapshot| snapshot.tank_id);
         previous_snapshots.sort_unstable_by_key(|snapshot| snapshot.tank_id);
 
@@ -130,7 +127,7 @@ impl ViewModel {
             EitherOrBoth::Both(current, previous)
                 if current.all_statistics.battles > previous.all_statistics.battles =>
             {
-                Some(TankSnapshot {
+                Some(Tank {
                     account_id: current.account_id,
                     tank_id: current.tank_id,
                     all_statistics: &current.all_statistics - &previous.all_statistics,
@@ -141,7 +138,7 @@ impl ViewModel {
             EitherOrBoth::Left(current) => Some(current),
             _ => None,
         })
-        .collect::<Vec<TankSnapshot>>()
+        .collect::<Vec<Tank>>()
     }
 
     fn sort_tanks(rows: &mut Vec<DisplayRow>, sort_by: SortBy) {

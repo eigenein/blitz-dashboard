@@ -8,7 +8,7 @@ use moka::future::{Cache, CacheBuilder};
 use sqlx::PgPool;
 
 use crate::database;
-use crate::models::{AccountInfo, Nation, TankSnapshot, TankType, Vehicle};
+use crate::models::{AccountInfo, Nation, Tank, TankType, Vehicle};
 use crate::opts::WebOpts;
 use crate::wargaming::WargamingApi;
 
@@ -27,7 +27,7 @@ pub struct State {
 
     tankopedia: HashMap<i32, Arc<Vehicle>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
-    account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<TankSnapshot>>)>,
+    account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<Tank>>)>,
     retrieve_count_cache: Cache<RetrieveCount, i64>,
 }
 
@@ -154,7 +154,7 @@ impl State {
     pub async fn retrieve_tanks(
         &self,
         account_info: &AccountInfo,
-    ) -> crate::Result<Arc<Vec<TankSnapshot>>> {
+    ) -> crate::Result<Arc<Vec<Tank>>> {
         let account_id = account_info.basic.id;
         match self.account_tanks_cache.get(&account_id) {
             Some((last_battle_time, snapshots))

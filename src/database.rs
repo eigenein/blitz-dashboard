@@ -9,8 +9,8 @@ use sqlx::{ConnectOptions, Executor, FromRow, PgPool, Postgres, Row, Transaction
 
 use crate::metrics::Stopwatch;
 use crate::models::{
-    AccountInfo, AccountInfoStatistics, AllStatistics, BasicAccountInfo, Nation, TankSnapshot,
-    TankType, Vehicle,
+    AccountInfo, AccountInfoStatistics, AllStatistics, BasicAccountInfo, Nation, Tank, TankType,
+    Vehicle,
 };
 
 /// Open and initialize the database.
@@ -104,7 +104,7 @@ pub async fn retrieve_latest_tank_snapshots(
     executor: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
-) -> crate::Result<Vec<TankSnapshot>> {
+) -> crate::Result<Vec<Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT DISTINCT ON (tank_id) *
@@ -221,9 +221,9 @@ pub async fn insert_account_snapshot(
 
 pub async fn insert_tank_snapshots(
     executor: &mut Transaction<'_, Postgres>,
-    snapshots: &[TankSnapshot],
+    tanks: &[Tank],
 ) -> crate::Result {
-    log::info!("Inserting {} tank snapshots…", snapshots.len());
+    log::info!("Inserting {} tanks…", tanks.len());
     let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(1000);
 
     // language=SQL
@@ -246,7 +246,7 @@ pub async fn insert_tank_snapshots(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         ON CONFLICT (account_id, tank_id, last_battle_time) DO NOTHING
     ";
-    for snapshot in snapshots {
+    for snapshot in tanks {
         log::debug!(
             "Inserting #{}/#{} tank snapshot…",
             snapshot.account_id,
@@ -338,7 +338,7 @@ impl<'r> FromRow<'r, PgRow> for Vehicle {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for TankSnapshot {
+impl<'r> FromRow<'r, PgRow> for Tank {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         let battle_life_time: i64 = row.try_get("battle_life_time")?;
         Ok(Self {

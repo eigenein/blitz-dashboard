@@ -130,10 +130,7 @@ impl WargamingApi {
             .context("failed to parse the tankopedia")?)
     }
 
-    pub async fn get_merged_tanks(
-        &self,
-        account_id: i32,
-    ) -> crate::Result<Vec<models::TankSnapshot>> {
+    pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<models::Tank>> {
         let mut statistics = self.get_tanks_stats(account_id).await?;
         let mut achievements = self.get_tanks_achievements(account_id).await?;
 
@@ -144,7 +141,7 @@ impl WargamingApi {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
-            EitherOrBoth::Both(statistics, _achievements) => Some(models::TankSnapshot {
+            EitherOrBoth::Both(statistics, _achievements) => Some(models::Tank {
                 account_id,
                 tank_id: statistics.tank_id,
                 all_statistics: statistics.all,
@@ -153,7 +150,7 @@ impl WargamingApi {
             }),
             _ => None,
         })
-        .collect::<Vec<models::TankSnapshot>>())
+        .collect::<Vec<models::Tank>>())
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.

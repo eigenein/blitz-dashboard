@@ -207,7 +207,7 @@ impl ToString for TankType {
 }
 
 #[derive(Clone, Debug)]
-pub struct TankSnapshot {
+pub struct Tank {
     pub account_id: i32,
     pub tank_id: i32,
     pub all_statistics: AllStatistics,

@@ -7,7 +7,7 @@ use sqlx::PgPool;
 
 use crate::database;
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, BasicAccountInfo, TankSnapshot};
+use crate::models::{AccountInfo, BasicAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
@@ -72,7 +72,7 @@ impl Crawler {
                 let force = self.opts.force || previous_info.crawled_at.is_none();
                 if force || current_info.basic.last_battle_time != previous_info.last_battle_time {
                     database::insert_account_snapshot(&mut transaction, &current_info).await?;
-                    let tanks: Vec<TankSnapshot> = self
+                    let tanks: Vec<Tank> = self
                         .api
                         .get_merged_tanks(previous_info.id)
                         .await?
