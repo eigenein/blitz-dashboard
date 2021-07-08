@@ -348,7 +348,7 @@ fn render_period_li(
 ) -> crate::Result<Markup> {
     Ok(html! {
         li.(if query.period == period { "is-active" } else { "" }) {
-            a href=(format!("?{}#period", serde_qs::to_string(&query.with_period(period))?)) { (text) }
+            a href=(format!("?{}#period", serde_qs::to_string(&query.period(period))?)) { (text) }
         }
     })
 }
@@ -356,7 +356,7 @@ fn render_period_li(
 fn render_vehicles_th(query: &Query, sort_by: SortBy, markup: Markup) -> crate::Result<Markup> {
     Ok(html! {
         th {
-            a href=(format!("?{}#vehicles", serde_qs::to_string(&query.with_sort_by(sort_by))?)) {
+            a href=(format!("?{}#vehicles", serde_qs::to_string(&query.sort_by(sort_by))?)) {
                 span.icon-text.is-flex-wrap-nowrap {
                     @if query.sort_by == sort_by {
                         span.icon { i.fas.fa-angle-down {} }

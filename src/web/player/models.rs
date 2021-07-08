@@ -191,30 +191,51 @@ pub struct DisplayRow {
 
 #[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct Query {
-    #[serde(default = "default_period", with = "humantime_serde")]
+    #[serde(
+        default = "Query::default_period",
+        with = "humantime_serde",
+        skip_serializing_if = "Query::skip_serializing_period_if"
+    )]
     pub period: StdDuration,
 
-    #[serde(default = "default_sort_by", rename = "sort-by")]
+    #[serde(
+        default = "Query::default_sort_by",
+        rename = "sort-by",
+        skip_serializing_if = "Query::skip_serializing_sort_by_if"
+    )]
     pub sort_by: SortBy,
 }
 
-fn default_period() -> StdDuration {
-    StdDuration::from_secs(86400)
-}
+impl Query {
+    const DEFAULT_PERIOD: StdDuration = StdDuration::from_secs(86400);
+    const DEFAULT_SORT_BY: SortBy = SortBy::Battles;
 
-fn default_sort_by() -> SortBy {
-    SortBy::Battles
+    fn default_period() -> StdDuration {
+        Self::DEFAULT_PERIOD
+    }
+
+    fn skip_serializing_period_if(period: &StdDuration) -> bool {
+        period == &Self::DEFAULT_PERIOD
+    }
+
+    fn default_sort_by() -> SortBy {
+        Self::DEFAULT_SORT_BY
+    }
+
+    fn skip_serializing_sort_by_if(sort_by: &SortBy) -> bool {
+        sort_by == &Self::DEFAULT_SORT_BY
+    }
 }
 
 impl Query {
-    pub fn with_period(&self, period: StdDuration) -> Self {
+    pub fn period(&self, period: StdDuration) -> Self {
         Self {
             period,
             sort_by: self.sort_by,
         }
     }
 
-    pub fn with_sort_by(&self, sort_by: SortBy) -> Self {
+    pub fn sort_by(&self, sort_by: SortBy) -> Self {
         Self {
             sort_by,
             period: self.period,
