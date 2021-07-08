@@ -6,7 +6,7 @@ use std::time::{Duration as StdDuration, Instant};
 use anyhow::{anyhow, Context};
 use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
-use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::header;
 use reqwest::Url;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -28,10 +28,18 @@ struct Response<T> {
 
 impl WargamingApi {
     pub fn new(application_id: &str) -> crate::Result<WargamingApi> {
-        let mut headers = HeaderMap::new();
+        let mut headers = header::HeaderMap::new();
         headers.insert(
-            "User-Agent",
-            HeaderValue::from_static(concat!(crate_name!(), "/", crate_version!())),
+            header::USER_AGENT,
+            header::HeaderValue::from_static(concat!(crate_name!(), "/", crate_version!())),
+        );
+        headers.insert(
+            header::ACCEPT,
+            header::HeaderValue::from_static("application/json"),
+        );
+        headers.insert(
+            header::ACCEPT_ENCODING,
+            header::HeaderValue::from_static("br, deflate, gzip"),
         );
         Ok(Self {
             application_id: Arc::new(application_id.to_string()),
@@ -112,6 +120,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     pub async fn get_tankopedia(&self) -> crate::Result<HashMap<i32, models::Vehicle>> {
+        log::info!("Retrieving the tankopedia…");
         Ok(self
             .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
                 "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",

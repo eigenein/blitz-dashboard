@@ -13,7 +13,6 @@ mod models;
 mod opts;
 mod serde;
 mod statistics;
-mod tankopedia;
 mod wargaming;
 mod web;
 
@@ -46,7 +45,6 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
             .run()
             .await
         }
-        Subcommand::ImportTankopedia(_) => tankopedia::run(api, database).await,
     }
 }
 

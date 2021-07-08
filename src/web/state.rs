@@ -25,7 +25,7 @@ pub struct State {
     /// Caches search query to search results, expires way sooner but provides more accurate data.
     search_accounts_infos_cache: Cache<String, Arc<Vec<AccountInfo>>>,
 
-    tankopedia: HashMap<i32, Arc<Vehicle>>,
+    tankopedia: Cache<(), Arc<HashMap<i32, Vehicle>>>,
     account_info_cache: Cache<i32, Arc<AccountInfo>>,
     account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<Tank>>)>,
     retrieve_count_cache: Cache<RetrieveCount, i64>,
@@ -40,26 +40,22 @@ pub enum RetrieveCount {
 
 impl State {
     pub async fn new(api: WargamingApi, database: PgPool, opts: &WebOpts) -> crate::Result<Self> {
-        let tankopedia: HashMap<i32, Arc<Vehicle>> = Self::retrieve_tankopedia(&database).await?;
+        const DAY: StdDuration = StdDuration::from_secs(86400);
+        const MINUTE: StdDuration = StdDuration::from_secs(60);
+        const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
 
         let state = State {
             api,
             database,
             extra_html_headers: Self::make_extra_html_headers(&opts),
-            tankopedia,
-            search_accounts_ids_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(86400))
-                .build(),
+            tankopedia: CacheBuilder::new(1).time_to_live(DAY).build(),
+            search_accounts_ids_cache: CacheBuilder::new(1_000).time_to_live(DAY).build(),
             search_accounts_infos_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(300))
+                .time_to_live(FIVE_MINUTES)
                 .build(),
-            account_info_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(60))
-                .build(),
+            account_info_cache: CacheBuilder::new(1_000).time_to_live(MINUTE).build(),
             account_tanks_cache: CacheBuilder::new(1_000).build(),
-            retrieve_count_cache: CacheBuilder::new(1_000)
-                .time_to_live(StdDuration::from_secs(300))
-                .build(),
+            retrieve_count_cache: CacheBuilder::new(1_000).time_to_live(FIVE_MINUTES).build(),
         };
         Ok(state)
     }
@@ -176,42 +172,42 @@ impl State {
         }
     }
 
-    pub fn get_vehicle(&self, tank_id: i32) -> Arc<Vehicle> {
-        self.tankopedia
+    pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Vehicle> {
+        let tankopedia = match self.tankopedia.get(&()) {
+            Some(tankopedia) => tankopedia,
+            None => {
+                let mut tankopedia = self.api.get_tankopedia().await?;
+                tankopedia.insert(
+                    23057,
+                    Vehicle {
+                        tank_id: 23057,
+                        name: "Kunze Panzer".to_string(),
+                        tier: 7,
+                        is_premium: true,
+                        nation: Nation::Germany,
+                        type_: TankType::Light,
+                    },
+                );
+                let tankopedia = Arc::new(tankopedia);
+                self.tankopedia.insert((), tankopedia.clone()).await;
+                tankopedia
+            }
+        };
+        Ok(tankopedia
             .get(&tank_id)
-            .cloned()
-            .unwrap_or_else(|| Self::new_hardcoded_vehicle(tank_id))
+            .cloned() // FIXME: avoid `cloned()`.
+            .unwrap_or_else(|| Self::new_hardcoded_vehicle(tank_id)))
     }
 
-    async fn retrieve_tankopedia(database: &PgPool) -> crate::Result<HashMap<i32, Arc<Vehicle>>> {
-        let mut tankopedia: HashMap<i32, Arc<Vehicle>> = database::retrieve_vehicles(&database)
-            .await?
-            .into_iter()
-            .map(|vehicle| (vehicle.tank_id, Arc::new(vehicle)))
-            .collect();
-        tankopedia.insert(
-            23057,
-            Arc::new(Vehicle {
-                tank_id: 23057,
-                name: "Kunze Panzer".to_string(),
-                tier: 7,
-                is_premium: true,
-                nation: Nation::Germany,
-                type_: TankType::Light,
-            }),
-        );
-        Ok(tankopedia)
-    }
-
-    fn new_hardcoded_vehicle(tank_id: i32) -> Arc<Vehicle> {
-        Arc::new(Vehicle {
+    fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
+        Vehicle {
             tank_id,
             name: format!("#{}", tank_id),
             tier: 0,
             is_premium: false,
             type_: TankType::Light, // FIXME
             nation: Nation::Other,
-        })
+        }
     }
 
     fn make_extra_html_headers(opts: &WebOpts) -> String {

@@ -274,47 +274,6 @@ pub async fn insert_tank_snapshots(
     Ok(())
 }
 
-pub async fn insert_vehicles(
-    executor: &mut Transaction<'_, Postgres>,
-    vehicles: &[Vehicle],
-) -> crate::Result {
-    // language=SQL
-    const QUERY: &str = r#"
-        INSERT INTO tankopedia (tank_id, "name", tier, is_premium, nation, "type")
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (tank_id) DO UPDATE SET
-            "name" = EXCLUDED."name",
-            "is_premium" = EXCLUDED.is_premium,
-            "type" = EXCLUDED."type"
-    "#;
-
-    log::info!("Inserting {} vehicles…", vehicles.len());
-    for vehicle in vehicles {
-        sqlx::query(QUERY)
-            .bind(vehicle.tank_id)
-            .bind(vehicle.name.clone())
-            .bind(vehicle.tier)
-            .bind(vehicle.is_premium)
-            .bind(vehicle.nation.to_string())
-            .bind(vehicle.type_.to_string())
-            .execute(&mut *executor)
-            .await
-            .context("failed to insert the vehicles")?;
-    }
-    log::info!("Inserted {} vehicles.", vehicles.len());
-    Ok(())
-}
-
-pub async fn retrieve_vehicles(executor: &PgPool) -> crate::Result<Vec<Vehicle>> {
-    Ok(sqlx::query_as(
-        // language=SQL
-        "SELECT * FROM tankopedia",
-    )
-    .fetch_all(executor)
-    .await
-    .context("failed to retrieve the tankopedia")?)
-}
-
 impl<'r> FromRow<'r, PgRow> for Vehicle {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {

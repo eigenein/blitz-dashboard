@@ -27,7 +27,6 @@ pub struct Opts {
 pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
-    ImportTankopedia(ImportTankopediaOpts),
 }
 
 #[derive(Clap)]
@@ -63,14 +62,6 @@ pub struct CrawlerOpts {
     #[clap(long, about = "Override the last battle time check")]
     pub force: bool,
 }
-
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Imports the tankopedia")]
-#[clap(setting = AppSettings::ColoredHelp)]
-pub struct ImportTankopediaOpts;
 
 pub fn parse() -> Opts {
     Opts::parse()

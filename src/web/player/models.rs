@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::{anyhow, Context};
@@ -61,12 +60,12 @@ impl ViewModel {
         };
 
         let mut rows: Vec<DisplayRow> = Vec::new();
-        for snapshot in
+        for tank in
             Self::subtract_tank_snapshots(current_tanks.to_vec(), previous_tanks).into_iter()
         {
             rows.push(Self::make_display_row(
-                state.get_vehicle(snapshot.tank_id).clone(),
-                snapshot,
+                state.get_vehicle(tank.tank_id).await?,
+                tank,
             )?);
         }
         Self::sort_tanks(&mut rows, query.sort_by);
@@ -94,8 +93,8 @@ impl ViewModel {
         })
     }
 
-    fn make_display_row(vehicle: Arc<Vehicle>, snapshot: Tank) -> crate::Result<DisplayRow> {
-        let stats = &snapshot.all_statistics;
+    fn make_display_row(vehicle: Vehicle, tank: Tank) -> crate::Result<DisplayRow> {
+        let stats = &tank.all_statistics;
         let win_rate = stats.wins as f64 / stats.battles as f64;
         let expected_win_rate = wilson_score_interval(stats.battles, stats.wins);
         Ok(DisplayRow {
@@ -104,7 +103,7 @@ impl ViewModel {
             expected_win_rate_margin: OrderedFloat(expected_win_rate.1),
             damage_per_battle: OrderedFloat(stats.damage_dealt as f64 / stats.battles as f64),
             survival_rate: OrderedFloat(stats.survived_battles as f64 / stats.battles as f64),
-            all_statistics: snapshot.all_statistics,
+            all_statistics: tank.all_statistics,
             gold_per_battle: OrderedFloat(10.0 + vehicle.tier as f64 * win_rate),
             expected_gold_per_battle: OrderedFloat(
                 10.0 + vehicle.tier as f64 * expected_win_rate.0,
@@ -175,7 +174,7 @@ impl ViewModel {
 }
 
 pub struct DisplayRow {
-    pub vehicle: Arc<Vehicle>,
+    pub vehicle: Vehicle,
     pub all_statistics: AllStatistics,
     pub win_rate: OrderedFloat<f64>,
     pub expected_win_rate: OrderedFloat<f64>,
