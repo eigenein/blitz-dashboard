@@ -10,7 +10,7 @@ use sqlx::PgPool;
 
 use crate::database;
 use crate::models::{AccountInfo, Nation, Tank, TankType, Vehicle};
-use crate::opts::WebOpts;
+use crate::opts::Opts;
 use crate::wargaming::WargamingApi;
 
 /// Web application global state.
@@ -37,7 +37,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(api: WargamingApi, database: PgPool, opts: &WebOpts) -> crate::Result<Self> {
+    pub async fn new(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Result<Self> {
         const DAY: StdDuration = StdDuration::from_secs(86400);
         const MINUTE: StdDuration = StdDuration::from_secs(60);
         const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
@@ -228,7 +228,7 @@ impl State {
         }
     }
 
-    fn make_tracking_code(opts: &WebOpts) -> PreEscaped<String> {
+    fn make_tracking_code(opts: &Opts) -> PreEscaped<String> {
         let mut extra_html_headers = Vec::new();
         if let Some(counter) = &opts.yandex_metrika {
             extra_html_headers.push(format!(

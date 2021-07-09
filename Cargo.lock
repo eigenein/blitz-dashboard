@@ -434,13 +434,14 @@ dependencies = [
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.4.5"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "async-std",
  "chrono",
  "chrono-humanize",
  "clap",
+ "futures",
  "http-types",
  "humantime-serde",
  "itertools",

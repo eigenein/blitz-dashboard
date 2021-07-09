@@ -9,33 +9,29 @@ use sqlx::PgPool;
 use crate::database;
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BasicAccountInfo, Tank};
-use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
-    pub api: WargamingApi,
-    pub database: PgPool,
-    pub opts: CrawlerOpts,
+    api: WargamingApi,
+    database: PgPool,
 }
 
 impl Crawler {
-    pub async fn run(&self) -> crate::Result {
-        sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
+    pub async fn run(api: WargamingApi, database: PgPool, run: bool) -> crate::Result {
+        if !run {
+            return Ok(());
+        }
 
+        let crawler = Self { api, database };
         loop {
-            if let Err(error) = self.crawl_batch().await {
+            if let Err(error) = crawler.crawl_batch().await {
                 let sentry_id = capture_anyhow(&error);
                 log::error!("Failed to crawl a batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
-            }
-            if self.opts.once {
-                break;
             }
 
             // FIXME: https://github.com/eigenein/blitz-dashboard/issues/15.
             sleep(StdDuration::from_secs(1)).await;
         }
-
-        Ok(())
     }
 
     async fn crawl_batch(&self) -> crate::Result {
@@ -78,7 +74,7 @@ impl Crawler {
                 log::debug!("Nickname: {}.", current_info.nickname);
                 current_info.basic.crawled_at = Some(Utc::now());
                 database::insert_account_or_replace(&mut transaction, &current_info.basic).await?;
-                let force = self.opts.force || previous_info.crawled_at.is_none();
+                let force = previous_info.crawled_at.is_none();
                 if force || current_info.basic.last_battle_time != previous_info.last_battle_time {
                     database::insert_account_snapshot(&mut transaction, &current_info).await?;
                     let tanks: Vec<Tank> = self

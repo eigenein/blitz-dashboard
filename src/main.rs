@@ -1,8 +1,7 @@
 use clap::{crate_name, crate_version};
+use futures::try_join;
 use sentry::integrations::anyhow::capture_anyhow;
 
-use crate::crawler::Crawler;
-use crate::opts::{Opts, Subcommand};
 use crate::wargaming::WargamingApi;
 
 mod crawler;
@@ -24,26 +23,18 @@ async fn main() -> crate::Result {
     logging::init(opts.verbosity)?;
     log::info!("{} {}", crate_name!(), crate_version!());
     let _sentry_guard = init_sentry(&opts);
-    let result = run_subcommand(opts).await;
-    if let Err(ref error) = result {
-        capture_anyhow(error);
-    }
-    result
-}
 
-async fn run_subcommand(opts: Opts) -> crate::Result {
     let api = WargamingApi::new(&opts.application_id)?;
     let database = crate::database::open(&opts.database).await?;
-    match opts.subcommand {
-        Subcommand::Web(opts) => web::run(api, database, opts).await,
-        Subcommand::Crawler(opts) => {
-            Crawler {
-                api,
-                database,
-                opts,
-            }
-            .run()
-            .await
+
+    match try_join!(
+        web::run(api.clone(), database.clone(), &opts),
+        crawler::Crawler::run(api.clone(), database.clone(), opts.crawler),
+    ) {
+        Ok(_) => Ok(()),
+        Err(error) => {
+            capture_anyhow(&error);
+            Err(error)
         }
     }
 }

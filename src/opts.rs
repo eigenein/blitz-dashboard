@@ -24,48 +24,23 @@ pub struct Opts {
     )]
     pub verbosity: i32,
 
-    #[clap(subcommand)]
-    pub subcommand: Subcommand,
-}
+    #[clap(long, about = "Runs the web app")]
+    pub web: bool,
 
-#[derive(Clap)]
-pub enum Subcommand {
-    Web(WebOpts),
-    Crawler(CrawlerOpts),
-}
+    #[clap(long, about = "Runs the account crawler")]
+    pub crawler: bool,
 
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Runs the web application")]
-#[clap(setting = AppSettings::ColoredHelp)]
-pub struct WebOpts {
     #[clap(long, default_value = "localhost", about = "Web app host")]
     pub host: String,
 
     #[clap(short, long, default_value = "8081", about = "Web app port")]
     pub port: u16,
 
-    #[clap(long, about = "Yandex.Metrika counter number")]
+    #[clap(long, about = "Yandex.Metrika counter number", requires = "web")]
     pub yandex_metrika: Option<String>,
 
-    #[clap(long, about = "Google Analytics measurement ID")]
+    #[clap(long, about = "Google Analytics measurement ID", requires = "web")]
     pub gtag: Option<String>,
-}
-
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Runs the account crawler")]
-#[clap(setting = AppSettings::ColoredHelp)]
-pub struct CrawlerOpts {
-    #[clap(long, about = "Crawl one account and exit")]
-    pub once: bool,
-
-    #[clap(long, about = "Override the last battle time check")]
-    pub force: bool,
 }
 
 pub fn parse() -> Opts {
