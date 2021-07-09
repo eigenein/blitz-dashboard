@@ -5,7 +5,7 @@ use anyhow::Context;
 use chrono::{DateTime, Duration, TimeZone, Utc};
 use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{ConnectOptions, Executor, FromRow, PgPool, Postgres, Row, Transaction};
+use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
 
 use crate::metrics::Stopwatch;
 use crate::models::{
@@ -42,7 +42,9 @@ pub async fn retrieve_account_count(executor: &PgPool) -> crate::Result<i64> {
         .context("failed to select count from accounts")?)
 }
 
-pub async fn retrieve_account_snapshot_count(executor: &PgPool) -> crate::Result<i64> {
+pub async fn retrieve_account_snapshot_count<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
+) -> crate::Result<i64> {
     // language=SQL
     const QUERY: &str = "SELECT count(*) FROM account_snapshots";
     Ok(sqlx::query_scalar(QUERY)
@@ -51,7 +53,9 @@ pub async fn retrieve_account_snapshot_count(executor: &PgPool) -> crate::Result
         .context("failed to select count from account snapshots")?)
 }
 
-pub async fn retrieve_tank_snapshot_count(executor: &PgPool) -> crate::Result<i64> {
+pub async fn retrieve_tank_snapshot_count<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
+) -> crate::Result<i64> {
     // language=SQL
     const QUERY: &str = "SELECT count(*) FROM tank_snapshots";
     Ok(sqlx::query_scalar(QUERY)
@@ -60,7 +64,9 @@ pub async fn retrieve_tank_snapshot_count(executor: &PgPool) -> crate::Result<i6
         .context("failed to select count from tank snapshots")?)
 }
 
-pub async fn retrieve_oldest_crawled_at(executor: &PgPool) -> crate::Result<DateTime<Utc>> {
+pub async fn retrieve_oldest_crawled_at<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
+) -> crate::Result<DateTime<Utc>> {
     // language=SQL
     const QUERY: &str = "SELECT MIN(crawled_at) FROM accounts WHERE crawled_at IS NOT NULL";
     Ok(sqlx::query_scalar(QUERY)
@@ -70,8 +76,8 @@ pub async fn retrieve_oldest_crawled_at(executor: &PgPool) -> crate::Result<Date
         .unwrap_or_else(|| Utc.timestamp(0, 0)))
 }
 
-pub async fn retrieve_oldest_accounts(
-    executor: &PgPool,
+pub async fn retrieve_oldest_accounts<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
     limit: i32,
 ) -> crate::Result<Vec<BasicAccountInfo>> {
     // language=SQL
@@ -88,8 +94,8 @@ pub async fn retrieve_oldest_accounts(
     Ok(accounts)
 }
 
-pub async fn retrieve_latest_account_snapshot(
-    executor: &PgPool,
+pub async fn retrieve_latest_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
     account_id: i32,
     before: &DateTime<Utc>,
 ) -> crate::Result<Option<AccountInfo>> {
@@ -110,8 +116,8 @@ pub async fn retrieve_latest_account_snapshot(
     Ok(account_info)
 }
 
-pub async fn retrieve_latest_tank_snapshots(
-    executor: &PgPool,
+pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
     account_id: i32,
     before: &DateTime<Utc>,
 ) -> crate::Result<Vec<Tank>> {
@@ -154,7 +160,10 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     Ok(())
 }
 
-pub async fn insert_account_or_ignore(executor: &PgPool, info: &BasicAccountInfo) -> crate::Result {
+pub async fn insert_account_or_ignore<'e, E>(executor: E, info: &BasicAccountInfo) -> crate::Result
+where
+    E: Executor<'e, Database = Postgres>,
+{
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)
@@ -185,8 +194,8 @@ where
     Ok(())
 }
 
-pub async fn insert_account_snapshot(
-    executor: &mut Transaction<'_, Postgres>,
+pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
+    executor: E,
     info: &AccountInfo,
 ) -> crate::Result {
     log::info!("Inserting account #{} snapshot…", info.basic.id);
@@ -229,10 +238,7 @@ pub async fn insert_account_snapshot(
     Ok(())
 }
 
-pub async fn insert_tank_snapshots(
-    executor: &mut Transaction<'_, Postgres>,
-    tanks: &[Tank],
-) -> crate::Result {
+pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     log::info!("Inserting {} tanks…", tanks.len());
     let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(1000);
 
@@ -277,7 +283,7 @@ pub async fn insert_tank_snapshots(
             .bind(snapshot.all_statistics.hits)
             .bind(snapshot.all_statistics.frags)
             .bind(snapshot.all_statistics.xp)
-            .execute(&mut *executor)
+            .execute(&mut *connection)
             .await
             .context("failed to insert tank snapshots")?;
     }
