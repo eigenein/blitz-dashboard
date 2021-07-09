@@ -23,7 +23,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
         StatusCode::Ok,
         html! {
             (DOCTYPE)
-            html lang="en" {
+            html.has-navbar-fixed-top lang="en" {
                 head {
                     (headers())
                     title { (model.query) " – Поиск статистов" }
@@ -31,7 +31,7 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
             }
             body {
                 (state.tracking_code)
-                nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
+                nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
                     div.container {
                         div.navbar-brand {
                             div.navbar-item {
@@ -53,11 +53,23 @@ pub async fn get(request: tide::Request<State>) -> tide::Result {
                     }
                 }
 
-                @for account in &model.accounts {
-                    section.section."p-0"."m-4" {
-                        div.container {
-                            div.columns.is-centered {
-                                div.column."is-6-widescreen"."is-10-tablet" {
+                section.section."p-0"."m-4" {
+                    div.container {
+                        div.columns.is-centered {
+                            div.column."is-6-widescreen"."is-10-tablet" {
+                                @if model.accounts.is_empty() {
+                                    div.box {
+                                        p.content {
+                                            "Не найдено ни одного аккаунта с подобным именем."
+                                        }
+                                        p {
+                                            a class="button is-info" href="https://ru.wargaming.net/registration/ru/" {
+                                                "Создать аккаунт"
+                                            }
+                                        }
+                                    }
+                                }
+                                @for account in &model.accounts {
                                     div.box {
                                         p.title."is-5" {
                                             a href=(get_account_url(account.basic.id)) { (account.nickname) }

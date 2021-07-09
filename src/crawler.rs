@@ -43,7 +43,12 @@ impl Crawler {
         let previous_infos = database::retrieve_oldest_accounts(&self.database, 100).await?;
         let mut current_infos = self
             .api
-            .get_account_info(previous_infos.iter().map(|account| account.id))
+            .get_account_info(
+                &previous_infos
+                    .iter()
+                    .map(|account| account.id)
+                    .collect::<Vec<_>>(),
+            )
             .await?;
         for previous_info in previous_infos.iter() {
             let current_info = current_infos

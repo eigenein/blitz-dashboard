@@ -147,7 +147,7 @@ impl State {
 
                 let account_infos: Vec<AccountInfo> = self
                     .api
-                    .get_account_info(account_ids.iter())
+                    .get_account_info(&account_ids)
                     .await?
                     .into_iter()
                     .filter_map(|(_, info)| info)
@@ -170,7 +170,7 @@ impl State {
             None => {
                 let account_info = Arc::new(
                     self.api
-                        .get_account_info([account_id])
+                        .get_account_info(&[account_id])
                         .await?
                         .remove(&account_id.to_string())
                         .flatten()
