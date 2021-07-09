@@ -21,7 +21,7 @@ type Result<T = ()> = anyhow::Result<T>;
 #[async_std::main]
 async fn main() -> crate::Result {
     let opts = opts::parse();
-    logging::init(opts.debug)?;
+    logging::init(opts.verbosity)?;
     log::info!("{} {}", crate_name!(), crate_version!());
     let _sentry_guard = init_sentry(&opts);
     let result = run_subcommand(opts).await;
@@ -56,7 +56,7 @@ fn init_sentry(opts: &opts::Opts) -> Option<sentry::ClientInitGuard> {
             dsn.as_str(),
             sentry::ClientOptions {
                 release: sentry::release_name!(),
-                debug: opts.debug,
+                debug: opts.verbosity != 0,
                 ..Default::default()
             },
         ))

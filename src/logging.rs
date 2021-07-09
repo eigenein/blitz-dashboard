@@ -1,13 +1,15 @@
 use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 
-pub fn init(debug: bool) -> anyhow::Result<()> {
+pub fn init(verbosity: i32) -> anyhow::Result<()> {
+    let log_level = match verbosity {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 => LevelFilter::Debug,
+        _ => LevelFilter::Trace,
+    };
     let logger = TermLogger::new(
-        if !debug {
-            LevelFilter::Info
-        } else {
-            LevelFilter::Debug
-        },
+        log_level,
         ConfigBuilder::new()
             .set_target_level(LevelFilter::Off)
             .set_location_level(LevelFilter::Off)

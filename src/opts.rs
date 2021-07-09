@@ -13,11 +13,16 @@ pub struct Opts {
     #[clap(short, long, about = "Sentry DSN")]
     pub sentry_dsn: Option<String>,
 
-    #[clap(short, long, about = "Database URI")]
+    #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
-    #[clap(long, about = "Enable debugging")]
-    pub debug: bool,
+    #[clap(
+        short = 'v',
+        long = "verbose",
+        about = "Increases log verbosity",
+        parse(from_occurrences)
+    )]
+    pub verbosity: i32,
 
     #[clap(subcommand)]
     pub subcommand: Subcommand,
