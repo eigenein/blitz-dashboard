@@ -149,7 +149,7 @@ impl WargamingApi {
         statistics.sort_unstable_by_key(|snapshot| snapshot.tank_id);
         achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
 
-        Ok(merge_join_by(statistics, achievements, |left, right| {
+        let tanks: Vec<models::Tank> = merge_join_by(statistics, achievements, |left, right| {
             left.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
@@ -162,7 +162,8 @@ impl WargamingApi {
             }),
             _ => None,
         })
-        .collect::<Vec<models::Tank>>())
+        .collect();
+        Ok(tanks)
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
