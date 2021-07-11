@@ -449,6 +449,7 @@ dependencies = [
  "maud",
  "moka",
  "ordered-float",
+ "rand 0.8.4",
  "reqwest",
  "sentry",
  "serde",

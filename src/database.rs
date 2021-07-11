@@ -76,7 +76,7 @@ pub async fn retrieve_oldest_crawled_at<'e, E: Executor<'e, Database = Postgres>
         .unwrap_or_else(|| Utc.timestamp(0, 0)))
 }
 
-pub async fn retrieve_oldest_accounts<'e, E: Executor<'e, Database = Postgres>>(
+pub async fn retrieve_oldest_crawled_accounts<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
     limit: i32,
 ) -> crate::Result<Vec<BasicAccountInfo>> {

@@ -1,14 +1,15 @@
 use std::time::Duration as StdDuration;
 
 use async_std::task::sleep;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use log::Level;
+use rand::prelude::*;
 use sentry::integrations::anyhow::capture_anyhow;
 use sqlx::{PgConnection, PgPool};
 
 use crate::database;
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, Tank};
+use crate::models::{AccountInfo, BasicAccountInfo, Tank};
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
@@ -16,9 +17,9 @@ pub struct Crawler {
     database: PgPool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum CrawlMode {
-    Force,
+    New,
     LastBattleTime(DateTime<Utc>),
 }
 
@@ -43,7 +44,13 @@ impl Crawler {
     async fn crawl_batch(&self) -> crate::Result {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
 
-        let previous_infos = database::retrieve_oldest_accounts(&self.database, 100).await?;
+        let mut previous_infos =
+            database::retrieve_oldest_crawled_accounts(&self.database, 99).await?;
+        previous_infos.push(BasicAccountInfo {
+            id: (1..146458230).choose(&mut thread_rng()).unwrap(),
+            last_battle_time: Utc.timestamp(0, 0),
+            crawled_at: None,
+        }); // FIXME
         let account_ids = previous_infos
             .iter()
             .map(|account| account.id)
@@ -58,7 +65,7 @@ impl Crawler {
                 previous_info.id,
                 match previous_info.crawled_at {
                     Some(_) => CrawlMode::LastBattleTime(previous_info.last_battle_time),
-                    None => CrawlMode::Force,
+                    None => CrawlMode::New,
                 },
                 current_info,
             )
@@ -84,10 +91,11 @@ impl Crawler {
                 self.crawl_existing_account(&mut transaction, account_id, mode, current_info)
                     .await?;
             }
-            None => {
+            None if mode != CrawlMode::New => {
                 log::warn!("The account does not exist anymore. Deleting…");
                 database::delete_account(&self.database, account_id).await?;
             }
+            _ => {}
         };
         log::debug!("Committing…");
         transaction.commit().await?;
@@ -107,7 +115,7 @@ impl Crawler {
         database::insert_account_or_replace(&mut *connection, &current_info.basic).await?;
 
         match mode {
-            CrawlMode::Force => {
+            CrawlMode::New => {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
                 let tanks = self.api.get_merged_tanks(account_id).await?;
                 database::insert_tank_snapshots(&mut *connection, &tanks).await?;
