@@ -129,7 +129,7 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
         ORDER BY tank_id, last_battle_time DESC
     ";
 
-    let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(30);
+    let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(100);
     Ok(sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(before)
