@@ -3,6 +3,7 @@ name = "blitz-dashboard"
 version = "0.6.0"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
+resolver = "2"
 description = "World of Tanks Blitz player's web dashboard"
 license-file = "LICENSE"
 documentation = "https://github.com/eigenein/blitz-dashboard"
