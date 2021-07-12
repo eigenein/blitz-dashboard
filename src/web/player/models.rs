@@ -1,11 +1,10 @@
+use std::borrow::Cow;
 use std::time::Duration as StdDuration;
 
-use anyhow::{anyhow, Context};
 use chrono::{DateTime, Duration, Utc};
+use humantime::parse_duration;
 use itertools::{merge_join_by, EitherOrBoth};
 use ordered_float::OrderedFloat;
-use serde::{Deserialize, Serialize};
-use tide::Request;
 
 use crate::database;
 use crate::logging::set_user;
@@ -22,7 +21,8 @@ pub struct ViewModel {
     pub is_active: bool,
     pub total_battles: i32,
     pub total_tanks: usize,
-    pub query: Query,
+    pub sort: Cow<'static, str>,
+    pub period: StdDuration,
     pub warn_no_previous_account_info: bool,
     pub statistics: AllStatistics,
     pub rows: Vec<DisplayRow>,
@@ -30,26 +30,28 @@ pub struct ViewModel {
 }
 
 impl ViewModel {
-    pub async fn new(request: &Request<State>) -> crate::Result<ViewModel> {
-        let account_id = Self::parse_account_id(&request)?;
-        let query: Query = request
-            .query()
-            .map_err(|error| anyhow!(error))
-            .context("failed to parse the query")?;
-        log::info!(
-            "Requested player #{} within {:?}.",
-            account_id,
-            query.period,
-        );
+    pub async fn new(
+        state: &State,
+        account_id: i32,
+        period: Option<String>,
+        sort: Option<String>,
+    ) -> crate::Result<ViewModel> {
+        let sort = sort
+            .map(Cow::Owned)
+            .unwrap_or(Cow::Borrowed(SORT_BY_BATTLES));
+        let period = match period {
+            Some(period) => parse_duration(&period)?,
+            None => StdDuration::from_secs(43200),
+        };
+        log::info!("Requested player #{} within {:?}s.", account_id, period);
 
-        let state = request.state();
         let current_info = state.retrieve_account_info(account_id).await?;
         set_user(&current_info.nickname);
         database::insert_account_or_ignore(&state.database, &current_info.basic).await?;
 
         let current_tanks = state.retrieve_tanks(&current_info).await?;
         let total_tanks = current_tanks.len();
-        let before = Utc::now() - Duration::from_std(query.period)?;
+        let before = Utc::now() - Duration::from_std(period)?;
         let previous_info =
             database::retrieve_latest_account_snapshot(&state.database, account_id, &before)
                 .await?;
@@ -60,15 +62,13 @@ impl ViewModel {
         };
 
         let mut rows: Vec<DisplayRow> = Vec::new();
-        for tank in
-            Self::subtract_tank_snapshots(current_tanks.to_vec(), previous_tanks).into_iter()
-        {
+        for tank in Self::subtract_tanks(current_tanks.to_vec(), previous_tanks).into_iter() {
             rows.push(Self::make_display_row(
                 state.get_vehicle(tank.tank_id).await?,
                 tank,
             )?);
         }
-        Self::sort_tanks(&mut rows, query.sort_by);
+        Self::sort_tanks(&mut rows, &sort);
 
         let statistics = match &previous_info {
             Some(previous_info) => &current_info.statistics.all - &previous_info.statistics.all,
@@ -85,11 +85,12 @@ impl ViewModel {
                 > (Utc::now() - Duration::hours(1)),
             is_active: current_info.is_active(),
             warn_no_previous_account_info: previous_info.is_none(),
-            query,
             statistics,
             rows,
             total_tanks,
             before,
+            period,
+            sort,
         })
     }
 
@@ -112,7 +113,7 @@ impl ViewModel {
         })
     }
 
-    fn subtract_tank_snapshots(
+    fn subtract_tanks(
         mut actual_snapshots: Vec<Tank>,
         mut previous_snapshots: Vec<Tank>,
     ) -> Vec<Tank> {
@@ -140,36 +141,27 @@ impl ViewModel {
         .collect::<Vec<Tank>>()
     }
 
-    fn sort_tanks(rows: &mut Vec<DisplayRow>, sort_by: SortBy) {
+    fn sort_tanks(rows: &mut Vec<DisplayRow>, sort_by: &str) {
         match sort_by {
-            SortBy::Battles => rows.sort_unstable_by_key(|row| -row.all_statistics.battles),
-            SortBy::Wins => rows.sort_unstable_by_key(|row| -row.all_statistics.wins),
-            SortBy::Nation => rows.sort_unstable_by_key(|row| row.vehicle.nation),
-            SortBy::DamageDealt => {
+            SORT_BY_BATTLES => rows.sort_unstable_by_key(|row| -row.all_statistics.battles),
+            SORT_BY_WINS => rows.sort_unstable_by_key(|row| -row.all_statistics.wins),
+            SORT_BY_NATION => rows.sort_unstable_by_key(|row| row.vehicle.nation),
+            SORT_BY_DAMAGE_DEALT => {
                 rows.sort_unstable_by_key(|row| -row.all_statistics.damage_dealt)
             }
-            SortBy::DamagePerBattle => rows.sort_unstable_by_key(|row| -row.damage_per_battle),
-            SortBy::Tier => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
-            SortBy::VehicleType => rows.sort_unstable_by_key(|row| row.vehicle.type_),
-            SortBy::WinRate => rows.sort_unstable_by_key(|row| -row.win_rate),
-            SortBy::TrueWinRate => rows.sort_unstable_by_key(|row| -row.expected_win_rate),
-            SortBy::Gold => rows.sort_unstable_by_key(|row| -row.gold_per_battle),
-            SortBy::TrueGold => rows.sort_unstable_by_key(|row| -row.expected_gold_per_battle),
-            SortBy::SurvivedBattles => {
+            SORT_BY_DAMAGE_PER_BATTLE => rows.sort_unstable_by_key(|row| -row.damage_per_battle),
+            SORT_BY_TIER => rows.sort_unstable_by_key(|row| -row.vehicle.tier),
+            SORT_BY_VEHICLE_TYPE => rows.sort_unstable_by_key(|row| row.vehicle.type_),
+            SORT_BY_WIN_RATE => rows.sort_unstable_by_key(|row| -row.win_rate),
+            SORT_BY_TRUE_WIN_RATE => rows.sort_unstable_by_key(|row| -row.expected_win_rate),
+            SORT_BY_GOLD => rows.sort_unstable_by_key(|row| -row.gold_per_battle),
+            SORT_BY_TRUE_GOLD => rows.sort_unstable_by_key(|row| -row.expected_gold_per_battle),
+            SORT_BY_SURVIVED_BATTLES => {
                 rows.sort_unstable_by_key(|row| -row.all_statistics.survived_battles)
             }
-            SortBy::SurvivalRate => rows.sort_unstable_by_key(|row| -row.survival_rate),
+            SORT_BY_SURVIVAL_RATE => rows.sort_unstable_by_key(|row| -row.survival_rate),
+            _ => {}
         }
-    }
-
-    /// Parses account ID URL segment.
-    fn parse_account_id(request: &Request<State>) -> crate::Result<i32> {
-        request
-            .param("account_id")
-            .map_err(tide::Error::into_inner)
-            .context("missing account ID")?
-            .parse()
-            .context("invalid account ID")
     }
 }
 
@@ -185,74 +177,16 @@ pub struct DisplayRow {
     pub expected_gold_per_battle: OrderedFloat<f64>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
-pub struct Query {
-    #[serde(
-        default = "Query::default_period",
-        with = "humantime_serde",
-        skip_serializing_if = "Query::skip_serializing_period_if"
-    )]
-    pub period: StdDuration,
-
-    #[serde(
-        default = "Query::default_sort_by",
-        rename = "sort-by",
-        skip_serializing_if = "Query::skip_serializing_sort_by_if"
-    )]
-    pub sort_by: SortBy,
-}
-
-impl Query {
-    const DEFAULT_PERIOD: StdDuration = StdDuration::from_secs(86400);
-    const DEFAULT_SORT_BY: SortBy = SortBy::Battles;
-
-    fn default_period() -> StdDuration {
-        Self::DEFAULT_PERIOD
-    }
-
-    fn skip_serializing_period_if(period: &StdDuration) -> bool {
-        period == &Self::DEFAULT_PERIOD
-    }
-
-    fn default_sort_by() -> SortBy {
-        Self::DEFAULT_SORT_BY
-    }
-
-    fn skip_serializing_sort_by_if(sort_by: &SortBy) -> bool {
-        sort_by == &Self::DEFAULT_SORT_BY
-    }
-}
-
-impl Query {
-    pub fn period(&self, period: StdDuration) -> Self {
-        Self {
-            period,
-            sort_by: self.sort_by,
-        }
-    }
-
-    pub fn sort_by(&self, sort_by: SortBy) -> Self {
-        Self {
-            sort_by,
-            period: self.period,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum SortBy {
-    Battles,
-    Tier,
-    Nation,
-    VehicleType,
-    Wins,
-    WinRate,
-    TrueWinRate,
-    Gold,
-    TrueGold,
-    DamageDealt,
-    DamagePerBattle,
-    SurvivedBattles,
-    SurvivalRate,
-}
+pub const SORT_BY_BATTLES: &str = "battles";
+pub const SORT_BY_TIER: &str = "tier";
+pub const SORT_BY_NATION: &str = "nation";
+pub const SORT_BY_VEHICLE_TYPE: &str = "vehicle-type";
+pub const SORT_BY_WINS: &str = "wins";
+pub const SORT_BY_WIN_RATE: &str = "win-rate";
+pub const SORT_BY_TRUE_WIN_RATE: &str = "true-win-rate";
+pub const SORT_BY_GOLD: &str = "gold";
+pub const SORT_BY_TRUE_GOLD: &str = "true-gold";
+pub const SORT_BY_DAMAGE_DEALT: &str = "damage-dealt";
+pub const SORT_BY_DAMAGE_PER_BATTLE: &str = "damage-per-battle";
+pub const SORT_BY_SURVIVED_BATTLES: &str = "survived-battles";
+pub const SORT_BY_SURVIVAL_RATE: &str = "survival-rate";

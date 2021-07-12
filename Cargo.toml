@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
 description = "World of Tanks Blitz player's web dashboard"
@@ -21,12 +21,13 @@ split-debuginfo = "unpacked"
 anyhow = "1.0.40"
 chrono-humanize = "0.2.1"
 clap = "3.0.0-beta.2"
-humantime-serde = "1.0.1"
+humantime = "2.1.0"
 itertools = "0.10.0"
 log = "0.4.14"
 maud = "0.22.2"
 ordered-float = "2.5.1"
 rand = "0.8.4"
+rocket = "0.5.0-rc.1"
 serde_qs = "0.8.4"
 simplelog = "0.10.0"
 
@@ -35,19 +36,10 @@ version = "0.3.15"
 default-features = false
 features = ["async-await"]
 
-[dependencies.tide]
-version = "0.16.0"
-default-features = false
-features = ["h1-server"]
-
 [dependencies.reqwest]
 version = "0.11.4"
 default-features = false
 features = ["rustls-tls", "gzip", "brotli", "deflate", "json"]
-
-[dependencies.http-types]
-version = "2.11.1"
-default-features = false
 
 [dependencies.chrono]
 version = "0.4.19"

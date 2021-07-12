@@ -7,6 +7,7 @@ use maud::{html, Markup};
 
 use crate::web::state::State;
 
+#[allow(dead_code)]
 pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 const MIN_QUERY_LENGTH: usize = 3;
 const MAX_QUERY_LENGTH: usize = 24;

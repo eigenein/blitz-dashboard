@@ -30,7 +30,7 @@ pub struct Opts {
     #[clap(long, about = "Runs the account crawler")]
     pub crawler: bool,
 
-    #[clap(long, default_value = "localhost", about = "Web app host")]
+    #[clap(long, default_value = "::", about = "Web app host")]
     pub host: String,
 
     #[clap(short, long, default_value = "8081", about = "Web app port")]
