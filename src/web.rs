@@ -6,7 +6,7 @@ use rocket::response;
 use rocket::{routes, Request};
 use sqlx::PgPool;
 
-use responses::r#static;
+use routes::r#static;
 use state::State;
 
 use crate::opts::Opts;
@@ -18,8 +18,8 @@ mod helpers;
 mod index;
 mod partials;
 mod player;
-mod responses;
 mod result;
+mod routes;
 mod search;
 mod state;
 
@@ -42,7 +42,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
         .mount("/", routes![index::get])
         .mount("/", routes![search::view::get])
         .mount("/", routes![player::view::get])
-        .mount("/", routes![responses::error::get_error])
+        .mount("/", routes![routes::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)
         .launch()
