@@ -5,9 +5,10 @@ use rocket::response::Redirect;
 use rocket::Responder;
 
 use crate::web::partials::{account_search, datetime, footer, headers};
-use crate::web::player::view::get_account_url;
-use crate::web::search::models::ViewModel;
+use crate::web::routes::player::get_account_url;
 use crate::web::state::State;
+
+use super::models::ViewModel;
 
 // TODO: generic response in `crate::web::responses`.
 #[allow(clippy::large_enum_variant)]

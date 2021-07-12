@@ -16,10 +16,8 @@ mod error;
 mod fairings;
 mod helpers;
 mod partials;
-mod player;
 mod result;
 mod routes;
-mod search;
 mod state;
 
 /// Run the web app.
@@ -39,8 +37,8 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
         .mount("/", routes![r#static::get_android_chrome_512x512])
         .mount("/", routes![r#static::get_apple_touch_icon])
         .mount("/", routes![routes::index::get])
-        .mount("/", routes![search::view::get])
-        .mount("/", routes![player::view::get])
+        .mount("/", routes![routes::search::view::get])
+        .mount("/", routes![routes::player::view::get])
         .mount("/", routes![routes::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)
