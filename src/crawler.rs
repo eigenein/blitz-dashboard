@@ -1,6 +1,3 @@
-use std::time::Duration as StdDuration;
-
-use async_std::task::sleep;
 use chrono::{DateTime, TimeZone, Utc};
 use log::Level;
 use rand::prelude::*;
@@ -35,9 +32,6 @@ impl Crawler {
                 let sentry_id = capture_anyhow(&error);
                 log::error!("Failed to crawl a batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
             }
-
-            // FIXME: https://github.com/eigenein/blitz-dashboard/issues/15.
-            sleep(StdDuration::from_secs(1)).await;
         }
     }
 
