@@ -6,6 +6,7 @@ use maud::{html, Markup, DOCTYPE};
 use rocket::response::content::Html;
 
 use crate::statistics::wilson_score_interval;
+use crate::tankopedia::Tankopedia;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::{account_search, datetime, footer, headers, icon_text};
 use crate::web::state::State;
@@ -15,12 +16,13 @@ use super::models::ViewModel;
 
 #[rocket::get("/ru/<account_id>?<sort>&<period>")]
 pub async fn get(
-    state: &rocket::State<State>,
     account_id: i32,
     sort: Option<String>,
     period: Option<String>,
+    state: &rocket::State<State>,
+    tankopedia: &rocket::State<Tankopedia>,
 ) -> crate::web::result::Result<Html<String>> {
-    let model = ViewModel::new(&state, account_id, period, sort).await?;
+    let model = ViewModel::new(account_id, period, sort, &state, &tankopedia).await?;
     let footer = footer(state).await?;
 
     let markup = html! {

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
@@ -9,7 +8,7 @@ use moka::future::{Cache, CacheBuilder};
 use sqlx::PgPool;
 
 use crate::database;
-use crate::models::{AccountInfo, Nation, Tank, TankType, Vehicle};
+use crate::models::{AccountInfo, Tank};
 use crate::opts::Opts;
 use crate::wargaming::WargamingApi;
 
@@ -19,8 +18,6 @@ pub struct State {
     pub api: WargamingApi,
     pub database: PgPool,
     pub tracking_code: PreEscaped<String>,
-
-    tankopedia: HashMap<i32, Vehicle>,
 
     /// Caches search query to accounts IDs, optimises searches for popular accounts.
     search_accounts_ids_cache: Cache<String, Arc<Vec<i32>>>,
@@ -42,23 +39,9 @@ impl State {
         const MINUTE: StdDuration = StdDuration::from_secs(60);
         const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
 
-        let mut tankopedia = api.get_tankopedia().await?;
-        tankopedia.insert(
-            23057,
-            Vehicle {
-                tank_id: 23057,
-                name: "Kunze Panzer".to_string(),
-                tier: 7,
-                is_premium: true,
-                nation: Nation::Germany,
-                type_: TankType::Light,
-            },
-        );
-
         let state = State {
             api,
             database,
-            tankopedia,
             tracking_code: Self::make_tracking_code(&opts),
             search_accounts_ids_cache: CacheBuilder::new(1_000).time_to_live(DAY).build(),
             search_accounts_infos_cache: CacheBuilder::new(1_000)
@@ -206,25 +189,6 @@ impl State {
                     .await;
                 Ok(snapshots)
             }
-        }
-    }
-
-    pub async fn get_vehicle(&self, tank_id: i32) -> crate::Result<Vehicle> {
-        Ok(self
-            .tankopedia
-            .get(&tank_id)
-            .cloned() // FIXME: avoid `cloned()`.
-            .unwrap_or_else(|| Self::new_hardcoded_vehicle(tank_id)))
-    }
-
-    fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
-        Vehicle {
-            tank_id,
-            name: format!("#{}", tank_id),
-            tier: 0,
-            is_premium: false,
-            type_: TankType::Light, // FIXME
-            nation: Nation::Other,
         }
     }
 

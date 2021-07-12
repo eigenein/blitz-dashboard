@@ -12,6 +12,7 @@ mod models;
 mod opts;
 mod serde;
 mod statistics;
+mod tankopedia;
 mod wargaming;
 mod web;
 

@@ -10,6 +10,7 @@ use routes::r#static;
 use state::State;
 
 use crate::opts::Opts;
+use crate::tankopedia::Tankopedia;
 use crate::wargaming::WargamingApi;
 
 mod error;
@@ -27,7 +28,9 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
     }
 
     log::info!("Listening on {}:{}.", opts.host, opts.port);
+    let tankopedia = Tankopedia::new(&api).await?;
     rocket::custom(to_config(&opts)?)
+        .manage(tankopedia)
         .manage(State::new(api, database, opts).await?)
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
