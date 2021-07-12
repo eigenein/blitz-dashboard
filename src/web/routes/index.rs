@@ -7,7 +7,7 @@ use crate::web::partials::{account_search, headers};
 use crate::web::state::State;
 
 #[rocket::get("/")]
-pub async fn get(state: &rocket::State<State>) -> super::result::Result<Html<String>> {
+pub async fn get(state: &rocket::State<State>) -> crate::web::result::Result<Html<String>> {
     clear_user();
 
     let markup = html! {

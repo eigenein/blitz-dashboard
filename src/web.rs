@@ -15,7 +15,6 @@ use crate::wargaming::WargamingApi;
 mod error;
 mod fairings;
 mod helpers;
-mod index;
 mod partials;
 mod player;
 mod result;
@@ -39,7 +38,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
         .mount("/", routes![r#static::get_android_chrome_192x192])
         .mount("/", routes![r#static::get_android_chrome_512x512])
         .mount("/", routes![r#static::get_apple_touch_icon])
-        .mount("/", routes![index::get])
+        .mount("/", routes![routes::index::get])
         .mount("/", routes![search::view::get])
         .mount("/", routes![player::view::get])
         .mount("/", routes![routes::error::get_error])
