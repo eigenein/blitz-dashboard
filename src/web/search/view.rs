@@ -18,7 +18,10 @@ pub enum Response {
 }
 
 #[rocket::get("/search?<query>")]
-pub async fn get(query: &str, state: &rocket::State<State>) -> crate::web::Result<Response> {
+pub async fn get(
+    query: &str,
+    state: &rocket::State<State>,
+) -> crate::web::result::Result<Response> {
     let model = ViewModel::new(&state, query.to_string()).await?;
     let footer = footer(state).await?;
 

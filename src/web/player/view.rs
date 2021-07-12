@@ -23,7 +23,7 @@ pub async fn get(
     account_id: i32,
     sort: Option<String>,
     period: Option<String>,
-) -> crate::web::Result<Html<String>> {
+) -> crate::web::result::Result<Html<String>> {
     let model = ViewModel::new(&state, account_id, period, sort).await?;
     let footer = footer(state).await?;
 
