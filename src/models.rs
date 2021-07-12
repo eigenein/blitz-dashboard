@@ -16,7 +16,7 @@ pub struct Account {
 }
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
-pub struct BasicAccountInfo {
+pub struct GeneralAccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
 
@@ -28,19 +28,17 @@ pub struct BasicAccountInfo {
         deserialize_with = "crate::serde::deserialize_optional_timestamp"
     )]
     pub crawled_at: Option<DateTime<Utc>>,
+
+    pub nickname: String,
+
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(flatten)]
-    pub basic: BasicAccountInfo,
-
-    // TODO: move to `BasicAccountInfo` and add to the database.
-    pub nickname: String,
-
-    // TODO: move to `BasicAccountInfo` and add to the database.
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub created_at: DateTime<Utc>,
+    pub general: GeneralAccountInfo,
 
     pub statistics: AccountInfoStatistics,
 }
@@ -88,7 +86,7 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
-/// Tankopedia entry.
+/// Represents a generic vehicle from tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
     pub tank_id: i32,
@@ -206,12 +204,17 @@ impl ToString for TankType {
     }
 }
 
+/// Represents a state of a specific player's tank at a specific moment in time.
 #[derive(Clone, Debug)]
 pub struct Tank {
     pub account_id: i32,
     pub tank_id: i32,
     pub all_statistics: AllStatistics,
+
+    /// Timestamp when the described state is actual.
+    /// Every new [`Tank::last_battle_time`] produces a new record in the database.
     pub last_battle_time: DateTime<Utc>,
+
     pub battle_life_time: Duration,
 }
 
@@ -237,7 +240,7 @@ impl Sub for &AllStatistics {
 
 impl AccountInfo {
     pub fn is_active(&self) -> bool {
-        self.basic.last_battle_time > (Utc::now() - Duration::days(365))
+        self.general.last_battle_time > (Utc::now() - Duration::days(365))
     }
 }
 

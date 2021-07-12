@@ -9,7 +9,7 @@ use sqlx::{PgConnection, PgPool};
 
 use crate::database;
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, BasicAccountInfo, Tank};
+use crate::models::{AccountInfo, GeneralAccountInfo, Tank};
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
@@ -46,10 +46,12 @@ impl Crawler {
 
         let mut previous_infos =
             database::retrieve_oldest_crawled_accounts(&self.database, 99).await?;
-        previous_infos.push(BasicAccountInfo {
+        previous_infos.push(GeneralAccountInfo {
             id: (1..146458230).choose(&mut thread_rng()).unwrap(),
             last_battle_time: Utc.timestamp(0, 0),
             crawled_at: None,
+            nickname: "".to_string(),
+            created_at: Utc.timestamp(0, 0),
         }); // FIXME
         let account_ids = previous_infos
             .iter()
@@ -110,9 +112,9 @@ impl Crawler {
         mode: CrawlMode,
         mut current_info: AccountInfo,
     ) -> crate::Result {
-        log::debug!("Nickname: {}.", current_info.nickname);
-        current_info.basic.crawled_at = Some(Utc::now());
-        database::insert_account_or_replace(&mut *connection, &current_info.basic).await?;
+        log::debug!("Nickname: {}.", current_info.general.nickname);
+        current_info.general.crawled_at = Some(Utc::now());
+        database::insert_account_or_replace(&mut *connection, &current_info.general).await?;
 
         match mode {
             CrawlMode::New => {
@@ -121,7 +123,7 @@ impl Crawler {
                 database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             }
             CrawlMode::LastBattleTime(last_battle_time)
-                if current_info.basic.last_battle_time != last_battle_time =>
+                if current_info.general.last_battle_time != last_battle_time =>
             {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
                 let tanks: Vec<Tank> = self.api.get_merged_tanks(account_id).await?;

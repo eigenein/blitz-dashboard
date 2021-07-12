@@ -9,7 +9,7 @@ use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Ro
 
 use crate::metrics::Stopwatch;
 use crate::models::{
-    AccountInfo, AccountInfoStatistics, AllStatistics, BasicAccountInfo, Nation, Tank, TankType,
+    AccountInfo, AccountInfoStatistics, AllStatistics, GeneralAccountInfo, Nation, Tank, TankType,
     Vehicle,
 };
 
@@ -79,7 +79,7 @@ pub async fn retrieve_oldest_crawled_at<'e, E: Executor<'e, Database = Postgres>
 pub async fn retrieve_oldest_crawled_accounts<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
     limit: i32,
-) -> crate::Result<Vec<BasicAccountInfo>> {
+) -> crate::Result<Vec<GeneralAccountInfo>> {
     // language=SQL
     const QUERY: &str = "
         SELECT * FROM accounts
@@ -140,7 +140,7 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
 
 pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
-    info: &BasicAccountInfo,
+    info: &GeneralAccountInfo,
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
@@ -160,7 +160,10 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     Ok(())
 }
 
-pub async fn insert_account_or_ignore<'e, E>(executor: E, info: &BasicAccountInfo) -> crate::Result
+pub async fn insert_account_or_ignore<'e, E>(
+    executor: E,
+    info: &GeneralAccountInfo,
+) -> crate::Result
 where
     E: Executor<'e, Database = Postgres>,
 {
@@ -198,7 +201,7 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
     info: &AccountInfo,
 ) -> crate::Result {
-    log::info!("Inserting account #{} snapshot…", info.basic.id);
+    log::info!("Inserting account #{} snapshot…", info.general.id);
     // language=SQL
     const QUERY: &str = "
         INSERT INTO account_snapshots (
@@ -219,9 +222,9 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
         ON CONFLICT (account_id, last_battle_time) DO NOTHING
     ";
     sqlx::query(QUERY)
-        .bind(info.basic.id)
-        .bind(info.basic.last_battle_time)
-        .bind(info.basic.crawled_at)
+        .bind(info.general.id)
+        .bind(info.general.last_battle_time)
+        .bind(info.general.crawled_at)
         .bind(info.statistics.all.battles)
         .bind(info.statistics.all.wins)
         .bind(info.statistics.all.survived_battles)
@@ -329,9 +332,7 @@ impl<'r> FromRow<'r, PgRow> for Tank {
 impl<'r> FromRow<'r, PgRow> for AccountInfo {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
-            basic: BasicAccountInfo::from_row(row)?,
-            nickname: "".to_string(), // FIXME
-            created_at: Utc::now(),   // FIXME
+            general: GeneralAccountInfo::from_row(row)?,
             statistics: AccountInfoStatistics {
                 all: AllStatistics::from_row(row)?,
             },
@@ -339,12 +340,14 @@ impl<'r> FromRow<'r, PgRow> for AccountInfo {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for BasicAccountInfo {
+impl<'r> FromRow<'r, PgRow> for GeneralAccountInfo {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             id: row.try_get("account_id")?,
             last_battle_time: row.try_get("last_battle_time")?,
             crawled_at: row.try_get("crawled_at")?,
+            nickname: "".to_string(), // FIXME
+            created_at: Utc::now(),   // FIXME
         })
     }
 }

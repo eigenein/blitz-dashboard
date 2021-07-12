@@ -14,9 +14,9 @@ impl ViewModel {
         let mut accounts = state.search_accounts(&query).await?.to_vec();
         accounts.sort_unstable_by(|left, right| {
             right
-                .basic
+                .general
                 .last_battle_time
-                .cmp(&left.basic.last_battle_time)
+                .cmp(&left.general.last_battle_time)
         });
         Ok(Self { query, accounts })
     }

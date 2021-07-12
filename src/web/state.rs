@@ -188,10 +188,10 @@ impl State {
         &self,
         account_info: &AccountInfo,
     ) -> crate::Result<Arc<Vec<Tank>>> {
-        let account_id = account_info.basic.id;
+        let account_id = account_info.general.id;
         match self.account_tanks_cache.get(&account_id) {
             Some((last_battle_time, snapshots))
-                if last_battle_time == account_info.basic.last_battle_time =>
+                if last_battle_time == account_info.general.last_battle_time =>
             {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
                 Ok(snapshots)
@@ -201,7 +201,7 @@ impl State {
                 self.account_tanks_cache
                     .insert(
                         account_id,
-                        (account_info.basic.last_battle_time, snapshots.clone()),
+                        (account_info.general.last_battle_time, snapshots.clone()),
                     )
                     .await;
                 Ok(snapshots)

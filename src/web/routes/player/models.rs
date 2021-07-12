@@ -46,8 +46,8 @@ impl ViewModel {
         log::info!("Requested player #{} within {:?}s.", account_id, period);
 
         let current_info = state.retrieve_account_info(account_id).await?;
-        set_user(&current_info.nickname);
-        database::insert_account_or_ignore(&state.database, &current_info.basic).await?;
+        set_user(&current_info.general.nickname);
+        database::insert_account_or_ignore(&state.database, &current_info.general).await?;
 
         let current_tanks = state.retrieve_tanks(&current_info).await?;
         let total_tanks = current_tanks.len();
@@ -76,12 +76,12 @@ impl ViewModel {
         };
 
         Ok(Self {
-            account_id: current_info.basic.id,
-            nickname: current_info.nickname.clone(),
-            created_at: current_info.created_at,
-            last_battle_time: current_info.basic.last_battle_time,
+            account_id: current_info.general.id,
+            nickname: current_info.general.nickname.clone(),
+            created_at: current_info.general.created_at,
+            last_battle_time: current_info.general.last_battle_time,
             total_battles: current_info.statistics.all.battles,
-            has_recently_played: current_info.basic.last_battle_time
+            has_recently_played: current_info.general.last_battle_time
                 > (Utc::now() - Duration::hours(1)),
             is_active: current_info.is_active(),
             warn_no_previous_account_info: previous_info.is_none(),

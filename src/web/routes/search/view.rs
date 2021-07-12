@@ -28,7 +28,7 @@ pub async fn get(
 
     if model.accounts.len() == 1 {
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
-            model.accounts.first().unwrap().basic.id,
+            model.accounts.first().unwrap().general.id,
         ))));
     }
 
@@ -83,13 +83,13 @@ pub async fn get(
                             @for account in &model.accounts {
                                 div.box {
                                     p.title."is-5" {
-                                        a href=(get_account_url(account.basic.id)) { (account.nickname) }
+                                        a href=(get_account_url(account.general.id)) { (account.general.nickname) }
                                     }
                                     p.subtitle."is-6" {
                                         span.icon-text.has-text-grey {
                                             span { (account.statistics.all.battles) " боев" }
                                             span.icon { i.far.fa-dot-circle {} }
-                                            span { (datetime(account.basic.last_battle_time, Tense::Past)) }
+                                            span { (datetime(account.general.last_battle_time, Tense::Past)) }
                                         }
                                     }
                                 }
