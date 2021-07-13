@@ -298,7 +298,7 @@ pub async fn get(
                                                     td.has-text-info { strong { (render_f64(100.0 * row.win_rate.0, 1)) "%" } }
                                                     td.has-text-centered.is-white-space-nowrap {
                                                         strong { (render_f64(100.0 * row.expected_win_rate.0, 1)) "%" }
-                                                        span.(if row.expected_win_rate_margin.0 > 0.25 { "has-text-danger" } else { "" }) {
+                                                        span.(margin_class(row.expected_win_rate_margin.0, 0.1, 0.25)) {
                                                             " ±" (render_f64(row.expected_win_rate_margin.0 * 100.0, 1))
                                                         }
                                                     }
@@ -313,8 +313,11 @@ pub async fn get(
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                             span {
                                                                 strong { (render_f64(row.expected_gold_per_battle.0, 1)) }
-                                                                " ±"
-                                                                (render_f64(row.vehicle.tier as f64 * row.expected_win_rate_margin.0, 1))
+                                                                @let gold_margin = row.vehicle.tier as f64 * row.expected_win_rate_margin.0;
+                                                                span.(margin_class(gold_margin, 2.0, 3.0)) {
+                                                                    " ±"
+                                                                    (render_f64(gold_margin, 1))
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -397,5 +400,13 @@ fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
                 }
             }
         }
+    }
+}
+
+fn margin_class(value: f64, level_success: f64, level_warning: f64) -> &'static str {
+    match value {
+        _ if value < level_success => "has-text-success",
+        _ if value < level_warning => "has-text-warning",
+        _ => "has-text-danger",
     }
 }
