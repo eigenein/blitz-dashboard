@@ -7,6 +7,7 @@ use rocket::response::content::Html;
 
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::Tankopedia;
+use crate::wargaming::AccountInfoCache;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::{account_search, datetime, footer, headers, icon_text};
 use crate::web::state::State;
@@ -21,8 +22,17 @@ pub async fn get(
     period: Option<String>,
     state: &rocket::State<State>,
     tankopedia: &rocket::State<Tankopedia>,
+    account_info_cache: &rocket::State<AccountInfoCache>,
 ) -> crate::web::result::Result<Html<String>> {
-    let model = ViewModel::new(account_id, period, sort, &state, &tankopedia).await?;
+    let model = ViewModel::new(
+        account_id,
+        sort,
+        period,
+        &state,
+        &account_info_cache,
+        &tankopedia,
+    )
+    .await?;
     let footer = footer(state).await?;
 
     let markup = html! {

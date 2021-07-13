@@ -11,6 +11,7 @@ use crate::logging::set_user;
 use crate::models::{AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::Tankopedia;
+use crate::wargaming::AccountInfoCache;
 use crate::web::state::State;
 
 pub struct ViewModel {
@@ -33,9 +34,10 @@ pub struct ViewModel {
 impl ViewModel {
     pub async fn new(
         account_id: i32,
-        period: Option<String>,
         sort: Option<String>,
+        period: Option<String>,
         state: &State,
+        account_info_cache: &AccountInfoCache,
         tankopedia: &Tankopedia,
     ) -> crate::Result<ViewModel> {
         let sort = sort
@@ -47,7 +49,7 @@ impl ViewModel {
         };
         log::info!("Requested player #{} within {:?}s.", account_id, period);
 
-        let current_info = state.retrieve_account_info(account_id).await?;
+        let current_info = account_info_cache.get(account_id).await?;
         set_user(&current_info.general.nickname);
         database::insert_account_or_ignore(&state.database, &current_info.general).await?;
 

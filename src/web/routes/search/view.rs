@@ -4,6 +4,7 @@ use rocket::response::content::Html;
 use rocket::response::Redirect;
 use rocket::Responder;
 
+use crate::wargaming::AccountSearchCache;
 use crate::web::partials::{account_search, datetime, footer, headers};
 use crate::web::routes::player::get_account_url;
 use crate::web::state::State;
@@ -22,8 +23,9 @@ pub enum Response {
 pub async fn get(
     query: &str,
     state: &rocket::State<State>,
+    account_search_cache: &rocket::State<AccountSearchCache>,
 ) -> crate::web::result::Result<Response> {
-    let model = ViewModel::new(&state, query.to_string()).await?;
+    let model = ViewModel::new(query.to_string(), &account_search_cache).await?;
     let footer = footer(state).await?;
 
     if model.accounts.len() == 1 {

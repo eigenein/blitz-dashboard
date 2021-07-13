@@ -1,6 +1,6 @@
 use crate::logging::clear_user;
 use crate::models::AccountInfo;
-use crate::web::state::State;
+use crate::wargaming::AccountSearchCache;
 
 pub struct ViewModel {
     pub query: String,
@@ -8,10 +8,13 @@ pub struct ViewModel {
 }
 
 impl ViewModel {
-    pub async fn new(state: &State, query: String) -> crate::Result<Self> {
+    pub async fn new(
+        query: String,
+        account_search_cache: &AccountSearchCache,
+    ) -> crate::Result<Self> {
         clear_user();
 
-        let mut accounts = state.search_accounts(&query).await?.to_vec();
+        let mut accounts = account_search_cache.get(&query).await?.to_vec();
         accounts.sort_unstable_by(|left, right| {
             right
                 .general

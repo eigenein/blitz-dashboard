@@ -6,6 +6,7 @@ use std::time::{Duration as StdDuration, Instant};
 use anyhow::{anyhow, Context};
 use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
+use moka::future::{Cache, CacheBuilder};
 use reqwest::header;
 use reqwest::Url;
 use serde::de::DeserializeOwned;
@@ -209,5 +210,104 @@ impl WargamingApi {
             .await
             .context("failed to parse JSON")?
             .data)
+    }
+}
+
+const DAY: StdDuration = StdDuration::from_secs(86400);
+const MINUTE: StdDuration = StdDuration::from_secs(60);
+const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
+
+pub struct AccountSearchCache {
+    api: WargamingApi,
+    id_cache: Cache<String, Arc<Vec<i32>>>,
+    info_cache: Cache<String, Arc<Vec<models::AccountInfo>>>,
+}
+
+impl AccountSearchCache {
+    pub fn new(api: WargamingApi) -> Self {
+        Self {
+            api,
+            id_cache: CacheBuilder::new(1_000).time_to_live(DAY).build(),
+            info_cache: CacheBuilder::new(1_000).time_to_live(FIVE_MINUTES).build(),
+        }
+    }
+
+    #[allow(clippy::ptr_arg)]
+    pub async fn get(&self, query: &String) -> crate::Result<Arc<Vec<models::AccountInfo>>> {
+        match self.info_cache.get(query) {
+            // Check if we already have up-to-date search results.
+            Some(infos) => Ok(infos),
+
+            None => {
+                let account_ids = match self.id_cache.get(query) {
+                    // Check if we already have account IDs for this query.
+                    Some(account_ids) => account_ids,
+
+                    None => {
+                        let account_ids: Vec<i32> = self
+                            .api
+                            .search_accounts(query)
+                            .await?
+                            .iter()
+                            .map(|account| account.id)
+                            .collect();
+                        let account_ids = Arc::new(account_ids);
+                        self.id_cache
+                            .insert(query.clone(), account_ids.clone())
+                            .await;
+                        account_ids
+                    }
+                };
+
+                let account_infos: Vec<models::AccountInfo> = self
+                    .api
+                    .get_account_info(&account_ids)
+                    .await?
+                    .into_iter()
+                    .filter_map(|(_, info)| info)
+                    .collect();
+                let account_infos = Arc::new(account_infos);
+                self.info_cache
+                    .insert(query.clone(), account_infos.clone())
+                    .await;
+                Ok(account_infos)
+            }
+        }
+    }
+}
+
+/// Cached account info.
+pub struct AccountInfoCache {
+    api: WargamingApi,
+    cache: Cache<i32, Arc<models::AccountInfo>>,
+}
+
+impl AccountInfoCache {
+    pub fn new(api: WargamingApi) -> Self {
+        Self {
+            api,
+            cache: CacheBuilder::new(1_000).time_to_live(MINUTE).build(),
+        }
+    }
+
+    pub async fn get(&self, account_id: i32) -> crate::Result<Arc<models::AccountInfo>> {
+        match self.cache.get(&account_id) {
+            Some(account_info) => {
+                log::debug!("Cache hit on account #{} info.", account_id);
+                Ok(account_info)
+            }
+            None => {
+                let account_info = Arc::new(
+                    self.api
+                        .get_account_info(&[account_id])
+                        .await?
+                        .remove(&account_id.to_string())
+                        .flatten()
+                        .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
+                );
+                self.cache.insert(account_id, account_info.clone()).await;
+                Ok(account_info)
+            }
+        }
     }
 }

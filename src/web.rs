@@ -11,7 +11,7 @@ use state::State;
 
 use crate::opts::Opts;
 use crate::tankopedia::Tankopedia;
-use crate::wargaming::WargamingApi;
+use crate::wargaming::{AccountInfoCache, AccountSearchCache, WargamingApi};
 
 mod error;
 mod fairings;
@@ -31,6 +31,8 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
     let tankopedia = Tankopedia::new(&api).await?;
     rocket::custom(to_config(&opts)?)
         .manage(tankopedia)
+        .manage(AccountInfoCache::new(api.clone()))
+        .manage(AccountSearchCache::new(api.clone()))
         .manage(State::new(api, database, opts).await?)
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])

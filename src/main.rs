@@ -2,7 +2,7 @@ use clap::{crate_name, crate_version};
 use futures::try_join;
 use sentry::integrations::anyhow::capture_anyhow;
 
-use crate::wargaming::WargamingApi;
+use wargaming::WargamingApi;
 
 mod crawler;
 mod database;
