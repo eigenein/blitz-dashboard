@@ -4,7 +4,7 @@ use rocket::response::content::Html;
 use rocket::response::Redirect;
 use rocket::Responder;
 
-use crate::wargaming::AccountSearchCache;
+use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::web::partials::{account_search, datetime, footer, headers};
 use crate::web::routes::player::get_account_url;
 use crate::web::state::State;

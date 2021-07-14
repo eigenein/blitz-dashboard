@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 use clap::{crate_name, crate_version};
 use futures::try_join;
 use sentry::integrations::anyhow::capture_anyhow;
@@ -13,6 +15,7 @@ mod opts;
 mod serde;
 mod statistics;
 mod tankopedia;
+mod time;
 mod wargaming;
 mod web;
 

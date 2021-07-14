@@ -7,7 +7,7 @@ use rocket::response::content::Html;
 
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::Tankopedia;
-use crate::wargaming::AccountInfoCache;
+use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::{account_search, datetime, footer, headers, icon_text};
 use crate::web::state::State;

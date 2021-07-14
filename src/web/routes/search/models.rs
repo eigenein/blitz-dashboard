@@ -1,6 +1,6 @@
 use crate::logging::clear_user;
 use crate::models::AccountInfo;
-use crate::wargaming::AccountSearchCache;
+use crate::wargaming::cache::account::search::AccountSearchCache;
 
 pub struct ViewModel {
     pub query: String,

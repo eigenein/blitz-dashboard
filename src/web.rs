@@ -11,7 +11,9 @@ use state::State;
 
 use crate::opts::Opts;
 use crate::tankopedia::Tankopedia;
-use crate::wargaming::{AccountInfoCache, AccountSearchCache, WargamingApi};
+use crate::wargaming::cache::account::info::AccountInfoCache;
+use crate::wargaming::cache::account::search::AccountSearchCache;
+use crate::wargaming::WargamingApi;
 
 mod error;
 mod fairings;

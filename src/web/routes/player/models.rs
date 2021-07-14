@@ -11,7 +11,7 @@ use crate::logging::set_user;
 use crate::models::{AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::Tankopedia;
-use crate::wargaming::AccountInfoCache;
+use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::web::state::State;
 
 pub struct ViewModel {
