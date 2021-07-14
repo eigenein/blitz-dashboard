@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use reqwest::header;
@@ -121,27 +121,6 @@ impl WargamingApi {
                 )
             })?
             .unwrap_or_else(Vec::new))
-    }
-
-    /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
-    pub async fn get_tankopedia(&self) -> crate::Result<HashMap<i32, models::Vehicle>> {
-        log::info!("Retrieving the tankopedia…");
-        Ok(self
-            .call::<HashMap<String, models::Vehicle>>(&Url::parse_with_params(
-                "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
-                &[("application_id", self.application_id.as_str())],
-            )?)
-            .await
-            .context("failed to get the tankopedia")?
-            .into_iter()
-            .map(|(tank_id, vehicle)| {
-                tank_id
-                    .parse::<i32>()
-                    .map(|tank_id| (tank_id, vehicle))
-                    .map_err(|error| anyhow!(error))
-            })
-            .collect::<crate::Result<HashMap<i32, models::Vehicle>>>()
-            .context("failed to parse the tankopedia")?)
     }
 
     pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<models::Tank>> {

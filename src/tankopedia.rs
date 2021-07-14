@@ -1,13 +1,20 @@
 use std::collections::HashMap;
 
+use anyhow::Context;
+
 use crate::models::{Nation, TankType, Vehicle};
-use crate::wargaming::WargamingApi;
 
 pub struct Tankopedia(HashMap<i32, Vehicle>);
 
 impl Tankopedia {
-    pub async fn new(api: &WargamingApi) -> crate::Result<Self> {
-        let mut tankopedia = api.get_tankopedia().await?;
+    pub fn new() -> crate::Result<Self> {
+        let tankopedia: HashMap<String, Vehicle> =
+            serde_json::from_str(include_str!("tankopedia.json"))
+                .context("failed to parse the tankopedia")?;
+        let mut tankopedia: HashMap<i32, Vehicle> = tankopedia
+            .into_iter()
+            .map(|(_, vehicle)| (vehicle.tank_id, vehicle))
+            .collect();
         tankopedia.insert(
             23057,
             Vehicle {

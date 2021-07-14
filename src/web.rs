@@ -30,7 +30,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
     }
 
     log::info!("Listening on {}:{}.", opts.host, opts.port);
-    let tankopedia = Tankopedia::new(&api).await?;
+    let tankopedia = Tankopedia::new()?;
     rocket::custom(to_config(&opts)?)
         .manage(tankopedia)
         .manage(AccountInfoCache::new(api.clone()))
