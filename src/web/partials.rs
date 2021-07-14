@@ -1,11 +1,9 @@
 use std::ops::Range;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_version;
 use maud::{html, Markup};
-
-use crate::web::state::State;
 
 #[allow(dead_code)]
 pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
@@ -85,19 +83,8 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
     }
 }
 
-pub fn duration(value: Duration, tense: Tense) -> Markup {
+pub fn footer() -> Markup {
     html! {
-        span title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
-    }
-}
-
-pub async fn footer(state: &State) -> crate::Result<Markup> {
-    let account_count = state.retrieve_account_count().await?;
-    let account_snapshot_count = state.retrieve_account_snapshot_count().await?;
-    let tank_snapshot_count = state.retrieve_tank_snapshot_count().await?;
-    let crawler_lag = state.retrieve_crawler_lag().await?;
-
-    let markup = html! {
         footer.footer {
             div.container {
                 div.columns {
@@ -153,38 +140,8 @@ pub async fn footer(state: &State) -> crate::Result<Markup> {
                             }
                         }
                     }
-
-                    div.column."is-3" {
-                        p.title."is-6" { "Статистика" }
-                        p."mt-1" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-user.has-text-info {} }
-                                span { strong { (account_count) } " аккаунтов" }
-                            }
-                        }
-                        p."mt-1" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-portrait.has-text-info {} }
-                                span { strong { (account_snapshot_count) } " снимков аккаунтов" }
-                            }
-                        }
-                        p."mt-1" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-truck-monster.has-text-info {} }
-                                span { strong { (tank_snapshot_count) } " снимков танков" }
-                            }
-                        }
-                        p."mt-1" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-clock.has-text-info {} }
-                                span { "Обход робота " strong { (duration(crawler_lag, Tense::Past)) } }
-                            }
-                        }
-                    }
                 }
             }
         }
-    };
-
-    Ok(markup)
+    }
 }

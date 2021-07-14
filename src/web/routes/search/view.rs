@@ -26,7 +26,6 @@ pub async fn get(
     account_search_cache: &rocket::State<AccountSearchCache>,
 ) -> crate::web::result::Result<Response> {
     let model = ViewModel::new(query.to_string(), &account_search_cache).await?;
-    let footer = footer(state).await?;
 
     if model.accounts.len() == 1 {
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
@@ -101,7 +100,7 @@ pub async fn get(
                 }
             }
 
-            (footer)
+            (footer())
         }
     };
 

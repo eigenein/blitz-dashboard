@@ -1,12 +1,10 @@
 use std::sync::Arc;
-use std::time::Duration as StdDuration;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use maud::PreEscaped;
 use moka::future::{Cache, CacheBuilder};
 use sqlx::PgPool;
 
-use crate::database;
 use crate::models::{AccountInfo, Tank};
 use crate::opts::Opts;
 use crate::wargaming::WargamingApi;
@@ -19,71 +17,17 @@ pub struct State {
     pub tracking_code: PreEscaped<String>,
 
     account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<Tank>>)>,
-    account_count_cache: Cache<(), i64>,
-    account_snapshot_count_cache: Cache<(), i64>,
-    tank_snapshot_count_cache: Cache<(), i64>,
-    crawler_lag_cache: Cache<(), Duration>,
 }
 
 impl State {
     pub async fn new(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Result<Self> {
-        const FIVE_MINUTES: StdDuration = StdDuration::from_secs(300);
-
         let state = State {
             api,
             database,
             tracking_code: Self::make_tracking_code(&opts),
             account_tanks_cache: CacheBuilder::new(1_000).build(),
-            account_count_cache: CacheBuilder::new(1).time_to_live(FIVE_MINUTES).build(),
-            account_snapshot_count_cache: CacheBuilder::new(1).time_to_live(FIVE_MINUTES).build(),
-            tank_snapshot_count_cache: CacheBuilder::new(1).time_to_live(FIVE_MINUTES).build(),
-            crawler_lag_cache: CacheBuilder::new(1).time_to_live(FIVE_MINUTES).build(),
         };
         Ok(state)
-    }
-
-    pub async fn retrieve_account_count(&self) -> crate::Result<i64> {
-        match self.account_count_cache.get(&()) {
-            Some(count) => Ok(count),
-            None => {
-                let count = database::retrieve_account_count(&self.database).await?;
-                self.account_count_cache.insert((), count).await;
-                Ok(count)
-            }
-        }
-    }
-
-    pub async fn retrieve_account_snapshot_count(&self) -> crate::Result<i64> {
-        match self.account_snapshot_count_cache.get(&()) {
-            Some(count) => Ok(count),
-            None => {
-                let count = database::retrieve_account_snapshot_count(&self.database).await?;
-                self.account_snapshot_count_cache.insert((), count).await;
-                Ok(count)
-            }
-        }
-    }
-
-    pub async fn retrieve_tank_snapshot_count(&self) -> crate::Result<i64> {
-        match self.tank_snapshot_count_cache.get(&()) {
-            Some(count) => Ok(count),
-            None => {
-                let count = database::retrieve_tank_snapshot_count(&self.database).await?;
-                self.tank_snapshot_count_cache.insert((), count).await;
-                Ok(count)
-            }
-        }
-    }
-
-    pub async fn retrieve_crawler_lag(&self) -> crate::Result<Duration> {
-        match self.crawler_lag_cache.get(&()) {
-            Some(lag) => Ok(lag),
-            None => {
-                let lag = Utc::now() - database::retrieve_oldest_crawled_at(&self.database).await?;
-                self.crawler_lag_cache.insert((), lag).await;
-                Ok(lag)
-            }
-        }
     }
 
     pub async fn retrieve_tanks(

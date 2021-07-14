@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{DateTime, Duration, Utc};
 use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
@@ -31,49 +31,6 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
         .context("failed to run the script")?;
 
     Ok(inner)
-}
-
-pub async fn retrieve_account_count(executor: &PgPool) -> crate::Result<i64> {
-    // language=SQL
-    const QUERY: &str = "SELECT count(*) FROM accounts";
-    Ok(sqlx::query_scalar(QUERY)
-        .fetch_one(executor)
-        .await
-        .context("failed to select count from accounts")?)
-}
-
-pub async fn retrieve_account_snapshot_count<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
-) -> crate::Result<i64> {
-    // language=SQL
-    const QUERY: &str = "SELECT count(*) FROM account_snapshots";
-    Ok(sqlx::query_scalar(QUERY)
-        .fetch_one(executor)
-        .await
-        .context("failed to select count from account snapshots")?)
-}
-
-pub async fn retrieve_tank_snapshot_count<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
-) -> crate::Result<i64> {
-    // language=SQL
-    const QUERY: &str = "SELECT count(*) FROM tank_snapshots";
-    Ok(sqlx::query_scalar(QUERY)
-        .fetch_one(executor)
-        .await
-        .context("failed to select count from tank snapshots")?)
-}
-
-pub async fn retrieve_oldest_crawled_at<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
-) -> crate::Result<DateTime<Utc>> {
-    // language=SQL
-    const QUERY: &str = "SELECT MIN(crawled_at) FROM accounts WHERE crawled_at IS NOT NULL";
-    Ok(sqlx::query_scalar(QUERY)
-        .fetch_optional(executor)
-        .await
-        .context("failed to select the oldest `crawled_at`")?
-        .unwrap_or_else(|| Utc.timestamp(0, 0)))
 }
 
 pub async fn retrieve_oldest_crawled_accounts<'e, E: Executor<'e, Database = Postgres>>(

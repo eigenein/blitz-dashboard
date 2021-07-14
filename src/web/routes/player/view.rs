@@ -33,7 +33,6 @@ pub async fn get(
         &tankopedia,
     )
     .await?;
-    let footer = footer(state).await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -350,7 +349,7 @@ pub async fn get(
                     }
                 }
 
-                (footer)
+                (footer())
             }
         }
     };
