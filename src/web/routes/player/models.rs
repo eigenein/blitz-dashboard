@@ -22,7 +22,6 @@ pub struct ViewModel {
     pub has_recently_played: bool,
     pub is_active: bool,
     pub total_battles: i32,
-    pub total_tanks: usize,
     pub sort: Cow<'static, str>,
     pub period: StdDuration,
     pub warn_no_previous_account_info: bool,
@@ -52,20 +51,33 @@ impl ViewModel {
         set_user(&current_info.general.nickname);
         database::insert_account_or_ignore(&state.database, &current_info.general).await?;
 
-        let current_tanks = state.retrieve_tanks(&current_info).await?;
-        let total_tanks = current_tanks.len();
         let before = Utc::now() - Duration::from_std(period)?;
         let previous_info =
             database::retrieve_latest_account_snapshot(&state.database, account_id, &before)
                 .await?;
-        let previous_tanks = if previous_info.is_some() {
-            database::retrieve_latest_tank_snapshots(&state.database, account_id, &before).await?
-        } else {
-            Vec::new()
+        let current_tanks = state.retrieve_tanks(&current_info).await?;
+        let (current_tanks, previous_tanks) = match &previous_info {
+            Some(previous_info) => {
+                let current_tanks: Vec<Tank> = current_tanks
+                    .iter()
+                    .filter(|tank| tank.last_battle_time >= previous_info.general.last_battle_time)
+                    .cloned()
+                    .collect();
+                let tank_ids: Vec<i32> = current_tanks.iter().map(|tank| tank.tank_id).collect();
+                let previous_tanks = database::retrieve_latest_tank_snapshots(
+                    &state.database,
+                    account_id,
+                    &before,
+                    &tank_ids,
+                )
+                .await?;
+                (current_tanks, previous_tanks)
+            }
+            None => (current_tanks.to_vec(), Vec::new()),
         };
 
         let mut rows: Vec<DisplayRow> = Vec::new();
-        for tank in Self::subtract_tanks(current_tanks.to_vec(), previous_tanks).into_iter() {
+        for tank in Self::subtract_tanks(current_tanks, previous_tanks).into_iter() {
             rows.push(Self::make_display_row(get_vehicle(tank.tank_id), tank)?);
         }
         Self::sort_tanks(&mut rows, &sort);
@@ -87,7 +99,6 @@ impl ViewModel {
             warn_no_previous_account_info: previous_info.is_none(),
             statistics,
             rows,
-            total_tanks,
             before,
             period,
             sort,

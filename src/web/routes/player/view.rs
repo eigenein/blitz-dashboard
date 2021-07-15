@@ -75,12 +75,6 @@ pub async fn get(
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Танков" }
-                                                    p.title { (model.total_tanks) }
-                                                }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
                                                     p.heading { "Боев" }
                                                     p.title { (model.total_battles) }
                                                 }

@@ -74,12 +74,13 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
     executor: E,
     account_id: i32,
     before: &DateTime<Utc>,
+    tank_ids: &[i32],
 ) -> crate::Result<Vec<Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT DISTINCT ON (tank_id) *
         FROM tank_snapshots
-        WHERE account_id = $1 AND last_battle_time <= $2
+        WHERE account_id = $1 AND last_battle_time <= $2 AND tank_id IN (SELECT unnest($3))
         ORDER BY tank_id, last_battle_time DESC
     ";
 
@@ -87,6 +88,7 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
     Ok(sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(before)
+        .bind(tank_ids)
         .fetch_all(executor)
         .await
         .context("failed to retrieve the latest tank snapshots")?)
