@@ -8,10 +8,7 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
 
 use crate::metrics::Stopwatch;
-use crate::models::{
-    AccountInfo, AccountInfoStatistics, AllStatistics, GeneralAccountInfo, Nation, Tank, TankType,
-    Vehicle,
-};
+use crate::models::{AccountInfo, AccountInfoStatistics, AllStatistics, GeneralAccountInfo, Tank};
 
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
@@ -248,29 +245,6 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
             .context("failed to insert tank snapshots")?;
     }
     Ok(())
-}
-
-impl<'r> FromRow<'r, PgRow> for Vehicle {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        Ok(Self {
-            tank_id: row.try_get("tank_id")?,
-            name: row.try_get("name")?,
-            tier: row.try_get("tier")?,
-            is_premium: row.try_get("is_premium")?,
-            nation: Nation::from_str(&row.try_get::<String, _>("nation")?).map_err(|error| {
-                sqlx::Error::ColumnDecode {
-                    index: "nation".to_string(),
-                    source: error.into(),
-                }
-            })?,
-            type_: TankType::from_str(&row.try_get::<String, _>("type")?).map_err(|error| {
-                sqlx::Error::ColumnDecode {
-                    index: "type".to_string(),
-                    source: error.into(),
-                }
-            })?,
-        })
-    }
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

@@ -129,7 +129,6 @@ pub enum Nation {
     Other,
 }
 
-// TODO: why would I need it?
 impl FromStr for Nation {
     type Err = anyhow::Error;
 
@@ -149,7 +148,6 @@ impl FromStr for Nation {
     }
 }
 
-// TODO: why would I need it?
 impl ToString for Nation {
     fn to_string(&self) -> String {
         match self {
@@ -182,34 +180,6 @@ pub enum TankType {
 
     #[serde(other)]
     Unknown,
-}
-
-// TODO: why would I need it?
-impl FromStr for TankType {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value {
-            "AT" => Ok(Self::AT),
-            "LIGHT" => Ok(Self::Light),
-            "MEDIUM" => Ok(Self::Medium),
-            "HEAVY" => Ok(Self::Heavy),
-            _ => Err(anyhow::anyhow!("`{}` is not a valid vehicle type", value)),
-        }
-    }
-}
-
-// TODO: why would I need it?
-impl ToString for TankType {
-    fn to_string(&self) -> String {
-        match self {
-            TankType::Light => "LIGHT".to_string(),
-            TankType::Medium => "MEDIUM".to_string(),
-            TankType::Heavy => "HEAVY".to_string(),
-            TankType::AT => "AT".to_string(),
-            TankType::Unknown => "Неизвестный".to_string(),
-        }
-    }
 }
 
 /// Represents a state of a specific player's tank at a specific moment in time.
