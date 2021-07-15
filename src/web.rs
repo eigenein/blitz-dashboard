@@ -10,7 +10,6 @@ use routes::r#static;
 use state::State;
 
 use crate::opts::Opts;
-use crate::tankopedia::Tankopedia;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::wargaming::WargamingApi;
@@ -30,9 +29,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Res
     }
 
     log::info!("Listening on {}:{}.", opts.host, opts.port);
-    let tankopedia = Tankopedia::new()?;
     rocket::custom(to_config(&opts)?)
-        .manage(tankopedia)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountSearchCache::new(api.clone()))
         .manage(State::new(api, database, opts).await?)

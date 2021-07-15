@@ -129,6 +129,7 @@ pub enum Nation {
     Other,
 }
 
+// TODO: why would I need it?
 impl FromStr for Nation {
     type Err = anyhow::Error;
 
@@ -148,6 +149,7 @@ impl FromStr for Nation {
     }
 }
 
+// TODO: why would I need it?
 impl ToString for Nation {
     fn to_string(&self) -> String {
         match self {
@@ -177,8 +179,12 @@ pub enum TankType {
 
     #[serde(rename = "AT-SPG")]
     AT,
+
+    #[serde(other)]
+    Unknown,
 }
 
+// TODO: why would I need it?
 impl FromStr for TankType {
     type Err = anyhow::Error;
 
@@ -193,6 +199,7 @@ impl FromStr for TankType {
     }
 }
 
+// TODO: why would I need it?
 impl ToString for TankType {
     fn to_string(&self) -> String {
         match self {
@@ -200,6 +207,7 @@ impl ToString for TankType {
             TankType::Medium => "MEDIUM".to_string(),
             TankType::Heavy => "HEAVY".to_string(),
             TankType::AT => "AT".to_string(),
+            TankType::Unknown => "Неизвестный".to_string(),
         }
     }
 }

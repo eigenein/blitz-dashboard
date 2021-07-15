@@ -10,7 +10,7 @@ use crate::database;
 use crate::logging::set_user;
 use crate::models::{AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
-use crate::tankopedia::Tankopedia;
+use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::web::state::State;
 
@@ -38,7 +38,6 @@ impl ViewModel {
         period: Option<String>,
         state: &State,
         account_info_cache: &AccountInfoCache,
-        tankopedia: &Tankopedia,
     ) -> crate::Result<ViewModel> {
         let sort = sort
             .map(Cow::Owned)
@@ -67,7 +66,7 @@ impl ViewModel {
 
         let mut rows: Vec<DisplayRow> = Vec::new();
         for tank in Self::subtract_tanks(current_tanks.to_vec(), previous_tanks).into_iter() {
-            rows.push(Self::make_display_row(tankopedia.get(tank.tank_id), tank)?);
+            rows.push(Self::make_display_row(get_vehicle(tank.tank_id), tank)?);
         }
         Self::sort_tanks(&mut rows, &sort);
 
