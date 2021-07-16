@@ -45,7 +45,7 @@ impl ViewModel {
             Some(period) => parse_duration(&period)?,
             None => StdDuration::from_secs(43200),
         };
-        log::info!("Requested player #{} within {:?}s.", account_id, period);
+        log::info!("Requested player #{} within {:?}.", account_id, period);
 
         let current_info = account_info_cache.get(account_id).await?;
         set_user(&current_info.general.nickname);
