@@ -37,6 +37,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::R
         .mount("/", routes![r#static::get_android_chrome_192x192])
         .mount("/", routes![r#static::get_android_chrome_512x512])
         .mount("/", routes![r#static::get_apple_touch_icon])
+        .mount("/", routes![r#static::get_player_js])
         .mount("/", routes![routes::index::get])
         .mount("/", routes![routes::search::get])
         .mount("/", routes![routes::player::get])

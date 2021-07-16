@@ -52,6 +52,11 @@ pub async fn get_apple_touch_icon() -> Static {
     )
 }
 
+#[get("/static/player.js")]
+pub async fn get_player_js() -> Static {
+    Static(ContentType::JavaScript, include_bytes!("static/player.js"))
+}
+
 pub struct Static(ContentType, &'static [u8]);
 
 #[rocket::async_trait]
