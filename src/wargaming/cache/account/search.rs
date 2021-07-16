@@ -1,4 +1,5 @@
-use async_std::sync::Arc;
+use std::sync::Arc;
+
 use moka::future::{Cache, CacheBuilder};
 
 use crate::models::AccountInfo;

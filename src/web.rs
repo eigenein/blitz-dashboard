@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use routes::r#static;
 use state::State;
 
-use crate::opts::Opts;
+use crate::opts::WebOpts;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::wargaming::WargamingApi;
@@ -23,16 +23,12 @@ mod routes;
 mod state;
 
 /// Run the web app.
-pub async fn run(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Result {
-    if !opts.web {
-        return Ok(());
-    }
-
+pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::Result {
     log::info!("Listening on {}:{}.", opts.host, opts.port);
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountSearchCache::new(api.clone()))
-        .manage(State::new(api, database, opts).await?)
+        .manage(State::new(api, database, &opts).await?)
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
         .mount("/", routes![r#static::get_favicon_16x16])
@@ -65,7 +61,7 @@ fn default_catcher(status: Status, request: &Request<'_>) -> response::status::C
     response::status::Custom(status, ())
 }
 
-fn to_config(opts: &Opts) -> crate::Result<rocket::Config> {
+fn to_config(opts: &WebOpts) -> crate::Result<rocket::Config> {
     Ok(rocket::Config {
         address: IpAddr::from_str(&opts.host)?,
         port: opts.port,

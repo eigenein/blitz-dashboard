@@ -21,11 +21,7 @@ enum CrawlMode {
 }
 
 impl Crawler {
-    pub async fn run(api: WargamingApi, database: PgPool, run: bool) -> crate::Result {
-        if !run {
-            return Ok(());
-        }
-
+    pub async fn run(api: WargamingApi, database: PgPool) -> crate::Result {
         let crawler = Self { api, database };
         loop {
             if let Err(error) = crawler.crawl_batch().await {

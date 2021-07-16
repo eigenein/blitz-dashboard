@@ -7,7 +7,7 @@ use moka::future::{Cache, CacheBuilder};
 use sqlx::PgPool;
 
 use crate::models::{AccountInfo, Tank};
-use crate::opts::Opts;
+use crate::opts::WebOpts;
 use crate::wargaming::WargamingApi;
 
 /// Web application global state.
@@ -26,7 +26,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(api: WargamingApi, database: PgPool, opts: &Opts) -> crate::Result<Self> {
+    pub async fn new(api: WargamingApi, database: PgPool, opts: &WebOpts) -> crate::Result<Self> {
         let state = State {
             api,
             database,
@@ -68,7 +68,7 @@ impl State {
         }
     }
 
-    fn make_tracking_code(opts: &Opts) -> PreEscaped<String> {
+    fn make_tracking_code(opts: &WebOpts) -> PreEscaped<String> {
         let mut extra_html_headers = Vec::new();
         if let Some(counter) = &opts.yandex_metrika {
             extra_html_headers.push(format!(
