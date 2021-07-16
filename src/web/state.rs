@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
@@ -12,11 +13,16 @@ use crate::wargaming::WargamingApi;
 /// Web application global state.
 #[derive(Clone)]
 pub struct State {
-    pub api: WargamingApi,
+    // TODO: move to Rocket's `.manage()`.
+    api: WargamingApi,
     pub database: PgPool,
+
+    // TODO: move into a separate struct.
     pub tracking_code: PreEscaped<String>,
 
-    account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<Vec<Tank>>)>,
+    // TODO: forgot to move into a separate struct.
+    #[allow(clippy::type_complexity)]
+    account_tanks_cache: Cache<i32, (DateTime<Utc>, Arc<HashMap<i32, Tank>>)>,
 }
 
 impl State {
@@ -33,7 +39,7 @@ impl State {
     pub async fn retrieve_tanks(
         &self,
         account_info: &AccountInfo,
-    ) -> crate::Result<Arc<Vec<Tank>>> {
+    ) -> crate::Result<Arc<HashMap<i32, Tank>>> {
         let account_id = account_info.general.id;
         match self.account_tanks_cache.get(&account_id) {
             Some((last_battle_time, snapshots))
@@ -43,7 +49,14 @@ impl State {
                 Ok(snapshots)
             }
             _ => {
-                let snapshots = Arc::new(self.api.get_merged_tanks(account_id).await?);
+                let snapshots: Arc<HashMap<i32, Tank>> = Arc::new(
+                    self.api
+                        .get_merged_tanks(account_id)
+                        .await?
+                        .into_iter()
+                        .map(|tank| (tank.tank_id, tank))
+                        .collect(),
+                );
                 self.account_tanks_cache
                     .insert(
                         account_id,

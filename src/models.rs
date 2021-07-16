@@ -48,7 +48,7 @@ pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone, Default)]
+#[derive(Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
@@ -183,7 +183,7 @@ pub enum TankType {
 }
 
 /// Represents a state of a specific player's tank at a specific moment in time.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Tank {
     pub account_id: i32,
     pub tank_id: i32,
@@ -216,10 +216,40 @@ impl Sub for &AllStatistics {
     }
 }
 
+impl Sub for &Tank {
+    type Output = Tank;
+
+    #[must_use]
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            account_id: self.account_id,
+            tank_id: self.tank_id,
+            all_statistics: &self.all_statistics - &rhs.all_statistics,
+            last_battle_time: self.last_battle_time,
+            battle_life_time: self.battle_life_time - rhs.battle_life_time,
+        }
+    }
+}
+
 impl AccountInfo {
     pub fn is_active(&self) -> bool {
         self.general.last_battle_time > (Utc::now() - Duration::days(365))
     }
+}
+
+pub fn subtract_tanks(
+    tank_ids: &[i32],
+    left: &HashMap<i32, Tank>,
+    right: &HashMap<i32, Tank>,
+) -> Vec<Tank> {
+    tank_ids
+        .iter()
+        .filter_map(|tank_id| left.get(tank_id))
+        .map(|left_tank| match right.get(&left_tank.tank_id) {
+            Some(right_tank) => left_tank - right_tank,
+            None => *left_tank,
+        })
+        .collect()
 }
 
 #[cfg(test)]

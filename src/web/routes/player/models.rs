@@ -3,12 +3,12 @@ use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, Duration, Utc};
 use humantime::parse_duration;
-use itertools::{merge_join_by, EitherOrBoth};
 use ordered_float::OrderedFloat;
+use smallvec::SmallVec;
 
 use crate::database;
 use crate::logging::set_user;
-use crate::models::{AllStatistics, Tank, Vehicle};
+use crate::models::{subtract_tanks, AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
@@ -56,35 +56,36 @@ impl ViewModel {
             database::retrieve_latest_account_snapshot(&state.database, account_id, &before)
                 .await?;
         let current_tanks = state.retrieve_tanks(&current_info).await?;
-        let (current_tanks, previous_tanks) = match &previous_info {
+        let tanks_delta = match &previous_info {
             Some(previous_info) => {
-                let current_tanks: Vec<Tank> = current_tanks
+                let played_tank_ids: SmallVec<[i32; 96]> = current_tanks
                     .iter()
-                    .filter(|tank| tank.last_battle_time >= previous_info.general.last_battle_time)
-                    .cloned()
+                    .filter(|(_, tank)| {
+                        tank.last_battle_time > previous_info.general.last_battle_time
+                    })
+                    .map(|(tank_id, _)| *tank_id)
                     .collect();
-                let tank_ids: Vec<i32> = current_tanks.iter().map(|tank| tank.tank_id).collect();
-                let previous_tanks = database::retrieve_latest_tank_snapshots(
+                let previous_tank_snapshots = database::retrieve_latest_tank_snapshots(
                     &state.database,
                     account_id,
                     &before,
-                    &tank_ids,
+                    &played_tank_ids,
                 )
                 .await?;
-                (current_tanks, previous_tanks)
+                subtract_tanks(&played_tank_ids, &current_tanks, &previous_tank_snapshots)
             }
-            None => (current_tanks.to_vec(), Vec::new()),
+            None => current_tanks.values().cloned().collect(), // FIXME: `cloned`.
         };
 
-        let mut rows: Vec<DisplayRow> = Vec::new();
-        for tank in Self::subtract_tanks(current_tanks, previous_tanks).into_iter() {
-            rows.push(Self::make_display_row(get_vehicle(tank.tank_id), tank)?);
-        }
+        let mut rows: Vec<DisplayRow> = tanks_delta
+            .into_iter()
+            .map(Self::make_display_row)
+            .collect();
         Self::sort_tanks(&mut rows, &sort);
 
         let statistics = match &previous_info {
             Some(previous_info) => &current_info.statistics.all - &previous_info.statistics.all,
-            None => current_info.statistics.all.clone(),
+            None => current_info.statistics.all,
         };
 
         Ok(Self {
@@ -105,11 +106,12 @@ impl ViewModel {
         })
     }
 
-    fn make_display_row(vehicle: Vehicle, tank: Tank) -> crate::Result<DisplayRow> {
+    fn make_display_row(tank: Tank) -> DisplayRow {
+        let vehicle = get_vehicle(tank.tank_id);
         let stats = &tank.all_statistics;
         let win_rate = stats.wins as f64 / stats.battles as f64;
         let expected_win_rate = wilson_score_interval(stats.battles, stats.wins);
-        Ok(DisplayRow {
+        DisplayRow {
             win_rate: OrderedFloat(win_rate),
             expected_win_rate: OrderedFloat(expected_win_rate.0),
             expected_win_rate_margin: OrderedFloat(expected_win_rate.1),
@@ -121,35 +123,7 @@ impl ViewModel {
                 10.0 + vehicle.tier as f64 * expected_win_rate.0,
             ),
             vehicle,
-        })
-    }
-
-    fn subtract_tanks(
-        mut actual_snapshots: Vec<Tank>,
-        mut previous_snapshots: Vec<Tank>,
-    ) -> Vec<Tank> {
-        actual_snapshots.sort_unstable_by_key(|snapshot| snapshot.tank_id);
-        previous_snapshots.sort_unstable_by_key(|snapshot| snapshot.tank_id);
-
-        merge_join_by(actual_snapshots, previous_snapshots, |left, right| {
-            left.tank_id.cmp(&right.tank_id)
-        })
-        .filter_map(|item| match item {
-            EitherOrBoth::Both(current, previous)
-                if current.all_statistics.battles > previous.all_statistics.battles =>
-            {
-                Some(Tank {
-                    account_id: current.account_id,
-                    tank_id: current.tank_id,
-                    all_statistics: &current.all_statistics - &previous.all_statistics,
-                    last_battle_time: current.last_battle_time,
-                    battle_life_time: current.battle_life_time - previous.battle_life_time,
-                })
-            }
-            EitherOrBoth::Left(current) => Some(current),
-            _ => None,
-        })
-        .collect::<Vec<Tank>>()
+        }
     }
 
     fn sort_tanks(rows: &mut Vec<DisplayRow>, sort_by: &str) {

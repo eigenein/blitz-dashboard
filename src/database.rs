@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
@@ -75,7 +76,12 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
     account_id: i32,
     before: &DateTime<Utc>,
     tank_ids: &[i32],
-) -> crate::Result<Vec<Tank>> {
+) -> crate::Result<HashMap<i32, Tank>> {
+    if tank_ids.is_empty() {
+        // Not necessary, but saves the query execution time.
+        return Ok(HashMap::new());
+    }
+
     // language=SQL
     const QUERY: &str = "
         SELECT DISTINCT ON (tank_id) *
@@ -85,13 +91,17 @@ pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postg
     ";
 
     let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(100);
-    Ok(sqlx::query_as(QUERY)
+    let tanks = sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(before)
         .bind(tank_ids)
         .fetch_all(executor)
         .await
-        .context("failed to retrieve the latest tank snapshots")?)
+        .context("failed to retrieve the latest tank snapshots")?
+        .into_iter()
+        .map(|tank: Tank| (tank.tank_id, tank))
+        .collect();
+    Ok(tanks)
 }
 
 pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
@@ -199,7 +209,7 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
 
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     log::info!("Inserting {} tanks…", tanks.len());
-    let _stopwatch = Stopwatch::new("Inserted in").threshold_millis(1000);
+    let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
 
     // language=SQL
     const QUERY: &str = "

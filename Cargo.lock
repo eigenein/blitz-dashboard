@@ -374,7 +374,7 @@ dependencies = [
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.6.15"
+version = "0.6.16"
 dependencies = [
  "anyhow",
  "async-std",
@@ -396,6 +396,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "simplelog",
+ "smallvec",
  "sqlx",
  "static_init",
 ]

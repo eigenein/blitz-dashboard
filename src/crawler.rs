@@ -120,10 +120,12 @@ impl Crawler {
                 if current_info.general.last_battle_time != last_battle_time =>
             {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
-                let tanks: Vec<Tank> = self.api.get_merged_tanks(account_id).await?;
-                let tanks: Vec<Tank> = tanks
+                let tanks: Vec<Tank> = self
+                    .api
+                    .get_merged_tanks(account_id)
+                    .await?
                     .into_iter()
-                    .filter(|tank| tank.last_battle_time >= last_battle_time)
+                    .filter(|tank| tank.last_battle_time > last_battle_time)
                     .collect();
                 database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             }
