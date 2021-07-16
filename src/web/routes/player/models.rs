@@ -8,11 +8,13 @@ use smallvec::SmallVec;
 
 use crate::database;
 use crate::logging::set_user;
+use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::web::state::State;
+use log::Level;
 
 pub struct ViewModel {
     pub account_id: i32,
@@ -45,7 +47,9 @@ impl ViewModel {
             Some(period) => parse_duration(&period)?,
             None => StdDuration::from_secs(43200),
         };
-        log::info!("Requested player #{} within {:?}.", account_id, period);
+        log::info!("GET #{} within {:?}.", account_id, period);
+        let _stopwatch =
+            Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 
         let current_info = account_info_cache.get(account_id).await?;
         set_user(&current_info.general.nickname);
