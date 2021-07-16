@@ -1,8 +1,4 @@
 (function () {
-    function compareValues(left, right) {
-        return (left < right) ? +1 : (left > right) ? -1 : 0;
-    }
-
     function sortVehicles(by) {
         console.log(`Sorting vehicles ${by}`);
         let qs = `[data-sort="${by}"]`;
@@ -17,6 +13,6 @@
     };
 
     const vehicles = document.getElementById("vehicles");
-    let rows = Array.from(vehicles.querySelectorAll("tr")).slice(1);
+    let rows = Array.from(vehicles.querySelectorAll("tbody tr"));
     sortVehicles(!!location.hash ? location.hash : "#by-battles");
 })();
