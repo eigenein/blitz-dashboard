@@ -2,12 +2,12 @@ use chrono_humanize::Tense;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::Redirect;
-use rocket::Responder;
+use rocket::{Responder, State};
 
 use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::web::partials::{account_search, datetime, footer, headers};
 use crate::web::routes::player::get_account_url;
-use crate::web::state::State;
+use crate::web::TrackingCode;
 
 use super::models::ViewModel;
 
@@ -22,8 +22,8 @@ pub enum Response {
 #[rocket::get("/search?<query>")]
 pub async fn get(
     query: &str,
-    state: &rocket::State<State>,
-    account_search_cache: &rocket::State<AccountSearchCache>,
+    account_search_cache: &State<AccountSearchCache>,
+    tracking_code: &State<TrackingCode>,
 ) -> crate::web::result::Result<Response> {
     let model = ViewModel::new(query.to_string(), &account_search_cache).await?;
 
@@ -42,7 +42,7 @@ pub async fn get(
             }
         }
         body {
-            (state.tracking_code)
+            (tracking_code.0)
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
                 div.container {
                     div.navbar-brand {

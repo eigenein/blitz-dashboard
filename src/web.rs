@@ -1,17 +1,18 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::response;
 use rocket::{routes, Request};
 use sqlx::PgPool;
 
 use routes::r#static;
-use state::State;
 
 use crate::opts::WebOpts;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::search::AccountSearchCache;
+use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::WargamingApi;
 
 mod error;
@@ -20,7 +21,6 @@ mod helpers;
 mod partials;
 mod result;
 mod routes;
-mod state;
 
 /// Run the web app.
 pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::Result {
@@ -28,7 +28,9 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::R
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountSearchCache::new(api.clone()))
-        .manage(State::new(api, database, &opts).await?)
+        .manage(AccountTanksCache::new(api.clone()))
+        .manage(database)
+        .manage(TrackingCode::new(&opts))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
         .mount("/", routes![r#static::get_favicon_16x16])
@@ -68,4 +70,25 @@ fn to_config(opts: &WebOpts) -> crate::Result<rocket::Config> {
         log_level: rocket::log::LogLevel::Off,
         ..Default::default()
     })
+}
+
+pub struct TrackingCode(PreEscaped<String>);
+
+impl TrackingCode {
+    fn new(opts: &WebOpts) -> Self {
+        let mut extra_html_headers = Vec::new();
+        if let Some(counter) = &opts.yandex_metrika {
+            extra_html_headers.push(format!(
+                r#"<!-- Yandex.Metrika counter --> <script type="text/javascript" > (function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym({}, "init", {{ clickmap:true, trackLinks:true, accurateTrackBounce:true, trackHash:true }}); </script> <noscript><div><img src="https://mc.yandex.ru/watch/{}" style="position:absolute; left:-9999px;" alt=""/></div></noscript> <!-- /Yandex.Metrika counter -->"#,
+                counter, counter,
+            ));
+        };
+        if let Some(measurement_id) = &opts.gtag {
+            extra_html_headers.push(format!(
+                r#"<!-- Global site tag (gtag.js) - Google Analytics --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-S1HXCH4JPZ"></script> <script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{}'); </script>"#,
+                measurement_id,
+            ));
+        };
+        Self(PreEscaped(extra_html_headers.join("")))
+    }
 }

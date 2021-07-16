@@ -4,25 +4,38 @@ use chrono_humanize::Tense;
 use humantime::format_duration;
 use maud::{html, Markup, DOCTYPE};
 use rocket::response::content::Html;
+use rocket::State;
+use sqlx::PgPool;
 
 use crate::statistics::wilson_score_interval;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::web::helpers::{render_f64, render_nation, render_tier, render_vehicle_name};
 use crate::web::partials::{account_search, datetime, footer, headers, icon_text};
-use crate::web::state::State;
+use crate::web::TrackingCode;
 
 use super::models;
 use super::models::ViewModel;
+use crate::wargaming::cache::account::tanks::AccountTanksCache;
 
 #[rocket::get("/ru/<account_id>?<sort>&<period>")]
 pub async fn get(
     account_id: i32,
     sort: Option<String>,
     period: Option<String>,
-    state: &rocket::State<State>,
-    account_info_cache: &rocket::State<AccountInfoCache>,
+    database: &State<PgPool>,
+    account_info_cache: &State<AccountInfoCache>,
+    tracking_code: &State<TrackingCode>,
+    account_tanks_cache: &State<AccountTanksCache>,
 ) -> crate::web::result::Result<Html<String>> {
-    let model = ViewModel::new(account_id, sort, period, &state, &account_info_cache).await?;
+    let model = ViewModel::new(
+        database,
+        account_id,
+        sort,
+        period,
+        &account_info_cache,
+        &account_tanks_cache,
+    )
+    .await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -32,7 +45,7 @@ pub async fn get(
                 title { (model.nickname) " – Я статист!" }
             }
             body {
-                (state.tracking_code)
+                (tracking_code.0)
                 nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
                     div.container {
                         div.navbar-brand {

@@ -3,8 +3,10 @@ use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, Duration, Utc};
 use humantime::parse_duration;
+use log::Level;
 use ordered_float::OrderedFloat;
 use smallvec::SmallVec;
+use sqlx::PgPool;
 
 use crate::database;
 use crate::logging::set_user;
@@ -13,8 +15,7 @@ use crate::models::{subtract_tanks, AllStatistics, Tank, Vehicle};
 use crate::statistics::wilson_score_interval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
-use crate::web::state::State;
-use log::Level;
+use crate::wargaming::cache::account::tanks::AccountTanksCache;
 
 pub struct ViewModel {
     pub account_id: i32,
@@ -34,11 +35,12 @@ pub struct ViewModel {
 
 impl ViewModel {
     pub async fn new(
+        database: &PgPool,
         account_id: i32,
         sort: Option<String>,
         period: Option<String>,
-        state: &State,
         account_info_cache: &AccountInfoCache,
+        account_tanks_cache: &AccountTanksCache,
     ) -> crate::Result<ViewModel> {
         let sort = sort
             .map(Cow::Owned)
@@ -53,13 +55,12 @@ impl ViewModel {
 
         let current_info = account_info_cache.get(account_id).await?;
         set_user(&current_info.general.nickname);
-        database::insert_account_or_ignore(&state.database, &current_info.general).await?;
+        database::insert_account_or_ignore(database, &current_info.general).await?;
 
         let before = Utc::now() - Duration::from_std(period)?;
         let previous_info =
-            database::retrieve_latest_account_snapshot(&state.database, account_id, &before)
-                .await?;
-        let current_tanks = state.retrieve_tanks(&current_info).await?;
+            database::retrieve_latest_account_snapshot(database, account_id, &before).await?;
+        let current_tanks = account_tanks_cache.get(&current_info).await?;
         let tanks_delta = match &previous_info {
             Some(previous_info) => {
                 let played_tank_ids: SmallVec<[i32; 96]> = current_tanks
@@ -70,7 +71,7 @@ impl ViewModel {
                     .map(|(tank_id, _)| *tank_id)
                     .collect();
                 let previous_tank_snapshots = database::retrieve_latest_tank_snapshots(
-                    &state.database,
+                    database,
                     account_id,
                     &before,
                     &played_tank_ids,

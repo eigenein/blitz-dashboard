@@ -1,13 +1,14 @@
 use maud::{html, DOCTYPE};
 use rocket::response::content;
 use rocket::response::content::Html;
+use rocket::State;
 
 use crate::logging::clear_user;
 use crate::web::partials::{account_search, headers};
-use crate::web::state::State;
+use crate::web::TrackingCode;
 
 #[rocket::get("/")]
-pub async fn get(state: &rocket::State<State>) -> crate::web::result::Result<Html<String>> {
+pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Result<Html<String>> {
     clear_user();
 
     let markup = html! {
@@ -18,7 +19,7 @@ pub async fn get(state: &rocket::State<State>) -> crate::web::result::Result<Htm
                 title { "Я статист!" }
             }
             body {
-                (state.tracking_code)
+                (tracking_code.0)
                 section.hero.is-fullheight {
                     div.hero-body {
                         div.container {
