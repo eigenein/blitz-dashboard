@@ -399,7 +399,7 @@ fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
 fn margin_class(value: f64, level_success: f64, level_warning: f64) -> &'static str {
     match value {
         _ if value < level_success => "has-text-success",
-        _ if value < level_warning => "has-text-warning",
+        _ if value < level_warning => "has-text-warning-dark",
         _ => "has-text-danger",
     }
 }
