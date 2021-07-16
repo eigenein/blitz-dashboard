@@ -49,8 +49,8 @@ pub async fn retrieve_oldest_crawled_accounts<'e, E: Executor<'e, Database = Pos
     Ok(accounts)
 }
 
-pub async fn retrieve_latest_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
+pub async fn retrieve_latest_account_snapshot(
+    executor: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
 ) -> crate::Result<Option<AccountInfo>> {
@@ -71,8 +71,8 @@ pub async fn retrieve_latest_account_snapshot<'e, E: Executor<'e, Database = Pos
     Ok(account_info)
 }
 
-pub async fn retrieve_latest_tank_snapshots<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
+pub async fn retrieve_latest_tank_snapshots(
+    executor: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
     tank_ids: &[i32],
@@ -126,13 +126,10 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     Ok(())
 }
 
-pub async fn insert_account_or_ignore<'e, E>(
-    executor: E,
+pub async fn insert_account_or_ignore(
+    executor: &PgPool,
     info: &GeneralAccountInfo,
-) -> crate::Result
-where
-    E: Executor<'e, Database = Postgres>,
-{
+) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)

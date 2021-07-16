@@ -17,7 +17,6 @@ use crate::wargaming::WargamingApi;
 
 mod error;
 mod fairings;
-mod helpers;
 mod partials;
 mod result;
 mod routes;
@@ -40,7 +39,7 @@ pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::R
         .mount("/", routes![r#static::get_apple_touch_icon])
         .mount("/", routes![routes::index::get])
         .mount("/", routes![routes::search::get])
-        .mount("/", routes![routes::player::view::get])
+        .mount("/", routes![routes::player::get])
         .mount("/", routes![routes::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)

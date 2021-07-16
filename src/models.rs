@@ -235,6 +235,10 @@ impl AccountInfo {
     pub fn is_active(&self) -> bool {
         self.general.last_battle_time > (Utc::now() - Duration::days(365))
     }
+
+    pub fn has_recently_played(&self) -> bool {
+        self.general.last_battle_time > (Utc::now() - Duration::hours(1))
+    }
 }
 
 pub fn subtract_tanks(
