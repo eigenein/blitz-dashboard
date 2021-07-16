@@ -112,19 +112,19 @@ pub async fn get(
 
                         #period.tabs.is-boxed {
                             ul {
-                                (render_period_li(&model, StdDuration::from_secs(3600), "Час")?)
-                                (render_period_li(&model, StdDuration::from_secs(2 * 3600), "2 часа")?)
-                                (render_period_li(&model, StdDuration::from_secs(4 * 3600), "4 часа")?)
-                                (render_period_li(&model, StdDuration::from_secs(8 * 3600), "8 часов")?)
-                                (render_period_li(&model, StdDuration::from_secs(12 * 3600), "12 часов")?)
-                                (render_period_li(&model, StdDuration::from_secs(86400), "24 часа")?)
-                                (render_period_li(&model, StdDuration::from_secs(2 * 86400), "2 дня")?)
-                                (render_period_li(&model, StdDuration::from_secs(3 * 86400), "3 дня")?)
-                                (render_period_li(&model, StdDuration::from_secs(7 * 86400), "Неделя")?)
-                                (render_period_li(&model, StdDuration::from_secs(2630016), "Месяц")?)
-                                (render_period_li(&model, StdDuration::from_secs(2 * 2630016), "2 месяца")?)
-                                (render_period_li(&model, StdDuration::from_secs(3 * 2630016), "3 месяца")?)
-                                (render_period_li(&model, StdDuration::from_secs(31557600), "Год")?)
+                                (render_period_li(&model, StdDuration::from_secs(3600), "Час"))
+                                (render_period_li(&model, StdDuration::from_secs(2 * 3600), "2 часа"))
+                                (render_period_li(&model, StdDuration::from_secs(4 * 3600), "4 часа"))
+                                (render_period_li(&model, StdDuration::from_secs(8 * 3600), "8 часов"))
+                                (render_period_li(&model, StdDuration::from_secs(12 * 3600), "12 часов"))
+                                (render_period_li(&model, StdDuration::from_secs(86400), "24 часа"))
+                                (render_period_li(&model, StdDuration::from_secs(2 * 86400), "2 дня"))
+                                (render_period_li(&model, StdDuration::from_secs(3 * 86400), "3 дня"))
+                                (render_period_li(&model, StdDuration::from_secs(7 * 86400), "Неделя"))
+                                (render_period_li(&model, StdDuration::from_secs(2630016), "Месяц"))
+                                (render_period_li(&model, StdDuration::from_secs(2 * 2630016), "2 месяца"))
+                                (render_period_li(&model, StdDuration::from_secs(3 * 2630016), "3 месяца"))
+                                (render_period_li(&model, StdDuration::from_secs(31557600), "Год"))
                             }
                         }
 
@@ -277,19 +277,19 @@ pub async fn get(
                                         thead {
                                             tr {
                                                 th { "Техника" }
-                                                (render_vehicles_th(&model, models::SORT_BY_TIER, html! { "Уровень" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_NATION, html! { "Нация" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_VEHICLE_TYPE, html! { "Тип" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_BATTLES, html! { "Бои" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_WINS, html! { "Победы" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_WIN_RATE, html! { "Текущий процент побед" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_TRUE_WIN_RATE, html! { "Ожидаемый процент побед" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_GOLD, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_TRUE_GOLD, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_DAMAGE_DEALT, html! { "Ущерб" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_DAMAGE_PER_BATTLE, html! { "Ущерб за бой" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_SURVIVED_BATTLES, html! { "Выжил" })?)
-                                                (render_vehicles_th(&model, models::SORT_BY_SURVIVAL_RATE, html! { "Выживаемость" })?)
+                                                (render_vehicles_th(&model, models::SORT_BY_TIER, html! { "Уровень" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_NATION, html! { "Нация" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_VEHICLE_TYPE, html! { "Тип" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_BATTLES, html! { "Бои" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_WINS, html! { "Победы" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_WIN_RATE, html! { "Текущий процент побед" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_TRUE_WIN_RATE, html! { "Ожидаемый процент побед" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_GOLD, html! { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }))
+                                                (render_vehicles_th(&model, models::SORT_BY_TRUE_GOLD, html! { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } }))
+                                                (render_vehicles_th(&model, models::SORT_BY_DAMAGE_DEALT, html! { "Ущерб" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_DAMAGE_PER_BATTLE, html! { "Ущерб за бой" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_SURVIVED_BATTLES, html! { "Выжил" }))
+                                                (render_vehicles_th(&model, models::SORT_BY_SURVIVAL_RATE, html! { "Выживаемость" }))
                                             }
                                         }
                                         tbody {
@@ -354,20 +354,16 @@ pub async fn get(
     Ok(Html(markup.into_string()))
 }
 
-fn render_period_li(
-    model: &ViewModel,
-    period: StdDuration,
-    text: &'static str,
-) -> crate::Result<Markup> {
-    Ok(html! {
+fn render_period_li(model: &ViewModel, period: StdDuration, text: &'static str) -> Markup {
+    html! {
         li.(if model.period == period { "is-active" } else { "" }) {
             a href=(format!("?sort={}&period={}#period", model.sort, format_duration(period))) { (text) }
         }
-    })
+    }
 }
 
-fn render_vehicles_th(model: &ViewModel, sort: &str, markup: Markup) -> crate::Result<Markup> {
-    Ok(html! {
+fn render_vehicles_th(model: &ViewModel, sort: &str, markup: Markup) -> Markup {
+    html! {
         th {
             a href=(format!("?sort={}&period={}#vehicles", sort, format_duration(model.period))) {
                 span.icon-text.is-flex-wrap-nowrap {
@@ -376,7 +372,7 @@ fn render_vehicles_th(model: &ViewModel, sort: &str, markup: Markup) -> crate::R
                 }
             }
         }
-    })
+    }
 }
 
 fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
