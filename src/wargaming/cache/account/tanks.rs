@@ -9,10 +9,10 @@ use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
     api: WargamingApi,
-
-    #[allow(clippy::type_complexity)]
-    cache: Cache<i32, (DateTime<Utc>, Arc<HashMap<i32, Tank>>)>,
+    cache: Cache<i32, Entry>,
 }
+
+type Entry = (DateTime<Utc>, Arc<HashMap<i32, Tank>>);
 
 impl AccountTanksCache {
     pub fn new(api: WargamingApi) -> Self {
