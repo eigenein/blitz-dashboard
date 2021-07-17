@@ -410,7 +410,7 @@ pub async fn get(
                                                         strong { (render_f64(100.0 * win_rate, 1)) "%" }
                                                     }
                                                     @let win_rate_ordering = expected_win_rate.partial_cmp(&total_win_rate);
-                                                    td.has-text-centered.(partial_cmp_class(win_rate_ordering))
+                                                    td.is-white-space-nowrap.has-text-centered.(partial_cmp_class(win_rate_ordering))
                                                         data-sort="#by-true-win-rate"
                                                         data-value=(expected_win_rate.mean)
                                                     {
