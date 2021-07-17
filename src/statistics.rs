@@ -107,4 +107,13 @@ impl PartialOrd for ConfidenceInterval {
 pub const Z_90: f64 = 1.645;
 
 #[allow(dead_code)]
+pub const Z_89: f64 = 1.598;
+
+#[allow(dead_code)]
+pub const Z_88: f64 = 1.5548;
+
+#[allow(dead_code)]
+pub const Z_87: f64 = 1.51;
+
+#[allow(dead_code)]
 pub const Z_85: f64 = 1.44;
