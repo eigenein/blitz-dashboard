@@ -72,10 +72,14 @@ pub async fn get(
         None => current_tanks.values().cloned().collect(),
     };
 
-    let statistics = match &previous_info {
+    let stats_delta = match &previous_info {
         Some(previous_info) => &current_info.statistics.all - &previous_info.statistics.all,
         None => current_info.statistics.all,
     };
+    let total_win_rate = ConfidenceInterval::default_wilson_score_interval(
+        current_info.statistics.all.battles,
+        current_info.statistics.all.wins,
+    );
 
     let markup = html! {
         (DOCTYPE)
@@ -178,7 +182,7 @@ pub async fn get(
                             }
                         }
 
-                        @if current_info.general.last_battle_time >= before && statistics.battles == 0 {
+                        @if current_info.general.last_battle_time >= before && stats_delta.battles == 0 {
                             article.message.is-warning {
                                 div.message-body {
                                     strong { "Нет случайных боев за этот период." }
@@ -198,19 +202,19 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Всего" }
-                                                    p.title { (statistics.battles) }
+                                                    p.title { (stats_delta.battles) }
                                                 }
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Победы" }
-                                                    p.title { (statistics.wins) }
+                                                    p.title { (stats_delta.wins) }
                                                 }
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Выжил" }
-                                                    p.title { (statistics.survived_battles) }
+                                                    p.title { (stats_delta.survived_battles) }
                                                 }
                                             }
                                         }
@@ -218,7 +222,7 @@ pub async fn get(
                                 }
                             }
 
-                            @if statistics.battles != 0 {
+                            @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
@@ -229,13 +233,13 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (statistics.damage_dealt) }
+                                                        p.title { (stats_delta.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(statistics.damage_dealt as f64 / statistics.battles as f64, 0)) }
+                                                        p.title { (render_f64(stats_delta.damage_dealt as f64 / stats_delta.battles as f64, 0)) }
                                                     }
                                                 }
                                             }
@@ -244,7 +248,7 @@ pub async fn get(
                                 }
                             }
 
-                            @if statistics.battles != 0 {
+                            @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
@@ -255,13 +259,13 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (statistics.frags) }
+                                                        p.title { (stats_delta.frags) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(statistics.frags as f64 / statistics.battles as f64, 1)) }
+                                                        p.title { (render_f64(stats_delta.frags as f64 / stats_delta.battles as f64, 1)) }
                                                     }
                                                 }
                                             }
@@ -272,40 +276,40 @@ pub async fn get(
                         }
 
                         div.tile.is-ancestor {
-                            @if statistics.battles != 0 {
+                            @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(statistics.battles, statistics.wins))
+                                            (render_confidence_interval_level(stats_delta.battles, stats_delta.wins))
                                         }
                                     }
                                 }
                             }
 
-                            @if statistics.battles != 0 {
+                            @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(statistics.battles, statistics.survived_battles))
+                                            (render_confidence_interval_level(stats_delta.battles, stats_delta.survived_battles))
                                         }
                                     }
                                 }
                             }
 
-                            @if statistics.shots != 0 {
+                            @if stats_delta.shots != 0 {
                                 div.tile."is-4".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(statistics.shots, statistics.hits))
+                                            (render_confidence_interval_level(stats_delta.shots, stats_delta.hits))
                                         }
                                     }
                                 }
@@ -406,10 +410,19 @@ pub async fn get(
                                                     td.has-text-info data-sort="#by-win-rate" data-value=(win_rate) {
                                                         strong { (render_f64(100.0 * win_rate, 1)) "%" }
                                                     }
-                                                    td.has-text-centered.is-white-space-nowrap data-sort="#by-true-win-rate" data-value=(expected_win_rate.mean) {
-                                                        strong { (render_f64(100.0 * expected_win_rate.mean, 1)) "%" }
-                                                        span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
-                                                            " ±" (render_f64(expected_win_rate.margin * 100.0, 1))
+                                                    @let win_rate_ordering = expected_win_rate.partial_cmp(&total_win_rate);
+                                                    td.has-text-centered.(partial_cmp_class(win_rate_ordering))
+                                                        data-sort="#by-true-win-rate"
+                                                        data-value=(expected_win_rate.mean)
+                                                    {
+                                                        span.icon-text.is-flex-wrap-nowrap {
+                                                            span {
+                                                                (partial_cmp_icon(win_rate_ordering))
+                                                                strong { (render_f64(100.0 * expected_win_rate.mean, 1)) "%" }
+                                                                span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
+                                                                    " ±" (render_f64(expected_win_rate.margin * 100.0, 1))
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                     @let gold = 10.0 + vehicle.tier as f64 * win_rate;

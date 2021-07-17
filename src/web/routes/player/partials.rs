@@ -5,6 +5,7 @@ use maud::{html, Markup};
 
 use crate::models::{Nation, Vehicle};
 use crate::statistics::ConfidenceInterval;
+use std::cmp::Ordering;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -47,9 +48,33 @@ pub fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Mark
 
 pub fn margin_class(value: f64, level_success: f64, level_warning: f64) -> &'static str {
     match value {
-        _ if value < level_success => "has-text-success",
+        _ if value < level_success => "",
         _ if value < level_warning => "has-text-warning-dark",
         _ => "has-text-danger",
+    }
+}
+
+pub fn partial_cmp_class(ordering: Option<Ordering>) -> &'static str {
+    match ordering {
+        Some(Ordering::Less) => "has-background-danger-light",
+        Some(Ordering::Greater) => "has-background-success-light",
+        _ => "",
+    }
+}
+
+pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
+    match ordering {
+        Some(Ordering::Less) => html! {
+            span.icon.has-text-danger title="Игра на этом танке уменьшает общий процент побед на аккаунте" {
+                i.fas.fa-thumbs-down {}
+            }
+        },
+        Some(Ordering::Greater) => html! {
+            span.icon.has-text-success title="Игра на этом танке увеличивает общий процент побед на аккаунте" {
+                i.fas.fa-thumbs-up {}
+            }
+        },
+        _ => html! {},
     }
 }
 
