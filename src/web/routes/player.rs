@@ -321,8 +321,8 @@ pub async fn get(
                                             tr {
                                                 th { "Техника" }
                                                 th#by-tier { a href=(format!("?period={}#by-tier", period)) { "Уровень" } }
-                                                th#by-nation { "Нация" }
-                                                th#by-type { "Тип" }
+                                                th { "Нация" }
+                                                th { "Тип" }
                                                 th#by-battles { a href=(format!("?period={}#by-battles", period)) { "Бои" } }
                                                 th#by-wins { a href=(format!("?period={}#by-wins", period)) { "Победы" } }
                                                 th#by-win-rate { a href=(format!("?period={}#by-win-rate", period)) { "Текущий процент побед" } }
