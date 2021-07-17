@@ -17,7 +17,7 @@ use crate::database;
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::subtract_tanks;
-use crate::statistics::wilson_score_interval;
+use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
@@ -383,7 +383,7 @@ pub async fn get(
                                             @for tank in &tanks_delta {
                                                 @let vehicle = get_vehicle(tank.tank_id);
                                                 @let win_rate = tank.all_statistics.wins as f64 / tank.all_statistics.battles as f64;
-                                                @let (expected_win_rate, expected_win_rate_margin) = wilson_score_interval(tank.all_statistics.battles, tank.all_statistics.wins);
+                                                @let expected_win_rate = ConfidenceInterval::default_wilson_score_interval(tank.all_statistics.battles, tank.all_statistics.wins);
                                                 tr {
                                                     th.is-white-space-nowrap {
                                                         (render_vehicle_name(&vehicle))
@@ -406,10 +406,10 @@ pub async fn get(
                                                     td.has-text-info data-sort="#by-win-rate" data-value=(win_rate) {
                                                         strong { (render_f64(100.0 * win_rate, 1)) "%" }
                                                     }
-                                                    td.has-text-centered.is-white-space-nowrap data-sort="#by-true-win-rate" data-value=(expected_win_rate) {
-                                                        strong { (render_f64(100.0 * expected_win_rate, 1)) "%" }
-                                                        span.(margin_class(expected_win_rate_margin, 0.1, 0.25)) {
-                                                            " ±" (render_f64(expected_win_rate_margin * 100.0, 1))
+                                                    td.has-text-centered.is-white-space-nowrap data-sort="#by-true-win-rate" data-value=(expected_win_rate.mean) {
+                                                        strong { (render_f64(100.0 * expected_win_rate.mean, 1)) "%" }
+                                                        span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
+                                                            " ±" (render_f64(expected_win_rate.margin * 100.0, 1))
                                                         }
                                                     }
                                                     @let gold = 10.0 + vehicle.tier as f64 * win_rate;
@@ -420,14 +420,13 @@ pub async fn get(
                                                         }
                                                     }
                                                     @let expected_gold = 10.0 + vehicle.tier as f64 * expected_win_rate;
-                                                    td.is-white-space-nowrap data-sort="#by-true-gold" data-value=(expected_gold) {
+                                                    td.is-white-space-nowrap data-sort="#by-true-gold" data-value=(expected_gold.mean) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                             span {
-                                                                strong { (render_f64(expected_gold, 1)) }
-                                                                @let gold_margin = vehicle.tier as f64 * expected_win_rate_margin;
-                                                                span.(margin_class(gold_margin, 2.0, 3.0)) {
-                                                                    " ±" (render_f64(gold_margin, 1))
+                                                                strong { (render_f64(expected_gold.mean, 1)) }
+                                                                span.(margin_class(expected_gold.margin, 2.0, 3.0)) {
+                                                                    " ±" (render_f64(expected_gold.margin, 1))
                                                                 }
                                                             }
                                                         }

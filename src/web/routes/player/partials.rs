@@ -4,7 +4,7 @@ use humantime::format_duration;
 use maud::{html, Markup};
 
 use crate::models::{Nation, Vehicle};
-use crate::statistics::wilson_score_interval;
+use crate::statistics::ConfidenceInterval;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -19,29 +19,26 @@ pub fn render_period_li(
 }
 
 pub fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
-    let mean = 100.0 * n_successes as f64 / n_trials as f64;
-    let (p, margin) = wilson_score_interval(n_trials, n_successes);
-    let lower = 100.0 * (p - margin);
-    let upper = 100.0 * (p + margin);
+    let interval = ConfidenceInterval::default_wilson_score_interval(n_trials, n_successes);
 
     html! {
         div.level {
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Нижнее" }
-                    p.title."is-5" { (render_f64(lower, 1)) "%" }
+                    p.title."is-5" { (render_f64(100.0 * interval.lower(), 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Среднее" }
-                    p.title { (render_f64(mean, 1)) "%" }
+                    p.title { (render_f64(100.0 * n_successes as f64 / n_trials as f64, 1)) "%" }
                 }
             }
             div.level-item.has-text-centered {
                 div {
                     p.heading { "Верхнее" }
-                    p.title."is-5" { (render_f64(upper, 1)) "%" }
+                    p.title."is-5" { (render_f64(100.0 * interval.upper(), 1)) "%" }
                 }
             }
         }
