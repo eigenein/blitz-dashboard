@@ -1,14 +1,29 @@
 (function () {
-    function sortVehicles(by) {
-        if (!location.hash.startsWith("#by-")) {
+    function sortVehicles(thSelector) {
+        if ((vehicles == null) || (!location.hash.startsWith("#by-"))) {
             return;
         }
-        let qs = `[data-sort="${by}"]`;
-        rows.sort((row_1, row_2) => {
-            return parseFloat(row_2.querySelector(qs).dataset.value) - parseFloat(row_1.querySelector(qs).dataset.value);
-        });
-        rows.forEach(row => vehicles.appendChild(row));
-        // TODO: set the sort icon.
+
+        const tbody = vehicles.querySelector("tbody");
+        let rows = Array.from(tbody.querySelectorAll("tr"));
+        let qs = `[data-sort="${thSelector}"]`;
+        rows
+            .sort((row_1, row_2) => {
+                return parseFloat(row_2.querySelector(qs).dataset.value) - parseFloat(row_1.querySelector(qs).dataset.value);
+            })
+            .forEach(row => tbody.appendChild(row));
+
+        const iconText = vehicles.querySelector(`${thSelector} span.icon-text`);
+        iconText.insertBefore(sortIcon, iconText.firstChild);
+    }
+
+    function createSortIcon() {
+        const inner = document.createElement("i");
+        inner.classList.add("fas", "fa-angle-down");
+        const outer = document.createElement("span");
+        outer.classList.add("icon");
+        outer.appendChild(inner);
+        return outer;
     }
 
     window.onhashchange = function () {
@@ -16,9 +31,7 @@
     };
 
     const vehicles = document.getElementById("vehicles");
-    let rows = null;
-    if (vehicles != null) {
-        rows = Array.from(vehicles.querySelectorAll("tbody tr"));
-        sortVehicles(!!location.hash ? location.hash : "#by-battles");
-    }
+    const sortIcon = createSortIcon();
+
+    sortVehicles(!!location.hash ? location.hash : "#by-battles");
 })();
