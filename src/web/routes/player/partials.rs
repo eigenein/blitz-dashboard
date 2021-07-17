@@ -78,7 +78,6 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-// TODO: `phf`.
 pub fn render_nation(nation: &Nation) -> Markup {
     html! {
         @match nation {
@@ -103,24 +102,18 @@ pub fn render_f64(value: f64, precision: usize) -> Markup {
     }
 }
 
-// TODO: `phf`.
-pub fn render_tier(tier: i32) -> Markup {
-    html! {
-        @match tier {
-            1 => "Ⅰ",
-            2 => "Ⅱ",
-            3 => "Ⅲ",
-            4 => "Ⅳ",
-            5 => "Ⅴ",
-            6 => "Ⅵ",
-            7 => "Ⅶ",
-            8 => "Ⅷ",
-            9 => "Ⅸ",
-            10 => "Ⅹ",
-            _ => "",
-        }
-    }
-}
+pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
+    1_i32 => "Ⅰ",
+    2_i32 => "Ⅱ",
+    3_i32 => "Ⅲ",
+    4_i32 => "Ⅳ",
+    5_i32 => "Ⅴ",
+    6_i32 => "Ⅵ",
+    7_i32 => "Ⅶ",
+    8_i32 => "Ⅷ",
+    9_i32 => "Ⅸ",
+    10_i32 => "Ⅹ",
+};
 
 pub fn render_vehicle_name(vehicle: &Vehicle) -> Markup {
     html! {

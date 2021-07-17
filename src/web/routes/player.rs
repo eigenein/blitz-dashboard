@@ -329,7 +329,6 @@ pub async fn get(
                                                         span { a href=(format!("?period={}#by-tier", period)) { "Уровень" } }
                                                     }
                                                 }
-                                                th { "Нация" }
                                                 th { "Тип" }
                                                 th#by-battles {
                                                     span.icon-text.is-flex-wrap-nowrap {
@@ -390,13 +389,13 @@ pub async fn get(
                                                 @let expected_win_rate = ConfidenceInterval::default_wilson_score_interval(tank.all_statistics.battles, tank.all_statistics.wins);
                                                 tr {
                                                     th.is-white-space-nowrap {
-                                                        (render_vehicle_name(&vehicle))
+                                                        (render_nation(&vehicle.nation))
+                                                        " " (render_vehicle_name(&vehicle))
                                                     }
                                                     td.has-text-centered data-sort="#by-tier" data-value=(vehicle.tier) {
-                                                        strong { (render_tier(vehicle.tier)) }
-                                                    }
-                                                    td.has-text-centered {
-                                                        (render_nation(&vehicle.nation))
+                                                        @if let Some(tier_markup) = TIER_MARKUP.get(&vehicle.tier) {
+                                                            strong { (tier_markup) }
+                                                        }
                                                     }
                                                     td {
                                                         (format!("{:?}", vehicle.type_))
