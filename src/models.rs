@@ -250,9 +250,19 @@ pub fn subtract_tanks(
     tank_ids
         .iter()
         .filter_map(|tank_id| left.get(tank_id))
-        .map(|left_tank| match right.get(&left_tank.tank_id) {
-            Some(right_tank) => left_tank - right_tank,
-            None => *left_tank,
+        .filter_map(|left_tank| match right.get(&left_tank.tank_id) {
+            Some(right_tank) => {
+                if left_tank.all_statistics.battles != right_tank.all_statistics.battles {
+                    Some(left_tank - right_tank)
+                } else {
+                    // The tank is here mostly likely because of some non-random battles.
+                    None
+                }
+            }
+            _ => {
+                // New tank.
+                Some(*left_tank)
+            }
         })
         .collect()
 }
