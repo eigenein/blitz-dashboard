@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Sub;
 use std::str::FromStr;
@@ -86,11 +87,11 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
-/// Represents a generic vehicle from tankopedia.
+/// Represents a generic vehicle from the tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
     pub tank_id: i32,
-    pub name: String,
+    pub name: Cow<'static, str>,
     pub tier: i32,
     pub is_premium: bool,
     pub nation: Nation,

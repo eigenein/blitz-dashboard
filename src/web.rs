@@ -5,7 +5,6 @@ use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::response;
 use rocket::{routes, Request};
-use sqlx::PgPool;
 
 use routes::r#static;
 
@@ -22,13 +21,13 @@ mod result;
 mod routes;
 
 /// Run the web app.
-pub async fn run(api: WargamingApi, database: PgPool, opts: WebOpts) -> crate::Result {
+pub async fn run(api: WargamingApi, opts: WebOpts) -> crate::Result {
     log::info!("Listening on {}:{}.", opts.host, opts.port);
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountSearchCache::new(api.clone()))
         .manage(AccountTanksCache::new(api.clone()))
-        .manage(database)
+        .manage(crate::database::open(&opts.database).await?)
         .manage(TrackingCode::new(&opts))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])

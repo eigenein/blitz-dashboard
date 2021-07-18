@@ -13,9 +13,6 @@ pub struct Opts {
     #[clap(short, long, about = "Sentry DSN")]
     pub sentry_dsn: Option<String>,
 
-    #[clap(short, long, about = "PostgreSQL database URI")]
-    pub database: String,
-
     #[clap(
         short = 'v',
         long = "verbose",
@@ -23,12 +20,6 @@ pub struct Opts {
         parse(from_occurrences)
     )]
     pub verbosity: i32,
-
-    #[clap(long, about = "Runs the web app")]
-    pub web: bool,
-
-    #[clap(long, about = "Runs the account crawler")]
-    pub crawler: bool,
 
     #[clap(subcommand)]
     pub subcommand: Subcommand,
@@ -38,6 +29,7 @@ pub struct Opts {
 pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
+    ImportTankopedia(ImportTankopediaOpts),
 }
 
 #[derive(Clap)]
@@ -47,6 +39,9 @@ pub enum Subcommand {
 #[clap(about = "Runs the web application")]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct WebOpts {
+    #[clap(short, long, about = "PostgreSQL database URI")]
+    pub database: String,
+
     #[clap(long, default_value = "::", about = "Web app host")]
     pub host: String,
 
@@ -66,7 +61,18 @@ pub struct WebOpts {
 #[clap(version = crate_version!())]
 #[clap(about = "Runs the account crawler")]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct CrawlerOpts;
+pub struct CrawlerOpts {
+    #[clap(short, long, about = "PostgreSQL database URI")]
+    pub database: String,
+}
+
+#[derive(Clap)]
+#[clap(name = crate_name!())]
+#[clap(author = crate_authors!())]
+#[clap(version = crate_version!())]
+#[clap(about = "Updates the bundled Tankopedia module")]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct ImportTankopediaOpts;
 
 pub fn parse() -> Opts {
     Opts::parse()

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
@@ -27,6 +27,10 @@ pub struct WargamingApi {
 struct Response<T> {
     data: T,
 }
+
+/// Represents the bundled `tankopedia.json` file.
+/// Note, that I'm using [`BTreeMap`] to keep the keys sorted in the output file for better diffs.
+pub type Tankopedia = BTreeMap<String, BTreeMap<String, serde_json::Value>>;
 
 impl WargamingApi {
     pub fn new(application_id: &str) -> crate::Result<WargamingApi> {
@@ -121,6 +125,17 @@ impl WargamingApi {
                 )
             })?
             .unwrap_or_else(Vec::new))
+    }
+
+    /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
+    pub async fn get_tankopedia(&self) -> crate::Result<Tankopedia> {
+        log::info!("Retrieving the tankopedia…");
+        self.call::<Tankopedia>(&Url::parse_with_params(
+            "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
+            &[("application_id", self.application_id.as_str())],
+        )?)
+        .await
+        .context("failed to get the tankopedia")
     }
 
     pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<models::Tank>> {

@@ -1,45 +1,16 @@
-use std::collections::HashMap;
-
-use static_init::dynamic;
+use std::borrow::Cow;
+use std::collections::BTreeMap;
+use std::fs;
+use std::io::Write;
+use std::path::Path;
 
 use crate::models::{Nation, TankType, Vehicle};
+use crate::wargaming::{Tankopedia, WargamingApi};
 
-#[dynamic]
-static TANKOPEDIA: HashMap<i32, Vehicle> = {
-    let tankopedia: HashMap<String, Vehicle> =
-        serde_json::from_str(include_str!("tankopedia.json"))
-            .expect("failed to parse the tankopedia");
-    let mut tankopedia: HashMap<i32, Vehicle> = tankopedia
-        .into_iter()
-        .map(|(_, vehicle)| (vehicle.tank_id, vehicle))
-        .collect();
-    tankopedia.insert(
-        23057,
-        Vehicle {
-            tank_id: 23057,
-            name: "Kunze Panzer".to_string(),
-            tier: 7,
-            is_premium: true,
-            nation: Nation::Germany,
-            type_: TankType::Light,
-        },
-    );
-    tankopedia.insert(
-        20817,
-        Vehicle {
-            tank_id: 20817,
-            name: "Эксплорер".to_string(),
-            tier: 6,
-            is_premium: true,
-            nation: Nation::Uk,
-            type_: TankType::Medium,
-        },
-    );
-    tankopedia
-};
+mod generated;
 
 pub fn get_vehicle(tank_id: i32) -> Vehicle {
-    TANKOPEDIA
+    generated::GENERATED
         .get(&tank_id)
         .cloned() // FIXME: avoid `cloned()`.
         .unwrap_or_else(|| new_hardcoded_vehicle(tank_id))
@@ -48,10 +19,100 @@ pub fn get_vehicle(tank_id: i32) -> Vehicle {
 fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
     Vehicle {
         tank_id,
-        name: format!("#{}", tank_id),
+        name: Cow::Owned(format!("#{}", tank_id)),
         tier: 0,
         is_premium: false,
         type_: TankType::Unknown,
         nation: Nation::Other,
     }
+}
+
+/// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
+pub async fn import(api: WargamingApi) -> crate::Result {
+    let json_path = Path::new(file!()).parent().unwrap().join("tankopedia.json");
+    let tankopedia: Tankopedia =
+        serde_json::from_str::<Tankopedia>(&fs::read_to_string(&json_path)?)?
+            .into_iter()
+            .chain(api.get_tankopedia().await?)
+            .collect();
+    fs::write(&json_path, serde_json::to_string_pretty(&tankopedia)?)?;
+
+    let mut vehicles: BTreeMap<String, Vehicle> =
+        serde_json::from_value(serde_json::to_value(&tankopedia)?)?;
+    insert_missing_vehicles(&mut vehicles)?;
+
+    let mut file = fs::File::create(
+        Path::new(file!())
+            .parent()
+            .unwrap()
+            .join("tankopedia")
+            .join("generated.rs"),
+    )?;
+    writeln!(&mut file, "//! Generated tankopedia.")?;
+    writeln!(&mut file)?;
+    writeln!(&mut file, "use std::borrow::Cow;")?;
+    writeln!(&mut file)?;
+    writeln!(
+        &mut file,
+        "use crate::models::{{Nation, TankType, Vehicle}};"
+    )?;
+    writeln!(&mut file)?;
+    writeln!(
+        &mut file,
+        "pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {{"
+    )?;
+    for (_, vehicle) in vehicles.into_iter() {
+        writeln!(&mut file, "    {}_i32 => Vehicle {{", vehicle.tank_id)?;
+        writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
+        writeln!(
+            &mut file,
+            "        name: Cow::Borrowed({:?}),",
+            vehicle.name,
+        )?;
+        writeln!(&mut file, "        tier: {:?},", vehicle.tier)?;
+        writeln!(&mut file, "        is_premium: {:?},", vehicle.is_premium)?;
+        writeln!(&mut file, "        nation: Nation::{:?},", vehicle.nation)?;
+        writeln!(&mut file, "        type_: TankType::{:?},", vehicle.type_)?;
+        writeln!(&mut file, "    }},")?;
+    }
+    writeln!(&mut file, "}};")?;
+
+    Ok(())
+}
+
+fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 23057,
+            name: Cow::Borrowed("Kunze Panzer"),
+            tier: 7,
+            is_premium: true,
+            nation: Nation::Germany,
+            type_: TankType::Light,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 20817,
+            name: Cow::Borrowed("Эксплорер"),
+            tier: 6,
+            is_premium: true,
+            nation: Nation::Uk,
+            type_: TankType::Medium,
+        },
+    )?;
+    Ok(())
+}
+
+fn insert_missing_vehicle(
+    vehicles: &mut BTreeMap<String, Vehicle>,
+    vehicle: Vehicle,
+) -> crate::Result {
+    match vehicles.get(&vehicle.tank_id.to_string()) {
+        Some(_) => anyhow::bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
+        None => vehicles.insert(vehicle.tank_id.to_string(), vehicle),
+    };
+    Ok(())
 }

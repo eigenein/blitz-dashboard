@@ -7,6 +7,7 @@ use sqlx::{PgConnection, PgPool};
 use crate::database;
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, GeneralAccountInfo, Tank};
+use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
 pub struct Crawler {
@@ -21,7 +22,8 @@ enum CrawlMode {
 }
 
 impl Crawler {
-    pub async fn run(api: WargamingApi, database: PgPool) -> crate::Result {
+    pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
+        let database = crate::database::open(&opts.database).await?;
         let crawler = Self { api, database };
         loop {
             if let Err(error) = crawler.crawl_batch().await {

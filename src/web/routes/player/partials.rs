@@ -1,11 +1,11 @@
+use std::cmp::Ordering;
 use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
 use maud::{html, Markup};
 
-use crate::models::{Nation, Vehicle};
+use crate::models::{Nation, TankType, Vehicle};
 use crate::statistics::ConfidenceInterval;
-use std::cmp::Ordering;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -116,9 +116,12 @@ pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
 };
 
 pub fn render_vehicle_name(vehicle: &Vehicle) -> Markup {
-    html! {
-        span.(if vehicle.is_premium { "has-text-warning-dark" } else { "" }) {
-            (vehicle.name)
-        }
-    }
+    let class = if vehicle.is_premium {
+        "has-text-warning-dark"
+    } else if vehicle.type_ == TankType::Unknown {
+        "has-text-grey"
+    } else {
+        ""
+    };
+    html! { span.(class) { (vehicle.name) } }
 }
