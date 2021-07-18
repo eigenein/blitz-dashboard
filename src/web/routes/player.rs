@@ -3,7 +3,7 @@ use std::time::Duration as StdDuration;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use clap::crate_version;
-use humantime::{format_duration, parse_duration};
+use humantime::parse_duration;
 use log::Level;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
@@ -321,63 +321,62 @@ pub async fn get(
                                 div.table-container {
                                     table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
                                         thead {
-                                            @let period = format_duration(period);
                                             tr {
                                                 th { "Техника" }
                                                 th#by-tier {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-tier", period)) { "Уровень" } }
+                                                        span { a href="#by-tier" { "Уровень" } }
                                                     }
                                                 }
                                                 th { "Тип" }
                                                 th#by-battles {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-battles", period)) { "Бои" } }
+                                                        span { a href="#by-battles" { "Бои" } }
                                                     }
                                                 }
                                                 th#by-wins {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-wins", period)) { "Победы" } }
+                                                        span { a href="#by-wins" { "Победы" } }
                                                     }
                                                 }
                                                 th#by-win-rate {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-win-rate", period)) { "Текущий процент побед" } }
+                                                        span { a href="#by-win-rate" { "Текущий процент побед" } }
                                                     }
                                                 }
                                                 th#by-true-win-rate {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-true-win-rate", period)) { "Ожидаемый процент побед" } }
+                                                        span { a href="#by-true-win-rate" { "Ожидаемый процент побед" } }
                                                     }
                                                 }
                                                 th#by-gold {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-gold", period)) { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
+                                                        span { a href="#by-gold" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
                                                     }
                                                 }
                                                 th#by-true-gold {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-true-gold", period)) { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
+                                                        span { a href="#by-true-gold" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
                                                     }
                                                 }
                                                 th#by-damage-dealt {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-damage-dealt", period)) { "Ущерб" } }
+                                                        span { a href="#by-damage-dealt" { "Ущерб" } }
                                                     }
                                                 }
                                                 th#by-damage-per-battle {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-damage-per-battle", period)) { "Ущерб за бой" } }
+                                                        span { a href="#by-damage-per-battle" { "Ущерб за бой" } }
                                                     }
                                                 }
                                                 th#by-survived-battles {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-survived-battles", period)) { "Выжил" } }
+                                                        span { a href="#by-survived-battles" { "Выжил" } }
                                                     }
                                                 }
                                                 th#by-survival-rate {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href=(format!("?period={}#by-survival-rate", period)) { "Выживаемость" } }
+                                                        span { a href="#by-survival-rate" { "Выживаемость" } }
                                                     }
                                                 }
                                             }
