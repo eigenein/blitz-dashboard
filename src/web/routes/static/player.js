@@ -1,3 +1,5 @@
+"use strict";
+
 (function () {
     function sortVehicles(thSelector) {
         if ((vehicles == null) || (!location.hash.startsWith("#by-"))) {
