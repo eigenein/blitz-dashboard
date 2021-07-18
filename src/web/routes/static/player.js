@@ -2,8 +2,11 @@
 
 (function () {
     function sortVehicles(thSelector) {
-        if ((vehicles == null) || (!location.hash.startsWith("#by-"))) {
+        if (vehicles == null) {
             return;
+        }
+        if ((!thSelector) || (!thSelector.startsWith("#by-"))) {
+            thSelector = "#by-battles";
         }
 
         const tbody = vehicles.querySelector("tbody");
@@ -35,5 +38,5 @@
     const vehicles = document.getElementById("vehicles");
     const sortIcon = createSortIcon();
 
-    sortVehicles(!!location.hash ? location.hash : "#by-battles");
+    sortVehicles(location.hash);
 })();

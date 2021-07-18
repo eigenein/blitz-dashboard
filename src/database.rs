@@ -28,6 +28,7 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
         .await
         .context("failed to run the script")?;
 
+    log::info!("The database is ready.");
     Ok(inner)
 }
 
