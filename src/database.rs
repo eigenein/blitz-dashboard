@@ -31,20 +31,6 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
     Ok(inner)
 }
 
-pub async fn retrieve_least_recent_crawled_accounts(
-    executor: &PgPool,
-    limit: i32,
-) -> crate::Result<Vec<GeneralAccountInfo>> {
-    // language=SQL
-    const QUERY: &str = "SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1";
-    let accounts = sqlx::query_as(QUERY)
-        .bind(limit)
-        .fetch_all(executor)
-        .await
-        .context("failed to retrieve the least recent crawled accounts")?;
-    Ok(accounts)
-}
-
 pub async fn retrieve_latest_account_snapshot(
     executor: &PgPool,
     account_id: i32,
@@ -312,7 +298,9 @@ const SCRIPT: &str = r#"
         last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL,
         crawled_at TIMESTAMP WITH TIME ZONE NULL
     );
-    CREATE INDEX IF NOT EXISTS accounts_crawled_at ON accounts(crawled_at);
+    DROP INDEX IF EXISTS accounts_crawled_at;
+    CREATE INDEX IF NOT EXISTS accounts_crawled_at_2 ON accounts(crawled_at NULLS FIRST);
+    CREATE INDEX IF NOT EXISTS accounts_last_battle_time ON accounts(last_battle_time DESC);
 
     CREATE TABLE IF NOT EXISTS account_snapshots (
         account_id INTEGER NOT NULL REFERENCES accounts (account_id) ON DELETE CASCADE,

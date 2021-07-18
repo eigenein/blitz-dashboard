@@ -1,3 +1,4 @@
+use anyhow::Context;
 use chrono::{DateTime, TimeZone, Utc};
 use log::Level;
 use rand::prelude::*;
@@ -37,10 +38,9 @@ impl Crawler {
     async fn crawl_batch(&self) -> crate::Result {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
 
-        let mut previous_infos =
-            database::retrieve_least_recent_crawled_accounts(&self.database, 99).await?;
+        let mut previous_infos = retrieve_batch(&self.database, 49, 50).await?;
         previous_infos.push(GeneralAccountInfo {
-            id: (1..146458230).choose(&mut thread_rng()).unwrap(),
+            id: (1..149034309).choose(&mut thread_rng()).unwrap(),
             last_battle_time: Utc.timestamp(0, 0),
             crawled_at: None,
             nickname: "".to_string(),
@@ -133,4 +133,24 @@ impl Crawler {
 
         Ok(())
     }
+}
+
+pub async fn retrieve_batch(
+    database: &PgPool,
+    n_least_recently_crawled: i32,
+    n_most_recently_played: i32,
+) -> crate::Result<Vec<GeneralAccountInfo>> {
+    // language=SQL
+    const QUERY: &str = r#"
+        (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)
+        UNION
+        (SELECT * FROM accounts ORDER BY last_battle_time DESC LIMIT $2);
+    "#;
+    let accounts = sqlx::query_as(QUERY)
+        .bind(n_least_recently_crawled)
+        .bind(n_most_recently_played)
+        .fetch_all(database)
+        .await
+        .context("failed to retrieve a batch")?;
+    Ok(accounts)
 }
