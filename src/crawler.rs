@@ -23,6 +23,7 @@ enum CrawlMode {
 
 impl Crawler {
     pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
+        sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
         let database = crate::database::open(&opts.database).await?;
         let crawler = Self { api, database };
         loop {

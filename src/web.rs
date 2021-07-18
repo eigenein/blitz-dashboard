@@ -22,6 +22,7 @@ mod routes;
 
 /// Run the web app.
 pub async fn run(api: WargamingApi, opts: WebOpts) -> crate::Result {
+    sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     log::info!("Listening on {}:{}.", opts.host, opts.port);
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
