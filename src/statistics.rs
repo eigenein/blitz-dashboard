@@ -27,7 +27,7 @@ impl ConfidenceInterval {
 
     #[must_use]
     pub fn default_wilson_score_interval(n_trials: i32, n_successes: i32) -> Self {
-        Self::wilson_score_interval(n_trials, n_successes, Z_80)
+        Self::wilson_score_interval(n_trials, n_successes, Z_90)
     }
 
     #[must_use]
