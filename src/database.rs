@@ -31,21 +31,17 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
     Ok(inner)
 }
 
-pub async fn retrieve_oldest_crawled_accounts<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
+pub async fn retrieve_least_recent_crawled_accounts(
+    executor: &PgPool,
     limit: i32,
 ) -> crate::Result<Vec<GeneralAccountInfo>> {
     // language=SQL
-    const QUERY: &str = "
-        SELECT * FROM accounts
-        ORDER BY crawled_at NULLS FIRST
-        LIMIT $1
-    ";
+    const QUERY: &str = "SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1";
     let accounts = sqlx::query_as(QUERY)
         .bind(limit)
         .fetch_all(executor)
         .await
-        .context("failed to retrieve the oldest accounts")?;
+        .context("failed to retrieve the least recent crawled accounts")?;
     Ok(accounts)
 }
 

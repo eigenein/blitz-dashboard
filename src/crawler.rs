@@ -38,7 +38,7 @@ impl Crawler {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
 
         let mut previous_infos =
-            database::retrieve_oldest_crawled_accounts(&self.database, 99).await?;
+            database::retrieve_least_recent_crawled_accounts(&self.database, 99).await?;
         previous_infos.push(GeneralAccountInfo {
             id: (1..146458230).choose(&mut thread_rng()).unwrap(),
             last_battle_time: Utc.timestamp(0, 0),
