@@ -144,7 +144,12 @@ pub async fn retrieve_batch(
     const QUERY: &str = r#"
         (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)
         UNION
-        (SELECT * FROM accounts ORDER BY last_battle_time DESC LIMIT $2);
+        (
+            SELECT * FROM accounts
+            WHERE last_battle_time < NOW() - INTERVAL '1 minute'
+            ORDER BY last_battle_time DESC
+            LIMIT $2
+        );
     "#;
     let accounts = sqlx::query_as(QUERY)
         .bind(n_least_recently_crawled)
