@@ -4,17 +4,17 @@ use serde::Deserialize;
 #[serde(untagged)]
 pub enum Response<T> {
     Data { data: T },
-    Error { error: ResponseError },
+    Error { error: Error },
 }
 
 #[derive(Deserialize, Debug)]
-pub struct ResponseError {
+pub struct Error {
     #[serde(default)]
-    pub message: ResponseMessage,
+    pub message: Message,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
-pub enum ResponseMessage {
+pub enum Message {
     #[serde(rename = "NOT_ENOUGH_SEARCH_LENGTH")]
     NotEnoughSearchLength,
 
@@ -40,18 +40,9 @@ pub enum ResponseMessage {
     Other,
 }
 
-impl Default for ResponseMessage {
+impl Default for Message {
     fn default() -> Self {
         Self::Other
-    }
-}
-
-impl<T> From<Response<T>> for crate::Result<T> {
-    fn from(response: Response<T>) -> Self {
-        match response {
-            Response::Data { data } => Ok(data),
-            Response::Error { error } => Err(anyhow::anyhow!("{:?}", error.message)),
-        }
     }
 }
 
@@ -65,10 +56,10 @@ mod tests {
             // language=JSON
             r#"{"data": 42}"#,
         )?;
-        match crate::Result::<i32>::from(response) {
-            Ok(data) => assert_eq!(data, 42),
-            Err(_) => unreachable!(),
-        };
+        match response {
+            Response::Data { data } => assert_eq!(data, 42),
+            Response::Error { .. } => unreachable!(),
+        }
         Ok(())
     }
 
@@ -78,10 +69,11 @@ mod tests {
             // language=JSON
             r#"{"status":"error","error":{"field":"search","message":"NOT_ENOUGH_SEARCH_LENGTH","code":407,"value":"a"}}"#,
         )?;
-        let result = crate::Result::<i32>::from(response);
-        match result {
-            Ok(_) => unreachable!(),
-            Err(error) => assert_eq!(error.to_string(), "NotEnoughSearchLength"),
+        match response {
+            Response::Data { .. } => unreachable!(),
+            Response::Error { error } => {
+                assert_eq!(error.message, Message::NotEnoughSearchLength)
+            }
         }
         Ok(())
     }
@@ -93,7 +85,7 @@ mod tests {
             r#"{"status":"error","error":{"message":"WTF"}}"#,
         )?;
         match response {
-            Response::Error { error } => assert_eq!(error.message, ResponseMessage::Other),
+            Response::Error { error } => assert_eq!(error.message, Message::Other),
             Response::Data { .. } => unreachable!(),
         }
         Ok(())
@@ -106,7 +98,7 @@ mod tests {
             r#"{"status":"error","error":{}}"#,
         )?;
         match response {
-            Response::Error { error } => assert_eq!(error.message, ResponseMessage::Other),
+            Response::Error { error } => assert_eq!(error.message, Message::Other),
             Response::Data { .. } => unreachable!(),
         }
         Ok(())

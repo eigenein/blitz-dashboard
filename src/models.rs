@@ -49,6 +49,7 @@ pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
+// TODO: rename to `Statistics`, because `account/info` has `statistics.rating`.
 #[derive(Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct AllStatistics {
     pub battles: i32,

@@ -1,9 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
+use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use reqwest::header;
@@ -11,7 +12,7 @@ use reqwest::Url;
 use serde::de::DeserializeOwned;
 
 use crate::models;
-use crate::wargaming::response::Response;
+use crate::wargaming::response::{Message, Response};
 
 pub mod cache;
 pub mod response;
@@ -164,45 +165,71 @@ impl WargamingApi {
         account_id: i32,
     ) -> crate::Result<Option<T>> {
         let account_id = account_id.to_string();
-        Ok(self
-            .call::<HashMap<String, Option<T>>>(&Url::parse_with_params(
+        let mut map: HashMap<String, Option<T>> = self
+            .call(&Url::parse_with_params(
                 url,
                 &[
                     ("application_id", self.application_id.as_str()),
                     ("account_id", account_id.as_str()),
                 ],
             )?)
-            .await?
-            .remove(&account_id)
-            .flatten())
+            .await?;
+        Ok(map.remove(&account_id).flatten())
     }
 
     async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
-        let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        log::debug!("Sending #{} {}", request_id, url);
-        let start_instant = Instant::now();
-        let response = loop {
-            break match self.client.get(url.as_str()).send().await {
-                Ok(response) => response,
+        loop {
+            break match self.call_once(url).await {
+                Ok(response) => {
+                    match response {
+                        Response::Data { data } => {
+                            // 🎉 The request has simply succeeded.
+                            Ok(data)
+                        }
+                        Response::Error { error }
+                            if error.message == Message::RequestLimitExceeded =>
+                        {
+                            // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
+                            log::warn!("Exceeded the request limit. Retrying…");
+                            continue;
+                        }
+                        Response::Error { error } => {
+                            // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
+                            Err(anyhow!("{:?}", error.message))
+                        }
+                    }
+                }
                 Err(error) if error.is_timeout() => {
-                    log::warn!("#{} has timed out. Retrying…", request_id);
+                    // ♻️ The HTTP request has timed out. Retrying…
                     continue;
                 }
-                result => result.context("failed to call the Wargaming.net API")?,
+                Err(error) => {
+                    // 🥅 The HTTP request has failed for a different reason.
+                    Err(error).context("failed to call the Wargaming.net API")
+                }
             };
-        };
-        log::debug!(
-            "Done #{} [{}] in {:?}",
-            request_id,
-            response.status(),
-            Instant::now() - start_instant,
-        );
-        response
-            .error_for_status()
-            .context("Wargaming.net API request has failed")?
-            .json::<Response<T>>()
-            .await
-            .context("failed to parse JSON")?
-            .into()
+        }
+    }
+
+    async fn call_once<T: DeserializeOwned>(
+        &self,
+        url: &Url,
+    ) -> StdResult<Response<T>, reqwest::Error> {
+        let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
+        log::debug!("Get #{} {}", request_id, url);
+
+        let start_instant = Instant::now();
+        let result = self.client.get(url.clone()).send().await;
+        let elapsed = Instant::now() - start_instant;
+        log::debug!("Done #{} in {:?}", request_id, elapsed);
+
+        if let Err(error) = &result {
+            if error.is_timeout() {
+                log::warn!("#{} has timed out.", request_id);
+            } else {
+                log::warn!("#{} has failed.", request_id);
+            }
+        }
+        result?.error_for_status()?.json::<Response<T>>().await
     }
 }
