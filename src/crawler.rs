@@ -38,14 +38,7 @@ impl Crawler {
     async fn crawl_batch(&self) -> crate::Result {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
 
-        let mut previous_infos = retrieve_batch(&self.database, 49, 50).await?;
-        previous_infos.push(GeneralAccountInfo {
-            id: (1..149034309).choose(&mut thread_rng()).unwrap(),
-            last_battle_time: Utc.timestamp(0, 0),
-            crawled_at: None,
-            nickname: "".to_string(),
-            created_at: Utc.timestamp(0, 0),
-        }); // FIXME
+        let mut previous_infos = retrieve_batch(&self.database, 50, 50).await?;
         let account_ids = previous_infos
             .iter()
             .map(|account| account.id)

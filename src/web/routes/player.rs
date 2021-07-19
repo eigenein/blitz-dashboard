@@ -279,11 +279,11 @@ pub async fn get(
                             @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     @let period_win_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.wins);
-                                    div.tile.is-child.card {
+                                    div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&total_win_rate))) {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
                                         }
-                                        div.card-content.(partial_cmp_class(period_win_rate.partial_cmp(&total_win_rate))) {
+                                        div.card-content {
                                             (render_confidence_interval_level(stats_delta.battles, stats_delta.wins))
                                         }
                                     }
