@@ -5,6 +5,7 @@ use rocket::response::Redirect;
 use rocket::{Responder, State};
 
 use crate::logging::clear_user;
+use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::web::partials::{account_search, datetime, footer, headers};
 use crate::web::routes::player::get_account_url;
@@ -22,6 +23,7 @@ pub enum Response {
 pub async fn get(
     query: String,
     account_search_cache: &State<AccountSearchCache>,
+    account_info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
@@ -38,6 +40,9 @@ pub async fn get(
             .last_battle_time
             .cmp(&left.general.last_battle_time)
     });
+    for account in &accounts[..3] {
+        account_info_cache.insert(account.clone()).await;
+    }
 
     let markup = html! {
         (DOCTYPE)
