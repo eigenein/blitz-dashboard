@@ -9,23 +9,18 @@ use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use reqwest::header;
 use reqwest::Url;
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
 
 use crate::models;
+use crate::wargaming::response::Response;
 
 pub mod cache;
+pub mod response;
 
 #[derive(Clone)]
 pub struct WargamingApi {
     application_id: Arc<String>,
     client: reqwest::Client,
     request_counter: Arc<AtomicU32>,
-}
-
-/// Generic Wargaming.net API response.
-#[derive(Deserialize)]
-struct Response<T> {
-    data: T,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -198,12 +193,12 @@ impl WargamingApi {
             response.status(),
             Instant::now() - start_instant,
         );
-        Ok(response
+        response
             .error_for_status()
             .context("Wargaming.net API request has failed")?
             .json::<Response<T>>()
             .await
             .context("failed to parse JSON")?
-            .data)
+            .into()
     }
 }
