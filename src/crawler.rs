@@ -1,7 +1,6 @@
 use anyhow::Context;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use log::Level;
-use rand::prelude::*;
 use sentry::integrations::anyhow::capture_anyhow;
 use sqlx::{PgConnection, PgPool};
 
@@ -38,7 +37,7 @@ impl Crawler {
     async fn crawl_batch(&self) -> crate::Result {
         let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
 
-        let mut previous_infos = retrieve_batch(&self.database, 50, 50).await?;
+        let previous_infos = retrieve_batch(&self.database, 50, 50).await?;
         let account_ids = previous_infos
             .iter()
             .map(|account| account.id)

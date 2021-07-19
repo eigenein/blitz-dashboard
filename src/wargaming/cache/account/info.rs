@@ -1,6 +1,7 @@
+use std::error::Error as StdError;
 use std::sync::Arc;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use moka::future::{Cache, CacheBuilder};
 
 use crate::models::AccountInfo;
@@ -21,24 +22,20 @@ impl AccountInfoCache {
     }
 
     pub async fn get(&self, account_id: i32) -> crate::Result<Arc<AccountInfo>> {
-        // TODO: https://docs.rs/moka/0.5.0/moka/future/struct.Cache.html#method.get_or_try_insert_with
-        match self.cache.get(&account_id) {
-            Some(account_info) => {
-                log::debug!("Cache hit on account #{} info.", account_id);
-                Ok(account_info)
-            }
-            None => {
-                let account_info = Arc::new(
+        self.cache
+            .get_or_try_insert_with(account_id, async {
+                Ok(Arc::new(
                     self.api
                         .get_account_info(&[account_id])
-                        .await?
+                        .await
+                        .map_err(Into::<Box<dyn StdError + Send + Sync + 'static>>::into)?
                         .remove(&account_id.to_string())
                         .flatten()
                         .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
-                );
-                self.cache.insert(account_id, account_info.clone()).await;
-                Ok(account_info)
-            }
-        }
+                ))
+            })
+            .await
+            .map_err(|error| anyhow::anyhow!(error))
+            .with_context(|| format!("failed to access the cache for account #{}", account_id))
     }
 }
