@@ -47,7 +47,7 @@ impl WargamingApi {
             client: reqwest::ClientBuilder::new()
                 .default_headers(headers)
                 .https_only(true)
-                .timeout(StdDuration::from_secs(3))
+                .timeout(StdDuration::from_millis(1500))
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(1)),
         })
@@ -181,14 +181,18 @@ impl WargamingApi {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         log::debug!("Sending #{} {}", request_id, url);
         let start_instant = Instant::now();
-        let response = self
-            .client
-            .get(url.as_str())
-            .send()
-            .await
-            .context("failed to send the Wargaming.net API request")?;
+        let response = loop {
+            break match self.client.get(url.as_str()).send().await {
+                Ok(response) => response,
+                Err(error) if error.is_timeout() => {
+                    log::warn!("#{} has timed out. Retrying…", request_id);
+                    continue;
+                }
+                result => result.context("failed to call the Wargaming.net API")?,
+            };
+        };
         log::debug!(
-            "Done #{} [{}] {:?}",
+            "Done #{} [{}] in {:?}",
             request_id,
             response.status(),
             Instant::now() - start_instant,
