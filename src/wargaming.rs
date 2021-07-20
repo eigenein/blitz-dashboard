@@ -203,7 +203,7 @@ impl WargamingApi {
                 }
                 Err(error) if error.is_timeout() => {
                     // ♻️ The HTTP request has timed out. Retrying…
-                    capture_message("Wargaming.net API has timed out", Level::Warning);
+                    capture_message("Wargaming.net API has timed out", Level::Info);
                     continue;
                 }
                 Err(error) => {
