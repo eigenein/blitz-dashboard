@@ -10,16 +10,24 @@ use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
+use rocket::route::BoxFuture;
 
 pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
-    Crawler::new(api, crate::database::open(&opts.database).await?)
-        .run()
-        .await
+    Crawler {
+        api,
+        database: crate::database::open(&opts.database).await?,
+        once: opts.once,
+        n_chunks: opts.n_chunks,
+    }
+    .run()
+    .await
 }
 
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
+    once: bool,
+    n_chunks: i32,
 }
 
 #[derive(Debug, PartialEq)]
@@ -29,48 +37,70 @@ enum CrawlMode {
 }
 
 impl Crawler {
-    pub fn new(api: WargamingApi, database: PgPool) -> Self {
-        Self { api, database }
-    }
-
-    const PARALLELISM: usize = 1;
-
     pub async fn run(&self) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-        let mut tasks = Vec::new();
-        let mut batch_counter = 0;
-
         loop {
-            while tasks.len() < Self::PARALLELISM {
-                batch_counter += 1;
-                log::info!("Spawning the batch #{}…", batch_counter);
-                tasks.push(self.crawl_batch(batch_counter).boxed());
+            let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
+
+            let mut batch =
+                retrieve_batch(&self.database, 50 * self.n_chunks, 50 * self.n_chunks).await?;
+            fastrand::shuffle(&mut batch);
+
+            let results = futures::future::join_all(
+                batch
+                    .chunks(100)
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, chunk)| self.crawl_chunk(i, chunk).boxed())
+                    .collect::<Vec<BoxFuture<crate::Result>>>(),
+            )
+            .await;
+
+            for result in results {
+                if let Err(error) = result {
+                    let sentry_id = capture_anyhow(&error);
+                    log::error!("Failed to crawl the chunk: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
+                }
             }
-            let (resolved, _, left_tasks) = futures::future::select_all(tasks).await;
-            tasks = left_tasks;
-            if let Err(error) = resolved {
-                let sentry_id = capture_anyhow(&error);
-                log::error!("Failed to crawl the batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
+
+            log::info!(
+                "{:.3}s per chunk.",
+                stopwatch.elapsed().as_secs_f64() / self.n_chunks as f64,
+            );
+
+            if self.once {
+                break Ok(());
             }
         }
     }
 
-    async fn crawl_batch(&self, batch_id: u32) -> crate::Result {
-        let _stopwatch = Stopwatch::new(format!("Batch #{} crawled", batch_id)).level(Level::Info);
+    async fn crawl_chunk(
+        &self,
+        chunk_index: usize,
+        previous_infos: &[BaseAccountInfo],
+    ) -> crate::Result {
+        let _stopwatch = Stopwatch::new(format!(
+            "Chunk #{} ({} accounts) crawled",
+            chunk_index,
+            previous_infos.len(),
+        ))
+        .level(Level::Info);
 
-        let previous_infos = retrieve_batch(&self.database, 50, 50).await?;
         let account_ids = previous_infos
             .iter()
             .map(|account| account.id)
             .collect::<Vec<_>>();
         let mut current_infos = self.api.get_account_info(&account_ids).await?;
 
-        for previous_info in previous_infos.into_iter() {
+        let mut transaction = self.database.begin().await?;
+
+        for previous_info in previous_infos.iter() {
             let current_info = current_infos
                 .remove(&previous_info.id.to_string())
                 .flatten();
             self.crawl_account(
+                &mut transaction,
                 previous_info.id,
                 match previous_info.crawled_at {
                     Some(_) => CrawlMode::LastBattleTime(previous_info.last_battle_time),
@@ -81,11 +111,15 @@ impl Crawler {
             .await?;
         }
 
+        log::debug!("Committing…");
+        transaction.commit().await?;
+
         Ok(())
     }
 
     async fn crawl_account(
         &self,
+        connection: &mut PgConnection,
         account_id: i32,
         mode: CrawlMode,
         current_info: Option<AccountInfo>,
@@ -94,10 +128,9 @@ impl Crawler {
             Stopwatch::new(format!("Account #{} crawled", account_id)).level(Level::Info);
         log::info!("Crawling account #{}, {:?}…", account_id, mode);
 
-        let mut transaction = self.database.begin().await?;
         match current_info {
             Some(current_info) => {
-                self.crawl_existing_account(&mut transaction, account_id, mode, current_info)
+                self.crawl_existing_account(&mut *connection, account_id, mode, current_info)
                     .await?;
             }
             None if mode != CrawlMode::New => {
@@ -106,8 +139,6 @@ impl Crawler {
             }
             _ => {}
         };
-        log::debug!("Committing…");
-        transaction.commit().await?;
 
         Ok(())
     }
@@ -150,7 +181,7 @@ impl Crawler {
 }
 
 async fn retrieve_batch(
-    database: &PgPool,
+    connection: &PgPool,
     n_least_recently_crawled: i32,
     n_most_recently_played: i32,
 ) -> crate::Result<Vec<BaseAccountInfo>> {
@@ -159,6 +190,7 @@ async fn retrieve_batch(
         (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)
         UNION
         (
+            -- FIXME: there are some pitfalls.
             SELECT * FROM accounts
             WHERE last_battle_time < NOW() - INTERVAL '1 minute'
             ORDER BY last_battle_time DESC
@@ -168,7 +200,7 @@ async fn retrieve_batch(
     let accounts = sqlx::query_as(QUERY)
         .bind(n_least_recently_crawled)
         .bind(n_most_recently_played)
-        .fetch_all(database)
+        .fetch_all(connection)
         .await
         .context("failed to retrieve a batch")?;
     Ok(accounts)

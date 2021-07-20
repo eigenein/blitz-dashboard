@@ -64,6 +64,12 @@ pub struct WebOpts {
 pub struct CrawlerOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
+
+    #[clap(long, about = "Exit after one iteration")]
+    pub once: bool,
+
+    #[clap(short, long, about = "Number of chunks crawled in parallel")]
+    pub n_chunks: i32,
 }
 
 #[derive(Clap)]

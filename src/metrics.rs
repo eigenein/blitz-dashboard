@@ -29,11 +29,15 @@ impl Stopwatch {
         self.threshold = Some(Duration::from_millis(millis));
         self
     }
+
+    pub fn elapsed(&self) -> Duration {
+        Instant::now() - self.start
+    }
 }
 
 impl Drop for Stopwatch {
     fn drop(&mut self) {
-        let elapsed = Instant::now() - self.start;
+        let elapsed = self.elapsed();
         log::log!(
             match self.threshold {
                 Some(threshold) if elapsed >= threshold => Level::Warn,
