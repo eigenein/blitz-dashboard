@@ -1,5 +1,6 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use futures::FutureExt;
 use log::Level;
 use sentry::integrations::anyhow::capture_anyhow;
 use sqlx::{PgConnection, PgPool};
@@ -9,6 +10,12 @@ use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
+
+pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
+    Crawler::new(api, crate::database::open(&opts.database).await?)
+        .run()
+        .await
+}
 
 pub struct Crawler {
     api: WargamingApi,
@@ -22,20 +29,35 @@ enum CrawlMode {
 }
 
 impl Crawler {
-    pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
+    pub fn new(api: WargamingApi, database: PgPool) -> Self {
+        Self { api, database }
+    }
+
+    const PARALLELISM: usize = 1;
+
+    pub async fn run(&self) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
-        let database = crate::database::open(&opts.database).await?;
-        let crawler = Self { api, database };
+
+        let mut tasks = Vec::new();
+        let mut batch_counter = 0;
+
         loop {
-            if let Err(error) = crawler.crawl_batch().await {
+            while tasks.len() < Self::PARALLELISM {
+                batch_counter += 1;
+                log::info!("Spawning the batch #{}…", batch_counter);
+                tasks.push(self.crawl_batch(batch_counter).boxed());
+            }
+            let (resolved, _, left_tasks) = futures::future::select_all(tasks).await;
+            tasks = left_tasks;
+            if let Err(error) = resolved {
                 let sentry_id = capture_anyhow(&error);
-                log::error!("Failed to crawl a batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
+                log::error!("Failed to crawl the batch: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
             }
         }
     }
 
-    async fn crawl_batch(&self) -> crate::Result {
-        let _stopwatch = Stopwatch::new("Batch crawled").level(Level::Info);
+    async fn crawl_batch(&self, batch_id: u32) -> crate::Result {
+        let _stopwatch = Stopwatch::new(format!("Batch #{} crawled", batch_id)).level(Level::Info);
 
         let previous_infos = retrieve_batch(&self.database, 50, 50).await?;
         let account_ids = previous_infos
@@ -127,7 +149,7 @@ impl Crawler {
     }
 }
 
-pub async fn retrieve_batch(
+async fn retrieve_batch(
     database: &PgPool,
     n_least_recently_crawled: i32,
     n_most_recently_played: i32,
