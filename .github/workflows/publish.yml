@@ -68,3 +68,5 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: eigenein
           SENTRY_PROJECT: yastatist
+        with:
+          version: ${{ github.ref }}

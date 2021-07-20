@@ -190,10 +190,9 @@ async fn retrieve_batch(
         (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)
         UNION
         (
-            -- FIXME: there are some pitfalls.
             SELECT * FROM accounts
-            WHERE last_battle_time < NOW() - INTERVAL '1 minute'
-            ORDER BY last_battle_time DESC
+            WHERE last_battle_time > NOW() - INTERVAL '1 hour'
+            ORDER BY crawled_at
             LIMIT $2
         );
     "#;
