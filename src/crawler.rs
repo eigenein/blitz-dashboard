@@ -2,6 +2,7 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::FutureExt;
 use log::Level;
+use rocket::route::BoxFuture;
 use sentry::integrations::anyhow::capture_anyhow;
 use sqlx::{PgConnection, PgPool};
 
@@ -10,7 +11,6 @@ use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
-use rocket::route::BoxFuture;
 
 pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
     Crawler {

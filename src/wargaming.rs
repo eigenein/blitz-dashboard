@@ -9,6 +9,7 @@ use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use reqwest::header;
 use reqwest::Url;
+use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 
 use crate::models;
@@ -191,6 +192,7 @@ impl WargamingApi {
                         {
                             // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
                             log::warn!("Exceeded the request limit. Retrying…");
+                            capture_message("Exceeded the Wargaming.net RPS limit", Level::Warning);
                             continue;
                         }
                         Response::Error { error } => {
@@ -201,6 +203,7 @@ impl WargamingApi {
                 }
                 Err(error) if error.is_timeout() => {
                     // ♻️ The HTTP request has timed out. Retrying…
+                    capture_message("Wargaming.net API has timed out", Level::Warning);
                     continue;
                 }
                 Err(error) => {
