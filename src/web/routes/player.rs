@@ -44,8 +44,8 @@ pub async fn get(
         Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 
     let current_info = account_info_cache.get(account_id).await?;
-    set_user(&current_info.general.nickname);
-    database::insert_account_or_ignore(database, &current_info.general).await?;
+    set_user(&current_info.base.nickname);
+    database::insert_account_or_ignore(database, &current_info.base).await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
     let previous_info =
@@ -55,7 +55,7 @@ pub async fn get(
         Some(previous_info) => {
             let played_tank_ids: SmallVec<[i32; 96]> = current_tanks
                 .iter()
-                .filter(|(_, tank)| tank.last_battle_time > previous_info.general.last_battle_time)
+                .filter(|(_, tank)| tank.last_battle_time > previous_info.base.last_battle_time)
                 .map(|(tank_id, _)| *tank_id)
                 .collect();
             let previous_tank_snapshots = database::retrieve_latest_tank_snapshots(
@@ -86,7 +86,7 @@ pub async fn get(
         html lang="en" {
             head {
                 (headers())
-                title { (current_info.general.nickname) " – Я статист!" }
+                title { (current_info.base.nickname) " – Я статист!" }
                 script defer="true" src=(concat!("/static/player.js?", crate_version!())) {};
             }
             body {
@@ -106,7 +106,7 @@ pub async fn get(
                         div.navbar-menu {
                             div.navbar-end {
                                 form.navbar-item action="/search" method="GET" {
-                                    (account_search("", &current_info.general.nickname, false))
+                                    (account_search("", &current_info.base.nickname, false))
                                 }
                             }
                         }
@@ -119,15 +119,15 @@ pub async fn get(
                             div.tile."is-6".is-parent {
                                 div.tile.is-child.card {
                                     header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-user", &current_info.general.nickname)) }
+                                        p.card-header-title { (icon_text("fas fa-user", &current_info.base.nickname)) }
                                     }
                                     div.card-content {
                                         div.level {
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Возраст" }
-                                                    p.title title=(current_info.general.created_at) {
-                                                        (datetime(current_info.general.created_at, Tense::Present))
+                                                    p.title title=(current_info.base.created_at) {
+                                                        (datetime(current_info.base.created_at, Tense::Present))
                                                     }
                                                 }
                                             }
@@ -142,9 +142,9 @@ pub async fn get(
                                                     p.heading { "Последний бой" }
                                                     p.title.(if current_info.has_recently_played() { "has-text-success" } else if !current_info.is_active() { "has-text-danger" } else { "" }) {
                                                         time
-                                                            datetime=(current_info.general.last_battle_time.to_rfc3339())
-                                                            title=(current_info.general.last_battle_time) {
-                                                                (datetime(current_info.general.last_battle_time, Tense::Past))
+                                                            datetime=(current_info.base.last_battle_time.to_rfc3339())
+                                                            title=(current_info.base.last_battle_time) {
+                                                                (datetime(current_info.base.last_battle_time, Tense::Past))
                                                             }
                                                     }
                                                 }
@@ -182,7 +182,7 @@ pub async fn get(
                             }
                         }
 
-                        @if current_info.general.last_battle_time >= before && stats_delta.battles == 0 {
+                        @if current_info.base.last_battle_time >= before && stats_delta.battles == 0 {
                             article.message.is-warning {
                                 div.message-body {
                                     strong { "Нет случайных боев за этот период." }

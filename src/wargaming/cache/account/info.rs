@@ -41,7 +41,7 @@ impl AccountInfoCache {
 
     pub async fn insert(&self, account_info: AccountInfo) {
         self.cache
-            .insert(account_info.general.id, Arc::new(account_info))
+            .insert(account_info.base.id, Arc::new(account_info))
             .await;
     }
 }

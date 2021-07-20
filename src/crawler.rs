@@ -6,7 +6,7 @@ use sqlx::{PgConnection, PgPool};
 
 use crate::database;
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, GeneralAccountInfo, Tank};
+use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
@@ -97,9 +97,9 @@ impl Crawler {
         mode: CrawlMode,
         mut current_info: AccountInfo,
     ) -> crate::Result {
-        log::debug!("Nickname: {}.", current_info.general.nickname);
-        current_info.general.crawled_at = Some(Utc::now());
-        database::insert_account_or_replace(&mut *connection, &current_info.general).await?;
+        log::debug!("Nickname: {}.", current_info.base.nickname);
+        current_info.base.crawled_at = Some(Utc::now());
+        database::insert_account_or_replace(&mut *connection, &current_info.base).await?;
 
         match mode {
             CrawlMode::New => {
@@ -108,7 +108,7 @@ impl Crawler {
                 database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             }
             CrawlMode::LastBattleTime(last_battle_time)
-                if current_info.general.last_battle_time != last_battle_time =>
+                if current_info.base.last_battle_time != last_battle_time =>
             {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
                 let tanks: Vec<Tank> = self
@@ -131,7 +131,7 @@ pub async fn retrieve_batch(
     database: &PgPool,
     n_least_recently_crawled: i32,
     n_most_recently_played: i32,
-) -> crate::Result<Vec<GeneralAccountInfo>> {
+) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
         (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)

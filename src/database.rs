@@ -9,7 +9,7 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
 
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, AccountInfoStatistics, AllStatistics, GeneralAccountInfo, Tank};
+use crate::models::{AccountInfo, AccountInfoStatistics, AllStatistics, BaseAccountInfo, Tank};
 
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
@@ -89,7 +89,7 @@ pub async fn retrieve_latest_tank_snapshots(
 
 pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
-    info: &GeneralAccountInfo,
+    info: &BaseAccountInfo,
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
@@ -109,10 +109,7 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     Ok(())
 }
 
-pub async fn insert_account_or_ignore(
-    executor: &PgPool,
-    info: &GeneralAccountInfo,
-) -> crate::Result {
+pub async fn insert_account_or_ignore(executor: &PgPool, info: &BaseAccountInfo) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)
@@ -147,7 +144,7 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
     info: &AccountInfo,
 ) -> crate::Result {
-    log::info!("Inserting account #{} snapshot…", info.general.id);
+    log::info!("Inserting account #{} snapshot…", info.base.id);
     // language=SQL
     const QUERY: &str = "
         INSERT INTO account_snapshots (
@@ -168,9 +165,9 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
         ON CONFLICT (account_id, last_battle_time) DO NOTHING
     ";
     sqlx::query(QUERY)
-        .bind(info.general.id)
-        .bind(info.general.last_battle_time)
-        .bind(info.general.crawled_at)
+        .bind(info.base.id)
+        .bind(info.base.last_battle_time)
+        .bind(info.base.crawled_at)
         .bind(info.statistics.all.battles)
         .bind(info.statistics.all.wins)
         .bind(info.statistics.all.survived_battles)
@@ -255,7 +252,7 @@ impl<'r> FromRow<'r, PgRow> for Tank {
 impl<'r> FromRow<'r, PgRow> for AccountInfo {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
-            general: GeneralAccountInfo::from_row(row)?,
+            base: BaseAccountInfo::from_row(row)?,
             statistics: AccountInfoStatistics {
                 all: AllStatistics::from_row(row)?,
             },
@@ -263,7 +260,7 @@ impl<'r> FromRow<'r, PgRow> for AccountInfo {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for GeneralAccountInfo {
+impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             id: row.try_get("account_id")?,

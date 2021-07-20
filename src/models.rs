@@ -17,7 +17,7 @@ pub struct Account {
 }
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
-pub struct GeneralAccountInfo {
+pub struct BaseAccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
 
@@ -39,7 +39,7 @@ pub struct GeneralAccountInfo {
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(flatten)]
-    pub general: GeneralAccountInfo,
+    pub base: BaseAccountInfo,
 
     pub statistics: AccountInfoStatistics,
 }
@@ -235,11 +235,11 @@ impl Sub for &Tank {
 
 impl AccountInfo {
     pub fn is_active(&self) -> bool {
-        self.general.last_battle_time > (Utc::now() - Duration::days(365))
+        self.base.last_battle_time > (Utc::now() - Duration::days(365))
     }
 
     pub fn has_recently_played(&self) -> bool {
-        self.general.last_battle_time > (Utc::now() - Duration::hours(1))
+        self.base.last_battle_time > (Utc::now() - Duration::hours(1))
     }
 }
 

@@ -23,10 +23,10 @@ impl AccountTanksCache {
     }
 
     pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Arc<HashMap<i32, Tank>>> {
-        let account_id = account_info.general.id;
+        let account_id = account_info.base.id;
         match self.cache.get(&account_id) {
             Some((last_battle_time, snapshots))
-                if last_battle_time == account_info.general.last_battle_time =>
+                if last_battle_time == account_info.base.last_battle_time =>
             {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
                 Ok(snapshots)
@@ -43,7 +43,7 @@ impl AccountTanksCache {
                 self.cache
                     .insert(
                         account_id,
-                        (account_info.general.last_battle_time, snapshots.clone()),
+                        (account_info.base.last_battle_time, snapshots.clone()),
                     )
                     .await;
                 Ok(snapshots)

@@ -31,14 +31,11 @@ pub async fn get(
     let mut accounts = account_search_cache.get(&query).await?.to_vec();
     if accounts.len() == 1 {
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
-            accounts.first().unwrap().general.id,
+            accounts.first().unwrap().base.id,
         ))));
     }
     accounts.sort_unstable_by(|left, right| {
-        right
-            .general
-            .last_battle_time
-            .cmp(&left.general.last_battle_time)
+        right.base.last_battle_time.cmp(&left.base.last_battle_time)
     });
     for account in &accounts[..3] {
         account_info_cache.insert(account.clone()).await;
@@ -95,13 +92,13 @@ pub async fn get(
                             @for account in &accounts {
                                 div.box {
                                     p.title."is-5" {
-                                        a href=(get_account_url(account.general.id)) { (account.general.nickname) }
+                                        a href=(get_account_url(account.base.id)) { (account.base.nickname) }
                                     }
                                     p.subtitle."is-6" {
                                         span.icon-text.has-text-grey {
                                             span { (account.statistics.all.battles) " боев" }
                                             span.icon { i.far.fa-dot-circle {} }
-                                            span { (datetime(account.general.last_battle_time, Tense::Past)) }
+                                            span { (datetime(account.base.last_battle_time, Tense::Past)) }
                                         }
                                     }
                                 }
