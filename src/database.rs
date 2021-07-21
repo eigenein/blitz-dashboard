@@ -105,7 +105,7 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
         .bind(info.crawled_at)
         .execute(executor)
         .await
-        .context("failed to insert the account or replace")?;
+        .with_context(|| format!("failed to insert the account #{} or replace", info.id))?;
     Ok(())
 }
 
