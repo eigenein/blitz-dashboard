@@ -69,7 +69,7 @@ impl Crawler {
             let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
 
             // FIXME: read only `account_id`, `crawled_at` and `last_battle_time`.
-            let mut batch = retrieve_batch(&self.database, 50 * n_chunks, 50 * n_chunks).await?;
+            let mut batch = retrieve_batch(&self.database, n_chunks).await?;
             fastrand::shuffle(&mut batch);
 
             let results = futures::future::join_all(
@@ -203,11 +203,7 @@ impl Crawler {
     }
 }
 
-async fn retrieve_batch(
-    connection: &PgPool,
-    n_least_recently_crawled: i32,
-    n_most_recently_played: i32,
-) -> crate::Result<Vec<BaseAccountInfo>> {
+async fn retrieve_batch(connection: &PgPool, n_chunks: i32) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
         (
@@ -215,14 +211,14 @@ async fn retrieve_batch(
             SELECT * FROM accounts
             WHERE last_battle_time < NOW() - INTERVAL '1 month'
             ORDER BY crawled_at NULLS FIRST
-            LIMIT 10
+            LIMIT $1
         )
         UNION
         (
             SELECT * FROM accounts
             WHERE NOW() - INTERVAL '1 month' <= last_battle_time AND last_battle_time < NOW() - INTERVAL '1 hour'
             ORDER BY crawled_at NULLS FIRST
-            LIMIT 40
+            LIMIT $2
         )
         UNION
         (
@@ -230,10 +226,13 @@ async fn retrieve_batch(
             SELECT * FROM accounts
             WHERE last_battle_time >= NOW() - INTERVAL '1 hour'
             ORDER BY crawled_at NULLS FIRST
-            LIMIT 50
+            LIMIT $3
         );
     "#;
     let accounts = sqlx::query_as(QUERY)
+        .bind(10 * n_chunks)
+        .bind(40 * n_chunks)
+        .bind(50 * n_chunks)
         .fetch_all(connection)
         .await
         .context("failed to retrieve a batch")?;
