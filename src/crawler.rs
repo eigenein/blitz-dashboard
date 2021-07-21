@@ -210,17 +210,27 @@ async fn retrieve_batch(
 ) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
-        -- TODO: 10-40-50 (inactive, active, recently played)
         (
-            SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1
+            -- Inactive accounts are crawled in batches of 10.
+            SELECT * FROM accounts
+            WHERE last_battle_time < NOW() - INTERVAL '1 month'
+            ORDER BY crawled_at NULLS FIRST
+            LIMIT 10
         )
         UNION
         (
-            -- TODO: `NULLS FIRST`
             SELECT * FROM accounts
-            WHERE last_battle_time > NOW() - INTERVAL '1 hour'
-            ORDER BY crawled_at
-            LIMIT $2
+            WHERE NOW() - INTERVAL '1 month' <= last_battle_time AND last_battle_time < NOW() - INTERVAL '1 hour'
+            ORDER BY crawled_at NULLS FIRST
+            LIMIT 40
+        )
+        UNION
+        (
+            -- Now playing accounts are given the top priority.
+            SELECT * FROM accounts
+            WHERE last_battle_time >= NOW() - INTERVAL '1 hour'
+            ORDER BY crawled_at NULLS FIRST
+            LIMIT 50
         );
     "#;
     let accounts = sqlx::query_as(QUERY)
