@@ -7,9 +7,6 @@ use clap::{crate_authors, crate_description, crate_name, crate_version, AppSetti
 #[clap(about = crate_description!())]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
-    #[clap(short, long, about = "Wargaming.net API application ID")]
-    pub application_id: String,
-
     #[clap(short, long, about = "Sentry DSN")]
     pub sentry_dsn: Option<String>,
 
@@ -42,6 +39,9 @@ pub struct WebOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
+    #[clap(short, long, about = "Wargaming.net API application ID")]
+    pub application_id: String,
+
     #[clap(long, default_value = "::", about = "Web app host")]
     pub host: String,
 
@@ -65,6 +65,9 @@ pub struct CrawlerOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
+    #[clap(short, long, about = "Wargaming.net API application ID")]
+    pub application_id: String,
+
     #[clap(long, about = "Exit after one iteration")]
     pub once: bool,
 
@@ -78,7 +81,10 @@ pub struct CrawlerOpts {
 #[clap(version = crate_version!())]
 #[clap(about = "Updates the bundled Tankopedia module")]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct ImportTankopediaOpts;
+pub struct ImportTankopediaOpts {
+    #[clap(short, long, about = "Wargaming.net API application ID")]
+    pub application_id: String,
+}
 
 pub fn parse() -> Opts {
     Opts::parse()

@@ -3,8 +3,6 @@
 use clap::{crate_name, crate_version};
 use sentry::integrations::anyhow::capture_anyhow;
 
-use wargaming::WargamingApi;
-
 use crate::opts::{Opts, Subcommand};
 
 mod crawler;
@@ -37,12 +35,10 @@ async fn main() -> crate::Result {
 }
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
-    let api = WargamingApi::new(&opts.application_id)?;
-
     match opts.subcommand {
-        Subcommand::Web(opts) => web::run(api, opts).await,
-        Subcommand::Crawler(opts) => crawler::run(api, opts).await,
-        Subcommand::ImportTankopedia(_) => tankopedia::import(api).await,
+        Subcommand::Web(opts) => web::run(opts).await,
+        Subcommand::Crawler(opts) => crawler::run(opts).await,
+        Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
     }
 }
 

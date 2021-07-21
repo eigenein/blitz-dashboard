@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::time::Duration as StdDuration;
 
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
@@ -21,9 +22,11 @@ mod result;
 mod routes;
 
 /// Run the web app.
-pub async fn run(api: WargamingApi, opts: WebOpts) -> crate::Result {
+pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
+
     log::info!("Listening on {}:{}.", opts.host, opts.port);
+    let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountSearchCache::new(api.clone()))

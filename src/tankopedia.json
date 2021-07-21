@@ -9782,8 +9782,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          2068,
-          11796
+          11796,
+          2068
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -24794,8 +24794,8 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          3713,
-          1409
+          1409,
+          3713
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -33627,9 +33627,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -33708,8 +33708,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -76054,8 +76054,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          6913,
-          2049
+          2049,
+          6913
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -77470,8 +77470,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -80052,8 +80052,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2324,
-          2068
+          2068,
+          2324
         ],
         "next_tanks": [
           10257

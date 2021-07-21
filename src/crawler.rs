@@ -1,3 +1,5 @@
+use std::time::Duration as StdDuration;
+
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::FutureExt;
@@ -12,9 +14,9 @@ use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::CrawlerOpts;
 use crate::wargaming::WargamingApi;
 
-pub async fn run(api: WargamingApi, opts: CrawlerOpts) -> crate::Result {
+pub async fn run(opts: CrawlerOpts) -> crate::Result {
     Crawler {
-        api,
+        api: WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?,
         database: crate::database::open(&opts.database).await?,
         once: opts.once,
         n_chunks: opts.n_chunks,
