@@ -34,7 +34,11 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
     let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(5000))?;
-    let json_path = Path::new(file!()).parent().unwrap().join("tankopedia.json");
+    let json_path = Path::new(file!())
+        .parent()
+        .unwrap()
+        .join("tankopedia")
+        .join("tankopedia.json");
     let tankopedia: Tankopedia =
         serde_json::from_str::<Tankopedia>(&fs::read_to_string(&json_path)?)?
             .into_iter()

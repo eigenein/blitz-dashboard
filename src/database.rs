@@ -24,7 +24,7 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
 
     log::info!("Initializing the database schema…");
     inner
-        .execute(include_str!("database.sql"))
+        .execute(include_str!("database/script.sql"))
         .await
         .context("failed to run the script")?;
 
