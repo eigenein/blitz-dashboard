@@ -31,6 +31,8 @@ fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
 
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
+    sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
+
     let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(5000))?;
     let json_path = Path::new(file!()).parent().unwrap().join("tankopedia.json");
     let tankopedia: Tankopedia =

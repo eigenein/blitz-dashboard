@@ -23,6 +23,8 @@ pub async fn run(opts: CrawlerOpts) -> crate::Result {
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
+    sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
+
     let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
     let epoch = Utc.timestamp(0, 0);
     for chunk in &(opts.start_id..opts.end_id).chunks(100) {
