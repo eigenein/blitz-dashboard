@@ -1,8 +1,9 @@
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use futures::FutureExt;
+use itertools::Itertools;
 use log::Level;
 use rocket::route::BoxFuture;
 use sentry::integrations::anyhow::capture_anyhow;
@@ -11,25 +12,38 @@ use sqlx::{PgConnection, PgPool};
 use crate::database;
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
-use crate::opts::CrawlerOpts;
+use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
 
 pub async fn run(opts: CrawlerOpts) -> crate::Result {
-    Crawler {
-        api: WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?,
-        database: crate::database::open(&opts.database).await?,
-        once: opts.once,
-        n_chunks: opts.n_chunks,
+    Crawler::new(&opts.application_id, &opts.database)
+        .await?
+        .run(opts.n_chunks, opts.once)
+        .await
+}
+
+pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
+    let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
+    let epoch = Utc.timestamp(0, 0);
+    for chunk in &(opts.start_id..opts.end_id).chunks(100) {
+        let previous_infos: Vec<BaseAccountInfo> = chunk
+            .map(|account_id| BaseAccountInfo {
+                id: account_id,
+                crawled_at: None,
+                // FIXME: the fields below don't matter for `crawl_chunk`, but would be better without the hack.
+                last_battle_time: epoch,
+                nickname: "".to_string(),
+                created_at: epoch,
+            })
+            .collect();
+        crawler.crawl_chunk(&previous_infos).await?;
     }
-    .run()
-    .await
+    Ok(())
 }
 
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
-    once: bool,
-    n_chunks: i32,
 }
 
 #[derive(Debug, PartialEq)]
@@ -39,22 +53,28 @@ enum CrawlMode {
 }
 
 impl Crawler {
-    pub async fn run(&self) -> crate::Result {
+    pub async fn new(application_id: &str, database_uri: &str) -> crate::Result<Self> {
+        Ok(Self {
+            api: WargamingApi::new(application_id, StdDuration::from_millis(1500))?,
+            database: crate::database::open(database_uri).await?,
+        })
+    }
+
+    pub async fn run(&self, n_chunks: i32, once: bool) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
         loop {
             let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
 
-            let mut batch =
-                retrieve_batch(&self.database, 50 * self.n_chunks, 50 * self.n_chunks).await?;
+            // FIXME: read only `account_id`, `crawled_at` and `last_battle_time`.
+            let mut batch = retrieve_batch(&self.database, 50 * n_chunks, 50 * n_chunks).await?;
             fastrand::shuffle(&mut batch);
 
             let results = futures::future::join_all(
                 batch
                     .chunks(100)
                     .into_iter()
-                    .enumerate()
-                    .map(|(i, chunk)| self.crawl_chunk(i, chunk).boxed())
+                    .map(|chunk| self.crawl_chunk(chunk).boxed())
                     .collect::<Vec<BoxFuture<crate::Result>>>(),
             )
             .await;
@@ -68,26 +88,19 @@ impl Crawler {
 
             log::info!(
                 "{:.3}s per chunk.",
-                stopwatch.elapsed().as_secs_f64() / self.n_chunks as f64,
+                stopwatch.elapsed().as_secs_f64() / n_chunks as f64,
             );
 
-            if self.once {
+            if once {
                 break Ok(());
             }
         }
     }
 
-    async fn crawl_chunk(
-        &self,
-        chunk_index: usize,
-        previous_infos: &[BaseAccountInfo],
-    ) -> crate::Result {
-        let _stopwatch = Stopwatch::new(format!(
-            "Chunk #{} ({} accounts) crawled",
-            chunk_index,
-            previous_infos.len(),
-        ))
-        .level(Level::Info);
+    async fn crawl_chunk(&self, previous_infos: &[BaseAccountInfo]) -> crate::Result {
+        let _stopwatch =
+            Stopwatch::new(format!("Chunk ({} accounts) crawled", previous_infos.len()))
+                .level(Level::Info);
 
         let account_ids = previous_infos
             .iter()
@@ -97,10 +110,14 @@ impl Crawler {
 
         let mut transaction = self.database.begin().await?;
 
+        let mut n_accounts = 0;
         for previous_info in previous_infos.iter() {
             let current_info = current_infos
                 .remove(&previous_info.id.to_string())
                 .flatten();
+            if current_info.is_some() {
+                n_accounts += 1;
+            }
             self.crawl_account(
                 &mut transaction,
                 previous_info.id,
@@ -113,7 +130,7 @@ impl Crawler {
             .await?;
         }
 
-        log::debug!("Committing…");
+        log::info!("{} accounts found. Committing…", n_accounts);
         transaction.commit().await?;
 
         Ok(())
@@ -136,10 +153,12 @@ impl Crawler {
                     .await?;
             }
             None if mode != CrawlMode::New => {
-                log::warn!("The account does not exist anymore. Deleting…");
+                log::warn!("The account #{} does not exist. Deleting…", account_id);
                 database::delete_account(&self.database, account_id).await?;
             }
-            _ => {}
+            _ => {
+                log::info!("The account #{} does not exist.", account_id);
+            }
         };
 
         Ok(())

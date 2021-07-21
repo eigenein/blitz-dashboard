@@ -27,6 +27,7 @@ pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
     ImportTankopedia(ImportTankopediaOpts),
+    CrawlAccounts(CrawlAccountsOpts),
 }
 
 #[derive(Clap)]
@@ -84,6 +85,26 @@ pub struct CrawlerOpts {
 pub struct ImportTankopediaOpts {
     #[clap(short, long, about = "Wargaming.net API application ID")]
     pub application_id: String,
+}
+
+#[derive(Clap)]
+#[clap(name = crate_name!())]
+#[clap(author = crate_authors!())]
+#[clap(version = crate_version!())]
+#[clap(about = "Crawls the specified account IDs")]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct CrawlAccountsOpts {
+    #[clap(short, long, about = "PostgreSQL database URI")]
+    pub database: String,
+
+    #[clap(short, long, about = "Wargaming.net API application ID")]
+    pub application_id: String,
+
+    #[clap(long, about = "Starting account ID")]
+    pub start_id: i32,
+
+    #[clap(long, about = "Ending account ID (non-inclusive)")]
+    pub end_id: i32,
 }
 
 pub fn parse() -> Opts {
