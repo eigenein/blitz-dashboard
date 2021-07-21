@@ -210,9 +210,13 @@ async fn retrieve_batch(
 ) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
-        (SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1)
+        -- TODO: 10-40-50 (inactive, active, recently played)
+        (
+            SELECT * FROM accounts ORDER BY crawled_at NULLS FIRST LIMIT $1
+        )
         UNION
         (
+            -- TODO: `NULLS FIRST`
             SELECT * FROM accounts
             WHERE last_battle_time > NOW() - INTERVAL '1 hour'
             ORDER BY crawled_at
