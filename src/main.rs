@@ -1,8 +1,10 @@
 #![warn(clippy::all)]
 
 use clap::{crate_name, crate_version};
+use log::Level;
 use sentry::integrations::anyhow::capture_anyhow;
 
+use crate::metrics::Stopwatch;
 use crate::opts::{Opts, Subcommand};
 
 mod crawler;
@@ -35,6 +37,7 @@ async fn main() -> crate::Result {
 }
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
+    let _stopwatch = Stopwatch::new("The subcommand has finished").level(Level::Info);
     match opts.subcommand {
         Subcommand::Web(opts) => web::run(opts).await,
         Subcommand::Crawler(opts) => crawler::run(opts).await,
