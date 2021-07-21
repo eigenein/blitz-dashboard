@@ -234,8 +234,6 @@ async fn retrieve_batch(
         );
     "#;
     let accounts = sqlx::query_as(QUERY)
-        .bind(n_least_recently_crawled)
-        .bind(n_most_recently_played)
         .fetch_all(connection)
         .await
         .context("failed to retrieve a batch")?;
