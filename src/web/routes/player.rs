@@ -352,7 +352,7 @@ pub async fn get(
                                                 }
                                                 th#by-frags-per-hour {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-wins-per-hour" { "Победы в час" } }
+                                                        span { a href="#by-wins-per-hour" { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } } }
                                                     }
                                                 }
                                                 th#by-gold {
