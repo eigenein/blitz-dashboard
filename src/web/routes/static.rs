@@ -57,6 +57,11 @@ pub async fn get_player_js() -> Static {
     Static(ContentType::JavaScript, include_bytes!("static/player.js"))
 }
 
+#[get("/robots.txt")]
+pub async fn get_robots_txt() -> Static {
+    Static(ContentType::Text, include_bytes!("static/robots.txt"))
+}
+
 pub struct Static(ContentType, &'static [u8]);
 
 #[rocket::async_trait]
