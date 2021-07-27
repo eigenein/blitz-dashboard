@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          25124,
-          24868
+          24868,
+          25124
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -20389,6 +20389,167 @@
     ],
     "type": "AT-SPG"
   },
+  "17729": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 155,
+          "rear": 40,
+          "sides": 90
+        },
+        "turret": {
+          "front": 200,
+          "rear": 40,
+          "sides": 100
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 295.003 \"Somua\"",
+        "power": 980,
+        "tier": 9,
+        "weight": 750
+      },
+      "engine_id": 19781,
+      "firepower": 46,
+      "gun": {
+        "aim_time": 5.92,
+        "caliber": 100,
+        "clip_capacity": 3,
+        "clip_reload_time": 3.0,
+        "dispersion": 0.38,
+        "fire_rate": 5.81,
+        "move_down_arc": 10,
+        "move_up_arc": 15,
+        "name": "100 mm SA47",
+        "reload_time": 25.0,
+        "tier": 8,
+        "traverse_speed": 21.88,
+        "weight": 3000
+      },
+      "gun_id": 20548,
+      "hp": 1800,
+      "hull_hp": 1440,
+      "hull_weight": 36870,
+      "is_default": true,
+      "maneuverability": 33,
+      "max_ammo": 60,
+      "max_weight": 75000,
+      "profile_id": "19781-20548-24899-30786",
+      "protection": 53,
+      "shells": [
+        {
+          "damage": 310,
+          "penetration": 232,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 260,
+          "penetration": 263,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 350,
+          "penetration": 50,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 76,
+      "signal_range": null,
+      "speed_backward": 18,
+      "speed_forward": 40,
+      "suspension": {
+        "load_limit": 75000,
+        "name": "Somua SM",
+        "tier": 8,
+        "traverse_speed": 25,
+        "weight": 13000
+      },
+      "suspension_id": 30786,
+      "turret": {
+        "hp": 360,
+        "name": "Somua SM",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 28,
+        "view_range": 240,
+        "weight": 16000
+      },
+      "turret_id": 24899,
+      "weight": 69870
+    },
+    "description": "Французский тяжёлый танк, представленный на конкурсе проектов как альтернатива проекту AMX 50. Разработка машины была начата в 1946 году, однако прототип был готов только в октябре 1951 года. Машина разрабатывалась с применением немецких технологий танкостроения; танк был вооружён 100-мм пушкой с автоматом заряжания барабанного типа в качающейся башне. Испытания проводились с января по июль 1953 года, однако они не показали положительных результатов. В итоге предпочтение было отдано проекту AMX 50.",
+    "engines": [
+      19781
+    ],
+    "guns": [
+      20548
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/F84_Somua_SM.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/F84_Somua_SM.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "19781": {
+        "is_default": true,
+        "module_id": 19781,
+        "name": "Maybach HL 295.003 \"Somua\"",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "20548": {
+        "is_default": true,
+        "module_id": 20548,
+        "name": "100 mm SA47",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "24899": {
+        "is_default": true,
+        "module_id": 24899,
+        "name": "Somua SM",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "30786": {
+        "is_default": true,
+        "module_id": 30786,
+        "name": "Somua SM",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "Somua SM",
+    "nation": "france",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      30786
+    ],
+    "tank_id": 17729,
+    "tier": 8,
+    "turrets": [
+      24899
+    ],
+    "type": "heavyTank"
+  },
   "17745": {
     "cost": null,
     "default_profile": {
@@ -21716,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -33627,9 +33788,9 @@
       24101
     ],
     "guns": [
-      264484,
+      264996,
       263204,
-      264996
+      264484
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -33708,8 +33869,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264484,
-          264996
+          264996,
+          264484
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -50828,8 +50989,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          10273,
-          5409
+          5409,
+          10273
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -72657,8 +72818,8 @@
         "name": "76 mm AT Gun M1A2",
         "next_modules": null,
         "next_tanks": [
-          7201,
-          11553
+          11553,
+          7201
         ],
         "price_credit": 0,
         "price_xp": 5000,
