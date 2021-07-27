@@ -19,7 +19,7 @@
             .forEach(row => tbody.appendChild(row));
 
         const iconText = vehicles.querySelector(`${thSelector} span.icon-text`);
-        iconText.insertBefore(sortIcon, iconText.firstChild);
+        iconText.appendChild(sortIcon);
     }
 
     function createSortIcon() {

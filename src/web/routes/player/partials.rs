@@ -78,22 +78,6 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-pub fn render_nation(nation: &Nation) -> Markup {
-    html! {
-        @match nation {
-            Nation::China => "🇨🇳",
-            Nation::Europe => "🇪🇺",
-            Nation::France => "🇫🇷",
-            Nation::Germany => "🇩🇪",
-            Nation::Japan => "🇯🇵",
-            Nation::Other => "🏳",
-            Nation::Uk => "🇬🇧",
-            Nation::Usa => "🇺🇸",
-            Nation::Ussr => "🇷🇺",
-        }
-    }
-}
-
 pub fn render_f64(value: f64, precision: usize) -> Markup {
     html! {
         span title=(value) {
@@ -115,13 +99,29 @@ pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     10_i32 => "Ⅹ",
 };
 
-pub fn render_vehicle_name(vehicle: &Vehicle) -> Markup {
-    let class = if vehicle.is_premium {
+pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
+    let flag = match vehicle.nation {
+        Nation::China => "🇨🇳",
+        Nation::Europe => "🇪🇺",
+        Nation::France => "🇫🇷",
+        Nation::Germany => "🇩🇪",
+        Nation::Japan => "🇯🇵",
+        Nation::Other => "🏳",
+        Nation::Uk => "🇬🇧",
+        Nation::Usa => "🇺🇸",
+        Nation::Ussr => "🇷🇺",
+    };
+    let name_class = if vehicle.is_premium {
         "has-text-warning-dark"
     } else if vehicle.type_ == TankType::Unknown {
         "has-text-grey"
     } else {
         ""
     };
-    html! { span.(class) { (vehicle.name) } }
+    html! {
+        th.is-white-space-nowrap {
+            span."mx-1" { (flag) }
+            strong."mx-1".(name_class) { (vehicle.name) }
+        }
+    }
 }
