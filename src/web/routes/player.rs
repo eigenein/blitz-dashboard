@@ -239,7 +239,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(stats_delta.damage_dealt as f64 / stats_delta.battles as f64, 0)) }
+                                                        p.title { (render_f64(stats_delta.damage_per_battle(), 0)) }
                                                     }
                                                 }
                                             }
@@ -350,6 +350,11 @@ pub async fn get(
                                                         span { a href="#by-true-win-rate" { "Ожидаемый " abbr title="Процент побед" { "WR" } } }
                                                     }
                                                 }
+                                                th#by-frags-per-hour {
+                                                    span.icon-text.is-flex-wrap-nowrap {
+                                                        span { a href="#by-wins-per-hour" { "Победы в час" } }
+                                                    }
+                                                }
                                                 th#by-gold {
                                                     span.icon-text.is-flex-wrap-nowrap {
                                                         span { a href="#by-gold" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
@@ -422,11 +427,16 @@ pub async fn get(
                                                         }
                                                     }
 
+                                                    @let wins_per_hour = tank.wins_per_hour();
+                                                    td data-sort="#by-wins-per-hour" data-value=(wins_per_hour) {
+                                                        (render_f64(wins_per_hour, 1))
+                                                    }
+
                                                     @let gold = 10.0 + vehicle.tier as f64 * win_rate;
                                                     td data-sort="#by-gold" data-value=(gold) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                            span { strong { (render_f64(gold, 1)) } }
+                                                            span { (render_f64(gold, 1)) }
                                                         }
                                                     }
 

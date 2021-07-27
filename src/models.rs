@@ -46,6 +46,7 @@ pub struct AccountInfo {
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
+    #[serde(rename = "all")]
     pub all: AllStatistics,
 }
 
@@ -68,6 +69,12 @@ pub struct AllStatistics {
     pub xp: i32,
 }
 
+impl AllStatistics {
+    pub fn damage_per_battle(&self) -> f64 {
+        self.damage_dealt as f64 / self.battles as f64
+    }
+}
+
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
     pub tank_id: i32,
@@ -78,6 +85,7 @@ pub struct TankStatistics {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
+    #[serde(rename = "all")]
     pub all: AllStatistics,
 }
 
@@ -196,6 +204,12 @@ pub struct Tank {
     pub last_battle_time: DateTime<Utc>,
 
     pub battle_life_time: Duration,
+}
+
+impl Tank {
+    pub fn wins_per_hour(&self) -> f64 {
+        self.all_statistics.wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+    }
 }
 
 impl Sub for &AllStatistics {
