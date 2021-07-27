@@ -2,7 +2,6 @@ use std::time::Duration as StdDuration;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
-use clap::crate_version;
 use humantime::parse_duration;
 use log::Level;
 use maud::{html, DOCTYPE};
@@ -87,7 +86,7 @@ pub async fn get(
             head {
                 (headers())
                 title { (current_info.base.nickname) " – Я статист!" }
-                script defer="true" src=(concat!("/static/player.js?", crate_version!())) {};
+                script defer="true" src="/static/player.js?v1" {};
             }
             body {
                 (tracking_code.0)
