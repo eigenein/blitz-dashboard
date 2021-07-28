@@ -1,0 +1,57 @@
+:root {
+    --color-white: hsl(0, 0%, 100%);
+    --color-white-bis: hsl(0, 0%, 98%);
+    --color-white-ter: hsl(0, 0%, 96%);
+    --color-grey-lighter: hsl(0, 0%, 86%);
+    --color-grey-light: hsl(0, 0%, 71%);
+    --color-grey: hsl(0, 0%, 48%);
+    --color-grey-dark: hsl(0, 0%, 29%);
+    --color-grey-darker: hsl(0, 0%, 21%);
+    --color-black-ter: hsl(0, 0%, 14%);
+    --color-black-bis: hsl(0, 0%, 7%);
+    --color-black: hsl(0, 0%, 4%);
+}
+
+.is-white-space-nowrap {
+    white-space: nowrap !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        background-color: var(--color-black-bis) !important;
+    }
+
+    .navbar {
+        background-color: var(--color-black) !important;
+    }
+
+    .navbar.has-shadow {
+        box-shadow: 0 2px 0 0 var(--color-black-bis) !important;
+    }
+
+    .navbar-item {
+        color: var(--color-grey-light) !important;
+    }
+
+    .card, .box {
+        background-color: var(--color-black) !important;
+        color: var(--color-grey-light) !important;
+        box-shadow: 0 0.5em 1em -0.125em rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+    }
+
+    .card-header-title {
+        color: var(--color-grey-light) !important;
+    }
+
+    .card-header {
+        box-shadow: 0 0.125em 0.25em rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .title {
+        color: var(--color-grey-light) !important;
+    }
+
+    .table {
+        background-color: var(--color-black) !important;
+    }
+}

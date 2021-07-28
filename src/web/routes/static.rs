@@ -57,6 +57,11 @@ pub async fn get_player_js() -> Static {
     Static(ContentType::JavaScript, include_bytes!("static/player.js"))
 }
 
+#[get("/static/theme.css")]
+pub async fn get_theme_css() -> Static {
+    Static(ContentType::CSS, include_bytes!("static/theme.css"))
+}
+
 #[get("/robots.txt")]
 pub async fn get_robots_txt() -> Static {
     Static(ContentType::Text, include_bytes!("static/robots.txt"))

@@ -42,6 +42,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![r#static::get_apple_touch_icon])
         .mount("/", routes![r#static::get_player_js])
         .mount("/", routes![r#static::get_robots_txt])
+        .mount("/", routes![r#static::get_theme_css])
         .mount("/", routes![routes::index::get])
         .mount("/", routes![routes::search::get])
         .mount("/", routes![routes::player::get])
