@@ -1,0 +1,6 @@
+[alias]
+c = "check"
+cc = "clippy"
+
+[build]
+rustflags = ["-Ctarget-cpu=native"]
