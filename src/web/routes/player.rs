@@ -20,7 +20,7 @@ use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
-use crate::web::partials::{account_search, datetime, footer, headers, icon_text};
+use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
 use crate::web::TrackingCode;
 
 pub mod partials;
@@ -80,6 +80,71 @@ pub async fn get(
         current_info.statistics.all.wins,
     );
 
+    let navbar = html! {
+        nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
+            div.container {
+                div.navbar-brand {
+                    div.navbar-item {
+                        div.buttons { (home_button()) }
+                    }
+                    div.navbar-item title="Последний бой" {
+                        span.icon-text.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" }) {
+                            span.icon { i.fas.fa-bullseye {} }
+                            time
+                                datetime=(current_info.base.last_battle_time.to_rfc3339())
+                                title=(current_info.base.last_battle_time) {
+                                    (datetime(current_info.base.last_battle_time, Tense::Past))
+                                }
+                        }
+                    }
+                }
+                div.navbar-menu {
+                    div.navbar-start {
+                        div.navbar-item title="Боев" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-sort-numeric-up-alt {} }
+                                span { (current_info.statistics.all.battles) }
+                            }
+                        }
+                        div.navbar-item title="Возраст аккаунта" {
+                            span.icon-text {
+                                span.icon { i.far.fa-calendar-alt {} }
+                                span title=(current_info.base.created_at) {
+                                    (datetime(current_info.base.created_at, Tense::Present))
+                                }
+                            }
+                        }
+                    }
+                    div.navbar-end {
+                        form.navbar-item action="/search" method="GET" {
+                            (account_search("", &current_info.base.nickname, false))
+                        }
+                    }
+                }
+            }
+        }
+    };
+    let tabs = html! {
+        nav#period.tabs.is-boxed {
+            div.container {
+                ul {
+                    (render_period_li(period, StdDuration::from_secs(3600), "Час"))
+                    (render_period_li(period, StdDuration::from_secs(2 * 3600), "2 часа"))
+                    (render_period_li(period, StdDuration::from_secs(4 * 3600), "4 часа"))
+                    (render_period_li(period, StdDuration::from_secs(8 * 3600), "8 часов"))
+                    (render_period_li(period, StdDuration::from_secs(12 * 3600), "12 часов"))
+                    (render_period_li(period, StdDuration::from_secs(86400), "24 часа"))
+                    (render_period_li(period, StdDuration::from_secs(2 * 86400), "2 дня"))
+                    (render_period_li(period, StdDuration::from_secs(3 * 86400), "3 дня"))
+                    (render_period_li(period, StdDuration::from_secs(7 * 86400), "Неделя"))
+                    (render_period_li(period, StdDuration::from_secs(2630016), "Месяц"))
+                    (render_period_li(period, StdDuration::from_secs(2 * 2630016), "2 месяца"))
+                    (render_period_li(period, StdDuration::from_secs(3 * 2630016), "3 месяца"))
+                    (render_period_li(period, StdDuration::from_secs(31557600), "Год"))
+                }
+            }
+        }
+    };
     let markup = html! {
         (DOCTYPE)
         html lang="en" {
@@ -90,88 +155,13 @@ pub async fn get(
             }
             body {
                 (tracking_code.0)
-                nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-                    div.container {
-                        div.navbar-brand {
-                            div.navbar-item {
-                                div.buttons {
-                                    a.button.is-link.is-rounded href="/" {
-                                        span.icon { i.fas.fa-home {} }
-                                        span { "На главную" }
-                                    }
-                                }
-                            }
-                        }
-                        div.navbar-menu {
-                            div.navbar-end {
-                                form.navbar-item action="/search" method="GET" {
-                                    (account_search("", &current_info.base.nickname, false))
-                                }
-                            }
-                        }
-                    }
-                }
+
+                (navbar)
 
                 section.section {
+                    (tabs)
+
                     div.container {
-                        div.tile.is-ancestor {
-                            div.tile."is-6".is-parent {
-                                div.tile.is-child.card {
-                                    header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-user", &current_info.base.nickname)) }
-                                    }
-                                    div.card-content {
-                                        div.level {
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Возраст" }
-                                                    p.title title=(current_info.base.created_at) {
-                                                        (datetime(current_info.base.created_at, Tense::Present))
-                                                    }
-                                                }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Боев" }
-                                                    p.title { (current_info.statistics.all.battles) }
-                                                }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Последний бой" }
-                                                    p.title.(if current_info.has_recently_played() { "has-text-success" } else if !current_info.is_active() { "has-text-danger" } else { "" }) {
-                                                        time
-                                                            datetime=(current_info.base.last_battle_time.to_rfc3339())
-                                                            title=(current_info.base.last_battle_time) {
-                                                                (datetime(current_info.base.last_battle_time, Tense::Past))
-                                                            }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        #period.tabs.is-boxed {
-                            ul {
-                                (render_period_li(period, StdDuration::from_secs(3600), "Час"))
-                                (render_period_li(period, StdDuration::from_secs(2 * 3600), "2 часа"))
-                                (render_period_li(period, StdDuration::from_secs(4 * 3600), "4 часа"))
-                                (render_period_li(period, StdDuration::from_secs(8 * 3600), "8 часов"))
-                                (render_period_li(period, StdDuration::from_secs(12 * 3600), "12 часов"))
-                                (render_period_li(period, StdDuration::from_secs(86400), "24 часа"))
-                                (render_period_li(period, StdDuration::from_secs(2 * 86400), "2 дня"))
-                                (render_period_li(period, StdDuration::from_secs(3 * 86400), "3 дня"))
-                                (render_period_li(period, StdDuration::from_secs(7 * 86400), "Неделя"))
-                                (render_period_li(period, StdDuration::from_secs(2630016), "Месяц"))
-                                (render_period_li(period, StdDuration::from_secs(2 * 2630016), "2 месяца"))
-                                (render_period_li(period, StdDuration::from_secs(3 * 2630016), "3 месяца"))
-                                (render_period_li(period, StdDuration::from_secs(31557600), "Год"))
-                            }
-                        }
-
                         @if previous_info.is_none() {
                             article.message.is-warning {
                                 div.message-body {

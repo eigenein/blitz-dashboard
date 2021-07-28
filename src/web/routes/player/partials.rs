@@ -14,7 +14,7 @@ pub fn render_period_li(
 ) -> Markup {
     html! {
         li.(if period == new_period { "is-active" } else { "" }) {
-            a href=(format!("?period={}#period", format_duration(new_period))) { (text) }
+            a href=(format!("?period={}", format_duration(new_period))) { (text) }
         }
     }
 }

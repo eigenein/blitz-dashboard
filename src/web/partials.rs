@@ -144,3 +144,12 @@ pub fn footer() -> Markup {
         }
     }
 }
+
+pub fn home_button() -> Markup {
+    html! {
+        a.button.is-link.is-rounded href="/" {
+            span.icon { i.fas.fa-home {} }
+            span { "На главную" }
+        }
+    }
+}

@@ -7,7 +7,7 @@ use rocket::{Responder, State};
 use crate::logging::clear_user;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::search::AccountSearchCache;
-use crate::web::partials::{account_search, datetime, footer, headers};
+use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::routes::player::get_account_url;
 use crate::web::TrackingCode;
 
@@ -55,12 +55,7 @@ pub async fn get(
                 div.container {
                     div.navbar-brand {
                         div.navbar-item {
-                            div.buttons {
-                                a.button.is-link.is-rounded href="/" {
-                                    span.icon { i.fas.fa-home {} }
-                                    span { "На главную" }
-                                }
-                            }
+                            div.buttons { (home_button()) }
                         }
                     }
                     div.navbar-menu {
