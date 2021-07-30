@@ -8,6 +8,10 @@
 
 ## Installation
 
+Grab a binary for your Raspberry Pi from [releases](https://github.com/eigenein/blitz-dashboard/releases), or:
+
 ```shell
 cargo install --git 'https://github.com/eigenein/blitz-dashboard.git' --branch main --locked
 ```
+
+## Setting up

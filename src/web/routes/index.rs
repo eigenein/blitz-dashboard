@@ -26,7 +26,6 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
                             div.columns {
                                 div.column."is-8"."is-offset-2" {
                                     form action="/search" method="GET" {
-                                        (account_search("is-medium", "", true))
                                         div.field.is-grouped.is-grouped-centered.is-grouped-multiline {
                                             p.control {
                                                 a.button.is-rounded.is-small href="/ru/3851977" { "D_W_S" }
@@ -45,6 +44,12 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
                                             }
                                             p.control {
                                                 a.button.is-rounded.is-small href="/ru/123484971" { "Chunya_Dobryak" }
+                                            }
+                                        }
+                                        (account_search("is-medium", "", true))
+                                        div.field.is-grouped.is-grouped-centered {
+                                            p.control {
+                                                a.button.is-link.is-rounded.is-medium href="/random" { "Мне повезет!" }
                                             }
                                         }
                                     }

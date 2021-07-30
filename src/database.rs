@@ -236,6 +236,20 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
     Ok(())
 }
 
+pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Option<i32>> {
+    // language=SQL
+    const QUERY: &str = r#"
+        SELECT account_id FROM accounts
+        WHERE last_battle_time >= NOW() - INTERVAL '1 hour'
+        LIMIT 1
+    "#;
+    let account_id = sqlx::query_scalar(QUERY)
+        .fetch_optional(connection)
+        .await
+        .context("failed to retrieve a random account ID")?;
+    Ok(account_id)
+}
+
 impl<'r> FromRow<'r, PgRow> for Tank {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         let battle_life_time: i64 = row.try_get("battle_life_time")?;

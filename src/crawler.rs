@@ -73,6 +73,7 @@ impl Crawler {
             fastrand::shuffle(&mut batch);
 
             let results = futures::future::join_all(
+                // FIXME: there's a problem if the database is empty.
                 batch
                     .chunks(100)
                     .into_iter()
