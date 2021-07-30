@@ -125,7 +125,7 @@ pub async fn get(
         }
     };
     let tabs = html! {
-        nav#period.tabs.is-boxed {
+        nav.tabs.is-boxed {
             div.container {
                 ul {
                     (render_period_li(period, StdDuration::from_secs(3600), "Час"))
@@ -141,6 +141,72 @@ pub async fn get(
                     (render_period_li(period, StdDuration::from_secs(2 * 2630016), "2 месяца"))
                     (render_period_li(period, StdDuration::from_secs(3 * 2630016), "3 месяца"))
                     (render_period_li(period, StdDuration::from_secs(31557600), "Год"))
+                }
+            }
+        }
+    };
+    let vehicles_thead = html! {
+        tr {
+            th { "Техника" }
+            th#by-tier {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-tier" { "Уровень" } }
+                }
+            }
+            th { "Тип" }
+            th#by-battles {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-battles" { "Бои" } }
+                }
+            }
+            th#by-wins {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-wins" { "Победы" } }
+                }
+            }
+            th#by-win-rate {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-win-rate" { "Текущий " abbr title="Процент побед" { "WR" } } }
+                }
+            }
+            th#by-true-win-rate {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-true-win-rate" { "Ожидаемый " abbr title="Процент побед" { "WR" } } }
+                }
+            }
+            th#by-frags-per-hour {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-wins-per-hour" { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } } }
+                }
+            }
+            th#by-gold {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-gold" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
+                }
+            }
+            th#by-true-gold {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-true-gold" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
+                }
+            }
+            th#by-damage-dealt {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-damage-dealt" { "Ущерб" } }
+                }
+            }
+            th#by-damage-per-battle {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-damage-per-battle" { "Ущерб за бой" } }
+                }
+            }
+            th#by-survived-battles {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-survived-battles" { "Выжил" } }
+                }
+            }
+            th#by-survival-rate {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { a href="#by-survival-rate" { "Выживаемость" } }
                 }
             }
         }
@@ -310,72 +376,7 @@ pub async fn get(
                             div.box {
                                 div.table-container {
                                     table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
-                                        thead {
-                                            tr {
-                                                th { "Техника" }
-                                                th#by-tier {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-tier" { "Уровень" } }
-                                                    }
-                                                }
-                                                th { "Тип" }
-                                                th#by-battles {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-battles" { "Бои" } }
-                                                    }
-                                                }
-                                                th#by-wins {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-wins" { "Победы" } }
-                                                    }
-                                                }
-                                                th#by-win-rate {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-win-rate" { "Текущий " abbr title="Процент побед" { "WR" } } }
-                                                    }
-                                                }
-                                                th#by-true-win-rate {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-true-win-rate" { "Ожидаемый " abbr title="Процент побед" { "WR" } } }
-                                                    }
-                                                }
-                                                th#by-frags-per-hour {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-wins-per-hour" { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } } }
-                                                    }
-                                                }
-                                                th#by-gold {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-gold" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
-                                                    }
-                                                }
-                                                th#by-true-gold {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-true-gold" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
-                                                    }
-                                                }
-                                                th#by-damage-dealt {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-damage-dealt" { "Ущерб" } }
-                                                    }
-                                                }
-                                                th#by-damage-per-battle {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-damage-per-battle" { "Ущерб за бой" } }
-                                                    }
-                                                }
-                                                th#by-survived-battles {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-survived-battles" { "Выжил" } }
-                                                    }
-                                                }
-                                                th#by-survival-rate {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span { a href="#by-survival-rate" { "Выживаемость" } }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let vehicle = get_vehicle(tank.tank_id);
@@ -464,6 +465,9 @@ pub async fn get(
                                                     }
                                                 }
                                             }
+                                        }
+                                        @if tanks_delta.len() >= 25 {
+                                            tfoot { (vehicles_thead) }
                                         }
                                     }
                                 }
