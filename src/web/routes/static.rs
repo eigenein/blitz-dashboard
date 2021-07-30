@@ -75,7 +75,7 @@ impl<'r> Responder<'r, 'static> for Static {
         Response::build()
             .header(self.0)
             .sized_body(self.1.len(), Cursor::new(self.1))
-            .raw_header("Cache-Control", "public, max-age=2592000, immutable")
+            .raw_header("Cache-Control", "public, max-age=31536000, immutable")
             .ok()
     }
 }
