@@ -25,11 +25,11 @@
         background-color: var(--color-danger-dark) !important;
     }
 
-    .has-text-danger {
+    td .has-text-danger {
         color: var(--color-danger-light) !important;
     }
 
-    .has-text-success {
+    td .has-text-success {
         color: var(--color-success-light) !important;
     }
 }
