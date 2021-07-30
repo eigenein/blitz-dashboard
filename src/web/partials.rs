@@ -69,8 +69,9 @@ pub fn headers() -> Markup {
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="manifest" href="/site.webmanifest";
         link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
+        link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
+        link rel="stylesheet" href="/static/theme.css?v2";
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
-        style { ".is-white-space-nowrap { white-space: nowrap !important; }" }
     }
 }
 
