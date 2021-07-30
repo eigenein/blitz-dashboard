@@ -3,6 +3,3 @@ c = "check"
 cc = "clippy"
 u = "update"
 o = "outdated"
-
-[build]
-rustflags = ["-Ctarget-cpu=native"]
