@@ -192,6 +192,13 @@ pub async fn get(
                 }
             }
             th {
+                a data-sort="expected-wins-per-hour" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Ожидаемое число побед в час, скорректированное на число боев" { "EWPH" } }
+                    }
+                }
+            }
+            th {
                 a data-sort="gold" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }
@@ -201,7 +208,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } }
+                        span { abbr title="Ожидаемая доходность золотого бустера за бой, скорректированная на число боев" { "Ожидаемое золото" } }
                     }
                 }
             }
@@ -444,6 +451,17 @@ pub async fn get(
                                                     @let wins_per_hour = tank.wins_per_hour();
                                                     td data-sort="wins-per-hour" data-value=(wins_per_hour) {
                                                         (render_f64(wins_per_hour, 1))
+                                                    }
+
+                                                    @let expected_wins_per_hour = expected_win_rate * tank.battles_per_hour();
+                                                    td.is-white-space-nowrap
+                                                        data-sort="expected-wins-per-hour"
+                                                        data-value=(expected_wins_per_hour.mean)
+                                                    {
+                                                        strong { (render_f64(expected_wins_per_hour.mean, 1)) }
+                                                        span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
+                                                            " ±" (render_f64(expected_wins_per_hour.margin, 1))
+                                                        }
                                                     }
 
                                                     @let gold = 10.0 + vehicle.tier as f64 * win_rate;

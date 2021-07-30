@@ -210,6 +210,10 @@ impl Tank {
     pub fn wins_per_hour(&self) -> f64 {
         self.all_statistics.wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
     }
+
+    pub fn battles_per_hour(&self) -> f64 {
+        self.all_statistics.battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+    }
 }
 
 impl Sub for &AllStatistics {
