@@ -148,65 +148,89 @@ pub async fn get(
     let vehicles_thead = html! {
         tr {
             th { "Техника" }
-            th#by-tier {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-tier" { "Уровень" } }
+            th {
+                a data-sort="tier" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Уровень" }
+                    }
                 }
             }
             th { "Тип" }
-            th#by-battles {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-battles" { "Бои" } }
+            th {
+                a data-sort="battles" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Бои" }
+                    }
                 }
             }
-            th#by-wins {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-wins" { "Победы" } }
+            th {
+                a data-sort="wins" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Победы" }
+                    }
                 }
             }
-            th#by-win-rate {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-win-rate" { "Текущий " abbr title="Процент побед" { "WR" } } }
+            th {
+                a data-sort="win-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Текущий " abbr title="Процент побед" { "WR" } }
+                    }
                 }
             }
-            th#by-true-win-rate {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-true-win-rate" { "Ожидаемый " abbr title="Процент побед" { "WR" } } }
+            th {
+                a data-sort="true-win-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Ожидаемый " abbr title="Процент побед" { "WR" } }
+                    }
                 }
             }
-            th#by-frags-per-hour {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-wins-per-hour" { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } } }
+            th {
+                a data-sort="wins-per-hour" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } }
+                    }
                 }
             }
-            th#by-gold {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-gold" { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } } }
+            th {
+                a data-sort="gold" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }
+                    }
                 }
             }
-            th#by-true-gold {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-true-gold" { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } } }
+            th {
+                a data-sort="true-gold" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Средняя ожидаемая доходность золотого бустера за бой" { "Ожидаемое золото" } }
+                    }
                 }
             }
-            th#by-damage-dealt {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-damage-dealt" { "Ущерб" } }
+            th {
+                a data-sort="damage-dealt" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Ущерб" }
+                    }
                 }
             }
-            th#by-damage-per-battle {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-damage-per-battle" { "Ущерб за бой" } }
+            th {
+                a data-sort="damage-per-battle" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Ущерб за бой" }
+                    }
                 }
             }
-            th#by-survived-battles {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-survived-battles" { "Выжил" } }
+            th {
+                a data-sort="survived-battles" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Выжил" }
+                    }
                 }
             }
-            th#by-survival-rate {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { a href="#by-survival-rate" { "Выживаемость" } }
+            th {
+                a data-sort="survival-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Выживаемость" }
+                    }
                 }
             }
         }
@@ -217,7 +241,7 @@ pub async fn get(
             head {
                 (headers())
                 title { (current_info.base.nickname) " – Я статист!" }
-                script defer="true" src="/static/player.js?v1" {};
+                script defer="true" src="/static/player.js?v2" {};
             }
             body {
                 (tracking_code.0)
@@ -385,7 +409,7 @@ pub async fn get(
 
                                                 tr.(partial_cmp_class(win_rate_ordering)) {
                                                     (vehicle_th(&vehicle))
-                                                    td.has-text-centered data-sort="#by-tier" data-value=(vehicle.tier) {
+                                                    td.has-text-centered data-sort="tier" data-value=(vehicle.tier) {
                                                         @if let Some(tier_markup) = TIER_MARKUP.get(&vehicle.tier) {
                                                             strong { (tier_markup) }
                                                         }
@@ -393,20 +417,20 @@ pub async fn get(
                                                     td {
                                                         (format!("{:?}", vehicle.type_))
                                                     }
-                                                    td data-sort="#by-battles" data-value=(tank.all_statistics.battles) {
+                                                    td data-sort="battles" data-value=(tank.all_statistics.battles) {
                                                         (tank.all_statistics.battles)
                                                     }
-                                                    td data-sort="#by-wins" data-value=(tank.all_statistics.wins) {
+                                                    td data-sort="wins" data-value=(tank.all_statistics.wins) {
                                                         (tank.all_statistics.wins)
                                                     }
 
                                                     @let win_rate = tank.all_statistics.wins as f64 / tank.all_statistics.battles as f64;
-                                                    td data-sort="#by-win-rate" data-value=(win_rate) {
+                                                    td data-sort="win-rate" data-value=(win_rate) {
                                                         strong { (render_f64(100.0 * win_rate, 1)) "%" }
                                                     }
 
                                                     td.is-white-space-nowrap
-                                                        data-sort="#by-true-win-rate"
+                                                        data-sort="true-win-rate"
                                                         data-value=(expected_win_rate.mean)
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
@@ -418,12 +442,12 @@ pub async fn get(
                                                     }
 
                                                     @let wins_per_hour = tank.wins_per_hour();
-                                                    td data-sort="#by-wins-per-hour" data-value=(wins_per_hour) {
+                                                    td data-sort="wins-per-hour" data-value=(wins_per_hour) {
                                                         (render_f64(wins_per_hour, 1))
                                                     }
 
                                                     @let gold = 10.0 + vehicle.tier as f64 * win_rate;
-                                                    td data-sort="#by-gold" data-value=(gold) {
+                                                    td data-sort="gold" data-value=(gold) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                             span { (render_f64(gold, 1)) }
@@ -431,7 +455,7 @@ pub async fn get(
                                                     }
 
                                                     @let expected_gold = 10.0 + vehicle.tier as f64 * expected_win_rate;
-                                                    td.is-white-space-nowrap data-sort="#by-true-gold" data-value=(expected_gold.mean) {
+                                                    td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                                                             span {
@@ -443,21 +467,21 @@ pub async fn get(
                                                         }
                                                     }
 
-                                                    td data-sort="#by-damage-dealt" data-value=(tank.all_statistics.damage_dealt) {
+                                                    td data-sort="damage-dealt" data-value=(tank.all_statistics.damage_dealt) {
                                                         (tank.all_statistics.damage_dealt)
                                                     }
 
                                                     @let damage_per_battle = tank.all_statistics.damage_dealt as f64 / tank.all_statistics.battles as f64;
-                                                    td data-sort="#by-damage-per-battle" data-value=(damage_per_battle) {
+                                                    td data-sort="damage-per-battle" data-value=(damage_per_battle) {
                                                         (render_f64(damage_per_battle, 0))
                                                     }
 
-                                                    td data-sort="#by-survived-battles" data-value=(tank.all_statistics.survived_battles) {
+                                                    td data-sort="survived-battles" data-value=(tank.all_statistics.survived_battles) {
                                                         (tank.all_statistics.survived_battles)
                                                     }
 
                                                     @let survival_rate = tank.all_statistics.survived_battles as f64 / tank.all_statistics.battles as f64;
-                                                    td data-sort="#by-survival-rate" data-value=(survival_rate) {
+                                                    td data-sort="survival-rate" data-value=(survival_rate) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon { i.fas.fa-heart.has-text-danger {} }
                                                             span { (render_f64(100.0 * survival_rate, 0)) "%" }

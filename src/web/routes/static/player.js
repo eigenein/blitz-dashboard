@@ -1,25 +1,28 @@
 "use strict";
 
 (function () {
-    function sortVehicles(thSelector) {
-        if (vehicles == null) {
-            return;
-        }
-        if ((!thSelector) || (!thSelector.startsWith("#by-"))) {
-            thSelector = "#by-battles";
-        }
+    function sortTable(table, by) {
+        const tbody = table.querySelector("tbody");
+        const qs = `[data-sort="${by}"]`;
 
-        const tbody = vehicles.querySelector("tbody");
-        let rows = Array.from(tbody.querySelectorAll("tr"));
-        let qs = `[data-sort="${thSelector}"]`;
-        rows
+        Array
+            .from(tbody.querySelectorAll("tr"))
             .sort((row_1, row_2) => {
                 return parseFloat(row_2.querySelector(qs).dataset.value) - parseFloat(row_1.querySelector(qs).dataset.value);
             })
             .forEach(row => tbody.appendChild(row));
 
-        const iconText = vehicles.querySelector(`${thSelector} span.icon-text`);
-        iconText.appendChild(sortIcon);
+        table.querySelector(`thead th a${qs} .icon-text`).appendChild(sortIcon);
+    }
+
+    function addSortableTableEventListeners(table) {
+        table.querySelectorAll("th a").forEach((a) => {
+            a.addEventListener("click", () => {
+                const sortBy = a.dataset.sort;
+                sortTable(table, sortBy);
+                localStorage.setItem(`${table.id}SortBy`, sortBy);
+            });
+        });
     }
 
     function createSortIcon() {
@@ -31,12 +34,15 @@
         return outer;
     }
 
-    window.onhashchange = function () {
-        sortVehicles(location.hash);
-    };
+    function initSortableTable(table, defaultSortBy) {
+        addSortableTableEventListeners(table);
+        sortTable(table, localStorage.getItem(`${table.id}SortBy`) || defaultSortBy);
+    }
 
     const vehicles = document.getElementById("vehicles");
     const sortIcon = createSortIcon();
 
-    sortVehicles(location.hash);
+    if (vehicles != null) {
+        initSortableTable(vehicles, "battles");
+    }
 })();
