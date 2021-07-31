@@ -130,6 +130,7 @@ pub async fn get(
                 ul {
                     (render_period_li(period, StdDuration::from_secs(3600), "Час"))
                     (render_period_li(period, StdDuration::from_secs(2 * 3600), "2 часа"))
+                    (render_period_li(period, StdDuration::from_secs(3 * 3600), "3 часа"))
                     (render_period_li(period, StdDuration::from_secs(4 * 3600), "4 часа"))
                     (render_period_li(period, StdDuration::from_secs(8 * 3600), "8 часов"))
                     (render_period_li(period, StdDuration::from_secs(12 * 3600), "12 часов"))
