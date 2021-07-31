@@ -37,9 +37,6 @@ pub async fn get(
     accounts.sort_unstable_by(|left, right| {
         right.base.last_battle_time.cmp(&left.base.last_battle_time)
     });
-    for account in &accounts[..3] {
-        account_info_cache.insert(account.clone()).await;
-    }
 
     let markup = html! {
         (DOCTYPE)
