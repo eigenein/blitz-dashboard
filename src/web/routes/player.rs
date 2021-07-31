@@ -70,7 +70,10 @@ pub async fn get(
         // FIXME: `cloned`, after https://github.com/eigenein/blitz-dashboard/issues/74.
         None => current_tanks.values().cloned().collect(),
     };
-
+    let battle_life_time: i64 = tanks_delta
+        .iter()
+        .map(|tank| tank.battle_life_time.num_seconds())
+        .sum();
     let stats_delta = match &previous_info {
         Some(previous_info) => &current_info.statistics.all - &previous_info.statistics.all,
         None => current_info.statistics.all,
@@ -355,6 +358,12 @@ pub async fn get(
                                                         p.title { (render_f64(stats_delta.frags as f64 / stats_delta.battles as f64, 1)) }
                                                     }
                                                 }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "В час" }
+                                                        p.title { (render_f64(stats_delta.frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -368,10 +377,46 @@ pub async fn get(
                                     @let period_win_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.wins);
                                     div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&total_win_rate))) {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-percentage", "Победы")) }
+                                            p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(stats_delta.battles, stats_delta.wins))
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Средний" }
+                                                        p.title { (render_f64(100.0 * stats_delta.win_rate(), 1)) "%" }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Ожидаемый" }
+                                                        p.title.is-white-space-nowrap {
+                                                            (render_f64(100.0 * period_win_rate.mean, 1)) "%"
+                                                            span.has-text-grey-light { " ±" (render_f64(100.0 * period_win_rate.margin, 1)) }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            @if stats_delta.battles != 0 {
+                                div.tile."is-2".is-parent {
+                                    div.tile.is-child.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-check", "Победы")) }
+                                        }
+                                        div.card-content {
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "В час" }
+                                                        p.title { (render_f64(stats_delta.wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -384,20 +429,44 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(stats_delta.battles, stats_delta.survived_battles))
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Средняя" }
+                                                        p.title { (render_f64(100.0 * stats_delta.survival_rate(), 1)) "%" }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Ожидаемая" }
+                                                        p.title.is-white-space-nowrap {
+                                                            @let expected_period_survival_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.survived_battles);
+                                                            (render_f64(100.0 * expected_period_survival_rate.mean, 1)) "%"
+                                                            span.has-text-grey-light { " ±" (render_f64(100.0 * expected_period_survival_rate.margin, 1)) }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
 
                             @if stats_delta.shots != 0 {
-                                div.tile."is-4".is-parent {
+                                div.tile."is-2".is-parent {
                                     div.tile.is-child.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
                                         }
                                         div.card-content {
-                                            (render_confidence_interval_level(stats_delta.shots, stats_delta.hits))
+                                            div.level {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "В среднем" }
+                                                        p.title { (render_f64(100.0 * stats_delta.hits as f64 / stats_delta.shots as f64, 1)) "%" }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -432,7 +501,7 @@ pub async fn get(
                                                         (tank.all_statistics.wins)
                                                     }
 
-                                                    @let win_rate = tank.all_statistics.wins as f64 / tank.all_statistics.battles as f64;
+                                                    @let win_rate = tank.all_statistics.win_rate();
                                                     td data-sort="win-rate" data-value=(win_rate) {
                                                         strong { (render_f64(100.0 * win_rate, 1)) "%" }
                                                     }

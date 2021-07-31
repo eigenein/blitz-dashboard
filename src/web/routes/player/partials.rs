@@ -5,7 +5,6 @@ use humantime::format_duration;
 use maud::{html, Markup};
 
 use crate::models::{Nation, TankType, Vehicle};
-use crate::statistics::ConfidenceInterval;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -15,33 +14,6 @@ pub fn render_period_li(
     html! {
         li.(if period == new_period { "is-active" } else { "" }) {
             a href=(format!("?period={}", format_duration(new_period))) { (text) }
-        }
-    }
-}
-
-pub fn render_confidence_interval_level(n_trials: i32, n_successes: i32) -> Markup {
-    let interval = ConfidenceInterval::default_wilson_score_interval(n_trials, n_successes);
-
-    html! {
-        div.level {
-            div.level-item.has-text-centered {
-                div {
-                    p.heading { "Нижнее" }
-                    p.title."is-5" { (render_f64(100.0 * interval.lower(), 1)) "%" }
-                }
-            }
-            div.level-item.has-text-centered {
-                div {
-                    p.heading { "Среднее" }
-                    p.title { (render_f64(100.0 * n_successes as f64 / n_trials as f64, 1)) "%" }
-                }
-            }
-            div.level-item.has-text-centered {
-                div {
-                    p.heading { "Верхнее" }
-                    p.title."is-5" { (render_f64(100.0 * interval.upper(), 1)) "%" }
-                }
-            }
         }
     }
 }

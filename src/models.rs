@@ -73,6 +73,14 @@ impl AllStatistics {
     pub fn damage_per_battle(&self) -> f64 {
         self.damage_dealt as f64 / self.battles as f64
     }
+
+    pub fn win_rate(&self) -> f64 {
+        self.wins as f64 / self.battles as f64
+    }
+
+    pub fn survival_rate(&self) -> f64 {
+        self.survived_battles as f64 / self.battles as f64
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Clone)]
