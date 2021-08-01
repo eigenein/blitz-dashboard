@@ -177,14 +177,21 @@ pub async fn get(
             th {
                 a data-sort="win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Текущий " abbr title="Процент побед" { "WR" } }
+                        span { abbr title="Текущий процент побед" { "WR" } }
                     }
                 }
             }
             th {
-                a data-sort="true-win-rate" {
+                a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Ожидаемый " abbr title="Процент побед" { "WR" } }
+                        span { abbr title="Ожидаемый процент побед" { "EWR" } }
+                    }
+                }
+            }
+            th {
+                a data-sort="true-win-rate-margin" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Неопределенность процента побед – разброс EWR" { "EWRU" } }
                     }
                 }
             }
@@ -252,7 +259,7 @@ pub async fn get(
             head {
                 (headers())
                 title { (current_info.base.nickname) " – Я статист!" }
-                script defer="true" src="/static/player.js?v2" {};
+                script defer="true" src="/static/player.js?v4" {};
             }
             body {
                 (tracking_code.0)
@@ -507,7 +514,7 @@ pub async fn get(
                                                     }
 
                                                     td.is-white-space-nowrap
-                                                        data-sort="true-win-rate"
+                                                        data-sort="true-win-rate-mean"
                                                         data-value=(expected_win_rate.mean)
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
@@ -516,6 +523,10 @@ pub async fn get(
                                                                 (partial_cmp_icon(win_rate_ordering))
                                                             }
                                                         }
+                                                    }
+
+                                                    td data-sort="true-win-rate-margin" data-value=(expected_win_rate.margin) {
+                                                        "±" (render_f64(100.0 * expected_win_rate.margin, 1))
                                                     }
 
                                                     @let wins_per_hour = tank.wins_per_hour();

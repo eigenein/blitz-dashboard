@@ -7,8 +7,13 @@
 
         Array
             .from(tbody.querySelectorAll("tr"))
-            .sort((row_1, row_2) => {
-                return parseFloat(row_2.querySelector(qs).dataset.value) - parseFloat(row_1.querySelector(qs).dataset.value);
+            .sort((row1, row2) => {
+                try {
+                    return parseFloat(row2.querySelector(qs).dataset.value) - parseFloat(row1.querySelector(qs).dataset.value);
+                } catch (error) {
+                    console.warn(error);
+                    return 0;
+                }
             })
             .forEach(row => tbody.appendChild(row));
 
