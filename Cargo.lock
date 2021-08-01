@@ -244,7 +244,7 @@ dependencies = [
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.31.6"
+version = "0.31.7"
 dependencies = [
  "anyhow",
  "chrono",

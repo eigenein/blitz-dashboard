@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.31.6"
+version = "0.31.7"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
 resolver = "2"

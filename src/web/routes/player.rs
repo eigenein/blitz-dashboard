@@ -205,7 +205,7 @@ pub async fn get(
             th {
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед в час, скорректированное на число боев" { "TWPH" } }
+                        span { abbr title="Число побед в час, скорректированное на число проведенных боев" { "TWPH" } }
                     }
                 }
             }
@@ -219,7 +219,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число боев" { "Истинное золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев" { "Истинное золото" } }
                     }
                 }
             }
