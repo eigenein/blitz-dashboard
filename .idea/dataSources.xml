@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="yastatist@blitz.local" uuid="13ea6c99-aa6c-48ff-9c1d-60d3bd9010e4">
+    <data-source source="LOCAL" name="yastatist@yastatist.local" uuid="13ea6c99-aa6c-48ff-9c1d-60d3bd9010e4">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://blitz.local:5432/yastatist</jdbc-url>
+      <jdbc-url>jdbc:postgresql://yastatist.local:5432/yastatist</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
