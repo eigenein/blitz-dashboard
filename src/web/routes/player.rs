@@ -191,14 +191,14 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-margin" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Неопределенность процента побед – разброс EWR" { "EWRU" } }
+                        span { abbr title="Разброс истинного процента побед" { "TWRU" } }
                     }
                 }
             }
             th {
                 a data-sort="wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "Победы в час" } }
+                        span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "WPH" } }
                     }
                 }
             }
