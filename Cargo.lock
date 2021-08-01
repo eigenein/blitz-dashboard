@@ -244,7 +244,7 @@ dependencies = [
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.31.5"
+version = "0.31.6"
 dependencies = [
  "anyhow",
  "chrono",
@@ -281,9 +281,9 @@ dependencies = [
 
 [[package]]
 name = "brotli"
-version = "3.3.1"
+version = "3.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2aa5b67b28d2530dac2071d92d7d12beb12d1559f137c3726e6e7b87980fc19"
+checksum = "71cb90ade945043d3d53597b2fc359bb063db8ade2bcffe7997351d0756e9d50"
 dependencies = [
  "alloc-no-stdlib",
  "alloc-stdlib",
