@@ -184,7 +184,7 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Ожидаемый процент побед" { "EWR" } }
+                        span { abbr title="Истинный процент побед" { "TWR" } }
                     }
                 }
             }
@@ -205,7 +205,7 @@ pub async fn get(
             th {
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Ожидаемое число побед в час, скорректированное на число боев" { "EWPH" } }
+                        span { abbr title="Число побед в час, скорректированное на число боев" { "TWPH" } }
                     }
                 }
             }
@@ -219,7 +219,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Ожидаемая доходность золотого бустера за бой, скорректированная на число боев" { "Ожидаемое золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число боев" { "Истинное золото" } }
                     }
                 }
             }
@@ -397,7 +397,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Ожидаемый" }
+                                                        p.heading { "Истинный" }
                                                         p.title.is-white-space-nowrap {
                                                             (render_f64(100.0 * period_win_rate.mean, 1)) "%"
                                                             span.has-text-grey-light { " ±" (render_f64(100.0 * period_win_rate.margin, 1)) }
@@ -446,7 +446,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Ожидаемая" }
+                                                        p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.survived_battles);
                                                             (render_f64(100.0 * expected_period_survival_rate.mean, 1)) "%"
