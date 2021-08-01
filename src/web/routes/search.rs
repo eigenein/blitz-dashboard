@@ -5,7 +5,8 @@ use rocket::response::Redirect;
 use rocket::{Responder, State};
 
 use crate::logging::clear_user;
-use crate::wargaming::cache::account::search::AccountSearchCache;
+use crate::models::AccountInfo;
+use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::routes::player::get_account_url;
 use crate::web::TrackingCode;
@@ -21,12 +22,23 @@ pub enum Response {
 #[rocket::get("/search?<query>")]
 pub async fn get(
     query: String,
-    account_search_cache: &State<AccountSearchCache>,
     tracking_code: &State<TrackingCode>,
+    api: &State<WargamingApi>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
 
-    let mut accounts = account_search_cache.get(&query).await?.to_vec();
+    let account_ids: Vec<i32> = api
+        .search_accounts(&query)
+        .await?
+        .iter()
+        .map(|account| account.id)
+        .collect();
+    let mut accounts: Vec<AccountInfo> = api
+        .get_account_info(&account_ids)
+        .await?
+        .into_iter()
+        .filter_map(|(_, info)| info)
+        .collect();
     if accounts.len() == 1 {
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
             accounts.first().unwrap().base.id,

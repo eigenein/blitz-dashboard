@@ -11,7 +11,6 @@ use routes::r#static;
 
 use crate::opts::WebOpts;
 use crate::wargaming::cache::account::info::AccountInfoCache;
-use crate::wargaming::cache::account::search::AccountSearchCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::WargamingApi;
 
@@ -29,7 +28,6 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
-        .manage(AccountSearchCache::new(api.clone()))
         .manage(AccountTanksCache::new(api.clone()))
         .manage(crate::database::open(&opts.database).await?)
         .manage(TrackingCode::new(&opts))
