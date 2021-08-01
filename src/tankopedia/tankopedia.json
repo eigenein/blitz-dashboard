@@ -9782,8 +9782,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          11796,
-          2068
+          2068,
+          11796
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -40043,8 +40043,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -47379,8 +47379,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          7729,
-          5169
+          5169,
+          7729
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -72818,8 +72818,8 @@
         "name": "76 mm AT Gun M1A2",
         "next_modules": null,
         "next_tanks": [
-          11553,
-          7201
+          7201,
+          11553
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -80213,8 +80213,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
