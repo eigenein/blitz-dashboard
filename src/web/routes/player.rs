@@ -258,6 +258,7 @@ pub async fn get(
         html lang="en" {
             head {
                 (headers())
+                link rel="canonical" href=(get_account_url(account_id));
                 title { (current_info.base.nickname) " – Я статист!" }
                 script defer="true" src="/static/player.js?v4" {};
             }
