@@ -112,6 +112,61 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             type_: TankType::Medium,
         },
     )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 3089,
+            name: Cow::Borrowed("Leichttraktor"),
+            tier: 1,
+            is_premium: false,
+            nation: Nation::Germany,
+            type_: TankType::Light,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 64081,
+            name: Cow::Borrowed("Mk I* Heavy Tank"),
+            tier: 1,
+            is_premium: true,
+            nation: Nation::Uk,
+            type_: TankType::Heavy,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 1329,
+            name: Cow::Borrowed("Renault NC-31"),
+            tier: 1,
+            is_premium: false,
+            nation: Nation::China,
+            type_: TankType::Light,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 609,
+            name: Cow::Borrowed("R. Otsu"),
+            tier: 1,
+            is_premium: false,
+            nation: Nation::Japan,
+            type_: TankType::Light,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 3329,
+            name: Cow::Borrowed("MS-1"),
+            tier: 1,
+            is_premium: false,
+            nation: Nation::Ussr,
+            type_: TankType::Light,
+        },
+    )?;
     Ok(())
 }
 
