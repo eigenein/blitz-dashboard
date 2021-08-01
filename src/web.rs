@@ -29,6 +29,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountTanksCache::new(api.clone()))
+        .manage(api)
         .manage(crate::database::open(&opts.database).await?)
         .manage(TrackingCode::new(&opts))
         .mount("/", routes![r#static::get_site_manifest])
