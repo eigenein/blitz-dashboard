@@ -40,7 +40,12 @@ pub struct WebOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
-    #[clap(short, long, about = "Wargaming.net API application ID")]
+    #[clap(
+        short,
+        long,
+        about = "Wargaming.net API application ID",
+        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+    )]
     pub application_id: String,
 
     #[clap(long, default_value = "::", about = "Web app host")]
@@ -66,7 +71,12 @@ pub struct CrawlerOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
-    #[clap(short, long, about = "Wargaming.net API application ID")]
+    #[clap(
+        short,
+        long,
+        about = "Wargaming.net API application ID",
+        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+    )]
     pub application_id: String,
 
     #[clap(long, about = "Exit after one iteration")]
@@ -83,10 +93,16 @@ pub struct CrawlerOpts {
 #[clap(about = "Updates the bundled Tankopedia module")]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct ImportTankopediaOpts {
-    #[clap(short, long, about = "Wargaming.net API application ID")]
+    #[clap(
+        short,
+        long,
+        about = "Wargaming.net API application ID",
+        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+    )]
     pub application_id: String,
 }
 
+// TODO: add batch size.
 #[derive(Clap)]
 #[clap(name = crate_name!())]
 #[clap(author = crate_authors!())]
@@ -97,7 +113,12 @@ pub struct CrawlAccountsOpts {
     #[clap(short, long, about = "PostgreSQL database URI")]
     pub database: String,
 
-    #[clap(short, long, about = "Wargaming.net API application ID")]
+    #[clap(
+        short,
+        long,
+        about = "Wargaming.net API application ID",
+        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+    )]
     pub application_id: String,
 
     #[clap(long, about = "Starting account ID")]

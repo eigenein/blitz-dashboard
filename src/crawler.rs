@@ -7,6 +7,7 @@ use itertools::Itertools;
 use log::Level;
 use rocket::route::BoxFuture;
 use sentry::integrations::anyhow::capture_anyhow;
+use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 
 use crate::database;
@@ -32,13 +33,13 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
             .map(|account_id| BaseAccountInfo {
                 id: account_id,
                 crawled_at: None,
-                // FIXME: the fields below don't matter for `crawl_chunk`, but would be better without the hack.
                 last_battle_time: epoch,
-                nickname: "".to_string(),
+                // FIXME: the fields below don't matter for `crawl_chunk`, but would be better without the hack.
+                nickname: String::new(),
                 created_at: epoch,
             })
             .collect();
-        crawler.crawl_chunk(&previous_infos).await?;
+        crawler.crawl_batch(&previous_infos).await?;
     }
     Ok(())
 }
@@ -62,53 +63,56 @@ impl Crawler {
         })
     }
 
+    /// Runs the crawler indefinitely.
     pub async fn run(&self, n_chunks: i32, once: bool) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
         loop {
-            let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
-
-            // FIXME: read only `account_id`, `crawled_at` and `last_battle_time`.
-            let mut batch = retrieve_batch(&self.database, n_chunks).await?;
-            fastrand::shuffle(&mut batch);
-
-            let results = futures::future::join_all(
-                // FIXME: there's a problem if the database is empty.
-                batch
-                    .chunks(100)
-                    .into_iter()
-                    .map(|chunk| self.crawl_chunk(chunk).boxed())
-                    .collect::<Vec<BoxFuture<crate::Result>>>(),
-            )
-            .await;
-
-            for result in results {
-                if let Err(error) = result {
-                    let sentry_id = capture_anyhow(&error);
-                    log::error!("Failed to crawl the chunk: {} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
-                }
-            }
-
-            log::info!(
-                "{:.3}s per chunk.",
-                stopwatch.elapsed().as_secs_f64() / n_chunks as f64,
-            );
-
+            self.make_iteration(n_chunks).await?;
             if once {
                 break Ok(());
             }
         }
     }
 
-    async fn crawl_chunk(&self, previous_infos: &[BaseAccountInfo]) -> crate::Result {
-        let _stopwatch =
-            Stopwatch::new(format!("Chunk ({} accounts) crawled", previous_infos.len()))
-                .level(Level::Info);
+    async fn make_iteration(&self, n_chunks: i32) -> crate::Result {
+        let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
+        let mut batch = retrieve_batch(&self.database, n_chunks).await?;
+        fastrand::shuffle(&mut batch);
+        self.crawl_batch(&batch).await?;
+        log::info!(
+            "{:.3}s per chunk.",
+            stopwatch.elapsed().as_secs_f64() / n_chunks as f64,
+        );
+        Ok(())
+    }
 
-        let account_ids = previous_infos
-            .iter()
-            .map(|account| account.id)
-            .collect::<Vec<_>>();
+    async fn crawl_batch(&self, batch: &[BaseAccountInfo]) -> crate::Result {
+        let results = futures::future::join_all(
+            // FIXME: there's a problem if the database is empty.
+            batch
+                .chunks(100)
+                .into_iter()
+                .map(|chunk| self.crawl_chunk(chunk).boxed())
+                .collect::<Vec<BoxFuture<crate::Result>>>(),
+        )
+        .await;
+
+        for result in results {
+            if let Err(error) = result {
+                let sentry_id = capture_anyhow(&error);
+                log::error!("Failed to crawl the chunk: {:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn crawl_chunk(&self, previous_infos: &[BaseAccountInfo]) -> crate::Result {
+        let _stopwatch = Stopwatch::new("Chunk crawled").level(Level::Info);
+
+        let account_ids: SmallVec<[i32; 128]> =
+            previous_infos.iter().map(|account| account.id).collect();
         let mut current_infos = self.api.get_account_info(&account_ids).await?;
 
         let mut transaction = self.database.begin().await?;
@@ -121,16 +125,12 @@ impl Crawler {
             if current_info.is_some() {
                 n_accounts += 1;
             }
-            self.crawl_account(
-                &mut transaction,
-                previous_info.id,
-                match previous_info.crawled_at {
-                    Some(_) => CrawlMode::LastBattleTime(previous_info.last_battle_time),
-                    None => CrawlMode::New,
-                },
-                current_info,
-            )
-            .await?;
+            let crawl_mode = match previous_info.crawled_at {
+                Some(_) => CrawlMode::LastBattleTime(previous_info.last_battle_time),
+                None => CrawlMode::New,
+            };
+            self.crawl_account(&mut transaction, previous_info.id, crawl_mode, current_info)
+                .await?;
         }
 
         log::info!("{} accounts found. Committing…", n_accounts);
@@ -177,21 +177,18 @@ impl Crawler {
         log::debug!("Nickname: {}.", current_info.base.nickname);
         current_info.base.crawled_at = Some(Utc::now());
         database::insert_account_or_replace(&mut *connection, &current_info.base).await?;
+        let tanks = self.api.get_merged_tanks(account_id).await?;
 
         match mode {
             CrawlMode::New => {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
-                let tanks = self.api.get_merged_tanks(account_id).await?;
                 database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             }
             CrawlMode::LastBattleTime(last_battle_time)
                 if current_info.base.last_battle_time != last_battle_time =>
             {
                 database::insert_account_snapshot(&mut *connection, &current_info).await?;
-                let tanks: Vec<Tank> = self
-                    .api
-                    .get_merged_tanks(account_id)
-                    .await?
+                let tanks: Vec<Tank> = tanks
                     .into_iter()
                     .filter(|tank| tank.last_battle_time > last_battle_time)
                     .collect();
@@ -204,6 +201,7 @@ impl Crawler {
     }
 }
 
+/// Retrieves a single batch of `n_chunks` from the database.
 async fn retrieve_batch(connection: &PgPool, n_chunks: i32) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
