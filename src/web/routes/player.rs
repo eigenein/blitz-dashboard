@@ -385,14 +385,14 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средний" }
-                                                        p.title { (render_f64(100.0 * stats_delta.win_rate(), 1)) "%" }
+                                                        p.title { (render_percentage(stats_delta.win_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Истинный" }
                                                         p.title.is-white-space-nowrap {
-                                                            (render_f64(100.0 * period_win_rate.mean, 1)) "%"
+                                                            (render_percentage(period_win_rate.mean))
                                                             span.has-text-grey-light { " ±" (render_f64(100.0 * period_win_rate.margin, 1)) }
                                                         }
                                                     }
@@ -434,7 +434,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средняя" }
-                                                        p.title { (render_f64(100.0 * stats_delta.survival_rate(), 1)) "%" }
+                                                        p.title { (render_percentage(stats_delta.survival_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -442,7 +442,7 @@ pub async fn get(
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.survived_battles);
-                                                            (render_f64(100.0 * expected_period_survival_rate.mean, 1)) "%"
+                                                            (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { " ±" (render_f64(100.0 * expected_period_survival_rate.margin, 1)) }
                                                         }
                                                     }
@@ -464,7 +464,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В среднем" }
-                                                        p.title { (render_f64(100.0 * stats_delta.hits as f64 / stats_delta.shots as f64, 1)) "%" }
+                                                        p.title { (render_percentage(stats_delta.hits as f64 / stats_delta.shots as f64)) }
                                                     }
                                                 }
                                             }
@@ -504,7 +504,7 @@ pub async fn get(
 
                                                     @let win_rate = tank.all_statistics.win_rate();
                                                     td data-sort="win-rate" data-value=(win_rate) {
-                                                        strong { (render_f64(100.0 * win_rate, 1)) "%" }
+                                                        strong { (render_percentage(win_rate)) }
                                                     }
 
                                                     td.is-white-space-nowrap
@@ -513,7 +513,7 @@ pub async fn get(
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span {
-                                                                strong { (render_f64(100.0 * expected_win_rate.mean, 1)) "%" }
+                                                                strong { (render_percentage(expected_win_rate.mean)) }
                                                                 span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
                                                                     " ±" (render_f64(100.0 * expected_win_rate.margin, 1))
                                                                 }
@@ -576,7 +576,7 @@ pub async fn get(
                                                     td data-sort="survival-rate" data-value=(survival_rate) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                            span { (render_f64(100.0 * survival_rate, 0)) "%" }
+                                                            span { (render_percentage(survival_rate)) }
                                                         }
                                                     }
                                                 }

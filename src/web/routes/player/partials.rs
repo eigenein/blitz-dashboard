@@ -58,6 +58,12 @@ pub fn render_f64(value: f64, precision: usize) -> Markup {
     }
 }
 
+pub fn render_percentage(value: f64) -> Markup {
+    html! {
+        (render_f64(value * 100.0, 1)) "%"
+    }
+}
+
 pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     1_i32 => "Ⅰ",
     2_i32 => "Ⅱ",
