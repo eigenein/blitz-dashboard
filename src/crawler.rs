@@ -205,33 +205,12 @@ impl Crawler {
 async fn retrieve_batch(connection: &PgPool, n_chunks: i32) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = r#"
-        (
-            -- Inactive accounts are crawled in batches of 10.
-            SELECT * FROM accounts
-            WHERE last_battle_time < NOW() - INTERVAL '1 month'
-            ORDER BY crawled_at NULLS FIRST
-            LIMIT $1
-        )
-        UNION
-        (
-            SELECT * FROM accounts
-            WHERE NOW() - INTERVAL '1 month' <= last_battle_time AND last_battle_time < NOW() - INTERVAL '1 hour'
-            ORDER BY crawled_at NULLS FIRST
-            LIMIT $2
-        )
-        UNION
-        (
-            -- Now playing accounts are given the top priority.
-            SELECT * FROM accounts
-            WHERE last_battle_time >= NOW() - INTERVAL '1 hour'
-            ORDER BY crawled_at NULLS FIRST
-            LIMIT $3
-        );
+        SELECT * FROM accounts
+        ORDER BY crawled_at NULLS FIRST
+        LIMIT $1
     "#;
     let accounts = sqlx::query_as(QUERY)
-        .bind(10 * n_chunks)
-        .bind(40 * n_chunks)
-        .bind(50 * n_chunks)
+        .bind(100 * n_chunks)
         .fetch_all(connection)
         .await
         .context("failed to retrieve a batch")?;
