@@ -56,7 +56,7 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::Account>> {
+    pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::FoundAccount>> {
         self.call(&Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[

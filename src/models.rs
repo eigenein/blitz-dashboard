@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::serde::deserialize_duration_seconds;
 
+/// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
-pub struct Account {
+pub struct FoundAccount {
     pub nickname: String,
 
     #[serde(rename = "account_id")]
@@ -36,6 +37,7 @@ pub struct BaseAccountInfo {
     pub created_at: DateTime<Utc>,
 }
 
+/// Wargaming.net account information.
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(flatten)]

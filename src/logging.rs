@@ -1,6 +1,7 @@
 use sentry::integrations::log::{LogFilter, SentryLogger};
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 
+/// Initialises logging.
 pub fn init(verbosity: i32) -> anyhow::Result<()> {
     let log_level = match verbosity {
         0 => LevelFilter::Warn,
@@ -27,10 +28,12 @@ pub fn init(verbosity: i32) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Clears current user in Sentry.
 pub fn clear_user() {
     sentry::configure_scope(|scope| scope.set_user(None));
 }
 
+/// Sets current user in Sentry.
 pub fn set_user<U: Into<String>>(username: U) {
     sentry::configure_scope(|scope| {
         scope.set_user(Some(sentry::User {
