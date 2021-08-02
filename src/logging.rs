@@ -3,20 +3,14 @@ use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMod
 
 /// Initialises logging.
 pub fn init(verbosity: i32) -> anyhow::Result<()> {
-    let log_level = match verbosity {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    };
     let logger = TermLogger::new(
-        log_level,
+        convert_verbosity_to_level(verbosity),
         ConfigBuilder::new()
             .set_target_level(LevelFilter::Off)
             .set_location_level(LevelFilter::Off)
             .set_time_level(LevelFilter::Off)
-            .add_filter_allow_str("blitz_dashboard")
             .set_thread_level(LevelFilter::Off)
+            .add_filter_allow_str("blitz_dashboard")
             .build(),
         TerminalMode::Stderr,
         ColorChoice::Auto,
@@ -26,6 +20,15 @@ pub fn init(verbosity: i32) -> anyhow::Result<()> {
     ))?;
     log::set_max_level(LevelFilter::Debug);
     Ok(())
+}
+
+fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
+    match verbosity {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 => LevelFilter::Debug,
+        _ => LevelFilter::Trace,
+    }
 }
 
 /// Clears current user in Sentry.

@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Sub;
-use std::str::FromStr;
 
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -147,41 +146,6 @@ pub enum Nation {
 
     #[serde(other, rename = "other")]
     Other,
-}
-
-impl FromStr for Nation {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value {
-            "CHINA" => Ok(Self::China),
-            "EUROPE" => Ok(Self::Europe),
-            "FRANCE" => Ok(Self::France),
-            "GERMANY" => Ok(Self::Germany),
-            "JAPAN" => Ok(Self::Japan),
-            "OTHER" => Ok(Self::Other),
-            "UK" => Ok(Self::Uk),
-            "USA" => Ok(Self::Usa),
-            "USSR" => Ok(Self::Ussr),
-            _ => Err(anyhow::anyhow!("`{}` is not a valid nation", value)),
-        }
-    }
-}
-
-impl ToString for Nation {
-    fn to_string(&self) -> String {
-        match self {
-            Nation::China => "CHINA".to_string(),
-            Nation::Europe => "EUROPE".to_string(),
-            Nation::France => "FRANCE".to_string(),
-            Nation::Germany => "GERMANY".to_string(),
-            Nation::Japan => "JAPAN".to_string(),
-            Nation::Other => "OTHER".to_string(),
-            Nation::Uk => "UK".to_string(),
-            Nation::Usa => "USA".to_string(),
-            Nation::Ussr => "USSR".to_string(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
