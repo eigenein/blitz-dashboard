@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context};
 use moka::future::{Cache, CacheBuilder};
 
 use crate::models::AccountInfo;
-use crate::time::*;
+use crate::time::from_minutes;
 use crate::wargaming::WargamingApi;
 
 pub struct AccountInfoCache {
@@ -17,7 +17,9 @@ impl AccountInfoCache {
     pub fn new(api: WargamingApi) -> Self {
         Self {
             api,
-            cache: CacheBuilder::new(1_000).time_to_live(MINUTE).build(),
+            cache: CacheBuilder::new(1_000)
+                .time_to_live(from_minutes(1))
+                .build(),
         }
     }
 

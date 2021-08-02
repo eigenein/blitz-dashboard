@@ -18,6 +18,7 @@ use crate::metrics::Stopwatch;
 use crate::models::subtract_tanks;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
+use crate::time::{from_days, from_hours, from_months, from_years};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
@@ -67,7 +68,6 @@ pub async fn get(
             subtract_tanks(&played_tank_ids, &current_tanks, &previous_tank_snapshots)
         }
 
-        // FIXME: `cloned`, after https://github.com/eigenein/blitz-dashboard/issues/74.
         None => current_tanks.values().cloned().collect(),
     };
     let battle_life_time: i64 = tanks_delta
@@ -131,20 +131,20 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
-                    (render_period_li(period, StdDuration::from_secs(3600), "Час"))
-                    (render_period_li(period, StdDuration::from_secs(2 * 3600), "2 часа"))
-                    (render_period_li(period, StdDuration::from_secs(3 * 3600), "3 часа"))
-                    (render_period_li(period, StdDuration::from_secs(4 * 3600), "4 часа"))
-                    (render_period_li(period, StdDuration::from_secs(8 * 3600), "8 часов"))
-                    (render_period_li(period, StdDuration::from_secs(12 * 3600), "12 часов"))
-                    (render_period_li(period, StdDuration::from_secs(86400), "24 часа"))
-                    (render_period_li(period, StdDuration::from_secs(2 * 86400), "2 дня"))
-                    (render_period_li(period, StdDuration::from_secs(3 * 86400), "3 дня"))
-                    (render_period_li(period, StdDuration::from_secs(7 * 86400), "Неделя"))
-                    (render_period_li(period, StdDuration::from_secs(2630016), "Месяц"))
-                    (render_period_li(period, StdDuration::from_secs(2 * 2630016), "2 месяца"))
-                    (render_period_li(period, StdDuration::from_secs(3 * 2630016), "3 месяца"))
-                    (render_period_li(period, StdDuration::from_secs(31557600), "Год"))
+                    (render_period_li(period, from_hours(1), "Час"))
+                    (render_period_li(period, from_hours(2), "2 часа"))
+                    (render_period_li(period, from_hours(3), "3 часа"))
+                    (render_period_li(period, from_hours(4), "4 часа"))
+                    (render_period_li(period, from_hours(8), "8 часов"))
+                    (render_period_li(period, from_hours(12), "12 часов"))
+                    (render_period_li(period, from_days(1), "24 часа"))
+                    (render_period_li(period, from_days(2), "2 дня"))
+                    (render_period_li(period, from_days(3), "3 дня"))
+                    (render_period_li(period, from_days(7), "Неделя"))
+                    (render_period_li(period, from_months(1), "Месяц"))
+                    (render_period_li(period, from_months(2), "2 месяца"))
+                    (render_period_li(period, from_months(3), "3 месяца"))
+                    (render_period_li(period, from_years(1), "Год"))
                 }
             }
         }
