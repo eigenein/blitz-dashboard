@@ -205,7 +205,7 @@ pub async fn get(
             th {
                 a data-sort="gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Текущий доход от золотых бустеров за бой, если они были установлены" { "Заработанное золото" } }
+                        span { abbr title="Текущий доход от золотых бустеров, если они были установлены" { "Золото" } }
                     }
                 }
             }
@@ -538,11 +538,11 @@ pub async fn get(
                                                         }
                                                     }
 
-                                                    @let gold = 10.0 + vehicle.tier as f64 * win_rate;
+                                                    @let gold = 10 * tank.all_statistics.battles + vehicle.tier * tank.all_statistics.wins;
                                                     td data-sort="gold" data-value=(gold) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                            span { (render_f64(gold, 1)) }
+                                                            span { (gold) }
                                                         }
                                                     }
 
