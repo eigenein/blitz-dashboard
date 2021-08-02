@@ -31,7 +31,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_known_error_ok() -> crate::Result {
+    fn parse_error_ok() -> crate::Result {
         let response = serde_json::from_str::<Response<i32>>(
             // language=JSON
             r#"{"status":"error","error":{"field":"search","message":"NOT_ENOUGH_SEARCH_LENGTH","code":407,"value":"a"}}"#,
@@ -39,34 +39,8 @@ mod tests {
         match response {
             Response::Data { .. } => unreachable!(),
             Response::Error { error } => {
-                assert_eq!(error.message, Message::NotEnoughSearchLength)
+                assert_eq!(error.message, "NOT_ENOUGH_SEARCH_LENGTH")
             }
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn parse_unknown_error_ok() -> crate::Result {
-        let response = serde_json::from_str::<Response<i32>>(
-            // language=JSON
-            r#"{"status":"error","error":{"message":"WTF"}}"#,
-        )?;
-        match response {
-            Response::Error { error } => assert_eq!(error.message, Message::Other),
-            Response::Data { .. } => unreachable!(),
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn parse_missing_error_message_ok() -> crate::Result {
-        let response = serde_json::from_str::<Response<i32>>(
-            // language=JSON
-            r#"{"status":"error","error":{}}"#,
-        )?;
-        match response {
-            Response::Error { error } => assert_eq!(error.message, Message::Other),
-            Response::Data { .. } => unreachable!(),
         }
         Ok(())
     }
