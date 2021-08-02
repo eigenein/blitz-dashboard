@@ -189,13 +189,6 @@ pub async fn get(
                 }
             }
             th {
-                a data-sort="true-win-rate-margin" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Разброс истинного процента побед" { "TWRU" } }
-                    }
-                }
-            }
-            th {
                 a data-sort="wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "WPH" } }
@@ -521,13 +514,12 @@ pub async fn get(
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span {
                                                                 strong { (render_f64(100.0 * expected_win_rate.mean, 1)) "%" }
+                                                                span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
+                                                                    " ±" (render_f64(100.0 * expected_win_rate.margin, 1))
+                                                                }
                                                                 (partial_cmp_icon(win_rate_ordering))
                                                             }
                                                         }
-                                                    }
-
-                                                    td data-sort="true-win-rate-margin" data-value=(expected_win_rate.margin) {
-                                                        "±" (render_f64(100.0 * expected_win_rate.margin, 1))
                                                     }
 
                                                     @let wins_per_hour = tank.wins_per_hour();
