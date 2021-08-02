@@ -54,9 +54,9 @@ pub async fn get(
     let tanks_delta = match &previous_info {
         Some(previous_info) => {
             let played_tank_ids: SmallVec<[i32; 96]> = current_tanks
-                .iter()
-                .filter(|(_, tank)| tank.last_battle_time > previous_info.base.last_battle_time)
-                .map(|(tank_id, _)| *tank_id)
+                .values()
+                .filter(|tank| tank.last_battle_time > previous_info.base.last_battle_time)
+                .map(|tank| tank.tank_id)
                 .collect();
             let previous_tank_snapshots = database::retrieve_latest_tank_snapshots(
                 database,
