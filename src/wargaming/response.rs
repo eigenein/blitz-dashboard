@@ -10,40 +10,7 @@ pub enum Response<T> {
 #[derive(Deserialize, Debug)]
 pub struct Error {
     #[serde(default)]
-    pub message: Message,
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-pub enum Message {
-    #[serde(rename = "NOT_ENOUGH_SEARCH_LENGTH")]
-    NotEnoughSearchLength,
-
-    #[serde(rename = "REQUEST_LIMIT_EXCEEDED")]
-    RequestLimitExceeded,
-
-    #[serde(rename = "APPLICATION_IS_BLOCKED")]
-    ApplicationIsBlocked,
-
-    #[serde(rename = "INVALID_APPLICATION_ID")]
-    InvalidApplicationId,
-
-    #[serde(rename = "INVALID_IP_ADDRESS")]
-    InvalidIpAddress,
-
-    #[serde(rename = "SEARCH_NOT_SPECIFIED")]
-    SearchNotSpecified,
-
-    #[serde(rename = "ACCOUNT_ID_LIST_LIMIT_EXCEEDED")]
-    AccountIdListLimitExceeded,
-
-    #[serde(other)]
-    Other,
-}
-
-impl Default for Message {
-    fn default() -> Self {
-        Self::Other
-    }
+    pub message: String,
 }
 
 #[cfg(test)]

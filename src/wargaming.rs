@@ -13,7 +13,7 @@ use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 
 use crate::models;
-use crate::wargaming::response::{Message, Response};
+use crate::wargaming::response::Response;
 
 pub mod cache;
 pub mod response;
@@ -187,9 +187,7 @@ impl WargamingApi {
                             // 🎉 The request has simply succeeded.
                             Ok(data)
                         }
-                        Response::Error { error }
-                            if error.message == Message::RequestLimitExceeded =>
-                        {
+                        Response::Error { error } if error.message == "REQUEST_LIMIT_EXCEEDED" => {
                             // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
                             log::warn!("Exceeded the request limit. Retrying…");
                             capture_message("Exceeded the Wargaming.net RPS limit", Level::Warning);
@@ -197,7 +195,7 @@ impl WargamingApi {
                         }
                         Response::Error { error } => {
                             // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
-                            Err(anyhow!("{:?}", error.message))
+                            Err(anyhow!("{}", error.message))
                         }
                     }
                 }
