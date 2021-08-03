@@ -50,12 +50,16 @@ impl WargamingApi {
                 .default_headers(headers)
                 .https_only(true)
                 .timeout(timeout)
+                .brotli(true)
+                .gzip(true)
+                .deflate(true)
+                .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(1)),
         })
     }
 
-    pub fn n_requests(&self) -> u32 {
+    pub fn get_request_counter(&self) -> u32 {
         self.request_counter.load(Ordering::Relaxed)
     }
 

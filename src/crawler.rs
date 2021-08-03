@@ -63,10 +63,11 @@ impl Crawler {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
         log::info!("Running crawler…");
-        let start_instant = Instant::now();
+        let mut start_instant = Instant::now();
         let mut max_crawled_at = Utc.timestamp(0, 0);
         let mut running_futures: Vec<JoinHandle<crate::Result>> = Vec::new();
         let mut n_crawled_chunks = 0;
+        let mut request_counter = self.api.get_request_counter();
 
         loop {
             if running_futures.len() < n_tasks {
@@ -78,11 +79,17 @@ impl Crawler {
                 resolved_future??;
                 running_futures = remaining_futures;
                 n_crawled_chunks += 1;
+            }
+            if start_instant.elapsed().as_secs() > 10 {
+                let elapsed = start_instant.elapsed().as_secs_f64();
                 log::info!(
-                    "{:.2} chunks/second. {:.1} RPS.",
-                    n_crawled_chunks as f64 / start_instant.elapsed().as_secs_f64(),
-                    self.api.n_requests() as f64 / start_instant.elapsed().as_secs_f64(),
+                    "{:.2} chunks/second, {:.1} requests/second.",
+                    n_crawled_chunks as f64 / elapsed,
+                    (self.api.get_request_counter() - request_counter) as f64 / elapsed,
                 );
+                start_instant = Instant::now();
+                n_crawled_chunks = 0;
+                request_counter = self.api.get_request_counter();
             }
         }
     }
