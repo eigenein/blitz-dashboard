@@ -146,7 +146,6 @@ impl Crawler {
         database::insert_account_or_replace(&mut *connection, &current_info.base).await?;
 
         if current_info.base.last_battle_time != previous_info.last_battle_time {
-            database::insert_account_snapshot(&mut *connection, &current_info).await?;
             let tanks: Vec<Tank> = self
                 .api
                 .get_merged_tanks(previous_info.id)

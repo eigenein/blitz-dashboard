@@ -98,7 +98,6 @@ pub async fn get(
                                     }
                                     p.subtitle."is-6" {
                                         span.icon-text.has-text-grey {
-                                            span { (account.statistics.all.battles) " боев" }
                                             span.icon { i.far.fa-dot-circle {} }
                                             span { (datetime(account.base.last_battle_time, Tense::Past)) }
                                         }

@@ -5,11 +5,12 @@ use std::time::Duration as StdDuration;
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
 use log::LevelFilter;
+use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
 
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, AccountInfoStatistics, AllStatistics, BaseAccountInfo, Tank};
+use crate::models::{AllStatistics, BaseAccountInfo, Tank};
 
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
@@ -32,52 +33,28 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
     Ok(inner)
 }
 
-pub async fn retrieve_latest_account_snapshot(
-    executor: &PgPool,
-    account_id: i32,
-    before: &DateTime<Utc>,
-) -> crate::Result<Option<AccountInfo>> {
-    // language=SQL
-    const QUERY: &str = "
-        SELECT *
-        FROM account_snapshots
-        WHERE account_id = $1 AND last_battle_time <= $2
-        ORDER BY last_battle_time DESC
-        LIMIT 1
-    ";
-    let account_info = sqlx::query_as(QUERY)
-        .bind(account_id)
-        .bind(before)
-        .fetch_optional(executor)
-        .await
-        .context("failed to retrieve the latest account snapshot")?;
-    Ok(account_info)
-}
-
 pub async fn retrieve_latest_tank_snapshots(
     executor: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
-    tank_ids: &[i32],
 ) -> crate::Result<HashMap<i32, Tank>> {
-    if tank_ids.is_empty() {
-        // Not necessary, but saves the query execution time.
-        return Ok(HashMap::new());
-    }
-
     // language=SQL
     const QUERY: &str = "
         SELECT DISTINCT ON (tank_id) *
         FROM tank_snapshots
-        WHERE account_id = $1 AND last_battle_time <= $2 AND tank_id IN (SELECT unnest($3))
+        WHERE account_id = $1 AND last_battle_time <= $2
         ORDER BY tank_id, last_battle_time DESC
     ";
 
-    let _stopwatch = Stopwatch::new("Retrieved latest tank snapshots").threshold_millis(100);
+    let _stopwatch = Stopwatch::new(format!(
+        "Retrieved latest tank snapshots for #{}",
+        account_id
+    ))
+    .threshold_millis(100)
+    .level(Level::Debug);
     let tanks = sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(before)
-        .bind(tank_ids)
         .fetch_all(executor)
         .await
         .context("failed to retrieve the latest tank snapshots")?
@@ -137,49 +114,6 @@ where
         .execute(executor)
         .await
         .context("failed to delete account")?;
-    Ok(())
-}
-
-pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
-    info: &AccountInfo,
-) -> crate::Result {
-    // language=SQL
-    const QUERY: &str = "
-        INSERT INTO account_snapshots (
-            account_id,
-            last_battle_time,
-            crawled_at,
-            battles,
-            wins,
-            survived_battles,
-            win_and_survived,
-            damage_dealt,
-            damage_received,
-            shots,
-            hits,
-            frags,
-            xp
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        ON CONFLICT (account_id, last_battle_time) DO NOTHING
-    ";
-    sqlx::query(QUERY)
-        .bind(info.base.id)
-        .bind(info.base.last_battle_time)
-        .bind(info.base.crawled_at)
-        .bind(info.statistics.all.battles)
-        .bind(info.statistics.all.wins)
-        .bind(info.statistics.all.survived_battles)
-        .bind(info.statistics.all.win_and_survived)
-        .bind(info.statistics.all.damage_dealt)
-        .bind(info.statistics.all.damage_received)
-        .bind(info.statistics.all.shots)
-        .bind(info.statistics.all.hits)
-        .bind(info.statistics.all.frags)
-        .bind(info.statistics.all.xp)
-        .execute(executor)
-        .await
-        .context("failed to insert account snapshot")?;
     Ok(())
 }
 
@@ -258,17 +192,6 @@ impl<'r> FromRow<'r, PgRow> for Tank {
             last_battle_time: row.try_get("last_battle_time")?,
             battle_life_time: Duration::seconds(battle_life_time),
             all_statistics: AllStatistics::from_row(row)?,
-        })
-    }
-}
-
-impl<'r> FromRow<'r, PgRow> for AccountInfo {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        Ok(Self {
-            base: BaseAccountInfo::from_row(row)?,
-            statistics: AccountInfoStatistics {
-                all: AllStatistics::from_row(row)?,
-            },
         })
     }
 }

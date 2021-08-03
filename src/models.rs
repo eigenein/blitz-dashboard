@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::iter::Sum;
 use std::ops::Sub;
 
 use chrono::{DateTime, Duration, Utc};
@@ -48,7 +49,6 @@ pub struct AccountInfoStatistics {
     pub all: AllStatistics,
 }
 
-// TODO: rename to `Statistics`, because `account/info` has `statistics.rating`.
 #[derive(Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct AllStatistics {
     pub battles: i32,
@@ -78,6 +78,29 @@ impl AllStatistics {
 
     pub fn survival_rate(&self) -> f64 {
         self.survived_battles as f64 / self.battles as f64
+    }
+
+    pub fn hit_rate(&self) -> f64 {
+        self.hits as f64 / self.shots as f64
+    }
+}
+
+impl Sum for AllStatistics {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = Self::default();
+        for component in iter {
+            sum.battles += component.battles;
+            sum.wins += component.wins;
+            sum.hits += component.hits;
+            sum.shots += component.shots;
+            sum.survived_battles += component.survived_battles;
+            sum.frags += component.frags;
+            sum.xp += component.xp;
+            sum.damage_received += component.damage_received;
+            sum.damage_dealt += component.damage_dealt;
+            sum.win_and_survived += component.win_and_survived;
+        }
+        sum
     }
 }
 
@@ -232,20 +255,14 @@ impl AccountInfo {
     }
 }
 
-pub fn subtract_tanks(
-    tank_ids: &[i32],
-    left: &HashMap<i32, Tank>,
-    right: &HashMap<i32, Tank>,
-) -> Vec<Tank> {
-    tank_ids
-        .iter()
-        .filter_map(|tank_id| left.get(tank_id))
+pub fn subtract_tanks(left: &HashMap<i32, Tank>, right: &HashMap<i32, Tank>) -> Vec<Tank> {
+    left.values()
         .filter_map(|left_tank| match right.get(&left_tank.tank_id) {
             Some(right_tank) => {
                 if left_tank.all_statistics.battles != right_tank.all_statistics.battles {
                     Some(left_tank - right_tank)
                 } else {
-                    // The tank is here mostly likely because of some non-random battles.
+                    // The tank is here most likely because of some non-random battles.
                     None
                 }
             }

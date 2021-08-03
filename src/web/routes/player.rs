@@ -5,18 +5,17 @@ use log::Level;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::State;
-use smallvec::SmallVec;
 use sqlx::PgPool;
 
 use partials::*;
 
-use crate::database;
+use crate::database::{insert_account_or_ignore, retrieve_latest_tank_snapshots};
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
-use crate::models::subtract_tanks;
+use crate::models::{subtract_tanks, AllStatistics};
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::time::{from_days, from_months, from_years};
+use crate::time::{from_days, from_hours, from_months, from_years};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
@@ -35,7 +34,7 @@ pub async fn get(
 ) -> crate::web::result::Result<Html<String>> {
     let period = match period {
         Some(period) => parse_duration(&period)?,
-        None => from_days(1),
+        None => from_hours(12),
     };
     log::info!("GET #{} within {:?}.", account_id, period);
     let _stopwatch =
@@ -43,39 +42,20 @@ pub async fn get(
 
     let current_info = account_info_cache.get(account_id).await?;
     set_user(&current_info.base.nickname);
-    database::insert_account_or_ignore(database, &current_info.base).await?;
+    insert_account_or_ignore(database, &current_info.base).await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
-    let previous_info =
-        database::retrieve_latest_account_snapshot(database, account_id, &before).await?;
     let current_tanks = account_tanks_cache.get(&current_info).await?;
-    let tanks_delta = match &previous_info {
-        Some(previous_info) => {
-            let played_tank_ids: SmallVec<[i32; 96]> = current_tanks
-                .values()
-                .filter(|tank| tank.last_battle_time > previous_info.base.last_battle_time)
-                .map(|tank| tank.tank_id)
-                .collect();
-            let previous_tank_snapshots = database::retrieve_latest_tank_snapshots(
-                database,
-                account_id,
-                &before,
-                &played_tank_ids,
-            )
-            .await?;
-            subtract_tanks(&played_tank_ids, &current_tanks, &previous_tank_snapshots)
-        }
-
-        None => current_tanks.values().cloned().collect(),
+    let tanks_delta = {
+        let previous_tank_snapshots =
+            retrieve_latest_tank_snapshots(database, account_id, &before).await?;
+        subtract_tanks(&current_tanks, &previous_tank_snapshots)
     };
+    let stats_delta: AllStatistics = tanks_delta.iter().map(|tank| tank.all_statistics).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.battle_life_time.num_seconds())
         .sum();
-    let stats_delta = match &previous_info {
-        Some(previous_info) => &current_info.statistics.all - &previous_info.statistics.all,
-        None => current_info.statistics.all,
-    };
     let total_win_rate = ConfidenceInterval::default_wilson_score_interval(
         current_info.statistics.all.battles,
         current_info.statistics.all.wins,
@@ -129,6 +109,7 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
+                    (render_period_li(period, from_hours(12), "12 часов"))
                     (render_period_li(period, from_days(1), "24 часа"))
                     (render_period_li(period, from_days(2), "2 дня"))
                     (render_period_li(period, from_days(3), "3 дня"))
@@ -256,15 +237,6 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        @if previous_info.is_none() {
-                            article.message.is-warning {
-                                div.message-body {
-                                    strong { "Отображается статистика за все время." }
-                                    " У нас нет сведений об аккаунте за этот период."
-                                }
-                            }
-                        }
-
                         @if current_info.base.last_battle_time >= before && stats_delta.battles == 0 {
                             article.message.is-warning {
                                 div.message-body {
@@ -456,7 +428,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В среднем" }
-                                                        p.title { (render_percentage(stats_delta.hits as f64 / stats_delta.shots as f64)) }
+                                                        p.title { (render_percentage(stats_delta.hit_rate())) }
                                                     }
                                                 }
                                             }
