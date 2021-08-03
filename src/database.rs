@@ -43,7 +43,7 @@ pub async fn retrieve_latest_tank_snapshots(
         SELECT DISTINCT ON (tank_id) *
         FROM tank_snapshots
         WHERE account_id = $1 AND last_battle_time <= $2
-        ORDER BY tank_id, last_battle_time DESC
+        ORDER BY tank_id
     ";
 
     let _stopwatch = Stopwatch::new(format!(
