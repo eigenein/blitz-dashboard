@@ -2,13 +2,12 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use chrono::{DateTime, TimeZone, Utc};
-use futures::FutureExt;
+use futures::future::select_all;
 use itertools::Itertools;
-use log::Level;
-use rocket::route::BoxFuture;
-use sentry::integrations::anyhow::capture_anyhow;
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
+use tokio::task::JoinHandle;
+use tokio::time::Instant;
 
 use crate::database;
 use crate::metrics::Stopwatch;
@@ -19,27 +18,32 @@ use crate::wargaming::WargamingApi;
 pub async fn run(opts: CrawlerOpts) -> crate::Result {
     Crawler::new(&opts.application_id, &opts.database)
         .await?
-        .run(opts.n_chunks, opts.once)
+        .run(opts.n_tasks)
         .await
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
     let epoch = Utc.timestamp(0, 0);
+
+    // FIXME: should use `Crawler::new`.
+    let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?;
+    let database = crate::database::open(&opts.database).await?;
+
     for chunk in &(opts.start_id..opts.end_id).chunks(100) {
         let previous_infos: Vec<BaseAccountInfo> = chunk
             .map(|account_id| BaseAccountInfo {
                 id: account_id,
-                crawled_at: None,
+                crawled_at: epoch,
                 last_battle_time: epoch,
-                // FIXME: the fields below don't matter for `crawl_chunk`, but would be better without the hack.
+                // FIXME: the following fields don't matter for `crawl_chunk`, but would be better without the hack.
                 nickname: String::new(),
                 created_at: epoch,
             })
             .collect();
-        crawler.crawl_batch(&previous_infos).await?;
+        // FIXME: should be available from a crawler instance.
+        Crawler::crawl_batch(api.clone(), database.clone(), previous_infos).await?;
     }
     Ok(())
 }
@@ -47,12 +51,6 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
-}
-
-#[derive(Debug, PartialEq)]
-enum CrawlMode {
-    New,
-    LastBattleTime(DateTime<Utc>),
 }
 
 impl Crawler {
@@ -64,103 +62,74 @@ impl Crawler {
     }
 
     /// Runs the crawler indefinitely.
-    pub async fn run(&self, n_chunks: i32, once: bool) -> crate::Result {
+    pub async fn run(&self, n_tasks: usize) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
+        log::info!("Running crawler…");
+        let start_instant = Instant::now();
+        let mut max_crawled_at = Utc.timestamp(0, 0);
+        let mut running_futures: Vec<JoinHandle<crate::Result>> = Vec::new();
+        let mut n_crawled_chunks = 0;
+
         loop {
-            self.make_iteration(n_chunks).await?;
-            if once {
-                break Ok(());
+            if running_futures.len() < n_tasks {
+                let batch = self.retrieve_batch(max_crawled_at).await?;
+                max_crawled_at = batch.last().expect("expected some accounts").crawled_at;
+                let api = self.api.clone();
+                let database = self.database.clone();
+                running_futures.push(tokio::spawn(Self::crawl_batch(api, database, batch)));
+            } else {
+                let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
+                resolved_future??;
+                running_futures = remaining_futures;
+                n_crawled_chunks += 1;
+                log::info!(
+                    "{:.2} chunks/second. {:.1} RPS.",
+                    n_crawled_chunks as f64 / start_instant.elapsed().as_secs_f64(),
+                    self.api.n_requests() as f64 / start_instant.elapsed().as_secs_f64(),
+                );
             }
         }
     }
 
-    async fn make_iteration(&self, n_chunks: i32) -> crate::Result {
-        let stopwatch = Stopwatch::new("Iteration finished").level(Level::Info);
-        let mut batch = retrieve_batch(&self.database, n_chunks).await?;
-        fastrand::shuffle(&mut batch);
-        self.crawl_batch(&batch).await?;
-        log::info!(
-            "{:.3}s per chunk.",
-            stopwatch.elapsed().as_secs_f64() / n_chunks as f64,
-        );
-        Ok(())
-    }
-
-    async fn crawl_batch(&self, batch: &[BaseAccountInfo]) -> crate::Result {
-        let results = futures::future::join_all(
-            // FIXME: there's a problem if the database is empty.
-            batch
-                .chunks(100)
-                .into_iter()
-                .map(|chunk| self.crawl_chunk(chunk).boxed())
-                .collect::<Vec<BoxFuture<crate::Result>>>(),
-        )
-        .await;
-
-        for result in results {
-            if let Err(error) = result {
-                let sentry_id = capture_anyhow(&error);
-                log::error!("Failed to crawl the chunk: {:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})", error, sentry_id);
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn crawl_chunk(&self, previous_infos: &[BaseAccountInfo]) -> crate::Result {
-        let _stopwatch = Stopwatch::new("Chunk crawled").level(Level::Info);
-
+    async fn crawl_batch(
+        api: WargamingApi,
+        database: PgPool,
+        previous_infos: Vec<BaseAccountInfo>,
+    ) -> crate::Result {
         let account_ids: SmallVec<[i32; 128]> =
             previous_infos.iter().map(|account| account.id).collect();
-        let mut current_infos = self.api.get_account_info(&account_ids).await?;
+        let mut current_infos = api.get_account_info(&account_ids).await?;
 
-        let mut transaction = self.database.begin().await?;
-
-        let mut n_accounts = 0;
+        let mut transaction = database.begin().await?;
         for previous_info in previous_infos.iter() {
             let current_info = current_infos
                 .remove(&previous_info.id.to_string())
                 .flatten();
-            if current_info.is_some() {
-                n_accounts += 1;
-            }
-            let crawl_mode = match previous_info.crawled_at {
-                Some(_) => CrawlMode::LastBattleTime(previous_info.last_battle_time),
-                None => CrawlMode::New,
-            };
-            self.crawl_account(&mut transaction, previous_info.id, crawl_mode, current_info)
-                .await?;
+            Self::maybe_crawl_account(&api, &mut transaction, previous_info, current_info).await?;
         }
-
-        log::info!("{} accounts found. Committing…", n_accounts);
+        log::debug!("Committing…");
         transaction.commit().await?;
 
         Ok(())
     }
 
-    async fn crawl_account(
-        &self,
+    async fn maybe_crawl_account(
+        api: &WargamingApi,
         connection: &mut PgConnection,
-        account_id: i32,
-        mode: CrawlMode,
+        previous_info: &BaseAccountInfo,
         current_info: Option<AccountInfo>,
     ) -> crate::Result {
-        let _stopwatch =
-            Stopwatch::new(format!("Account #{} crawled", account_id)).level(Level::Info);
-        log::info!("Crawling account #{}, {:?}…", account_id, mode);
+        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", previous_info.id));
 
         match current_info {
             Some(current_info) => {
-                self.crawl_existing_account(&mut *connection, account_id, mode, current_info)
+                Self::crawl_existing_account(api, &mut *connection, previous_info, current_info)
                     .await?;
             }
-            None if mode != CrawlMode::New => {
-                log::warn!("The account #{} does not exist. Deleting…", account_id);
-                database::delete_account(&self.database, account_id).await?;
-            }
-            _ => {
-                log::info!("The account #{} does not exist.", account_id);
+            None => {
+                log::warn!("Account #{} does not exist. Deleting…", previous_info.id);
+                database::delete_account(&mut *connection, previous_info.id).await?;
             }
         };
 
@@ -168,51 +137,46 @@ impl Crawler {
     }
 
     async fn crawl_existing_account(
-        &self,
+        api: &WargamingApi,
         connection: &mut PgConnection,
-        account_id: i32,
-        mode: CrawlMode,
+        previous_info: &BaseAccountInfo,
         mut current_info: AccountInfo,
     ) -> crate::Result {
-        log::debug!("Nickname: {}.", current_info.base.nickname);
-        current_info.base.crawled_at = Some(Utc::now());
+        log::debug!("Crawling existing account #{}…", current_info.base.id);
+        current_info.base.crawled_at = Utc::now();
         database::insert_account_or_replace(&mut *connection, &current_info.base).await?;
-        let tanks = self.api.get_merged_tanks(account_id).await?;
 
-        match mode {
-            CrawlMode::New => {
-                database::insert_account_snapshot(&mut *connection, &current_info).await?;
-                database::insert_tank_snapshots(&mut *connection, &tanks).await?;
-            }
-            CrawlMode::LastBattleTime(last_battle_time)
-                if current_info.base.last_battle_time != last_battle_time =>
-            {
-                database::insert_account_snapshot(&mut *connection, &current_info).await?;
-                let tanks: Vec<Tank> = tanks
-                    .into_iter()
-                    .filter(|tank| tank.last_battle_time > last_battle_time)
-                    .collect();
-                database::insert_tank_snapshots(&mut *connection, &tanks).await?;
-            }
-            _ => log::info!("No new battles detected."),
-        };
+        if current_info.base.last_battle_time != previous_info.last_battle_time {
+            database::insert_account_snapshot(&mut *connection, &current_info).await?;
+            let tanks: Vec<Tank> = api
+                .get_merged_tanks(previous_info.id)
+                .await?
+                .into_iter()
+                .filter(|tank| tank.last_battle_time > previous_info.last_battle_time)
+                .collect();
+            log::info!("Inserting tank snapshots for #{}…", previous_info.id);
+            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
+        } else {
+            log::debug!("No new battles detected.")
+        }
 
         Ok(())
     }
-}
 
-/// Retrieves a single batch of `n_chunks` from the database.
-async fn retrieve_batch(connection: &PgPool, n_chunks: i32) -> crate::Result<Vec<BaseAccountInfo>> {
-    // language=SQL
-    const QUERY: &str = r#"
+    async fn retrieve_batch(&self, after: DateTime<Utc>) -> crate::Result<Vec<BaseAccountInfo>> {
+        // language=SQL
+        const QUERY: &str = r#"
         SELECT * FROM accounts
+        WHERE crawled_at > $1
         ORDER BY crawled_at NULLS FIRST
-        LIMIT $1
+        LIMIT $2
     "#;
-    let accounts = sqlx::query_as(QUERY)
-        .bind(100 * n_chunks)
-        .fetch_all(connection)
-        .await
-        .context("failed to retrieve a batch")?;
-    Ok(accounts)
+        let accounts = sqlx::query_as(QUERY)
+            .bind(after)
+            .bind(100)
+            .fetch_all(&self.database)
+            .await
+            .context("failed to retrieve a batch")?;
+        Ok(accounts)
+    }
 }

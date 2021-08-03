@@ -24,11 +24,8 @@ pub struct BaseAccountInfo {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
-    #[serde(
-        default,
-        deserialize_with = "crate::serde::deserialize_optional_timestamp"
-    )]
-    pub crawled_at: Option<DateTime<Utc>>,
+    #[serde(default = "crate::serde::epoch")]
+    pub crawled_at: DateTime<Utc>,
 
     pub nickname: String,
 

@@ -7,8 +7,6 @@ pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
 }
 
-pub fn deserialize_optional_timestamp<'de, D: serde::Deserializer<'de>>(
-    deserializer: D,
-) -> Result<Option<DateTime<Utc>>, D::Error> {
-    Ok(Option::<i64>::deserialize(deserializer)?.map(|timestamp| Utc.timestamp(timestamp, 0)))
+pub fn epoch() -> DateTime<Utc> {
+    Utc.timestamp(0, 0)
 }

@@ -144,7 +144,6 @@ pub async fn insert_account_snapshot<'e, E: Executor<'e, Database = Postgres>>(
     executor: E,
     info: &AccountInfo,
 ) -> crate::Result {
-    log::info!("Inserting account #{} snapshot…", info.base.id);
     // language=SQL
     const QUERY: &str = "
         INSERT INTO account_snapshots (

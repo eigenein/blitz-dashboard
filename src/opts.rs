@@ -79,11 +79,8 @@ pub struct CrawlerOpts {
     )]
     pub application_id: String,
 
-    #[clap(long, about = "Exit after one iteration")]
-    pub once: bool,
-
-    #[clap(short, long, about = "Number of chunks crawled in parallel")]
-    pub n_chunks: i32,
+    #[clap(short, long, about = "Number of crawling tasks")]
+    pub n_tasks: usize,
 }
 
 #[derive(Clap)]
