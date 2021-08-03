@@ -1,5 +1,6 @@
 #![warn(clippy::all)]
 
+use clap::Clap;
 use clap::{crate_name, crate_version};
 use log::Level;
 use sentry::integrations::anyhow::capture_anyhow;
@@ -24,7 +25,7 @@ type Result<T = ()> = anyhow::Result<T>;
 
 #[tokio::main]
 async fn main() -> crate::Result {
-    let opts = opts::parse();
+    let opts = Opts::parse();
     logging::init(opts.verbosity)?;
     log::info!("{} {}", crate_name!(), crate_version!());
     let _sentry_guard = init_sentry(&opts);

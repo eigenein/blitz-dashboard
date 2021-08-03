@@ -18,7 +18,7 @@ use crate::metrics::Stopwatch;
 use crate::models::subtract_tanks;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::time::{from_days, from_hours, from_months, from_years};
+use crate::time::{from_days, from_months, from_years};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};

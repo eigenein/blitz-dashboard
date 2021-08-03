@@ -26,10 +26,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let epoch = Utc.timestamp(0, 0);
-
-    // FIXME: should use `Crawler::new`.
-    let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?;
-    let database = crate::database::open(&opts.database).await?;
+    let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
 
     for chunk in &(opts.start_id..opts.end_id).chunks(100) {
         let previous_infos: Vec<BaseAccountInfo> = chunk
@@ -42,12 +39,12 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
                 created_at: epoch,
             })
             .collect();
-        // FIXME: should be available from a crawler instance.
-        Crawler::crawl_batch(api.clone(), database.clone(), previous_infos).await?;
+        crawler.clone().crawl_batch(previous_infos).await?;
     }
     Ok(())
 }
 
+#[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
@@ -75,9 +72,7 @@ impl Crawler {
             if running_futures.len() < n_tasks {
                 let batch = self.retrieve_batch(max_crawled_at).await?;
                 max_crawled_at = batch.last().expect("expected some accounts").crawled_at;
-                let api = self.api.clone();
-                let database = self.database.clone();
-                running_futures.push(tokio::spawn(Self::crawl_batch(api, database, batch)));
+                running_futures.push(tokio::spawn(self.clone().crawl_batch(batch)));
             } else {
                 let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
                 resolved_future??;
@@ -92,21 +87,18 @@ impl Crawler {
         }
     }
 
-    async fn crawl_batch(
-        api: WargamingApi,
-        database: PgPool,
-        previous_infos: Vec<BaseAccountInfo>,
-    ) -> crate::Result {
+    async fn crawl_batch(self, previous_infos: Vec<BaseAccountInfo>) -> crate::Result {
         let account_ids: SmallVec<[i32; 128]> =
             previous_infos.iter().map(|account| account.id).collect();
-        let mut current_infos = api.get_account_info(&account_ids).await?;
+        let mut current_infos = self.api.get_account_info(&account_ids).await?;
 
-        let mut transaction = database.begin().await?;
+        let mut transaction = self.database.begin().await?;
         for previous_info in previous_infos.iter() {
             let current_info = current_infos
                 .remove(&previous_info.id.to_string())
                 .flatten();
-            Self::maybe_crawl_account(&api, &mut transaction, previous_info, current_info).await?;
+            self.maybe_crawl_account(&mut transaction, previous_info, current_info)
+                .await?;
         }
         log::debug!("Committing…");
         transaction.commit().await?;
@@ -115,7 +107,7 @@ impl Crawler {
     }
 
     async fn maybe_crawl_account(
-        api: &WargamingApi,
+        &self,
         connection: &mut PgConnection,
         previous_info: &BaseAccountInfo,
         current_info: Option<AccountInfo>,
@@ -124,7 +116,7 @@ impl Crawler {
 
         match current_info {
             Some(current_info) => {
-                Self::crawl_existing_account(api, &mut *connection, previous_info, current_info)
+                self.crawl_existing_account(&mut *connection, previous_info, current_info)
                     .await?;
             }
             None => {
@@ -137,7 +129,7 @@ impl Crawler {
     }
 
     async fn crawl_existing_account(
-        api: &WargamingApi,
+        &self,
         connection: &mut PgConnection,
         previous_info: &BaseAccountInfo,
         mut current_info: AccountInfo,
@@ -148,7 +140,8 @@ impl Crawler {
 
         if current_info.base.last_battle_time != previous_info.last_battle_time {
             database::insert_account_snapshot(&mut *connection, &current_info).await?;
-            let tanks: Vec<Tank> = api
+            let tanks: Vec<Tank> = self
+                .api
                 .get_merged_tanks(previous_info.id)
                 .await?
                 .into_iter()

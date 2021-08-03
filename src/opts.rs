@@ -124,7 +124,3 @@ pub struct CrawlAccountsOpts {
     #[clap(long, about = "Ending account ID (non-inclusive)")]
     pub end_id: i32,
 }
-
-pub fn parse() -> Opts {
-    Opts::parse()
-}
