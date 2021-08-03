@@ -1,5 +1,3 @@
-use std::time::Duration as StdDuration;
-
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
@@ -37,7 +35,7 @@ pub async fn get(
 ) -> crate::web::result::Result<Html<String>> {
     let period = match period {
         Some(period) => parse_duration(&period)?,
-        None => StdDuration::from_secs(43200),
+        None => from_days(1),
     };
     log::info!("GET #{} within {:?}.", account_id, period);
     let _stopwatch =
