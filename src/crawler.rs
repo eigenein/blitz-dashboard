@@ -165,11 +165,11 @@ impl Crawler {
     async fn retrieve_batch(&self, after: DateTime<Utc>) -> crate::Result<Vec<BaseAccountInfo>> {
         // language=SQL
         const QUERY: &str = r#"
-        SELECT * FROM accounts
-        WHERE crawled_at > $1
-        ORDER BY crawled_at NULLS FIRST
-        LIMIT $2
-    "#;
+            SELECT * FROM accounts
+            WHERE crawled_at > $1
+            ORDER BY crawled_at
+            LIMIT $2
+        "#;
         let accounts = sqlx::query_as(QUERY)
             .bind(after)
             .bind(100)
