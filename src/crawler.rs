@@ -33,7 +33,6 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         let old_infos: Vec<BaseAccountInfo> = chunk
             .map(|account_id| BaseAccountInfo {
                 id: account_id,
-                crawled_at: epoch,
                 last_battle_time: epoch,
                 // FIXME: the following fields don't matter for `crawl_chunk`, but would be better without the hack.
                 nickname: String::new(),
@@ -137,10 +136,9 @@ impl Crawler {
         &self,
         connection: &mut PgConnection,
         old_info: &BaseAccountInfo,
-        mut new_info: AccountInfo,
+        new_info: AccountInfo,
     ) -> crate::Result {
         log::debug!("Crawling existing account #{}…", new_info.base.id);
-        new_info.base.crawled_at = Utc::now();
         database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
 
         if new_info.base.last_battle_time != old_info.last_battle_time {

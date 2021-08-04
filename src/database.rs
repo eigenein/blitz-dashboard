@@ -71,7 +71,7 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, now())
         ON CONFLICT (account_id) DO UPDATE SET
             last_battle_time = EXCLUDED.last_battle_time,
             crawled_at = EXCLUDED.crawled_at
@@ -79,7 +79,6 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     sqlx::query(QUERY)
         .bind(info.id)
         .bind(info.last_battle_time)
-        .bind(info.crawled_at)
         .execute(executor)
         .await
         .with_context(|| format!("failed to insert the account #{} or replace", info.id))?;
@@ -90,13 +89,12 @@ pub async fn insert_account_or_ignore(executor: &PgPool, info: &BaseAccountInfo)
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, now())
         ON CONFLICT (account_id) DO NOTHING
     ";
     sqlx::query(QUERY)
         .bind(info.id)
         .bind(info.last_battle_time)
-        .bind(info.crawled_at)
         .execute(executor)
         .await
         .context("failed to insert the account or ignore")?;
@@ -210,7 +208,6 @@ impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
         Ok(Self {
             id: row.try_get("account_id")?,
             last_battle_time: row.try_get("last_battle_time")?,
-            crawled_at: row.try_get("crawled_at")?,
             nickname: "".to_string(), // FIXME
             created_at: Utc::now(),   // FIXME
         })
