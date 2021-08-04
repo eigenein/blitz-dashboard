@@ -83,7 +83,7 @@ impl Crawler {
                 resolved_future??;
                 running_futures = remaining_futures;
             }
-            if metrics_start.elapsed().as_secs() > 5 {
+            if metrics_start.elapsed().as_secs() > 10 {
                 let elapsed = metrics_start.elapsed().as_secs_f64();
                 let rps = self.api.get_request_counter() as f64 / elapsed;
                 log::info!("{:.1} requests/second.", rps);
