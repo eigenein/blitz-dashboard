@@ -70,8 +70,8 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time, crawled_at)
-        VALUES ($1, $2, now())
+        INSERT INTO accounts (account_id, last_battle_time)
+        VALUES ($1, $2)
         ON CONFLICT (account_id) DO UPDATE SET
             last_battle_time = EXCLUDED.last_battle_time
     ";
@@ -87,8 +87,8 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
 pub async fn insert_account_or_ignore(executor: &PgPool, info: &BaseAccountInfo) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time, crawled_at)
-        VALUES ($1, $2, now())
+        INSERT INTO accounts (account_id, last_battle_time)
+        VALUES ($1, $2)
         ON CONFLICT (account_id) DO NOTHING
     ";
     sqlx::query(QUERY)
