@@ -101,15 +101,21 @@ impl Sum for AllStatistics {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
-pub struct TankStatistics {
+#[derive(Deserialize, Debug, Clone, PartialEq)]
+pub struct BaseTankStatistics {
     pub tank_id: i32,
-
-    #[serde(deserialize_with = "deserialize_duration_seconds")]
-    pub battle_life_time: Duration,
 
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Debug, PartialEq, Clone)]
+pub struct TankStatistics {
+    #[serde(flatten)]
+    pub base: BaseTankStatistics,
+
+    #[serde(deserialize_with = "deserialize_duration_seconds")]
+    pub battle_life_time: Duration,
 
     #[serde(rename = "all")]
     pub all: AllStatistics,

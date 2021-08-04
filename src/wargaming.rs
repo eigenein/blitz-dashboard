@@ -127,7 +127,7 @@ impl WargamingApi {
                 account_id,
             )
             .await
-            .with_context(|| format!("failed to get tanks achievements for #{}", account_id,))?
+            .with_context(|| format!("failed to get tanks achievements for #{}", account_id))?
             .unwrap_or_else(Vec::new))
     }
 
@@ -146,18 +146,18 @@ impl WargamingApi {
         let mut statistics = self.get_tanks_stats(account_id).await?;
         let mut achievements = self.get_tanks_achievements(account_id).await?;
 
-        statistics.sort_unstable_by_key(|snapshot| snapshot.tank_id);
+        statistics.sort_unstable_by_key(|snapshot| snapshot.base.tank_id);
         achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
 
         let tanks: Vec<models::Tank> = merge_join_by(statistics, achievements, |left, right| {
-            left.tank_id.cmp(&right.tank_id)
+            left.base.tank_id.cmp(&right.tank_id)
         })
         .filter_map(|item| match item {
             EitherOrBoth::Both(statistics, _achievements) => Some(models::Tank {
                 account_id,
-                tank_id: statistics.tank_id,
+                tank_id: statistics.base.tank_id,
                 all_statistics: statistics.all,
-                last_battle_time: statistics.last_battle_time,
+                last_battle_time: statistics.base.last_battle_time,
                 battle_life_time: statistics.battle_life_time,
             }),
             _ => None,
