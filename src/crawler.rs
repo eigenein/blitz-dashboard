@@ -138,10 +138,9 @@ impl Crawler {
         old_info: &BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result {
-        log::debug!("Crawling existing account #{}…", new_info.base.id);
-        database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
-
         if new_info.base.last_battle_time != old_info.last_battle_time {
+            log::debug!("Crawling account #{}…", old_info.id);
+            database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
             let tanks: Vec<Tank> = self
                 .api
                 .get_merged_tanks(old_info.id)
@@ -149,14 +148,14 @@ impl Crawler {
                 .into_iter()
                 .filter(|tank| tank.last_battle_time > old_info.last_battle_time)
                 .collect();
+            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             log::info!(
-                "Inserting {} tank snapshots for #{}…",
+                "Inserted {} tank snapshots for #{}.",
                 tanks.len(),
                 old_info.id,
             );
-            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
         } else {
-            log::debug!("No new battles detected.")
+            log::debug!("Account #{} haven't played.", old_info.id)
         }
 
         Ok(())

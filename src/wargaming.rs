@@ -112,7 +112,7 @@ impl WargamingApi {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
-            .with_context(|| format!("failed to get tanks stats for account #{}", account_id))?
+            .with_context(|| format!("failed to get tanks stats for #{}", account_id))?
             .unwrap_or_else(Vec::new))
     }
 
@@ -127,12 +127,7 @@ impl WargamingApi {
                 account_id,
             )
             .await
-            .with_context(|| {
-                format!(
-                    "failed to get tanks achievements for account #{}",
-                    account_id,
-                )
-            })?
+            .with_context(|| format!("failed to get tanks achievements for #{}", account_id,))?
             .unwrap_or_else(Vec::new))
     }
 

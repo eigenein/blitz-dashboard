@@ -73,8 +73,7 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
         INSERT INTO accounts (account_id, last_battle_time, crawled_at)
         VALUES ($1, $2, now())
         ON CONFLICT (account_id) DO UPDATE SET
-            last_battle_time = EXCLUDED.last_battle_time,
-            crawled_at = EXCLUDED.crawled_at
+            last_battle_time = EXCLUDED.last_battle_time
     ";
     sqlx::query(QUERY)
         .bind(info.id)
