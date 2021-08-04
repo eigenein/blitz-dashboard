@@ -63,6 +63,10 @@ impl WargamingApi {
         self.request_counter.load(Ordering::Relaxed)
     }
 
+    pub fn reset_request_counter(&self) {
+        self.request_counter.store(0, Ordering::Relaxed);
+    }
+
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::FoundAccount>> {
         self.call(&Url::parse_with_params(
