@@ -45,11 +45,11 @@ pub async fn get(
     insert_account_or_ignore(database, &current_info.base).await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
-    let current_tanks = account_tanks_cache.get(&current_info).await?;
+    let tanks = account_tanks_cache.get(&current_info).await?;
     let tanks_delta = {
-        let previous_tank_snapshots =
+        let old_tank_snapshots =
             retrieve_latest_tank_snapshots(database, account_id, &before).await?;
-        subtract_tanks(&current_tanks, &previous_tank_snapshots)
+        subtract_tanks(&tanks, &old_tank_snapshots)
     };
     let stats_delta: AllStatistics = tanks_delta.iter().map(|tank| tank.all_statistics).sum();
     let battle_life_time: i64 = tanks_delta

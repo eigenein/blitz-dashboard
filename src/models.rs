@@ -265,14 +265,10 @@ pub fn subtract_tanks(left: &[Tank], right: &HashMap<i32, Tank>) -> Vec<Tank> {
                 if left_tank.all_statistics.battles != right_tank.all_statistics.battles {
                     Some(left_tank - right_tank)
                 } else {
-                    // The tank is here most likely because of some non-random battles.
                     None
                 }
             }
-            _ => {
-                // New tank.
-                Some(*left_tank)
-            }
+            None => Some(*left_tank),
         })
         .collect()
 }
