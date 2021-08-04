@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS accounts (
 );
 DROP INDEX IF EXISTS accounts_crawled_at;
 DROP INDEX IF EXISTS accounts_crawled_at_2;
-CREATE INDEX IF NOT EXISTS accounts_crawled_at_3 ON accounts(crawled_at);
+DROP INDEX IF EXISTS accounts_crawled_at_3;
+ALTER TABLE ONLY accounts ALTER COLUMN crawled_at SET DEFAULT now();
 CREATE INDEX IF NOT EXISTS accounts_last_battle_time ON accounts(last_battle_time DESC);
 
 CREATE TABLE IF NOT EXISTS account_snapshots (
