@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
@@ -12,7 +11,7 @@ pub struct AccountTanksCache {
     cache: Cache<i32, Entry>,
 }
 
-type Entry = (DateTime<Utc>, Arc<HashMap<i32, Tank>>);
+type Entry = (DateTime<Utc>, Arc<Vec<Tank>>);
 
 impl AccountTanksCache {
     pub fn new(api: WargamingApi) -> Self {
@@ -22,7 +21,7 @@ impl AccountTanksCache {
         }
     }
 
-    pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Arc<HashMap<i32, Tank>>> {
+    pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Arc<Vec<Tank>>> {
         let account_id = account_info.base.id;
         match self.cache.get(&account_id) {
             Some((last_battle_time, snapshots))
@@ -32,14 +31,8 @@ impl AccountTanksCache {
                 Ok(snapshots)
             }
             _ => {
-                let snapshots: Arc<HashMap<i32, Tank>> = Arc::new(
-                    self.api
-                        .get_merged_tanks(account_id)
-                        .await?
-                        .into_iter()
-                        .map(|tank| (tank.tank_id, tank))
-                        .collect(),
-                );
+                let snapshots: Arc<Vec<Tank>> =
+                    Arc::new(self.api.get_merged_tanks(account_id).await?);
                 self.cache
                     .insert(
                         account_id,

@@ -258,8 +258,8 @@ impl AccountInfo {
     }
 }
 
-pub fn subtract_tanks(left: &HashMap<i32, Tank>, right: &HashMap<i32, Tank>) -> Vec<Tank> {
-    left.values()
+pub fn subtract_tanks(left: &[Tank], right: &HashMap<i32, Tank>) -> Vec<Tank> {
+    left.iter()
         .filter_map(|left_tank| match right.get(&left_tank.tank_id) {
             Some(right_tank) => {
                 if left_tank.all_statistics.battles != right_tank.all_statistics.battles {
