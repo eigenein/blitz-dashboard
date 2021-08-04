@@ -1,12 +1,11 @@
 CREATE TABLE IF NOT EXISTS accounts (
     account_id INTEGER PRIMARY KEY,
-    last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    crawled_at TIMESTAMP WITH TIME ZONE NOT NULL
+    last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL
 );
 DROP INDEX IF EXISTS accounts_crawled_at;
 DROP INDEX IF EXISTS accounts_crawled_at_2;
 DROP INDEX IF EXISTS accounts_crawled_at_3;
-ALTER TABLE ONLY accounts ALTER COLUMN crawled_at SET DEFAULT now();
+ALTER TABLE ONLY accounts DROP COLUMN IF EXISTS crawled_at;
 CREATE INDEX IF NOT EXISTS accounts_last_battle_time ON accounts(last_battle_time DESC);
 
 CREATE TABLE IF NOT EXISTS account_snapshots (
