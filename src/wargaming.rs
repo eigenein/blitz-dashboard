@@ -69,7 +69,7 @@ impl WargamingApi {
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::FoundAccount>> {
-        self.call(&Url::parse_with_params(
+        self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
                 ("application_id", self.application_id.as_str()),
@@ -93,7 +93,7 @@ impl WargamingApi {
             .iter()
             .map(|account_id| account_id.to_string())
             .join(",");
-        self.call(&Url::parse_with_params(
+        self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/info/",
             &[
                 ("application_id", self.application_id.as_str()),
@@ -134,7 +134,7 @@ impl WargamingApi {
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     pub async fn get_tankopedia(&self) -> crate::Result<Tankopedia> {
         log::info!("Retrieving the tankopedia…");
-        self.call::<Tankopedia>(&Url::parse_with_params(
+        self.call::<Tankopedia>(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
             &[("application_id", self.application_id.as_str())],
         )?)
@@ -174,7 +174,7 @@ impl WargamingApi {
     ) -> crate::Result<Option<T>> {
         let account_id = account_id.to_string();
         let mut map: HashMap<String, Option<T>> = self
-            .call(&Url::parse_with_params(
+            .call(Url::parse_with_params(
                 url,
                 &[
                     ("application_id", self.application_id.as_str()),
@@ -185,9 +185,9 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    async fn call<T: DeserializeOwned>(&self, url: &Url) -> crate::Result<T> {
+    async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
         loop {
-            break match self.call_once(url).await {
+            break match self.call_once(url.clone()).await {
                 Ok(response) => {
                     match response {
                         Response::Data { data } => {
@@ -221,13 +221,13 @@ impl WargamingApi {
 
     async fn call_once<T: DeserializeOwned>(
         &self,
-        url: &Url,
+        url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         log::debug!("Get #{} {}", request_id, url);
 
         let start_instant = Instant::now();
-        let result = self.client.get(url.clone()).send().await;
+        let result = self.client.get(url).send().await;
         let elapsed = Instant::now() - start_instant;
         log::debug!("Done #{} in {:?}", request_id, elapsed);
 
