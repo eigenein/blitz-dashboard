@@ -12,6 +12,7 @@ use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 
+use crate::backoff::Backoff;
 use crate::models;
 use crate::wargaming::response::Response;
 
@@ -186,36 +187,52 @@ impl WargamingApi {
     }
 
     async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
+        let mut backoff = Backoff::new(100);
         loop {
-            break match self.call_once(url.clone()).await {
+            match self.call_once(url.clone()).await {
                 Ok(response) => {
                     match response {
                         Response::Data { data } => {
                             // 🎉 The request has simply succeeded.
-                            Ok(data)
+                            return Ok(data);
                         }
-                        Response::Error { error } if error.message == "REQUEST_LIMIT_EXCEEDED" => {
-                            // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
-                            log::warn!("Exceeded the request limit. Retrying…");
-                            capture_message("Exceeded the Wargaming.net RPS limit", Level::Warning);
-                            continue;
-                        }
-                        Response::Error { error } => {
-                            // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
-                            Err(anyhow!("{}", error.message))
-                        }
+                        Response::Error { error } => match error.message.as_str() {
+                            "REQUEST_LIMIT_EXCEEDED" => {
+                                // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
+                                log::warn!("Exceeded the request limit.");
+                                capture_message(
+                                    "Exceeded the Wargaming.net RPS limit",
+                                    Level::Warning,
+                                );
+                            }
+                            "SOURCE_NOT_AVAILABLE" => {
+                                // ♻️ The HTTP request has succeeded, but Wargaming.net has an issue.
+                                log::warn!("Wargaming.net source is unavailable.");
+                                capture_message(
+                                    "Wargaming.net source is unavailable",
+                                    Level::Warning,
+                                );
+                            }
+                            _ => {
+                                // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
+                                return Err(anyhow!("{}", error.message));
+                            }
+                        },
                     }
                 }
                 Err(error) if error.is_timeout() => {
                     // ♻️ The HTTP request has timed out. Retrying…
+                    log::warn!("Wargaming.net API has timed out.");
                     capture_message("Wargaming.net API has timed out", Level::Info);
-                    continue;
                 }
                 Err(error) => {
                     // 🥅 The HTTP request has failed for a different reason.
-                    Err(error).context("failed to call the Wargaming.net API")
+                    return Err(error).context("failed to call the Wargaming.net API");
                 }
             };
+            let sleep_duration = backoff.next();
+            log::warn!("Retrying in {:?}…", sleep_duration);
+            tokio::time::sleep(sleep_duration).await;
         }
     }
 

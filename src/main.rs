@@ -8,6 +8,7 @@ use sentry::integrations::anyhow::capture_anyhow;
 use crate::metrics::Stopwatch;
 use crate::opts::{Opts, Subcommand};
 
+mod backoff;
 mod crawler;
 mod database;
 mod logging;
