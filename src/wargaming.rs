@@ -215,7 +215,7 @@ impl WargamingApi {
                             }
                             _ => {
                                 // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
-                                return Err(anyhow!("{}", error.message));
+                                return Err(anyhow!("{}/{}", error.code, error.message));
                             }
                         },
                     }

@@ -11,6 +11,9 @@ pub enum Response<T> {
 pub struct Error {
     #[serde(default)]
     pub message: String,
+
+    #[serde(default)]
+    pub code: i32,
 }
 
 #[cfg(test)]
