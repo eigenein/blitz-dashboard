@@ -66,7 +66,7 @@ impl Crawler {
         let mut account_pointer = fastrand::i32(0..retrieve_max_account_id(&self.database).await?);
         let mut running_futures: Vec<JoinHandle<crate::Result>> = Vec::new();
 
-        log::info!("Running crawler from #{}…", account_pointer);
+        log::info!("Starting the crawler from #{}…", account_pointer);
 
         loop {
             if running_futures.len() < n_tasks {
@@ -76,7 +76,10 @@ impl Crawler {
                         account_pointer = info.id;
                         running_futures.push(tokio::spawn(self.clone().crawl_batch(batch)));
                     }
-                    None => account_pointer = 0,
+                    None => {
+                        log::info!("Starting over.");
+                        account_pointer = 0
+                    }
                 }
             } else {
                 let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
@@ -86,7 +89,7 @@ impl Crawler {
             if metrics_start.elapsed().as_secs() > 10 {
                 let elapsed = metrics_start.elapsed().as_secs_f64();
                 let rps = self.api.get_request_counter() as f64 / elapsed;
-                log::info!("{:.1} requests/second.", rps);
+                log::info!("Rate: {:.1} RPS.", rps);
                 metrics_start = Instant::now();
                 self.api.reset_request_counter();
             }
@@ -149,11 +152,7 @@ impl Crawler {
                 .filter(|tank| tank.last_battle_time > old_info.last_battle_time)
                 .collect();
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
-            log::info!(
-                "Inserted {} tank snapshots for #{}.",
-                tanks.len(),
-                old_info.id,
-            );
+            log::info!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }
