@@ -22,7 +22,7 @@ impl Log for JournaldLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             eprintln!(
-                "{} {}",
+                "{} {}\u{001b}[0m",
                 convert_level_to_prefix(record.level()),
                 record.args(),
             );
@@ -45,11 +45,11 @@ fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
 
 fn convert_level_to_prefix(level: Level) -> &'static str {
     match level {
-        Level::Trace => "<7> [T]",
-        Level::Debug => "<6> [D]",
-        Level::Info => "<5> [I]",
-        Level::Warn => "<4> [W]",
-        Level::Error => "<3> [E]",
+        Level::Trace => "<7>[T]",
+        Level::Debug => "<6>[D]",
+        Level::Info => concat!("<5>", "\u{001b}[32m"),
+        Level::Warn => concat!("<4>", "\u{001b}[33;1m"),
+        Level::Error => concat!("<3>", "\u{001b}[31;1m"),
     }
 }
 
