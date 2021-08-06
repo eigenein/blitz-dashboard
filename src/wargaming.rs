@@ -28,7 +28,7 @@ pub struct WargamingApi {
 
 /// Represents the bundled `tankopedia.json` file.
 /// Note, that I'm using [`BTreeMap`] to keep the keys sorted in the output file for better diffs.
-pub type Tankopedia = BTreeMap<String, BTreeMap<String, serde_json::Value>>;
+pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
     pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
