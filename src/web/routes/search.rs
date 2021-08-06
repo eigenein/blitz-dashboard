@@ -1,6 +1,9 @@
+use std::ops::Range;
+
 use chrono_humanize::Tense;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
+use rocket::response::status::BadRequest;
 use rocket::response::Redirect;
 use rocket::State;
 
@@ -12,6 +15,10 @@ use crate::web::response::Response;
 use crate::web::routes::player::get_account_url;
 use crate::web::TrackingCode;
 
+const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
+pub const MIN_QUERY_LENGTH: usize = 3;
+pub const MAX_QUERY_LENGTH: usize = 24;
+
 #[rocket::get("/search?<query>")]
 pub async fn get(
     query: String,
@@ -19,6 +26,10 @@ pub async fn get(
     api: &State<WargamingApi>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
+
+    if !SEARCH_QUERY_LENGTH.contains(&query.len()) {
+        return Ok(Response::BadRequest(BadRequest(None)));
+    }
 
     let account_ids: Vec<i32> = api
         .search_accounts(&query)

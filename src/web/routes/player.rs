@@ -4,6 +4,7 @@ use humantime::parse_duration;
 use log::Level;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
+use rocket::response::status::BadRequest;
 use rocket::State;
 use sqlx::PgPool;
 
@@ -19,6 +20,7 @@ use crate::time::{from_days, from_hours, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
+use crate::web::response::Response;
 use crate::web::TrackingCode;
 
 pub mod partials;
@@ -31,9 +33,12 @@ pub async fn get(
     account_info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     account_tanks_cache: &State<AccountTanksCache>,
-) -> crate::web::result::Result<Html<String>> {
+) -> crate::web::result::Result<Response> {
     let period = match period {
-        Some(period) => parse_duration(&period)?,
+        Some(period) => match parse_duration(&period) {
+            Ok(period) => period,
+            Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
+        },
         None => from_hours(12),
     };
     log::info!("GET #{} within {:?}.", account_id, period);
@@ -573,7 +578,7 @@ pub async fn get(
         }
     };
 
-    Ok(Html(markup.into_string()))
+    Ok(Response::Html(Html(markup.into_string())))
 }
 
 pub fn get_account_url(account_id: i32) -> String {

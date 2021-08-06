@@ -1,14 +1,9 @@
-use std::ops::Range;
-
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use clap::crate_version;
 use maud::{html, Markup};
 
-#[allow(dead_code)]
-pub const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
-const MIN_QUERY_LENGTH: usize = 3;
-const MAX_QUERY_LENGTH: usize = 24;
+use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
     html! {
