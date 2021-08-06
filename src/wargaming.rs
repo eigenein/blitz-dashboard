@@ -187,7 +187,7 @@ impl WargamingApi {
     }
 
     async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
-        let mut backoff = Backoff::new(100);
+        let mut backoff = Backoff::new(100, 25600);
         loop {
             match self.call_once(url.clone()).await {
                 Ok(response) => {
@@ -200,21 +200,15 @@ impl WargamingApi {
                             "REQUEST_LIMIT_EXCEEDED" => {
                                 // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
                                 log::warn!("Exceeded the request limit.");
-                                capture_message(
-                                    "Exceeded the Wargaming.net RPS limit",
-                                    Level::Warning,
-                                );
+                                capture_message("Exceeded the API RPS limit", Level::Warning);
                             }
                             "SOURCE_NOT_AVAILABLE" => {
-                                // ♻️ The HTTP request has succeeded, but Wargaming.net has an issue.
-                                log::warn!("Wargaming.net source is unavailable.");
-                                capture_message(
-                                    "Wargaming.net source is unavailable",
-                                    Level::Warning,
-                                );
+                                // ♻️ The HTTP request has succeeded, but the API has an issue.
+                                log::warn!("API source is unavailable.");
+                                capture_message("API source is unavailable", Level::Warning);
                             }
                             _ => {
-                                // 🥅 The HTTP request has succeeded, but Wargaming.net has returned an error.
+                                // 🥅 The HTTP request has succeeded, but the API has returned an unexpected error.
                                 return Err(anyhow!("{}/{}", error.code, error.message));
                             }
                         },
@@ -226,8 +220,11 @@ impl WargamingApi {
                     capture_message("Wargaming.net API has timed out", Level::Info);
                 }
                 Err(error) => {
-                    // 🥅 The HTTP request has failed for a different reason.
-                    return Err(error).context("failed to call the Wargaming.net API");
+                    // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
+                    if backoff.attempts() >= 10 {
+                        // 🥅 Don't know what to do.
+                        return Err(error).context("failed to call the Wargaming.net API");
+                    }
                 }
             };
             let sleep_duration = backoff.next();
