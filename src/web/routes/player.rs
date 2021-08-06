@@ -239,6 +239,13 @@ pub async fn get(
                 (navbar)
 
                 section.section {
+                    h1.title.is-hidden-desktop."is-4" {
+                        span.icon-text {
+                            span.icon { i.icon { i.fas.fa-user {} } }
+                            span { (current_info.nickname) }
+                        }
+                    }
+
                     (tabs)
 
                     div.container {
