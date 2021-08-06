@@ -34,9 +34,6 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
             .map(|account_id| BaseAccountInfo {
                 id: account_id,
                 last_battle_time: epoch,
-                // FIXME: the following fields don't matter for `crawl_chunk`, but would be better without the hack.
-                nickname: String::new(),
-                created_at: epoch,
             })
             .collect();
         crawler.clone().crawl_batch(old_infos, true).await?;

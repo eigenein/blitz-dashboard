@@ -24,11 +24,6 @@ pub struct BaseAccountInfo {
 
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
-
-    pub nickname: String,
-
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub created_at: DateTime<Utc>,
 }
 
 /// Wargaming.net account information.
@@ -36,6 +31,11 @@ pub struct BaseAccountInfo {
 pub struct AccountInfo {
     #[serde(flatten)]
     pub base: BaseAccountInfo,
+
+    pub nickname: String,
+
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub created_at: DateTime<Utc>,
 
     pub statistics: AccountInfoStatistics,
 }

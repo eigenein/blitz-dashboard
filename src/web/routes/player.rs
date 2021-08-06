@@ -41,7 +41,7 @@ pub async fn get(
         Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 
     let current_info = account_info_cache.get(account_id).await?;
-    set_user(&current_info.base.nickname);
+    set_user(&current_info.nickname);
     insert_account_or_ignore(database, &current_info.base).await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
@@ -90,15 +90,15 @@ pub async fn get(
                         div.navbar-item title="Возраст аккаунта" {
                             span.icon-text {
                                 span.icon { i.far.fa-calendar-alt {} }
-                                span title=(current_info.base.created_at) {
-                                    (datetime(current_info.base.created_at, Tense::Present))
+                                span title=(current_info.created_at) {
+                                    (datetime(current_info.created_at, Tense::Present))
                                 }
                             }
                         }
                     }
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
-                            (account_search("", &current_info.base.nickname, false))
+                            (account_search("", &current_info.nickname, false))
                         }
                     }
                 }
@@ -230,7 +230,7 @@ pub async fn get(
             head {
                 (headers())
                 link rel="canonical" href=(get_account_url(account_id));
-                title { (current_info.base.nickname) " – Я статист!" }
+                title { (current_info.nickname) " – Я статист!" }
                 script defer="true" src="/static/player.js?v4" {};
             }
             body {

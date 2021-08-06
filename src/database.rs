@@ -207,8 +207,6 @@ impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
         Ok(Self {
             id: row.try_get("account_id")?,
             last_battle_time: row.try_get("last_battle_time")?,
-            nickname: "".to_string(), // FIXME
-            created_at: Utc::now(),   // FIXME
         })
     }
 }

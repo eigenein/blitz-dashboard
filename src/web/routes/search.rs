@@ -94,7 +94,7 @@ pub async fn get(
                             @for account in &accounts {
                                 div.box {
                                     p.title."is-5" {
-                                        a href=(get_account_url(account.base.id)) { (account.base.nickname) }
+                                        a href=(get_account_url(account.base.id)) { (account.nickname) }
                                     }
                                     p.subtitle."is-6" {
                                         span.icon-text.has-text-grey {
