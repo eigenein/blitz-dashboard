@@ -2,22 +2,15 @@ use chrono_humanize::Tense;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::Redirect;
-use rocket::{Responder, State};
+use rocket::State;
 
 use crate::logging::clear_user;
 use crate::models::AccountInfo;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
+use crate::web::response::Response;
 use crate::web::routes::player::get_account_url;
 use crate::web::TrackingCode;
-
-// TODO: generic response in `crate::web::responses`.
-#[allow(clippy::large_enum_variant)]
-#[derive(Responder)]
-pub enum Response {
-    Html(Html<String>),
-    Redirect(Redirect),
-}
 
 #[rocket::get("/search?<query>")]
 pub async fn get(

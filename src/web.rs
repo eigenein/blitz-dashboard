@@ -4,7 +4,6 @@ use std::time::Duration as StdDuration;
 
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
-use rocket::response;
 use rocket::{routes, Request};
 
 use routes::r#static;
@@ -17,6 +16,7 @@ use crate::wargaming::WargamingApi;
 mod error;
 mod fairings;
 mod partials;
+mod response;
 mod result;
 mod routes;
 
@@ -55,7 +55,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
 }
 
 #[rocket::catch(default)]
-fn default_catcher(status: Status, request: &Request<'_>) -> response::status::Custom<()> {
+fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::status::Custom<()> {
     match status.class() {
         StatusClass::ClientError => {
             log::warn!("{} {}: {}", request.method(), request.uri(), status);
@@ -65,7 +65,7 @@ fn default_catcher(status: Status, request: &Request<'_>) -> response::status::C
         }
         _ => {}
     }
-    response::status::Custom(status, ())
+    rocket::response::status::Custom(status, ())
 }
 
 fn to_config(opts: &WebOpts) -> crate::Result<rocket::Config> {
