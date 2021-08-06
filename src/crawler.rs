@@ -39,7 +39,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
                 created_at: epoch,
             })
             .collect();
-        crawler.clone().crawl_batch(old_infos).await?;
+        crawler.clone().crawl_batch(old_infos, true).await?;
     }
     Ok(())
 }
@@ -74,7 +74,7 @@ impl Crawler {
                 match batch.last() {
                     Some(info) => {
                         account_pointer = info.id;
-                        running_futures.push(tokio::spawn(self.clone().crawl_batch(batch)));
+                        running_futures.push(tokio::spawn(self.clone().crawl_batch(batch, false)));
                     }
                     None => {
                         log::info!("Starting over.");
@@ -96,7 +96,7 @@ impl Crawler {
         }
     }
 
-    async fn crawl_batch(self, old_infos: Vec<BaseAccountInfo>) -> crate::Result {
+    async fn crawl_batch(self, old_infos: Vec<BaseAccountInfo>, fake_infos: bool) -> crate::Result {
         let account_ids: SmallVec<[i32; 128]> =
             old_infos.iter().map(|account| account.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
@@ -104,7 +104,7 @@ impl Crawler {
         let mut tx = self.database.begin().await?;
         for old_info in old_infos.iter() {
             let new_info = new_infos.remove(&old_info.id.to_string()).flatten();
-            self.maybe_crawl_account(&mut tx, old_info, new_info)
+            self.maybe_crawl_account(&mut tx, old_info, new_info, fake_infos)
                 .await?;
         }
         log::debug!("Committing…");
@@ -118,6 +118,7 @@ impl Crawler {
         connection: &mut PgConnection,
         old_info: &BaseAccountInfo,
         new_info: Option<AccountInfo>,
+        fake_info: bool,
     ) -> crate::Result {
         let _stopwatch = Stopwatch::new(format!("Account #{} crawled", old_info.id));
 
@@ -127,8 +128,10 @@ impl Crawler {
                     .await?;
             }
             None => {
-                log::warn!("Account #{} does not exist. Deleting…", old_info.id);
-                database::delete_account(&mut *connection, old_info.id).await?;
+                if !fake_info {
+                    log::warn!("Account #{} does not exist. Deleting…", old_info.id);
+                    database::delete_account(&mut *connection, old_info.id).await?;
+                }
             }
         };
 
