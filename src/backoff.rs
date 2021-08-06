@@ -17,7 +17,7 @@ impl Backoff {
 
     pub fn next(&mut self) -> StdDuration {
         let delay_millis = self.delay_millis;
-        self.delay_millis = delay_millis.min(delay_millis * 2, self.max_delay_millis);
+        self.delay_millis = self.max_delay_millis.min(delay_millis * 2);
         self.attempts += 1;
         StdDuration::from_millis(delay_millis + fastrand::u64(0..delay_millis))
     }
