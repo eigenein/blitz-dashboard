@@ -45,11 +45,11 @@ fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
 
 fn convert_level_to_prefix(level: Level) -> &'static str {
     match level {
-        Level::Trace => "<7>\x08\x08\x08[T] ",
-        Level::Debug => "<6>\x08\x08\x08[D] ",
-        Level::Info => "<5>\x08\x08\x08\u{001b}[32m[I] ",
-        Level::Warn => "<4>\x08\x08\x08\u{001b}[33;1m[W] ",
-        Level::Error => "<3>\x08\x08\x08\u{001b}[31;1m[E] ",
+        Level::Trace => "<7>[T] ",
+        Level::Debug => "<6>[D] ",
+        Level::Info => "<5>\u{001b}[32m[I] ",
+        Level::Warn => "<4>\u{001b}[33;1m[W] ",
+        Level::Error => "<3>\u{001b}[31;1m[E] ",
     }
 }
 
