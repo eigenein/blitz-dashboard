@@ -1,25 +1,37 @@
+use log::{Level, LevelFilter, Log, Metadata, Record};
+
 use sentry::integrations::log::{LogFilter, SentryLogger};
-use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
+use std::io::Write;
 
 /// Initialises logging.
 pub fn init(verbosity: i32) -> anyhow::Result<()> {
-    let logger = TermLogger::new(
-        convert_verbosity_to_level(verbosity),
-        ConfigBuilder::new()
-            .set_target_level(LevelFilter::Off)
-            .set_location_level(LevelFilter::Off)
-            .set_time_level(LevelFilter::Off)
-            .set_thread_level(LevelFilter::Off)
-            .add_filter_allow_str("blitz_dashboard")
-            .build(),
-        TerminalMode::Stderr,
-        ColorChoice::Auto,
-    );
     log::set_boxed_logger(Box::new(
-        SentryLogger::with_dest(logger).filter(|_| LogFilter::Breadcrumb),
+        SentryLogger::with_dest(JournaldLogger).filter(|_| LogFilter::Breadcrumb),
     ))?;
-    log::set_max_level(LevelFilter::Debug);
+    log::set_max_level(convert_verbosity_to_level(verbosity));
     Ok(())
+}
+
+struct JournaldLogger;
+
+impl Log for JournaldLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.target().starts_with("blitz_dashboard")
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            eprintln!(
+                "{} {}",
+                convert_level_to_prefix(record.level()),
+                record.args(),
+            );
+        }
+    }
+
+    fn flush(&self) {
+        let _ = std::io::stderr().flush();
+    }
 }
 
 fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
@@ -28,6 +40,16 @@ fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
         1 => LevelFilter::Info,
         2 => LevelFilter::Debug,
         _ => LevelFilter::Trace,
+    }
+}
+
+fn convert_level_to_prefix(level: Level) -> &'static str {
+    match level {
+        Level::Trace => "<7> [T]",
+        Level::Debug => "<6> [D]",
+        Level::Info => "<5> [I]",
+        Level::Warn => "<4> [W]",
+        Level::Error => "<3> [E]",
     }
 }
 
