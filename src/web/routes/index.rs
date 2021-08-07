@@ -46,7 +46,7 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
                                                 a.button.is-rounded.is-small href="/ru/123484971" { "Chunya_Dobryak" }
                                             }
                                         }
-                                        (account_search("is-medium", "", true))
+                                        (account_search("is-medium", "", true, false))
                                         div.field.is-grouped.is-grouped-centered {
                                             p.control {
                                                 a.button.is-link.is-rounded.is-medium href="/random" { "Мне повезет!" }

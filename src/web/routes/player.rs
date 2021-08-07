@@ -1,4 +1,4 @@
-use chrono::{Duration, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
 use log::Level;
@@ -65,6 +65,7 @@ pub async fn get(
         current_info.statistics.all.battles,
         current_info.statistics.all.wins,
     );
+    let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -103,7 +104,7 @@ pub async fn get(
                     }
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
-                            (account_search("", &current_info.nickname, false))
+                            (account_search("", &current_info.nickname, false, is_prerelease_account))
                         }
                     }
                 }

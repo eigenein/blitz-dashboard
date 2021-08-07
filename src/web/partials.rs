@@ -5,7 +5,12 @@ use maud::{html, Markup};
 
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
-pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
+pub fn account_search(
+    class: &str,
+    value: &str,
+    has_autofocus: bool,
+    has_user_secret: bool,
+) -> Markup {
     html! {
         div.field.has-addons {
             div.control {
@@ -15,7 +20,7 @@ pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
                     }
                 }
             }
-            div.control.has-icons-left.is-expanded {
+            div.control.has-icons-left.has-icons-right.is-expanded {
                 input.input.is-rounded.(class)
                     type="search"
                     name="query"
@@ -35,6 +40,9 @@ pub fn account_search(class: &str, value: &str, has_autofocus: bool) -> Markup {
                     autofocus[has_autofocus]
                     required;
                 span.icon.is-left.(class) { i class="fas fa-user" {} }
+                @if has_user_secret {
+                    span.icon.is-right.(class) { i class="fas fa-user-secret" {} }
+                }
             }
             div.control {
                 button.button.is-rounded.is-link.(class) type="submit" {
