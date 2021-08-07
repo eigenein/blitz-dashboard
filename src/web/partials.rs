@@ -20,7 +20,7 @@ pub fn account_search(
                     }
                 }
             }
-            div.control.has-icons-left.has-icons-right.is-expanded {
+            div.control.has-icons-left.is-expanded.(conditional_class(has_user_secret, "has-icons-right")) {
                 input.input.is-rounded.(class)
                     type="search"
                     name="query"
@@ -155,5 +155,13 @@ pub fn home_button() -> Markup {
             span.icon { i.fas.fa-home {} }
             span { "На главную" }
         }
+    }
+}
+
+pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
+    if condition {
+        class
+    } else {
+        ""
     }
 }
