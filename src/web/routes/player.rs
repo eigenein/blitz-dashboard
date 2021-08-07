@@ -49,9 +49,9 @@ pub async fn get(
     set_user(&current_info.nickname);
     insert_account_or_ignore(database, &current_info.base).await?;
 
-    let before = Utc::now() - Duration::from_std(period)?;
     let tanks = account_tanks_cache.get(&current_info).await?;
     let tanks_delta = {
+        let before = Utc::now() - Duration::from_std(period)?;
         let old_tank_snapshots =
             retrieve_latest_tank_snapshots(database, account_id, &before).await?;
         subtract_tanks(&tanks, &old_tank_snapshots)
@@ -255,15 +255,6 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        @if current_info.base.last_battle_time >= before && stats_delta.battles == 0 {
-                            article.message.is-warning {
-                                div.message-body {
-                                    strong { "Нет случайных боев за этот период." }
-                                    " Вероятно, игрок проводил время в других режимах."
-                                }
-                            }
-                        }
-
                         div.tile.is-ancestor {
                             div.tile."is-4".is-parent {
                                 div.tile.is-child.card {
