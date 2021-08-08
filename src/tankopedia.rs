@@ -49,6 +49,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     let mut vehicles: BTreeMap<String, Vehicle> =
         serde_json::from_value(serde_json::to_value(&tankopedia)?)?;
     insert_missing_vehicles(&mut vehicles)?;
+    log::info!("{} vehicles.", vehicles.len());
 
     let mut file = fs::File::create(
         Path::new(file!())

@@ -72337,6 +72337,167 @@
     ],
     "type": "heavyTank"
   },
+  "6785": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 65,
+          "rear": 40,
+          "sides": 40
+        },
+        "turret": {
+          "front": 100,
+          "rear": 100,
+          "sides": 100
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.12,
+        "name": "Škoda 16 AH 145 A",
+        "power": 800,
+        "tier": 8,
+        "weight": 1400
+      },
+      "engine_id": 10629,
+      "firepower": 48,
+      "gun": {
+        "aim_time": 4.35,
+        "caliber": 88,
+        "clip_capacity": 3,
+        "clip_reload_time": 1.5,
+        "dispersion": 0.36,
+        "fire_rate": 8.57,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "8,8 cm vz. 41N A",
+        "reload_time": 18.0,
+        "tier": 8,
+        "traverse_speed": 30.0,
+        "weight": 2700
+      },
+      "gun_id": 9860,
+      "hp": 1350,
+      "hull_hp": 1080,
+      "hull_weight": 14063,
+      "is_default": true,
+      "maneuverability": 66,
+      "max_ammo": 54,
+      "max_weight": 43000,
+      "profile_id": "9860-10371-10626-10629",
+      "protection": 36,
+      "shells": [
+        {
+          "damage": 220,
+          "penetration": 194,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 237,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 44,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 70,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 50,
+      "suspension": {
+        "load_limit": 43000,
+        "name": "Škoda T 27",
+        "tier": 8,
+        "traverse_speed": 48,
+        "weight": 12000
+      },
+      "suspension_id": 10626,
+      "turret": {
+        "hp": 270,
+        "name": "Škoda T 27",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 38,
+        "view_range": 250,
+        "weight": 9500
+      },
+      "turret_id": 10371,
+      "weight": 39938
+    },
+    "description": "Один из вариантов развития чехословацкого послевоенного лёгкого танка, на который установили орудие с автоматом заряжания. Машина не была воплощена в металле и существовала только в виде бумажного проекта. Близким аналогом данной машины является проект лёгкого танка Т17.",
+    "engines": [
+      10629
+    ],
+    "guns": [
+      9860
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Cz13_T-27.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Cz13_T-27.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "10371": {
+        "is_default": true,
+        "module_id": 10371,
+        "name": "Škoda T 27",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "10626": {
+        "is_default": true,
+        "module_id": 10626,
+        "name": "Škoda T 27",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "10629": {
+        "is_default": true,
+        "module_id": 10629,
+        "name": "Škoda 16 AH 145 A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "9860": {
+        "is_default": true,
+        "module_id": 9860,
+        "name": "8,8 cm vz. 41N A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      }
+    },
+    "name": "Škoda T 27",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      10626
+    ],
+    "tank_id": 6785,
+    "tier": 8,
+    "turrets": [
+      10371
+    ],
+    "type": "mediumTank"
+  },
   "6913": {
     "cost": {
       "price_credit": 85000,
