@@ -205,7 +205,7 @@ impl WargamingApi {
                             "SOURCE_NOT_AVAILABLE" => {
                                 // ♻️ The HTTP request has succeeded, but the API has an issue.
                                 log::warn!("API source is unavailable.");
-                                capture_message("API source is unavailable", Level::Warning);
+                                capture_message("API source is unavailable", Level::Info);
                             }
                             _ => {
                                 // 🥅 The HTTP request has succeeded, but the API has returned an unexpected error.
