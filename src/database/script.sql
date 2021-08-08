@@ -2,10 +2,6 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_id INTEGER PRIMARY KEY,
     last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL
 );
-DROP INDEX IF EXISTS accounts_crawled_at;
-DROP INDEX IF EXISTS accounts_crawled_at_2;
-DROP INDEX IF EXISTS accounts_crawled_at_3;
-ALTER TABLE ONLY accounts DROP COLUMN IF EXISTS crawled_at;
 CREATE INDEX IF NOT EXISTS accounts_last_battle_time ON accounts(last_battle_time DESC);
 
 CREATE TABLE IF NOT EXISTS tank_snapshots (
@@ -26,3 +22,9 @@ CREATE TABLE IF NOT EXISTS tank_snapshots (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_key
     ON tank_snapshots(account_id ASC, tank_id ASC, last_battle_time DESC);
+
+-- 0.38.0
+
+CREATE TABLE IF NOT EXISTS vehicles (
+    tank_id INTEGER PRIMARY KEY
+);

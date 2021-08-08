@@ -65,7 +65,7 @@ pub async fn retrieve_latest_tank_snapshots(
 }
 
 pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
-    executor: E,
+    connection: E,
     info: &BaseAccountInfo,
 ) -> crate::Result {
     // language=SQL
@@ -78,7 +78,7 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     sqlx::query(QUERY)
         .bind(info.id)
         .bind(info.last_battle_time)
-        .execute(executor)
+        .execute(connection)
         .await
         .with_context(|| format!("failed to insert the account #{} or replace", info.id))?;
     Ok(())
@@ -187,6 +187,33 @@ pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Op
         .await
         .context("failed to retrieve a random account ID")?;
     Ok(account_id)
+}
+
+pub async fn insert_vehicle_or_ignore(
+    connection: &mut PgConnection,
+    tank_id: i32,
+) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = "
+        INSERT INTO vehicles (tank_id)
+        VALUES ($1)
+        ON CONFLICT (tank_id) DO NOTHING
+    ";
+    sqlx::query(QUERY)
+        .bind(tank_id)
+        .execute(connection)
+        .await
+        .context("failed to insert the vehicle or ignore")?;
+    Ok(())
+}
+
+pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
+    // language=SQL
+    const QUERY: &str = "SELECT tank_id FROM vehicles";
+    Ok(sqlx::query_scalar(QUERY)
+        .fetch_all(connection)
+        .await
+        .context("failed to retrieve all tank IDs")?)
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

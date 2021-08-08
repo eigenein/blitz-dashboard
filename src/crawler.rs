@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
@@ -6,11 +8,12 @@ use futures::future::select_all;
 use itertools::Itertools;
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
+use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
 use crate::database;
-use crate::database::retrieve_max_account_id;
+use crate::database::{retrieve_max_account_id, retrieve_tank_ids};
 use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -45,13 +48,17 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
+    vehicle_cache: Arc<RwLock<HashSet<i32>>>,
 }
 
 impl Crawler {
     pub async fn new(application_id: &str, database_uri: &str) -> crate::Result<Self> {
+        let database = crate::database::open(database_uri).await?;
+        let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         Ok(Self {
             api: WargamingApi::new(application_id, StdDuration::from_millis(1500))?,
-            database: crate::database::open(database_uri).await?,
+            database,
+            vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         })
     }
 
@@ -152,11 +159,27 @@ impl Crawler {
                 .filter(|tank| tank.last_battle_time > old_info.last_battle_time)
                 .collect();
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
+            self.insert_vehicles(&mut *connection, &tanks).await?;
             log::info!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }
 
+        Ok(())
+    }
+
+    /// Inserts missing tank IDs into the database.
+    async fn insert_vehicles(
+        &self,
+        connection: &mut PgConnection,
+        tanks: &[Tank],
+    ) -> crate::Result {
+        for tank in tanks {
+            if !self.vehicle_cache.read().await.contains(&tank.tank_id) {
+                self.vehicle_cache.write().await.insert(tank.tank_id);
+                database::insert_vehicle_or_ignore(&mut *connection, tank.tank_id).await?;
+            }
+        }
         Ok(())
     }
 
