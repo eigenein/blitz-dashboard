@@ -40,17 +40,24 @@ pub async fn retrieve_latest_tank_snapshots(
 ) -> crate::Result<HashMap<i32, Tank>> {
     // language=SQL
     const QUERY: &str = "
-        SELECT DISTINCT ON (tank_id) *
-        FROM tank_snapshots
-        WHERE account_id = $1 AND last_battle_time <= $2
-        ORDER BY tank_id, last_battle_time DESC
+        SELECT snapshot.*
+        FROM vehicles vehicle
+        CROSS JOIN LATERAL (
+            SELECT * FROM tank_snapshots snapshot
+            WHERE
+                snapshot.account_id = $1
+                AND snapshot.tank_id = vehicle.tank_id
+                AND snapshot.last_battle_time <= $2
+            ORDER BY snapshot.last_battle_time DESC
+            LIMIT 1
+        ) snapshot
     ";
 
     let _stopwatch = Stopwatch::new(format!(
         "Retrieved latest tank snapshots for #{}",
         account_id,
     ))
-    .threshold_millis(100)
+    .threshold_millis(250)
     .level(Level::Debug);
     let tanks = sqlx::query_as(QUERY)
         .bind(account_id)
