@@ -10,9 +10,9 @@ pub type Batch = Vec<BaseAccountInfo>;
 /// and looping through the entire account table.
 pub fn loop_batches(
     connection: PgPool,
-    start_account_id: i32,
+    starting_account_id: i32,
 ) -> impl Stream<Item = crate::Result<Batch>> + 'static {
-    let initial_stream = Box::pin(get_batches(connection.clone(), start_account_id));
+    let initial_stream = Box::pin(get_batches(connection.clone(), starting_account_id));
     stream::unfold(
         (connection, initial_stream),
         |(connection, mut inner_stream)| async move {
@@ -20,10 +20,10 @@ pub fn loop_batches(
                 Some(item) => Some((item, (connection, inner_stream))),
                 None => {
                     let mut new_stream = Box::pin(get_batches(connection.clone(), 0));
-                    match new_stream.next().await {
-                        Some(item) => Some((item, (connection, new_stream))),
-                        None => None,
-                    }
+                    new_stream
+                        .next()
+                        .await
+                        .map(|item| (item, (connection, new_stream)))
                 }
             }
         },
