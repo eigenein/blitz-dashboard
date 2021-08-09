@@ -19,6 +19,8 @@ use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
 
+mod batch_stream;
+
 pub async fn run(opts: CrawlerOpts) -> crate::Result {
     Crawler::new(&opts.application_id, &opts.database)
         .await?
@@ -73,7 +75,7 @@ impl Crawler {
         log::info!("Starting the crawler from #{}…", account_pointer);
 
         loop {
-            if running_futures.len() < n_tasks {
+            while running_futures.len() < n_tasks {
                 let batch = self.retrieve_batch(account_pointer).await?;
                 match batch.last() {
                     Some(info) => {
@@ -85,11 +87,12 @@ impl Crawler {
                         account_pointer = 0
                     }
                 }
-            } else {
-                let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
-                resolved_future??;
-                running_futures = remaining_futures;
             }
+
+            let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
+            resolved_future??;
+            running_futures = remaining_futures;
+
             if metrics_start.elapsed().as_secs() > 10 {
                 let elapsed = metrics_start.elapsed().as_secs_f64();
                 let rps = self.api.get_request_counter() as f64 / elapsed;
