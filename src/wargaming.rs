@@ -11,8 +11,10 @@ use reqwest::header;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
+use tokio::sync::RwLock;
 
 use crate::backoff::Backoff;
+use crate::metrics::RpsCounter;
 use crate::models;
 use crate::wargaming::response::Response;
 
@@ -24,6 +26,7 @@ pub struct WargamingApi {
     application_id: Arc<String>,
     client: reqwest::Client,
     request_counter: Arc<AtomicU32>,
+    rps_counter: Arc<RwLock<RpsCounter>>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -57,15 +60,8 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(1)),
+            rps_counter: Arc::new(RwLock::new(RpsCounter::new("API", 50))),
         })
-    }
-
-    pub fn get_request_counter(&self) -> u32 {
-        self.request_counter.load(Ordering::Relaxed)
-    }
-
-    pub fn reset_request_counter(&self) {
-        self.request_counter.store(0, Ordering::Relaxed);
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
@@ -252,6 +248,7 @@ impl WargamingApi {
                 log::warn!("#{} has failed.", request_id);
             }
         }
+        self.rps_counter.write().await.increment();
         result?.error_for_status()?.json::<Response<T>>().await
     }
 }

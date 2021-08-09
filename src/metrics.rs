@@ -45,3 +45,35 @@ impl Drop for Stopwatch {
         );
     }
 }
+
+pub struct RpsCounter {
+    tag: &'static str,
+    counter: i32,
+    counter_start: Instant,
+    counter_threshold: i32,
+}
+
+impl RpsCounter {
+    pub fn new(tag: &'static str, counter_threshold: i32) -> Self {
+        Self {
+            tag,
+            counter: 0,
+            counter_start: Instant::now(),
+            counter_threshold,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.counter = 0;
+        self.counter_start = Instant::now();
+    }
+
+    pub fn increment(&mut self) {
+        self.counter += 1;
+        let elapsed = self.counter_start.elapsed().as_secs_f64();
+        if self.counter >= self.counter_threshold || elapsed >= 15.0 {
+            log::info!("{}: {:.1} RPS.", self.tag, self.counter as f64 / elapsed);
+            self.reset();
+        }
+    }
+}

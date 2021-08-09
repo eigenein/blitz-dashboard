@@ -2,19 +2,18 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use anyhow::Context;
 use chrono::{TimeZone, Utc};
-use futures::future::select_all;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use itertools::Itertools;
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
-use tokio::time::Instant;
 
+use crate::crawler::batch_stream::loop_batches;
 use crate::database;
 use crate::database::{retrieve_max_account_id, retrieve_tank_ids};
-use crate::metrics::Stopwatch;
+use crate::metrics::{RpsCounter, Stopwatch};
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
@@ -34,6 +33,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     let epoch = Utc.timestamp(0, 0);
     let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
 
+    // TODO: implement a stream for the chunks.
     for chunk in &(opts.start_id..opts.end_id).chunks(100) {
         let old_infos: Vec<BaseAccountInfo> = chunk
             .map(|account_id| BaseAccountInfo {
@@ -41,6 +41,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
                 last_battle_time: epoch,
             })
             .collect();
+        // TODO: accept a stream in `Crawler::run` and use it instead of `crawl_batch`.
         crawler.clone().crawl_batch(old_infos, true).await?;
     }
     Ok(())
@@ -51,6 +52,7 @@ pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
+    account_rps_counter: Arc<RwLock<RpsCounter>>,
 }
 
 impl Crawler {
@@ -61,6 +63,7 @@ impl Crawler {
             api: WargamingApi::new(application_id, StdDuration::from_millis(1500))?,
             database,
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
+            account_rps_counter: Arc::new(RwLock::new(RpsCounter::new("Accounts", 1000))),
         })
     }
 
@@ -68,39 +71,13 @@ impl Crawler {
     pub async fn run(&self, n_tasks: usize) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-        let mut metrics_start = Instant::now();
-        let mut account_pointer = fastrand::i32(0..retrieve_max_account_id(&self.database).await?);
-        let mut running_futures: Vec<JoinHandle<crate::Result>> = Vec::new();
-
-        log::info!("Starting the crawler from #{}…", account_pointer);
-
-        loop {
-            while running_futures.len() < n_tasks {
-                let batch = self.retrieve_batch(account_pointer).await?;
-                match batch.last() {
-                    Some(info) => {
-                        account_pointer = info.id;
-                        running_futures.push(tokio::spawn(self.clone().crawl_batch(batch, false)));
-                    }
-                    None => {
-                        log::info!("Starting over.");
-                        account_pointer = 0
-                    }
-                }
-            }
-
-            let (resolved_future, _, remaining_futures) = select_all(running_futures).await;
-            resolved_future??;
-            running_futures = remaining_futures;
-
-            if metrics_start.elapsed().as_secs() > 10 {
-                let elapsed = metrics_start.elapsed().as_secs_f64();
-                let rps = self.api.get_request_counter() as f64 / elapsed;
-                log::info!("Rate: {:.1} RPS.", rps);
-                metrics_start = Instant::now();
-                self.api.reset_request_counter();
-            }
-        }
+        let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&self.database).await?);
+        log::info!("Starting the crawler from #{}…", starting_account_id);
+        loop_batches(self.database.clone(), starting_account_id)
+            .map(|batch| async move { self.clone().crawl_batch(batch?, false).await })
+            .buffer_unordered(n_tasks)
+            .try_collect()
+            .await
     }
 
     async fn crawl_batch(self, old_infos: Vec<BaseAccountInfo>, fake_infos: bool) -> crate::Result {
@@ -113,6 +90,7 @@ impl Crawler {
             let new_info = new_infos.remove(&old_info.id.to_string()).flatten();
             self.maybe_crawl_account(&mut tx, old_info, new_info, fake_infos)
                 .await?;
+            self.account_rps_counter.write().await.increment();
         }
         log::debug!("Committing…");
         tx.commit().await?;
@@ -184,21 +162,5 @@ impl Crawler {
             }
         }
         Ok(())
-    }
-
-    async fn retrieve_batch(&self, pointer: i32) -> crate::Result<Vec<BaseAccountInfo>> {
-        // language=SQL
-        const QUERY: &str = r#"
-            SELECT * FROM accounts
-            WHERE account_id > $1
-            ORDER BY account_id 
-            LIMIT 100
-        "#;
-        let accounts = sqlx::query_as(QUERY)
-            .bind(pointer)
-            .fetch_all(&self.database)
-            .await
-            .context("failed to retrieve a batch")?;
-        Ok(accounts)
     }
 }

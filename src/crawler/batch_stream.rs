@@ -12,16 +12,12 @@ pub fn loop_batches(
     connection: PgPool,
     starting_account_id: i32,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    // Starting at `starting_account_id`.
     let initial_stream = Box::pin(get_batches(connection.clone(), starting_account_id));
     stream::unfold(
         (connection, initial_stream),
         |(connection, mut inner_stream)| async move {
             match inner_stream.next().await {
-                // Exhaust the current stream.
                 Some(item) => Some((item, (connection, inner_stream))),
-
-                // The current stream has ended, starting over and return the new stream.
                 None => {
                     log::info!("Starting over.");
                     let mut new_stream = Box::pin(get_batches(connection.clone(), 0));
@@ -57,12 +53,8 @@ async fn retrieve_batch(
     starting_at: i32,
 ) -> crate::Result<Vec<BaseAccountInfo>> {
     // language=SQL
-    const QUERY: &str = r#"
-            SELECT * FROM accounts
-            WHERE account_id > $1
-            ORDER BY account_id 
-            LIMIT 100
-        "#;
+    const QUERY: &str =
+        "SELECT * FROM accounts WHERE account_id > $1 ORDER BY account_id LIMIT 100";
     let accounts = sqlx::query_as(QUERY)
         .bind(starting_at)
         .fetch_all(connection)
