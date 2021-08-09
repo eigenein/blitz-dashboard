@@ -40,18 +40,7 @@ fn get_batches(connection: PgPool, account_id: i32) -> impl Stream<Item = crate:
     stream::try_unfold(
         (connection, account_id),
         |(connection, pointer)| async move {
-            // language=SQL
-            const QUERY: &str = r#"
-            SELECT * FROM accounts
-            WHERE account_id > $1
-            ORDER BY account_id 
-            LIMIT 100
-        "#;
-            let batch: Batch = sqlx::query_as(QUERY)
-                .bind(pointer)
-                .fetch_all(&connection)
-                .await
-                .context("failed to retrieve a batch")?;
+            let batch = retrieve_batch(&connection, pointer).await?;
             match batch.last() {
                 Some(item) => {
                     let pointer = item.id;
@@ -61,4 +50,23 @@ fn get_batches(connection: PgPool, account_id: i32) -> impl Stream<Item = crate:
             }
         },
     )
+}
+
+async fn retrieve_batch(
+    connection: &PgPool,
+    starting_at: i32,
+) -> crate::Result<Vec<BaseAccountInfo>> {
+    // language=SQL
+    const QUERY: &str = r#"
+            SELECT * FROM accounts
+            WHERE account_id > $1
+            ORDER BY account_id 
+            LIMIT 100
+        "#;
+    let accounts = sqlx::query_as(QUERY)
+        .bind(starting_at)
+        .fetch_all(connection)
+        .await
+        .context("failed to retrieve a batch")?;
+    Ok(accounts)
 }
