@@ -6,19 +6,24 @@ use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
-/// Generates an infinite stream of batches starting at `start_account_id`
+/// Generates an infinite stream of batches starting at `starting_account_id`
 /// and looping through the entire account table.
 pub fn loop_batches(
     connection: PgPool,
     starting_account_id: i32,
-) -> impl Stream<Item = crate::Result<Batch>> + 'static {
+) -> impl Stream<Item = crate::Result<Batch>> {
+    // Starting at `starting_account_id`.
     let initial_stream = Box::pin(get_batches(connection.clone(), starting_account_id));
     stream::unfold(
         (connection, initial_stream),
         |(connection, mut inner_stream)| async move {
             match inner_stream.next().await {
+                // Exhaust the current stream.
                 Some(item) => Some((item, (connection, inner_stream))),
+
+                // The current stream has ended, starting over and return the new stream.
                 None => {
+                    log::info!("Starting over.");
                     let mut new_stream = Box::pin(get_batches(connection.clone(), 0));
                     new_stream
                         .next()
@@ -31,10 +36,7 @@ pub fn loop_batches(
 }
 
 /// Generates a finite stream of batches starting at `account_id` till the end of the account table.
-fn get_batches(
-    connection: PgPool,
-    account_id: i32,
-) -> impl Stream<Item = crate::Result<Batch>> + 'static {
+fn get_batches(connection: PgPool, account_id: i32) -> impl Stream<Item = crate::Result<Batch>> {
     stream::try_unfold(
         (connection, account_id),
         |(connection, pointer)| async move {
