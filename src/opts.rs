@@ -123,4 +123,7 @@ pub struct CrawlAccountsOpts {
 
     #[clap(long, about = "Ending account ID (non-inclusive)")]
     pub end_id: i32,
+
+    #[clap(short, long, about = "Number of crawling tasks")]
+    pub n_tasks: usize,
 }

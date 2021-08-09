@@ -3,14 +3,12 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use chrono::{TimeZone, Utc};
-use futures::StreamExt;
-use futures::TryStreamExt;
-use itertools::Itertools;
+use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
 
-use crate::crawler::batch_stream::loop_batches;
+use crate::crawler::batch_stream::{loop_batches_from, Batch};
 use crate::database;
 use crate::database::{retrieve_max_account_id, retrieve_tank_ids};
 use crate::metrics::{RpsCounter, Stopwatch};
@@ -20,31 +18,38 @@ use crate::wargaming::WargamingApi;
 
 mod batch_stream;
 
-pub async fn run(opts: CrawlerOpts) -> crate::Result {
-    Crawler::new(&opts.application_id, &opts.database)
+pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
+    let api = new_wargaming_api(&opts.application_id)?;
+    let database = crate::database::open(&opts.database).await?;
+    let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&database).await?);
+    log::info!("Starting the crawler from #{}…", starting_account_id);
+    let stream = loop_batches_from(database.clone(), starting_account_id);
+    Crawler::new(api, database)
         .await?
-        .run(opts.n_tasks)
+        .run(stream, opts.n_tasks, false)
         .await
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let epoch = Utc.timestamp(0, 0);
-    let crawler = Crawler::new(&opts.application_id, &opts.database).await?;
+    let api = new_wargaming_api(&opts.application_id)?;
+    let database = crate::database::open(&opts.database).await?;
+    let stream = stream::iter(opts.start_id..opts.end_id)
+        .map(|account_id| BaseAccountInfo {
+            id: account_id,
+            last_battle_time: Utc.timestamp(0, 0),
+        })
+        .chunks(100)
+        .map(|batch| Ok(batch));
+    Crawler::new(api, database)
+        .await?
+        .run(stream, opts.n_tasks, true)
+        .await
+}
 
-    // TODO: implement a stream for the chunks.
-    for chunk in &(opts.start_id..opts.end_id).chunks(100) {
-        let old_infos: Vec<BaseAccountInfo> = chunk
-            .map(|account_id| BaseAccountInfo {
-                id: account_id,
-                last_battle_time: epoch,
-            })
-            .collect();
-        // TODO: accept a stream in `Crawler::run` and use it instead of `crawl_batch`.
-        crawler.clone().crawl_batch(old_infos, true).await?;
-    }
-    Ok(())
+fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
+    WargamingApi::new(application_id, StdDuration::from_millis(1500))
 }
 
 #[derive(Clone)]
@@ -56,25 +61,28 @@ pub struct Crawler {
 }
 
 impl Crawler {
-    pub async fn new(application_id: &str, database_uri: &str) -> crate::Result<Self> {
-        let database = crate::database::open(database_uri).await?;
+    pub async fn new(api: WargamingApi, database: PgPool) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
-        Ok(Self {
-            api: WargamingApi::new(application_id, StdDuration::from_millis(1500))?,
+        let this = Self {
+            api,
             database,
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
-            account_rps_counter: Arc::new(RwLock::new(RpsCounter::new("Accounts", 1000))),
-        })
+            account_rps_counter: Arc::new(RwLock::new(RpsCounter::new("Accounts", 2000))),
+        };
+        Ok(this)
     }
 
-    /// Runs the crawler indefinitely.
-    pub async fn run(&self, n_tasks: usize) -> crate::Result {
+    /// Runs the crawler on the stream of batches.
+    pub async fn run(
+        &self,
+        stream: impl Stream<Item = crate::Result<Batch>>,
+        n_tasks: usize,
+        fake_infos: bool,
+    ) -> crate::Result {
         sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-        let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&self.database).await?);
-        log::info!("Starting the crawler from #{}…", starting_account_id);
-        loop_batches(self.database.clone(), starting_account_id)
-            .map(|batch| async move { self.clone().crawl_batch(batch?, false).await })
+        stream
+            .map(|batch| async move { self.clone().crawl_batch(batch?, fake_infos).await })
             .buffer_unordered(n_tasks)
             .try_collect()
             .await
