@@ -19,8 +19,8 @@ use crate::wargaming::WargamingApi;
 mod batch_stream;
 
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
-    let api = new_wargaming_api(&opts.application_id)?;
-    let database = crate::database::open(&opts.database).await?;
+    let api = new_wargaming_api(&opts.shared.application_id)?;
+    let database = crate::database::open(&opts.shared.database).await?;
     let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&database).await?);
     log::info!("Starting the crawler from #{}…", starting_account_id);
     let stream = loop_batches_from(database.clone(), starting_account_id);
@@ -33,8 +33,8 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = new_wargaming_api(&opts.application_id)?;
-    let database = crate::database::open(&opts.database).await?;
+    let api = new_wargaming_api(&opts.shared.application_id)?;
+    let database = crate::database::open(&opts.shared.database).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| BaseAccountInfo {
             id: account_id,

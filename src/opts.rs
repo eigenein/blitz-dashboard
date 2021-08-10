@@ -1,28 +1,24 @@
-use clap::{crate_authors, crate_description, crate_name, crate_version, AppSettings, Clap};
+use structopt::StructOpt;
 
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = crate_description!())]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(StructOpt)]
+#[structopt(rename_all = "kebab-case")]
 pub struct Opts {
-    #[clap(short, long, about = "Sentry DSN")]
+    #[structopt(short, long, about = "Sentry DSN", env = "BLITZ_DASHBOARD_SENTRY_DSN")]
     pub sentry_dsn: Option<String>,
 
-    #[clap(
-        short = 'v',
+    #[structopt(
+        short = "v",
         long = "verbose",
         about = "Increases log verbosity",
         parse(from_occurrences)
     )]
     pub verbosity: i32,
 
-    #[clap(subcommand)]
+    #[structopt(subcommand)]
     pub subcommand: Subcommand,
 }
 
-#[derive(Clap)]
+#[derive(StructOpt)]
 pub enum Subcommand {
     Web(WebOpts),
     Crawler(CrawlerOpts),
@@ -30,67 +26,64 @@ pub enum Subcommand {
     CrawlAccounts(CrawlAccountsOpts),
 }
 
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Runs the web application")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(StructOpt)]
+#[structopt(about = "Runs the web application")]
 pub struct WebOpts {
-    #[clap(short, long, about = "PostgreSQL database URI")]
-    pub database: String,
+    #[structopt(flatten)]
+    pub shared: SharedOpts,
 
-    #[clap(
-        short,
+    #[structopt(
         long,
-        about = "Wargaming.net API application ID",
-        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+        default_value = "::",
+        about = "Web app host",
+        env = "BLITZ_DASHBOARD_WEB_HOST"
     )]
-    pub application_id: String,
-
-    #[clap(long, default_value = "::", about = "Web app host")]
     pub host: String,
 
-    #[clap(short, long, default_value = "8081", about = "Web app port")]
+    #[structopt(
+        short,
+        long,
+        default_value = "8081",
+        about = "Web app port",
+        env = "BLITZ_DASHBOARD_WEB_PORT"
+    )]
     pub port: u16,
 
-    #[clap(long, about = "Yandex.Metrika counter number")]
+    #[structopt(
+        long,
+        about = "Yandex.Metrika counter number",
+        env = "BLITZ_DASHBOARD_WEB_YANDEX_METRIKA"
+    )]
     pub yandex_metrika: Option<String>,
 
-    #[clap(long, about = "Google Analytics measurement ID")]
+    #[structopt(
+        long,
+        about = "Google Analytics measurement ID",
+        env = "BLITZ_DASHBOARD_WEB_GTAG"
+    )]
     pub gtag: Option<String>,
 }
 
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Runs the account crawler")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(StructOpt)]
+#[structopt(about = "Runs the account crawler")]
 pub struct CrawlerOpts {
-    #[clap(short, long, about = "PostgreSQL database URI")]
-    pub database: String,
+    #[structopt(flatten)]
+    pub shared: SharedOpts,
 
-    #[clap(
+    #[structopt(
         short,
         long,
-        about = "Wargaming.net API application ID",
-        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+        about = "Number of crawling tasks",
+        default_value = "1",
+        env = "BLITZ_DASHBOARD_TASK_COUNT"
     )]
-    pub application_id: String,
-
-    #[clap(short, long, about = "Number of crawling tasks")]
     pub n_tasks: usize,
 }
 
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Updates the bundled Tankopedia module")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(StructOpt)]
+#[structopt(about = "Updates the bundled Tankopedia module")]
 pub struct ImportTankopediaOpts {
-    #[clap(
+    #[structopt(
         short,
         long,
         about = "Wargaming.net API application ID",
@@ -99,31 +92,51 @@ pub struct ImportTankopediaOpts {
     pub application_id: String,
 }
 
-// TODO: add batch size.
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(author = crate_authors!())]
-#[clap(version = crate_version!())]
-#[clap(about = "Crawls the specified account IDs")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(StructOpt)]
+#[structopt(about = "Crawls the specified account IDs")]
 pub struct CrawlAccountsOpts {
-    #[clap(short, long, about = "PostgreSQL database URI")]
-    pub database: String,
+    #[structopt(flatten)]
+    pub shared: SharedOpts,
 
-    #[clap(
-        short,
+    #[structopt(
         long,
-        about = "Wargaming.net API application ID",
-        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+        about = "Starting account ID",
+        env = "BLITZ_DASHBOARD_CRAWLER_START_ID"
     )]
-    pub application_id: String,
-
-    #[clap(long, about = "Starting account ID")]
     pub start_id: i32,
 
-    #[clap(long, about = "Ending account ID (non-inclusive)")]
+    #[structopt(
+        long,
+        about = "Ending account ID (non-inclusive)",
+        env = "BLITZ_DASHBOARD_CRAWLER_END_ID"
+    )]
     pub end_id: i32,
 
-    #[clap(short, long, about = "Number of crawling tasks")]
+    #[structopt(
+        short,
+        long,
+        about = "Number of crawling tasks",
+        default_value = "1",
+        env = "BLITZ_DASHBOARD_TASK_COUNT"
+    )]
     pub n_tasks: usize,
+}
+
+#[derive(StructOpt)]
+pub struct SharedOpts {
+    #[structopt(
+        short,
+        long,
+        about = "PostgreSQL database URI",
+        env = "BLITZ_DASHBOARD_DATABASE_URI"
+    )]
+    pub database: String,
+
+    #[structopt(
+        short,
+        long,
+        about = "Wargaming.net API application ID",
+        env = "BLITZ_DASHBOARD_APPLICATION_ID"
+    )]
+    pub application_id: String,
 }

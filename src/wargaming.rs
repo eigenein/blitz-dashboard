@@ -5,7 +5,6 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::{anyhow, Context};
-use clap::{crate_name, crate_version};
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use reqwest::header;
 use reqwest::Url;
@@ -38,7 +37,11 @@ impl WargamingApi {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
-            header::HeaderValue::from_static(concat!(crate_name!(), "/", crate_version!())),
+            header::HeaderValue::from_static(concat!(
+                env!("CARGO_PKG_NAME"),
+                "/",
+                env!("CARGO_PKG_VERSION"),
+            )),
         );
         headers.insert(
             header::ACCEPT,

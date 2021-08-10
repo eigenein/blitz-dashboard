@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use clap::crate_version;
 use maud::{html, Markup};
 
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
@@ -98,7 +97,7 @@ pub fn footer() -> Markup {
                                 span.icon { i.fas.fa-home.has-text-info {} }
                                 span {
                                     a href="https://github.com/eigenein/blitz-dashboard" {
-                                        "Blitz Dashboard " (crate_version!())
+                                        "Blitz Dashboard " (crate::CRATE_VERSION)
                                     }
                                     " © "
                                     a href="https://github.com/eigenein" { "@eigenein" }

@@ -25,12 +25,12 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
     log::info!("Listening on {}:{}.", opts.host, opts.port);
-    let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(1500))?;
+    let api = WargamingApi::new(&opts.shared.application_id, StdDuration::from_millis(1500))?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountTanksCache::new(api.clone()))
         .manage(api)
-        .manage(crate::database::open(&opts.database).await?)
+        .manage(crate::database::open(&opts.shared.database).await?)
         .manage(TrackingCode::new(&opts))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])

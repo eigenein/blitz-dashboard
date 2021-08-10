@@ -1,9 +1,8 @@
 #![warn(clippy::all)]
 
-use clap::Clap;
-use clap::{crate_name, crate_version};
 use log::Level;
 use sentry::integrations::anyhow::capture_anyhow;
+use structopt::StructOpt;
 
 use crate::metrics::Stopwatch;
 use crate::opts::{Opts, Subcommand};
@@ -22,13 +21,16 @@ mod time;
 mod wargaming;
 mod web;
 
+const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 type Result<T = ()> = anyhow::Result<T>;
 
 #[tokio::main]
 async fn main() -> crate::Result {
-    let opts = Opts::parse();
+    let opts = Opts::from_args();
     logging::init(opts.verbosity)?;
-    log::info!("{} {}", crate_name!(), crate_version!());
+    log::info!("{} {}", CRATE_NAME, CRATE_VERSION);
     let _sentry_guard = init_sentry(&opts);
 
     let result = run_subcommand(opts).await;
