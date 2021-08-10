@@ -19,6 +19,8 @@ use crate::wargaming::WargamingApi;
 mod batch_stream;
 
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
+    sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
+
     let api = new_wargaming_api(&opts.shared.application_id)?;
     let database = crate::database::open(&opts.shared.database).await?;
     let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&database).await?);
@@ -79,8 +81,6 @@ impl Crawler {
         n_tasks: usize,
         fake_infos: bool,
     ) -> crate::Result {
-        sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
-
         stream
             .map(|batch| async move { self.clone().crawl_batch(batch?, fake_infos).await })
             .buffer_unordered(n_tasks)
