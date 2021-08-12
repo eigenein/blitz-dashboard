@@ -21,32 +21,32 @@ mod batch_stream;
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let api = new_wargaming_api(&opts.shared.application_id)?;
-    let database = crate::database::open(&opts.shared.database).await?;
+    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
+    let database = crate::database::open(&opts.crawler.connections.database).await?;
     let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&database).await?);
     log::info!("Starting the crawler from #{}…", starting_account_id);
     let stream = loop_batches_from(database.clone(), starting_account_id);
     Crawler::new(api, database)
         .await?
-        .run(stream, opts.n_tasks, false)
+        .run(stream, opts.crawler.n_tasks, false)
         .await
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = new_wargaming_api(&opts.shared.application_id)?;
-    let database = crate::database::open(&opts.shared.database).await?;
+    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
+    let database = crate::database::open(&opts.crawler.connections.database).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| BaseAccountInfo {
             id: account_id,
             last_battle_time: Utc.timestamp(0, 0),
         })
         .chunks(100)
-        .map(|batch| Ok(batch));
+        .map(Ok);
     Crawler::new(api, database)
         .await?
-        .run(stream, opts.n_tasks, true)
+        .run(stream, opts.crawler.n_tasks, true)
         .await
 }
 

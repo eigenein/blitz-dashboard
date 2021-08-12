@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 
-use log::Level;
+use log::{Level, LevelFilter};
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
 
@@ -58,7 +58,8 @@ fn init_sentry(opts: &opts::Opts) -> Option<sentry::ClientInitGuard> {
             dsn.as_str(),
             sentry::ClientOptions {
                 release: sentry::release_name!(),
-                debug: opts.verbosity != 0,
+                debug: [LevelFilter::Trace, LevelFilter::Debug, LevelFilter::Info]
+                    .contains(&opts.verbosity),
                 ..Default::default()
             },
         ))

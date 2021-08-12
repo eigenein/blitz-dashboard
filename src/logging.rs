@@ -4,11 +4,11 @@ use sentry::integrations::log::{LogFilter, SentryLogger};
 use std::io::Write;
 
 /// Initialises logging.
-pub fn init(verbosity: i32) -> anyhow::Result<()> {
+pub fn init(max_level: LevelFilter) -> anyhow::Result<()> {
     log::set_boxed_logger(Box::new(
         SentryLogger::with_dest(JournaldLogger).filter(|_| LogFilter::Breadcrumb),
     ))?;
-    log::set_max_level(convert_verbosity_to_level(verbosity));
+    log::set_max_level(max_level);
     Ok(())
 }
 
@@ -31,15 +31,6 @@ impl Log for JournaldLogger {
 
     fn flush(&self) {
         let _ = std::io::stderr().flush();
-    }
-}
-
-fn convert_verbosity_to_level(verbosity: i32) -> LevelFilter {
-    match verbosity {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
     }
 }
 
