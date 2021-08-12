@@ -172,16 +172,6 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
     Ok(())
 }
 
-pub async fn retrieve_max_account_id(connection: &PgPool) -> crate::Result<i32> {
-    // language=SQL
-    const QUERY: &str = "SELECT max(account_id) FROM accounts";
-    let account_id = sqlx::query_scalar(QUERY)
-        .fetch_one(connection)
-        .await
-        .context("failed to retrieve the max account ID")?;
-    Ok(account_id)
-}
-
 pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Option<i32>> {
     // language=SQL
     const QUERY: &str = r#"

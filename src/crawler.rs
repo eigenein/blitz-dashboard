@@ -8,9 +8,9 @@ use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
 
-use crate::crawler::batch_stream::{loop_batches_from, Batch};
+use crate::crawler::batch_stream::{loop_batches_from, Batch, Select};
 use crate::database;
-use crate::database::{retrieve_max_account_id, retrieve_tank_ids};
+use crate::database::retrieve_tank_ids;
 use crate::metrics::{RpsCounter, Stopwatch};
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -23,13 +23,27 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
-    let starting_account_id = fastrand::i32(0..retrieve_max_account_id(&database).await?);
-    log::info!("Starting the crawler from #{}…", starting_account_id);
-    let stream = loop_batches_from(database.clone(), starting_account_id);
-    Crawler::new(api, database)
-        .await?
-        .run(stream, opts.crawler.n_tasks, false)
-        .await
+    let crawler = Crawler::new(api, database.clone()).await?;
+    let mut futures = Vec::new();
+    if opts.n_hot_tasks != 0 {
+        log::info!("Scheduling hot crawler with {} tasks…", opts.n_hot_tasks);
+        futures.push(crawler.run(
+            loop_batches_from(database.clone(), Select::Hot, opts.hot_offset),
+            opts.n_hot_tasks,
+            false,
+        ));
+    }
+    if opts.n_cold_tasks != 0 {
+        log::info!("Scheduling cold crawler with {} tasks…", opts.n_cold_tasks);
+        futures.push(crawler.run(
+            loop_batches_from(database.clone(), Select::Cold, opts.cold_offset),
+            opts.n_cold_tasks,
+            false,
+        ));
+    }
+    log::info!("Starting…");
+    futures::future::try_join_all(futures).await?;
+    Ok(())
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
@@ -46,7 +60,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Ok);
     Crawler::new(api, database)
         .await?
-        .run(stream, opts.crawler.n_tasks, true)
+        .run(stream, opts.n_tasks, true)
         .await
 }
 

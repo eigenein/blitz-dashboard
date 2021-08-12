@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
+use chrono::Duration;
 use log::LevelFilter;
 use structopt::StructOpt;
 
@@ -68,6 +69,36 @@ pub struct WebOpts {
 pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub crawler: CommonCrawlerOpts,
+
+    /// Number of «hot» crawling tasks
+    #[structopt(long, default_value = "1", env = "BLITZ_DASHBOARD_HOT_TASK_COUNT")]
+    pub n_hot_tasks: usize,
+
+    /// Number of «cold» crawling tasks
+    #[structopt(long, default_value = "1", env = "BLITZ_DASHBOARD_COLD_TASK_COUNT")]
+    pub n_cold_tasks: usize,
+
+    /// «Hot» accounts maximum last battle time offset from now
+    #[structopt(
+        long,
+        default_value = "1day",
+        env = "BLITZ_DASHBOARD_CRAWLER_HOT_AGE",
+        parse(try_from_str = parse_duration),
+    )]
+    pub hot_offset: Duration,
+
+    /// «Cold» accounts minimum last battle time offset from now
+    #[structopt(
+        long,
+        default_value = "1day 1min",
+        env = "BLITZ_DASHBOARD_CRAWLER_COLD_AGE",
+        parse(try_from_str = parse_duration),
+    )]
+    pub cold_offset: Duration,
+}
+
+fn parse_duration(value: &str) -> crate::Result<Duration> {
+    Ok(Duration::from_std(humantime::parse_duration(value)?)?)
 }
 
 /// Updates the bundled Tankopedia module
@@ -99,6 +130,10 @@ pub struct CrawlAccountsOpts {
         parse(try_from_str = parse_account_id),
     )]
     pub end_id: i32,
+
+    /// Number of crawling tasks
+    #[structopt(short, long, default_value = "1", env = "BLITZ_DASHBOARD_TASK_COUNT")]
+    pub n_tasks: usize,
 }
 
 fn parse_account_id(value: &str) -> crate::Result<i32> {
@@ -125,8 +160,4 @@ pub struct ConnectionOpts {
 pub struct CommonCrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
-
-    /// Number of crawling tasks
-    #[structopt(short, long, default_value = "1", env = "BLITZ_DASHBOARD_TASK_COUNT")]
-    pub n_tasks: usize,
 }
