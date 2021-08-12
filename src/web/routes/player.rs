@@ -16,7 +16,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, AllStatistics};
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::time::{from_days, from_hours, from_months};
+use crate::time::{from_days, from_hours, from_minutes, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
@@ -116,6 +116,7 @@ pub async fn get(
             div.container {
                 ul {
                     (render_period_li(period, from_hours(1), "1 час"))
+                    (render_period_li(period, from_minutes(90), "1.5 часа"))
                     (render_period_li(period, from_hours(2), "2 часа"))
                     (render_period_li(period, from_hours(3), "3 часа"))
                     (render_period_li(period, from_hours(4), "4 часа"))
@@ -125,10 +126,9 @@ pub async fn get(
                     (render_period_li(period, from_days(2), "2 дня"))
                     (render_period_li(period, from_days(3), "3 дня"))
                     (render_period_li(period, from_days(7), "Неделя"))
+                    (render_period_li(period, from_days(14), "2 недели"))
+                    (render_period_li(period, from_days(21), "3 недели"))
                     (render_period_li(period, from_months(1), "Месяц"))
-                    (render_period_li(period, from_months(2), "2 месяца"))
-                    (render_period_li(period, from_months(3), "3 месяца"))
-                    (render_period_li(period, from_months(6), "6 месяцев"))
                 }
             }
         }
