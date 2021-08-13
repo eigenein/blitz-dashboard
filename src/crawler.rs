@@ -163,7 +163,7 @@ impl Crawler {
                 .collect();
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_vehicles(&mut *connection, &tanks).await?;
-            log::info!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
+            log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }
