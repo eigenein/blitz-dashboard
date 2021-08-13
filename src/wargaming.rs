@@ -200,12 +200,10 @@ impl WargamingApi {
                             "REQUEST_LIMIT_EXCEEDED" => {
                                 // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
                                 log::warn!("Exceeded the request limit.");
-                                capture_message("Exceeded the API RPS limit", Level::Warning);
                             }
                             "SOURCE_NOT_AVAILABLE" => {
                                 // ♻️ The HTTP request has succeeded, but the API has an issue.
                                 log::warn!("API source is unavailable.");
-                                capture_message("API source is unavailable", Level::Info);
                             }
                             _ => {
                                 // 🥅 The HTTP request has succeeded, but the API has returned an unexpected error.
