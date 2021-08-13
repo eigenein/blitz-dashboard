@@ -33,22 +33,24 @@ impl TotalCrawlerMetrics {
         let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let cold_aps = self.cold.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_aps = self.hot.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
+        let total_aps = hot_aps + cold_aps;
         let cold_tps = self.cold.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_tps = self.hot.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         self.start = Instant::now();
 
         log::info!(
             concat!(
-                "RPS: {rps:.1}",
+                "RPS: {rps:.1} ({rps_utilization:.0}%)",
                 " | ",
-                "APS: {total_aps:.0} = ♨️ {hot_aps:.0} ❄️ {cold_aps:.0}",
+                "APS: {total_aps:.0} = 🔥{hot_aps:.0} 🧊{cold_aps:.0}",
                 " | ",
-                "TPS: {total_tps:.1} = ♨️ {hot_tps:.1} ❄️ {cold_tps:.2}",
+                "TPS: {total_tps:.1} = 🔥{hot_tps:.1} 🧊{cold_tps:.2}",
                 " | ",
-                "♨️ #{last_hot_account_id} ❄️ #{last_cold_account_id}",
+                "🔥#{last_hot_account_id} 🧊#{last_cold_account_id}",
             ),
             rps = rps,
-            total_aps = hot_aps + cold_aps,
+            total_aps = total_aps,
+            rps_utilization = total_aps / rps,
             hot_aps = hot_aps,
             cold_aps = cold_aps,
             total_tps = hot_tps + cold_tps,
