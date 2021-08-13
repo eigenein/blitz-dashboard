@@ -195,12 +195,10 @@ impl Crawler {
                 .into_iter()
                 .filter(|tank| tank.last_battle_time > old_info.last_battle_time)
                 .collect();
-            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
+            database::insert_tank_snapshots(&mut *connection, &tanks, self.metrics.n_tanks.clone())
+                .await?;
             self.insert_vehicles(&mut *connection, &tanks).await?;
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
-            self.metrics
-                .n_tanks
-                .fetch_add(tanks.len(), Ordering::Relaxed);
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }

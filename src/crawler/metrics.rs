@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicI32, AtomicU32, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicI32, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -14,7 +14,7 @@ pub struct TotalCrawlerMetrics {
 #[derive(Clone)]
 pub struct CrawlerMetrics {
     pub n_accounts: Arc<AtomicU32>,
-    pub n_tanks: Arc<AtomicUsize>,
+    pub n_tanks: Arc<AtomicU32>,
     pub last_account_id: Arc<AtomicI32>,
 }
 
@@ -64,7 +64,7 @@ impl CrawlerMetrics {
     pub fn new() -> Self {
         Self {
             n_accounts: Arc::new(AtomicU32::new(0)),
-            n_tanks: Arc::new(AtomicUsize::new(0)),
+            n_tanks: Arc::new(AtomicU32::new(0)),
             last_account_id: Arc::new(AtomicI32::new(0)),
         }
     }
