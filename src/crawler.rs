@@ -146,12 +146,10 @@ impl Crawler {
             self.metrics
                 .last_account_id
                 .swap(old_info.id, Ordering::Relaxed);
+            self.metrics.n_accounts.fetch_add(1, Ordering::Relaxed);
         }
         log::debug!("Committing…");
         tx.commit().await?;
-        self.metrics
-            .n_accounts
-            .fetch_add(old_infos.len(), Ordering::Relaxed);
 
         Ok(())
     }
