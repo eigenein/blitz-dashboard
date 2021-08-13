@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
@@ -9,47 +10,56 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
 
 use crate::crawler::batch_stream::{loop_batches_from, Batch, Select};
+use crate::crawler::metrics::{CrawlerMetrics, TotalCrawlerMetrics};
 use crate::database;
 use crate::database::retrieve_tank_ids;
-use crate::metrics::{RpsCounter, Stopwatch};
+use crate::metrics::Stopwatch;
 use crate::models::{AccountInfo, BaseAccountInfo, Tank};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
+mod metrics;
 
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
+    let metrics = TotalCrawlerMetrics::new();
+    let api = new_wargaming_api(
+        &opts.crawler.connections.application_id,
+        metrics.n_api_requests.clone(),
+    )?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
-    let crawler = Crawler::new(api, database.clone()).await?;
-    let mut futures = Vec::new();
-    if opts.n_hot_tasks != 0 {
-        log::info!("Scheduling hot crawler with {} tasks…", opts.n_hot_tasks);
-        futures.push(crawler.run(
+    let hot_crawler = Crawler::new(api.clone(), database.clone(), metrics.hot.clone()).await?;
+    let cold_crawler = Crawler::new(api, database.clone(), metrics.cold.clone()).await?;
+
+    log::info!("Starting…");
+    futures::future::try_join3(
+        hot_crawler.run(
             loop_batches_from(database.clone(), Select::Hot, opts.hot_offset),
             opts.n_hot_tasks,
             false,
-        ));
-    }
-    if opts.n_cold_tasks != 0 {
-        log::info!("Scheduling cold crawler with {} tasks…", opts.n_cold_tasks);
-        futures.push(crawler.run(
+        ),
+        cold_crawler.run(
             loop_batches_from(database.clone(), Select::Cold, opts.cold_offset),
-            opts.n_cold_tasks,
+            opts.crawler.n_cold_tasks,
             false,
-        ));
-    }
-    log::info!("Starting…");
-    futures::future::try_join_all(futures).await?;
+        ),
+        log_metrics(metrics),
+    )
+    .await?;
+
     Ok(())
 }
 
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
+    let metrics = TotalCrawlerMetrics::new();
+    let api = new_wargaming_api(
+        &opts.crawler.connections.application_id,
+        metrics.n_api_requests.clone(),
+    )?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| BaseAccountInfo {
@@ -58,14 +68,31 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         })
         .chunks(100)
         .map(Ok);
-    Crawler::new(api, database)
-        .await?
-        .run(stream, opts.n_tasks, true)
-        .await
+    let crawler = Crawler::new(api, database, metrics.cold.clone()).await?;
+    futures::future::try_join(
+        crawler.run(stream, opts.crawler.n_cold_tasks, true),
+        log_metrics(metrics),
+    )
+    .await?;
+    Ok(())
 }
 
-fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
-    WargamingApi::new(application_id, StdDuration::from_millis(1500))
+async fn log_metrics(mut metrics: TotalCrawlerMetrics) -> crate::Result {
+    loop {
+        metrics.log();
+        tokio::time::sleep(StdDuration::from_secs(15)).await;
+    }
+}
+
+fn new_wargaming_api(
+    application_id: &str,
+    request_counter: Arc<AtomicU32>,
+) -> crate::Result<WargamingApi> {
+    WargamingApi::new(
+        application_id,
+        StdDuration::from_millis(1500),
+        request_counter,
+    )
 }
 
 #[derive(Clone)]
@@ -73,17 +100,21 @@ pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
-    account_rps_counter: Arc<RwLock<RpsCounter>>,
+    metrics: CrawlerMetrics,
 }
 
 impl Crawler {
-    pub async fn new(api: WargamingApi, database: PgPool) -> crate::Result<Self> {
+    pub async fn new(
+        api: WargamingApi,
+        database: PgPool,
+        metrics: CrawlerMetrics,
+    ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             api,
             database,
+            metrics,
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
-            account_rps_counter: Arc::new(RwLock::new(RpsCounter::new("Accounts", 2000))),
         };
         Ok(this)
     }
@@ -112,10 +143,15 @@ impl Crawler {
             let new_info = new_infos.remove(&old_info.id.to_string()).flatten();
             self.maybe_crawl_account(&mut tx, old_info, new_info, fake_infos)
                 .await?;
-            self.account_rps_counter.write().await.increment();
+            self.metrics
+                .last_account_id
+                .swap(old_info.id, Ordering::Relaxed);
         }
         log::debug!("Committing…");
         tx.commit().await?;
+        self.metrics
+            .n_accounts
+            .fetch_add(old_infos.len(), Ordering::Relaxed);
 
         Ok(())
     }
@@ -164,6 +200,9 @@ impl Crawler {
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_vehicles(&mut *connection, &tanks).await?;
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
+            self.metrics
+                .n_tanks
+                .fetch_add(tanks.len(), Ordering::Relaxed);
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }

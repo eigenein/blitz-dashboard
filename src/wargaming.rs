@@ -10,10 +10,8 @@ use reqwest::header;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
-use tokio::sync::RwLock;
 
 use crate::backoff::Backoff;
-use crate::metrics::RpsCounter;
 use crate::models;
 use crate::wargaming::response::Response;
 
@@ -25,7 +23,6 @@ pub struct WargamingApi {
     application_id: Arc<String>,
     client: reqwest::Client,
     request_counter: Arc<AtomicU32>,
-    rps_counter: Arc<RwLock<RpsCounter>>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -33,7 +30,11 @@ pub struct WargamingApi {
 pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
-    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
+    pub fn new(
+        application_id: &str,
+        timeout: StdDuration,
+        request_counter: Arc<AtomicU32>,
+    ) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -51,7 +52,7 @@ impl WargamingApi {
             header::ACCEPT_ENCODING,
             header::HeaderValue::from_static("br, deflate, gzip"),
         );
-        Ok(Self {
+        let this = Self {
             application_id: Arc::new(application_id.to_string()),
             client: reqwest::ClientBuilder::new()
                 .default_headers(headers)
@@ -62,9 +63,9 @@ impl WargamingApi {
                 .deflate(true)
                 .tcp_nodelay(true)
                 .build()?,
-            request_counter: Arc::new(AtomicU32::new(1)),
-            rps_counter: Arc::new(RwLock::new(RpsCounter::new("API", 50))),
-        })
+            request_counter,
+        };
+        Ok(this)
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
@@ -251,7 +252,6 @@ impl WargamingApi {
                 log::warn!("#{} has failed.", request_id);
             }
         }
-        self.rps_counter.write().await.increment();
         result?.error_for_status()?.json::<Response<T>>().await
     }
 }

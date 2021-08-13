@@ -3,6 +3,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::sync::atomic::AtomicU32;
+use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use crate::models::{Nation, TankType, Vehicle};
@@ -33,7 +35,11 @@ fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
-    let api = WargamingApi::new(&opts.application_id, StdDuration::from_millis(5000))?;
+    let api = WargamingApi::new(
+        &opts.application_id,
+        StdDuration::from_millis(5000),
+        Arc::new(AtomicU32::new(0)),
+    )?;
     let json_path = Path::new(file!())
         .parent()
         .unwrap()
