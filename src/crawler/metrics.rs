@@ -14,7 +14,7 @@ pub struct CrawlerMetrics {
 
 #[derive(Clone)]
 pub struct SubCrawlerMetrics {
-    /// Updated account count.
+    /// Scanned account count.
     pub n_accounts: Arc<AtomicU32>,
 
     /// Inserted tank snapshot count.
