@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
 
-use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch, Select};
+use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch, Selector};
 use crate::crawler::metrics::{CrawlerMetrics, TotalCrawlerMetrics};
 use crate::database;
 use crate::database::retrieve_tank_ids;
@@ -37,12 +37,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     log::info!("Starting…");
     futures::future::try_join3(
         hot_crawler.run(
-            get_infinite_batches_stream(database.clone(), Select::Hot(opts.hot_offset)),
+            get_infinite_batches_stream(database.clone(), Selector::Hot(opts.hot_offset)),
             opts.crawler.n_tasks,
             false,
         ),
         frozen_crawler.run(
-            get_infinite_batches_stream(database.clone(), Select::Frozen(opts.frozen_offset)),
+            get_infinite_batches_stream(database.clone(), Selector::Frozen(opts.frozen_offset)),
             opts.crawler.n_tasks,
             false,
         ),
