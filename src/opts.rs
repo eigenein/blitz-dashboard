@@ -87,6 +87,15 @@ pub struct CrawlerOpts {
         parse(try_from_str = parse_duration),
     )]
     pub cold_offset: Duration,
+
+    /// «Frozen» accounts minimum last battle time offset from now
+    #[structopt(
+        long,
+        default_value = "6months",
+        env = "BLITZ_DASHBOARD_CRAWLER_FROZEN_OFFSET",
+        parse(try_from_str = parse_duration),
+    )]
+    pub frozen_offset: Duration,
 }
 
 fn parse_duration(value: &str) -> crate::Result<Duration> {
