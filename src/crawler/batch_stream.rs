@@ -17,12 +17,12 @@ pub enum Select {
 }
 
 /// Generates an infinite stream of batches, looping through the entire account table.
-pub fn loop_batches_from(
+pub fn get_infinite_batches_stream(
     connection: PgPool,
     select: Select,
     offset: Duration,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    let initial_stream = Box::pin(get_batches_from(connection.clone(), select, offset));
+    let initial_stream = Box::pin(get_batches_stream(connection.clone(), select, offset));
     stream::unfold(
         (connection, initial_stream),
         move |(connection, mut inner_stream)| async move {
@@ -31,7 +31,7 @@ pub fn loop_batches_from(
                 None => {
                     log::info!("{:?}: starting over.", select);
                     let mut new_stream =
-                        Box::pin(get_batches_from(connection.clone(), select, offset));
+                        Box::pin(get_batches_stream(connection.clone(), select, offset));
                     new_stream
                         .next()
                         .await
@@ -43,7 +43,7 @@ pub fn loop_batches_from(
 }
 
 /// Generates a finite stream of batches from the account table.
-fn get_batches_from(
+fn get_batches_stream(
     connection: PgPool,
     select: Select,
     offset: Duration,
