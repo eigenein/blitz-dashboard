@@ -31,7 +31,14 @@ pub fn get_infinite_batches_stream(
             match inner_stream.next().await {
                 Some(item) => Some((item, (connection, inner_stream))),
                 None => {
-                    log::info!("{:?}: starting over.", selector);
+                    log::info!(
+                        "{:?}: starting over.",
+                        match selector {
+                            Selector::Cold(_, _) => "Cold",
+                            Selector::Frozen(_) => "Frozen",
+                            Selector::Hot(_) => "Hot",
+                        }
+                    );
                     let mut new_stream = Box::pin(get_batches_stream(connection.clone(), selector));
                     new_stream
                         .next()
@@ -79,6 +86,7 @@ async fn retrieve_batch(
             sqlx::query_as(QUERY).bind(starting_at).bind(max_offset)
         }
         Selector::Cold(min_offset, max_offset) => {
+            assert!(min_offset < max_offset);
             // language=SQL
             const QUERY: &str = "
                 SELECT * FROM accounts

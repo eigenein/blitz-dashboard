@@ -31,13 +31,23 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         metrics.n_api_requests.clone(),
     )?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
+
     let hot_crawler = Crawler::new(api.clone(), database.clone(), metrics.hot.clone()).await?;
+    let cold_crawler = Crawler::new(api.clone(), database.clone(), metrics.cold.clone()).await?;
     let frozen_crawler = Crawler::new(api, database.clone(), metrics.frozen.clone()).await?;
 
     log::info!("Starting…");
-    futures::future::try_join3(
+    futures::future::try_join4(
         hot_crawler.run(
             get_infinite_batches_stream(database.clone(), Selector::Hot(opts.hot_offset)),
+            opts.crawler.n_tasks,
+            false,
+        ),
+        cold_crawler.run(
+            get_infinite_batches_stream(
+                database.clone(),
+                Selector::Cold(opts.hot_offset, opts.frozen_offset),
+            ),
             opts.crawler.n_tasks,
             false,
         ),

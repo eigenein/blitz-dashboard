@@ -79,19 +79,10 @@ pub struct CrawlerOpts {
     )]
     pub hot_offset: Duration,
 
-    /// «Cold» accounts minimum last battle time offset from now
-    #[structopt(
-        long,
-        default_value = "2hour",
-        env = "BLITZ_DASHBOARD_CRAWLER_COLD_OFFSET",
-        parse(try_from_str = parse_duration),
-    )]
-    pub cold_offset: Duration,
-
     /// «Frozen» accounts minimum last battle time offset from now
     #[structopt(
         long,
-        default_value = "6months",
+        default_value = "7days",
         env = "BLITZ_DASHBOARD_CRAWLER_FROZEN_OFFSET",
         parse(try_from_str = parse_duration),
     )]
