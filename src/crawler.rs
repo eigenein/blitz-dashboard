@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::convert::TryInto;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
@@ -80,7 +81,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 async fn log_metrics(mut metrics: TotalCrawlerMetrics) -> crate::Result {
     loop {
         metrics.log();
-        tokio::time::sleep(StdDuration::from_secs(15)).await;
+        tokio::time::sleep(StdDuration::from_secs(20)).await;
     }
 }
 
@@ -199,6 +200,15 @@ impl Crawler {
                 .await?;
             self.insert_vehicles(&mut *connection, &tanks).await?;
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
+            self.metrics
+                .n_updated_accounts
+                .fetch_add(1, Ordering::Relaxed);
+            self.metrics.total_lag_secs.fetch_add(
+                (Utc::now() - new_info.base.last_battle_time)
+                    .num_seconds()
+                    .try_into()?,
+                Ordering::Relaxed,
+            );
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }
