@@ -40,7 +40,7 @@ pub fn get_infinite_batches_stream(
                 Some(item) => Some((item, (connection, inner_stream))),
                 None => {
                     log::info!(
-                        "{:?}: starting over.",
+                        "{}: starting over.",
                         match selector {
                             Selector::Cold(_, _) => "Cold",
                             Selector::Frozen(_) => "Frozen",
