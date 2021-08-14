@@ -70,15 +70,6 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub crawler: CommonCrawlerOpts,
 
-    /// Number of «hot» crawling tasks
-    #[structopt(
-        long,
-        default_value = "1",
-        env = "BLITZ_DASHBOARD_HOT_TASK_COUNT",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_hot_tasks: usize,
-
     /// «Hot» accounts maximum last battle time offset from now
     #[structopt(
         long,
@@ -167,12 +158,13 @@ pub struct CommonCrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
-    /// Number of «cold» crawling tasks
+    /// Number of task for each (hot, cold, and frozen) sub-crawler
     #[structopt(
+        short,
         long,
         default_value = "1",
-        env = "BLITZ_DASHBOARD_COLD_TASK_COUNT",
+        env = "BLITZ_DASHBOARD_CRAWLER_TASK_COUNT",
         parse(try_from_str = parse_task_count),
     )]
-    pub n_cold_tasks: usize,
+    pub n_tasks: usize,
 }

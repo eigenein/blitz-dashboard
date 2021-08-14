@@ -38,12 +38,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     futures::future::try_join3(
         hot_crawler.run(
             loop_batches_from(database.clone(), Select::Hot, opts.hot_offset),
-            opts.n_hot_tasks,
+            opts.crawler.n_tasks,
             false,
         ),
         cold_crawler.run(
             loop_batches_from(database.clone(), Select::Cold, opts.cold_offset),
-            opts.crawler.n_cold_tasks,
+            opts.crawler.n_tasks,
             false,
         ),
         log_metrics(metrics),
@@ -71,7 +71,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Ok);
     let crawler = Crawler::new(api, database, metrics.cold.clone()).await?;
     futures::future::try_join(
-        crawler.run(stream, opts.crawler.n_cold_tasks, true),
+        crawler.run(stream, opts.crawler.n_tasks, true),
         log_metrics(metrics),
     )
     .await?;
