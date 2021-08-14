@@ -45,7 +45,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     futures::future::try_join4(
         hot_crawler.run(
             get_infinite_batches_stream(database.clone(), Selector::Hot(opts.hot_offset)),
-            opts.crawler.n_tasks,
+            opts.n_hot_tasks,
             false,
         ),
         cold_crawler.run(
@@ -53,12 +53,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
                 database.clone(),
                 Selector::Cold(opts.hot_offset, opts.frozen_offset),
             ),
-            opts.crawler.n_tasks,
+            opts.n_cold_tasks,
             false,
         ),
         frozen_crawler.run(
             get_infinite_batches_stream(database.clone(), Selector::Frozen(opts.frozen_offset)),
-            opts.crawler.n_tasks,
+            opts.crawler.n_frozen_tasks,
             false,
         ),
         log_metrics(metrics),
@@ -92,7 +92,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Ok);
     let crawler = Crawler::new(api, database, metrics.frozen.clone()).await?;
     futures::future::try_join(
-        crawler.run(stream, opts.crawler.n_tasks, true),
+        crawler.run(stream, opts.crawler.n_frozen_tasks, true),
         log_metrics(metrics),
     )
     .await?;

@@ -89,6 +89,24 @@ pub struct CrawlerOpts {
         parse(try_from_str = parse_duration),
     )]
     pub frozen_offset: Duration,
+
+    /// Number of tasks for the «cold» sub-crawler.
+    #[structopt(
+        long,
+        default_value = "1",
+        env = "BLITZ_DASHBOARD_CRAWLER_COLD_TASK_COUNT",
+        parse(try_from_str = parse_task_count),
+    )]
+    pub n_cold_tasks: usize,
+
+    /// Number of tasks for the «hot» sub-crawler.
+    #[structopt(
+        long,
+        default_value = "2",
+        env = "BLITZ_DASHBOARD_CRAWLER_HOT_TASK_COUNT",
+        parse(try_from_str = parse_task_count),
+    )]
+    pub n_hot_tasks: usize,
 }
 
 fn parse_duration(value: &str) -> crate::Result<Duration> {
@@ -160,13 +178,12 @@ pub struct CommonCrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
-    /// Number of task for each (hot, cold, and frozen) sub-crawler
+    /// Number of tasks for the «frozen» sub-crawler.
     #[structopt(
-        short,
         long,
         default_value = "1",
-        env = "BLITZ_DASHBOARD_CRAWLER_TASK_COUNT",
+        env = "BLITZ_DASHBOARD_CRAWLER_FROZEN_TASK_COUNT",
         parse(try_from_str = parse_task_count),
     )]
-    pub n_tasks: usize,
+    pub n_frozen_tasks: usize,
 }
