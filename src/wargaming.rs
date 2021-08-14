@@ -1,3 +1,5 @@
+//! Wargaming.net API.
+
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicU32, Ordering};

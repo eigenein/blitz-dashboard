@@ -3,10 +3,18 @@ use std::time::{Duration, Instant};
 
 use log::Level;
 
+/// Stopwatch to log a code block execution time.
 pub struct Stopwatch {
+    /// Logged message.
     message: Cow<'static, str>,
+
     start: Instant,
+
+    /// Default logging level.
     log_level: Level,
+
+    /// Optional execution time threshold.
+    /// If exceeded, raises the logging level to warning.
     threshold: Option<Duration>,
 }
 

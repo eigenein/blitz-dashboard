@@ -56,11 +56,7 @@ pub struct AllStatistics {
     pub damage_received: i32,
     pub shots: i32,
     pub hits: i32,
-
-    #[serde(default)]
     pub frags: i32,
-
-    #[serde(default)]
     pub xp: i32,
 }
 

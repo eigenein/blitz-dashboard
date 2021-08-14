@@ -26,6 +26,7 @@ pub struct SubCrawlerMetrics {
     /// Maximum lag – time after an account last battle time and now – in seconds.
     /// Note: by the time a sub-crawler scans an account, it may have already played more than 1 battle.
     /// So, the real maximum lag may be greater than that.
+    /// It's also useful to check the full-scan time for a specific sub-crawler («hot» or «cold»).
     pub max_lag_secs: Arc<AtomicU64>,
 }
 
@@ -40,6 +41,7 @@ impl CrawlerMetrics {
         }
     }
 
+    /// Logs the current metrics and resets the counters.
     pub fn log(&mut self) {
         let elapsed_secs = self.start.elapsed().as_secs_f64();
         let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;

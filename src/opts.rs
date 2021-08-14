@@ -1,3 +1,5 @@
+//! CLI options.
+
 use std::str::FromStr;
 
 use anyhow::anyhow;
