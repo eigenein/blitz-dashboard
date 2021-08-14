@@ -5,7 +5,7 @@ use std::time::{Duration as StdDuration, Instant};
 pub struct TotalCrawlerMetrics {
     pub n_api_requests: Arc<AtomicU32>,
     pub hot: CrawlerMetrics,
-    pub cold: CrawlerMetrics,
+    pub frozen: CrawlerMetrics,
 
     start: Instant,
 }
@@ -24,18 +24,18 @@ impl TotalCrawlerMetrics {
             n_api_requests: Arc::new(AtomicU32::new(0)),
             start: Instant::now(),
             hot: CrawlerMetrics::new(),
-            cold: CrawlerMetrics::new(),
+            frozen: CrawlerMetrics::new(),
         }
     }
 
     pub fn log(&mut self) {
         let elapsed_secs = self.start.elapsed().as_secs_f64();
         let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
-        let cold_aps = self.cold.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
+        let cold_aps = self.frozen.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_aps = self.hot.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
-        let cold_tps = self.cold.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
+        let cold_tps = self.frozen.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_tps = self.hot.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
-        let cold_lag_secs = self.cold.max_lag_secs.swap(0, Ordering::Relaxed);
+        let cold_lag_secs = self.frozen.max_lag_secs.swap(0, Ordering::Relaxed);
         let hot_lag_secs = self.hot.max_lag_secs.swap(0, Ordering::Relaxed);
 
         self.start = Instant::now();
@@ -58,7 +58,7 @@ impl TotalCrawlerMetrics {
             hot_tps = hot_tps,
             cold_tps = cold_tps,
             last_hot_account_id = self.hot.last_account_id.load(Ordering::Relaxed),
-            last_cold_account_id = self.cold.last_account_id.load(Ordering::Relaxed),
+            last_cold_account_id = self.frozen.last_account_id.load(Ordering::Relaxed),
             hot_lag = humantime::format_duration(StdDuration::from_secs(hot_lag_secs)),
             cold_lag = humantime::format_duration(StdDuration::from_secs(cold_lag_secs)),
         );
