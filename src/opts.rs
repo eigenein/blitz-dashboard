@@ -74,7 +74,7 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "1day",
-        env = "BLITZ_DASHBOARD_CRAWLER_HOT_AGE",
+        env = "BLITZ_DASHBOARD_CRAWLER_HOT_OFFSET",
         parse(try_from_str = parse_duration),
     )]
     pub hot_offset: Duration,
@@ -83,7 +83,7 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "1day 1min",
-        env = "BLITZ_DASHBOARD_CRAWLER_COLD_AGE",
+        env = "BLITZ_DASHBOARD_CRAWLER_COLD_OFFSET",
         parse(try_from_str = parse_duration),
     )]
     pub cold_offset: Duration,
