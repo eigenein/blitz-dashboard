@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
 
 use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch, Selector};
-use crate::crawler::metrics::{CrawlerMetrics, TotalCrawlerMetrics};
+use crate::crawler::metrics::{CrawlerMetrics, SubCrawlerMetrics};
 use crate::database;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
@@ -30,7 +30,7 @@ mod metrics;
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let metrics = TotalCrawlerMetrics::new();
+    let metrics = CrawlerMetrics::new();
     let api = new_wargaming_api(
         &opts.crawler.connections.application_id,
         metrics.n_api_requests.clone(),
@@ -77,7 +77,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let metrics = TotalCrawlerMetrics::new();
+    let metrics = CrawlerMetrics::new();
     let api = new_wargaming_api(
         &opts.crawler.connections.application_id,
         metrics.n_api_requests.clone(),
@@ -99,7 +99,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     Ok(())
 }
 
-async fn log_metrics(mut metrics: TotalCrawlerMetrics) -> crate::Result {
+async fn log_metrics(mut metrics: CrawlerMetrics) -> crate::Result {
     loop {
         metrics.log();
         tokio::time::sleep(StdDuration::from_secs(20)).await;
@@ -122,14 +122,14 @@ pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
-    metrics: CrawlerMetrics,
+    metrics: SubCrawlerMetrics,
 }
 
 impl Crawler {
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
-        metrics: CrawlerMetrics,
+        metrics: SubCrawlerMetrics,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {

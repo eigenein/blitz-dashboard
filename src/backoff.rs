@@ -15,6 +15,7 @@ impl Backoff {
         }
     }
 
+    /// Retrieves the upcoming delay.
     pub fn next(&mut self) -> StdDuration {
         let delay_millis = self.delay_millis;
         self.delay_millis = self.max_delay_millis.min(delay_millis * 2);

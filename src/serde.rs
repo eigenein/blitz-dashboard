@@ -1,3 +1,5 @@
+//! Helper functions for [`serde`].
+
 use chrono::Duration;
 use serde::Deserialize;
 

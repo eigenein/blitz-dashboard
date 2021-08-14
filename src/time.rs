@@ -1,3 +1,5 @@
+//! Helper functions for [`std::time`].
+
 use std::time::Duration as StdDuration;
 
 pub const fn from_minutes(minutes: u64) -> StdDuration {

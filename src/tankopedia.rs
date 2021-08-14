@@ -13,6 +13,7 @@ use crate::wargaming::{Tankopedia, WargamingApi};
 
 mod generated;
 
+/// Retrieves a vehicle from the Tankopedia.
 pub fn get_vehicle(tank_id: i32) -> Vehicle {
     generated::GENERATED
         .get(&tank_id)
@@ -20,6 +21,7 @@ pub fn get_vehicle(tank_id: i32) -> Vehicle {
         .unwrap_or_else(|| new_hardcoded_vehicle(tank_id))
 }
 
+/// Creates a fake vehicle instance with the specified ID.
 fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
     Vehicle {
         tank_id,
@@ -96,6 +98,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     Ok(())
 }
 
+/// Inserts the hand-coded tanks that are somehow missing from the Tankopedia.
 fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
     insert_missing_vehicle(
         vehicles,
@@ -188,6 +191,7 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
     Ok(())
 }
 
+/// Inserts a single hard-coded vehicle to the Tankopedia.
 fn insert_missing_vehicle(
     vehicles: &mut BTreeMap<String, Vehicle>,
     vehicle: Vehicle,

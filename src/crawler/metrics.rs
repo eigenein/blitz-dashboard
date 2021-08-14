@@ -2,37 +2,45 @@ use std::sync::atomic::{AtomicI32, AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-pub struct TotalCrawlerMetrics {
+pub struct CrawlerMetrics {
     pub n_api_requests: Arc<AtomicU32>,
-    pub hot: CrawlerMetrics,
-    pub cold: CrawlerMetrics,
-    pub frozen: CrawlerMetrics,
+
+    pub hot: SubCrawlerMetrics,
+    pub cold: SubCrawlerMetrics,
+    pub frozen: SubCrawlerMetrics,
 
     start: Instant,
 }
 
 #[derive(Clone)]
-pub struct CrawlerMetrics {
+pub struct SubCrawlerMetrics {
+    /// Updated account count.
     pub n_accounts: Arc<AtomicU32>,
+
+    /// Inserted tank snapshot count.
     pub n_tanks: Arc<AtomicU32>,
+
+    /// Last scanned account ID.
     pub last_account_id: Arc<AtomicI32>,
+
+    /// Maximum lag – time after an account last battle time and now – in seconds.
+    /// Note: by the time a sub-crawler scans an account, it may have already played more than 1 battle.
+    /// So, the real maximum lag may be greater than that.
     pub max_lag_secs: Arc<AtomicU64>,
 }
 
-impl TotalCrawlerMetrics {
+impl CrawlerMetrics {
     pub fn new() -> Self {
         Self {
             n_api_requests: Arc::new(AtomicU32::new(0)),
             start: Instant::now(),
-            hot: CrawlerMetrics::new(),
-            cold: CrawlerMetrics::new(),
-            frozen: CrawlerMetrics::new(),
+            hot: SubCrawlerMetrics::new(),
+            cold: SubCrawlerMetrics::new(),
+            frozen: SubCrawlerMetrics::new(),
         }
     }
 
     pub fn log(&mut self) {
-        // FIXME: you know it.
-
         let elapsed_secs = self.start.elapsed().as_secs_f64();
         let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
 
@@ -75,7 +83,7 @@ impl TotalCrawlerMetrics {
     }
 }
 
-impl CrawlerMetrics {
+impl SubCrawlerMetrics {
     pub fn new() -> Self {
         Self {
             n_accounts: Arc::new(AtomicU32::new(0)),

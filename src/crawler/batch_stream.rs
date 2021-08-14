@@ -77,6 +77,7 @@ fn get_batches_stream(
     })
 }
 
+/// Retrieves a single account batch from the database.
 async fn retrieve_batch(
     connection: &PgPool,
     starting_at: i32,
