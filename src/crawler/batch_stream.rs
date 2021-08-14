@@ -67,19 +67,30 @@ async fn retrieve_batch(
     starting_at: i32,
     selector: Selector,
 ) -> crate::Result<Vec<BaseAccountInfo>> {
-    // language=SQL
     let query = match selector {
         Selector::Frozen(min_offset) => {
-            sqlx::query_as("SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100")
-                .bind(starting_at)
-                .bind(min_offset)
+            // language=SQL
+            const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
+            sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)
         }
         Selector::Hot(max_offset) => {
-            sqlx::query_as("SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time > now() - $2 ORDER BY account_id LIMIT 100")
+            // language=SQL
+            const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time > now() - $2 ORDER BY account_id LIMIT 100";
+            sqlx::query_as(QUERY).bind(starting_at).bind(max_offset)
+        }
+        Selector::Cold(min_offset, max_offset) => {
+            // language=SQL
+            const QUERY: &str = "
+                SELECT * FROM accounts
+                WHERE account_id > $1 AND last_battle_time BETWEEN now() - $2 AND now() - $3
+                ORDER BY account_id
+                LIMIT 100
+            ";
+            sqlx::query_as(QUERY)
                 .bind(starting_at)
                 .bind(max_offset)
-        },
-        _ => unimplemented!(),
+                .bind(min_offset)
+        }
     };
     let accounts = query
         .fetch_all(connection)
