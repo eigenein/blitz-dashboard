@@ -33,7 +33,6 @@ impl TotalCrawlerMetrics {
         let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let cold_aps = self.cold.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_aps = self.hot.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
-        let total_aps = hot_aps + cold_aps;
         let cold_tps = self.cold.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_tps = self.hot.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let cold_lag_secs = self.cold.max_lag_secs.swap(0, Ordering::Relaxed);
@@ -43,7 +42,7 @@ impl TotalCrawlerMetrics {
 
         log::info!(
             concat!(
-                "RPS: {rps:.1} V: {velocity:.0}%",
+                "RPS: {rps:.1}",
                 " | ",
                 "APS: 🔥{hot_aps:.0} 🧊{cold_aps:.0}",
                 " | ",
@@ -54,7 +53,6 @@ impl TotalCrawlerMetrics {
                 "🔥#{last_hot_account_id} 🧊#{last_cold_account_id}",
             ),
             rps = rps,
-            velocity = total_aps / rps,
             hot_aps = hot_aps,
             cold_aps = cold_aps,
             hot_tps = hot_tps,
