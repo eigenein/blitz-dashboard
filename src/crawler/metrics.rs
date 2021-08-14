@@ -40,7 +40,7 @@ impl TotalCrawlerMetrics {
 
         log::info!(
             concat!(
-                "RPS: {rps:.1} ({rps_utilization:.0}%)",
+                "RPS: {rps:.1} {rps_utilization:.0}%",
                 " | ",
                 "APS: {total_aps:.0} = 🔥{hot_aps:.0} 🧊{cold_aps:.0}",
                 " | ",

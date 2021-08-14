@@ -90,7 +90,7 @@ fn new_wargaming_api(
 ) -> crate::Result<WargamingApi> {
     WargamingApi::new(
         application_id,
-        StdDuration::from_millis(1500),
+        StdDuration::from_millis(3000),
         request_counter,
     )
 }

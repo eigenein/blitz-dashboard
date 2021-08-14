@@ -55,6 +55,8 @@ fn get_batches_from(
                 let pointer = item.id;
                 Ok(Some((batch, (connection, pointer))))
             }
+
+            // FIXME: this doesn't necessarily mean that we've reached the table end.
             None => Ok(None),
         }
     })
