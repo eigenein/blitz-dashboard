@@ -40,11 +40,9 @@ impl TotalCrawlerMetrics {
         let cold_aps = self.cold.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_aps = self.hot.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
 
-        let frozen_tps = self.frozen.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let cold_tps = self.cold.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_tps = self.hot.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
 
-        let frozen_lag_secs = self.frozen.max_lag_secs.swap(0, Ordering::Relaxed);
         let cold_lag_secs = self.cold.max_lag_secs.swap(0, Ordering::Relaxed);
         let hot_lag_secs = self.hot.max_lag_secs.swap(0, Ordering::Relaxed);
 
@@ -56,9 +54,9 @@ impl TotalCrawlerMetrics {
                 " | ",
                 "APS: {hot_aps:.0} - {cold_aps:.0} - {frozen_aps:.0}",
                 " | ",
-                "TPS: {hot_tps:.1} - {cold_tps:.2} - {frozen_tps:.3}",
+                "TPS: {hot_tps:.1} - {cold_tps:.2}",
                 " | ",
-                "max lag: {hot_lag} - {cold_lag} - {frozen_lag}",
+                "max lag: {hot_lag} - {cold_lag}",
                 " | ",
                 "#{last_hot_account_id} - #{last_cold_account_id} - #{last_frozen_account_id}",
             ),
@@ -68,13 +66,11 @@ impl TotalCrawlerMetrics {
             frozen_aps = frozen_aps,
             hot_tps = hot_tps,
             cold_tps = cold_tps,
-            frozen_tps = frozen_tps,
             last_hot_account_id = self.hot.last_account_id.load(Ordering::Relaxed),
             last_cold_account_id = self.cold.last_account_id.load(Ordering::Relaxed),
             last_frozen_account_id = self.frozen.last_account_id.load(Ordering::Relaxed),
             hot_lag = humantime::format_duration(StdDuration::from_secs(hot_lag_secs)),
             cold_lag = humantime::format_duration(StdDuration::from_secs(cold_lag_secs)),
-            frozen_lag = humantime::format_duration(StdDuration::from_secs(frozen_lag_secs)),
         );
     }
 }

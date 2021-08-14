@@ -7,15 +7,23 @@ use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
+/// Specifies an account selection criteria for a batch stream.
 #[derive(Debug, Copy, Clone)]
 pub enum Selector {
-    /// Select accounts which played sooner than the specified offset.
+    /// Select accounts which last played sooner than the specified offset from now.
+    /// Intended to scan accounts which are currently playing.
+    /// The greater – the better, however, keep the hot maximum lag under 5-7 minutes.
     Hot(Duration),
 
-    /// Select accounts which played earlier than the specified offset.
+    /// Select accounts which last played earlier than the specified offset from now.
+    /// Or, in other words, which haven't player for a long time.
+    /// The greater – the better, however, keep the cold maximum lag under 30 minutes.
     Frozen(Duration),
 
     /// Select accounts where last battle time is in between the specified offsets from now.
+    /// Represents a last battle time interval between «hot» and «frozen» offsets.
+    /// Intended to scan accounts which have just started playing again after a pause,
+    /// and allow «picking them up» by the hot sub-crawler.
     Cold(Duration, Duration),
 }
 

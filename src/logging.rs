@@ -1,7 +1,7 @@
-use log::{Level, LevelFilter, Log, Metadata, Record};
-
-use sentry::integrations::log::{LogFilter, SentryLogger};
 use std::io::Write;
+
+use log::{Level, LevelFilter, Log, Metadata, Record};
+use sentry::integrations::log::{LogFilter, SentryLogger};
 
 /// Initialises logging.
 pub fn init(max_level: LevelFilter) -> anyhow::Result<()> {

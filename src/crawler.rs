@@ -22,6 +22,11 @@ use crate::wargaming::WargamingApi;
 mod batch_stream;
 mod metrics;
 
+/// Runs the full-featured account crawler, that infinitely scans all the accounts
+/// in the database.
+///
+/// Spawns 3 independent sub-crawlers: «hot», «cold», and «frozen». See also the `Selector` enum.
+/// Intended to be run as a system service.
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
@@ -63,6 +68,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     Ok(())
 }
 
+/// Performs a very slow one-time account scan.
+/// Spawns a single sub-crawler which unconditionally inserts and/or updates
+/// accounts in the specified range.
+///
+/// This is a technical script which is intended to be run one time for an entire region
+/// to populate the database.
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
