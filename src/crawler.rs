@@ -200,10 +200,7 @@ impl Crawler {
                 .await?;
             self.insert_vehicles(&mut *connection, &tanks).await?;
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
-            self.metrics
-                .n_updated_accounts
-                .fetch_add(1, Ordering::Relaxed);
-            self.metrics.total_lag_secs.fetch_add(
+            self.metrics.max_lag_secs.fetch_max(
                 (Utc::now() - new_info.base.last_battle_time)
                     .num_seconds()
                     .try_into()?,

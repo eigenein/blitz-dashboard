@@ -13,10 +13,9 @@ pub struct TotalCrawlerMetrics {
 #[derive(Clone)]
 pub struct CrawlerMetrics {
     pub n_accounts: Arc<AtomicU32>,
-    pub n_updated_accounts: Arc<AtomicU64>,
     pub n_tanks: Arc<AtomicU32>,
     pub last_account_id: Arc<AtomicI32>,
-    pub total_lag_secs: Arc<AtomicU64>,
+    pub max_lag_secs: Arc<AtomicU64>,
 }
 
 impl TotalCrawlerMetrics {
@@ -37,8 +36,8 @@ impl TotalCrawlerMetrics {
         let total_aps = hot_aps + cold_aps;
         let cold_tps = self.cold.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let hot_tps = self.hot.n_tanks.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
-        let cold_lag = self.cold.average_lag();
-        let hot_lag = self.hot.average_lag();
+        let cold_lag_secs = self.cold.max_lag_secs.swap(0, Ordering::Relaxed);
+        let hot_lag_secs = self.hot.max_lag_secs.swap(0, Ordering::Relaxed);
 
         self.start = Instant::now();
 
@@ -50,7 +49,7 @@ impl TotalCrawlerMetrics {
                 " | ",
                 "TPS: 🔥{hot_tps:.1} 🧊{cold_tps:.2}",
                 " | ",
-                "lag: 🔥{hot_lag} 🧊{cold_lag}",
+                "max lag: 🔥{hot_lag} 🧊{cold_lag}",
                 " | ",
                 "🔥#{last_hot_account_id} 🧊#{last_cold_account_id}",
             ),
@@ -62,8 +61,8 @@ impl TotalCrawlerMetrics {
             cold_tps = cold_tps,
             last_hot_account_id = self.hot.last_account_id.load(Ordering::Relaxed),
             last_cold_account_id = self.cold.last_account_id.load(Ordering::Relaxed),
-            hot_lag = humantime::format_duration(hot_lag),
-            cold_lag = humantime::format_duration(cold_lag),
+            hot_lag = humantime::format_duration(StdDuration::from_secs(hot_lag_secs)),
+            cold_lag = humantime::format_duration(StdDuration::from_secs(cold_lag_secs)),
         );
     }
 }
@@ -72,17 +71,9 @@ impl CrawlerMetrics {
     pub fn new() -> Self {
         Self {
             n_accounts: Arc::new(AtomicU32::new(0)),
-            n_updated_accounts: Arc::new(AtomicU64::new(0)),
             n_tanks: Arc::new(AtomicU32::new(0)),
             last_account_id: Arc::new(AtomicI32::new(0)),
-            total_lag_secs: Arc::new(AtomicU64::new(0)),
+            max_lag_secs: Arc::new(AtomicU64::new(0)),
         }
-    }
-
-    pub fn average_lag(&self) -> StdDuration {
-        StdDuration::from_secs(
-            self.total_lag_secs.swap(0, Ordering::Relaxed)
-                / self.n_updated_accounts.swap(0, Ordering::Relaxed).max(1),
-        )
     }
 }
