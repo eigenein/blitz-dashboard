@@ -7,6 +7,7 @@ use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::serde::deserialize_duration_seconds;
+use crate::statistics::ConfidenceInterval;
 
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
@@ -65,7 +66,7 @@ impl AllStatistics {
         self.damage_dealt as f64 / self.battles as f64
     }
 
-    pub fn win_rate(&self) -> f64 {
+    pub fn current_win_rate(&self) -> f64 {
         self.wins as f64 / self.battles as f64
     }
 
@@ -75,6 +76,14 @@ impl AllStatistics {
 
     pub fn hit_rate(&self) -> f64 {
         self.hits as f64 / self.shots as f64
+    }
+
+    pub fn frags_per_battle(&self) -> f64 {
+        self.frags as f64 / self.battles as f64
+    }
+
+    pub fn true_win_rate(&self) -> ConfidenceInterval {
+        ConfidenceInterval::default_wilson_score_interval(self.battles, self.wins)
     }
 }
 

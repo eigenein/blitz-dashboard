@@ -329,7 +329,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(stats_delta.frags as f64 / stats_delta.battles as f64, 1)) }
+                                                        p.title { (render_f64(stats_delta.frags_per_battle(), 1)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -348,7 +348,7 @@ pub async fn get(
                         div.tile.is-ancestor {
                             @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
-                                    @let period_win_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.wins);
+                                    @let period_win_rate = stats_delta.true_win_rate();
                                     div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&total_win_rate))) {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
@@ -358,7 +358,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средний" }
-                                                        p.title { (render_percentage(stats_delta.win_rate())) }
+                                                        p.title { (render_percentage(stats_delta.current_win_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -455,8 +455,8 @@ pub async fn get(
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let vehicle = get_vehicle(tank.tank_id);
-                                                @let expected_win_rate = ConfidenceInterval::default_wilson_score_interval(tank.all_statistics.battles, tank.all_statistics.wins);
-                                                @let win_rate_ordering = expected_win_rate.partial_cmp(&total_win_rate);
+                                                @let true_win_rate = tank.all_statistics.true_win_rate();
+                                                @let win_rate_ordering = true_win_rate.partial_cmp(&total_win_rate);
 
                                                 tr.(partial_cmp_class(win_rate_ordering)) {
                                                     (vehicle_th(&vehicle))
@@ -475,20 +475,20 @@ pub async fn get(
                                                         (tank.all_statistics.wins)
                                                     }
 
-                                                    @let win_rate = tank.all_statistics.win_rate();
+                                                    @let win_rate = tank.all_statistics.current_win_rate();
                                                     td data-sort="win-rate" data-value=(win_rate) {
                                                         strong { (render_percentage(win_rate)) }
                                                     }
 
                                                     td.is-white-space-nowrap
                                                         data-sort="true-win-rate-mean"
-                                                        data-value=(expected_win_rate.mean)
+                                                        data-value=(true_win_rate.mean)
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span {
-                                                                strong { (render_percentage(expected_win_rate.mean)) }
-                                                                span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
-                                                                    " ±" (render_f64(100.0 * expected_win_rate.margin, 1))
+                                                                strong { (render_percentage(true_win_rate.mean)) }
+                                                                span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
+                                                                    " ±" (render_f64(100.0 * true_win_rate.margin, 1))
                                                                 }
                                                                 (partial_cmp_icon(win_rate_ordering))
                                                             }
@@ -500,13 +500,13 @@ pub async fn get(
                                                         (render_f64(wins_per_hour, 1))
                                                     }
 
-                                                    @let expected_wins_per_hour = expected_win_rate * tank.battles_per_hour();
+                                                    @let expected_wins_per_hour = true_win_rate * tank.battles_per_hour();
                                                     td.is-white-space-nowrap
                                                         data-sort="expected-wins-per-hour"
                                                         data-value=(expected_wins_per_hour.mean)
                                                     {
                                                         strong { (render_f64(expected_wins_per_hour.mean, 1)) }
-                                                        span.(margin_class(expected_win_rate.margin, 0.1, 0.25)) {
+                                                        span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
                                                             " ±" (render_f64(expected_wins_per_hour.margin, 1))
                                                         }
                                                     }
@@ -519,7 +519,7 @@ pub async fn get(
                                                         }
                                                     }
 
-                                                    @let expected_gold = 10.0 + vehicle.tier as f64 * expected_win_rate;
+                                                    @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
                                                     td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
