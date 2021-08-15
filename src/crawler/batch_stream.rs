@@ -1,3 +1,5 @@
+use std::time::Duration as StdDuration;
+
 use anyhow::Context;
 use futures::{stream, Stream, StreamExt};
 use sqlx::PgPool;
@@ -18,13 +20,14 @@ pub fn get_infinite_batches_stream(
         move |(connection, mut inner_stream)| async move {
             match inner_stream.next().await {
                 Some(item) => Some((item, (connection, inner_stream))),
-                None => {
+                None => loop {
                     let mut new_stream = Box::pin(get_batches_stream(connection.clone(), selector));
-                    new_stream
-                        .next()
-                        .await
-                        .map(|item| (item, (connection, new_stream)))
-                }
+                    if let Some(item) = new_stream.next().await {
+                        break Some((item, (connection.clone(), new_stream)));
+                    }
+                    log::warn!("New stream is empty. Sleeping…");
+                    tokio::time::sleep(StdDuration::from_secs(60)).await;
+                },
             }
         },
     )
@@ -43,8 +46,6 @@ fn get_batches_stream(
                 let pointer = last_item.id;
                 Ok(Some((batch, (connection, pointer))))
             }
-
-            // FIXME: this doesn't necessarily mean that we've reached the table end.
             None => Ok(None),
         }
     })
