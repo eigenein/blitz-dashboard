@@ -43,24 +43,26 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let cold_crawler = Crawler::new(api.clone(), database.clone()).await?;
     let frozen_crawler = Crawler::new(api.clone(), database.clone()).await?;
 
-    log::info!("Starting…");
     futures::future::try_join4(
         hot_crawler.run(
-            get_infinite_batches_stream(database.clone(), Selector::Hot(opts.hot_offset)),
-            opts.n_hot_tasks,
+            get_infinite_batches_stream(database.clone(), Selector::SoonerThan(opts.hot_offset)),
+            1,
             false,
         ),
         cold_crawler.run(
             get_infinite_batches_stream(
                 database.clone(),
-                Selector::Cold(opts.hot_offset, opts.frozen_offset),
+                Selector::Between(opts.hot_offset, opts.frozen_offset),
             ),
-            opts.n_cold_tasks,
+            1,
             false,
         ),
         frozen_crawler.run(
-            get_infinite_batches_stream(database.clone(), Selector::Frozen(opts.frozen_offset)),
-            opts.crawler.n_frozen_tasks,
+            get_infinite_batches_stream(
+                database.clone(),
+                Selector::EarlierThan(opts.frozen_offset),
+            ),
+            1,
             false,
         ),
         log_metrics(
@@ -95,7 +97,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Ok);
     let crawler = Crawler::new(api.clone(), database).await?;
     futures::future::try_join(
-        crawler.run(stream, opts.crawler.n_frozen_tasks, true),
+        crawler.run(stream, opts.n_tasks, true),
         log_metrics(
             api.request_counter.clone(),
             Arc::new(Mutex::new(SubCrawlerMetrics::default())),

@@ -11,7 +11,7 @@ use structopt::StructOpt;
 #[structopt(rename_all = "kebab-case")]
 pub struct Opts {
     /// Sentry DSN
-    #[structopt(short, long, env = "BLITZ_DASHBOARD_SENTRY_DSN")]
+    #[structopt(short, long)]
     pub sentry_dsn: Option<String>,
 
     /// Increases log verbosity
@@ -50,19 +50,19 @@ pub struct WebOpts {
     pub connections: ConnectionOpts,
 
     /// Web application bind host
-    #[structopt(long, default_value = "::", env = "BLITZ_DASHBOARD_WEB_HOST")]
+    #[structopt(long, default_value = "::")]
     pub host: String,
 
     /// Web application bind port
-    #[structopt(short, long, default_value = "8081", env = "BLITZ_DASHBOARD_WEB_PORT")]
+    #[structopt(short, long, default_value = "8081")]
     pub port: u16,
 
     /// Yandex.Metrika counter number
-    #[structopt(long, env = "BLITZ_DASHBOARD_WEB_YANDEX_METRIKA")]
+    #[structopt(long)]
     pub yandex_metrika: Option<String>,
 
     /// Google Analytics measurement ID
-    #[structopt(long, env = "BLITZ_DASHBOARD_WEB_GTAG")]
+    #[structopt(long)]
     pub gtag: Option<String>,
 }
 
@@ -72,11 +72,14 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub crawler: CommonCrawlerOpts,
 
+    /// Time offsets between different sub-crawlers
+    #[structopt(short, long = "offset", parse(try_from_str = parse_duration))]
+    pub offsets: Vec<Duration>,
+
     /// «Hot» accounts maximum last battle time offset from now
     #[structopt(
         long,
         default_value = "2hour",
-        env = "BLITZ_DASHBOARD_CRAWLER_HOT_OFFSET",
         parse(try_from_str = parse_duration),
     )]
     pub hot_offset: Duration,
@@ -85,28 +88,9 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "7days",
-        env = "BLITZ_DASHBOARD_CRAWLER_FROZEN_OFFSET",
         parse(try_from_str = parse_duration),
     )]
     pub frozen_offset: Duration,
-
-    /// Number of tasks for the «cold» sub-crawler.
-    #[structopt(
-        long,
-        default_value = "1",
-        env = "BLITZ_DASHBOARD_CRAWLER_COLD_TASK_COUNT",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_cold_tasks: usize,
-
-    /// Number of tasks for the «hot» sub-crawler.
-    #[structopt(
-        long,
-        default_value = "2",
-        env = "BLITZ_DASHBOARD_CRAWLER_HOT_TASK_COUNT",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_hot_tasks: usize,
 }
 
 fn parse_duration(value: &str) -> crate::Result<Duration> {
@@ -137,20 +121,20 @@ pub struct CrawlAccountsOpts {
     pub crawler: CommonCrawlerOpts,
 
     /// Starting account ID
-    #[structopt(
-        long,
-        env = "BLITZ_DASHBOARD_CRAWLER_START_ID",
-        parse(try_from_str = parse_account_id),
-    )]
+    #[structopt(long, parse(try_from_str = parse_account_id))]
     pub start_id: i32,
 
     /// Ending account ID (non-inclusive)
+    #[structopt(long, parse(try_from_str = parse_account_id))]
+    pub end_id: i32,
+
+    /// Number of tasks
     #[structopt(
         long,
-        env = "BLITZ_DASHBOARD_CRAWLER_END_ID",
-        parse(try_from_str = parse_account_id),
+        default_value = "1",
+        parse(try_from_str = parse_task_count),
     )]
-    pub end_id: i32,
+    pub n_tasks: usize,
 }
 
 fn parse_account_id(value: &str) -> crate::Result<i32> {
@@ -165,11 +149,11 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
 #[derive(StructOpt)]
 pub struct ConnectionOpts {
     /// PostgreSQL database URI
-    #[structopt(short, long, env = "BLITZ_DASHBOARD_DATABASE_URI")]
+    #[structopt(short, long)]
     pub database: String,
 
     /// Wargaming.net API application ID
-    #[structopt(short, long, env = "BLITZ_DASHBOARD_APPLICATION_ID")]
+    #[structopt(short, long)]
     pub application_id: String,
 }
 
@@ -177,13 +161,4 @@ pub struct ConnectionOpts {
 pub struct CommonCrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
-
-    /// Number of tasks for the «frozen» sub-crawler.
-    #[structopt(
-        long,
-        default_value = "1",
-        env = "BLITZ_DASHBOARD_CRAWLER_FROZEN_TASK_COUNT",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_frozen_tasks: usize,
 }

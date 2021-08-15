@@ -12,18 +12,20 @@ pub type Batch = Vec<BaseAccountInfo>;
 pub enum Selector {
     /// Select accounts which last played sooner than the specified offset from now.
     /// Intended to scan accounts which are currently playing.
-    /// The greater – the better, however, keep the hot maximum lag under 5-7 minutes.
-    Hot(Duration),
+    /// The greater – the better, however, keep the maximum lag under 5-7 minutes.
+    SoonerThan(Duration),
 
     /// Select accounts where last battle time is in between the specified offsets from now.
-    /// Represents a last battle time interval between «hot» and «frozen» offsets.
     /// Intended to scan accounts which have just started playing again after a pause,
-    /// and allow «picking them up» by the hot sub-crawler.
-    Cold(Duration, Duration),
+    /// and allow «picking them up» by a «faster» sub-crawler.
+    Between(Duration, Duration),
 
     /// Select accounts which last played earlier than the specified offset from now.
     /// Or, in other words, which haven't played for a long time.
-    Frozen(Duration),
+    EarlierThan(Duration),
+
+    /// Select all accounts
+    All,
 }
 
 /// Generates an infinite stream of batches, looping through the entire account table.
@@ -38,14 +40,6 @@ pub fn get_infinite_batches_stream(
             match inner_stream.next().await {
                 Some(item) => Some((item, (connection, inner_stream))),
                 None => {
-                    log::info!(
-                        "{}: starting over.",
-                        match selector {
-                            Selector::Cold(_, _) => "Cold",
-                            Selector::Frozen(_) => "Frozen",
-                            Selector::Hot(_) => "Hot",
-                        }
-                    );
                     let mut new_stream = Box::pin(get_batches_stream(connection.clone(), selector));
                     new_stream
                         .next()
@@ -62,11 +56,12 @@ fn get_batches_stream(
     connection: PgPool,
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
+    log::info!("Starting stream: {:?}.", selector);
     stream::try_unfold((connection, 0), move |(connection, pointer)| async move {
         let batch = retrieve_batch(&connection, pointer, selector).await?;
         match batch.last() {
-            Some(item) => {
-                let pointer = item.id;
+            Some(last_item) => {
+                let pointer = last_item.id;
                 Ok(Some((batch, (connection, pointer))))
             }
 
@@ -83,17 +78,23 @@ async fn retrieve_batch(
     selector: Selector,
 ) -> crate::Result<Vec<BaseAccountInfo>> {
     let query = match selector {
-        Selector::Frozen(min_offset) => {
+        Selector::All => {
+            // language=SQL
+            const QUERY: &str =
+                "SELECT * FROM accounts WHERE account_id > $1 ORDER BY account_id LIMIT 100";
+            sqlx::query_as(QUERY).bind(starting_at)
+        }
+        Selector::EarlierThan(min_offset) => {
             // language=SQL
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)
         }
-        Selector::Hot(max_offset) => {
+        Selector::SoonerThan(max_offset) => {
             // language=SQL
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time > now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(max_offset)
         }
-        Selector::Cold(min_offset, max_offset) => {
+        Selector::Between(min_offset, max_offset) => {
             assert!(min_offset < max_offset);
             // language=SQL
             const QUERY: &str = "
