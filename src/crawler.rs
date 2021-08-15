@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use chrono::{TimeZone, Utc};
+use futures::future::BoxFuture;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
@@ -43,36 +44,36 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let cold_crawler = Crawler::new(api.clone(), database.clone()).await?;
     let frozen_crawler = Crawler::new(api.clone(), database.clone()).await?;
 
-    futures::future::try_join4(
-        hot_crawler.run(
+    let futures: Vec<BoxFuture<crate::Result>> = vec![
+        Box::pin(hot_crawler.run(
             get_infinite_batches_stream(database.clone(), Selector::SoonerThan(opts.hot_offset)),
             1,
             false,
-        ),
-        cold_crawler.run(
+        )),
+        Box::pin(cold_crawler.run(
             get_infinite_batches_stream(
                 database.clone(),
                 Selector::Between(opts.hot_offset, opts.frozen_offset),
             ),
             1,
             false,
-        ),
-        frozen_crawler.run(
+        )),
+        Box::pin(frozen_crawler.run(
             get_infinite_batches_stream(
                 database.clone(),
                 Selector::EarlierThan(opts.frozen_offset),
             ),
             1,
             false,
-        ),
-        log_metrics(
+        )),
+        Box::pin(log_metrics(
             api.request_counter.clone(),
             hot_crawler.metrics.clone(),
             cold_crawler.metrics.clone(),
             frozen_crawler.metrics.clone(),
-        ),
-    )
-    .await?;
+        )),
+    ];
+    futures::future::try_join_all(futures).await?;
 
     Ok(())
 }

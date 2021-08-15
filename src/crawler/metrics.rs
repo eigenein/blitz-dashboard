@@ -39,10 +39,12 @@ pub async fn log_metrics(
 ) -> crate::Result {
     loop {
         let start_instant = Instant::now();
+        let n_requests_start = request_counter.load(Ordering::Relaxed);
         tokio::time::sleep(StdDuration::from_secs(20)).await;
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
+        let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
-        let rps = request_counter.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
+        let rps = n_requests as f64 / elapsed_secs;
 
         let mut hot = hot.lock().await;
         let mut cold = cold.lock().await;
