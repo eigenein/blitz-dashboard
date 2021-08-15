@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use chrono::{TimeZone, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use futures::future::BoxFuture;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
@@ -111,6 +111,24 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 
 fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
     WargamingApi::new(application_id, StdDuration::from_millis(3000))
+}
+
+/// Converts user-defined offsets to sub-crawler selectors.
+fn convert_offsets_to_selectors(offsets: &[Duration]) -> Vec<Selector> {
+    let mut selectors = Vec::new();
+    let mut last_offset: Option<&Duration> = None;
+    for offset in offsets {
+        match last_offset {
+            Some(last_offset) => selectors.push(Selector::Between(*last_offset, *offset)),
+            None => selectors.push(Selector::SoonerThan(*offset)),
+        }
+        last_offset = Some(offset);
+    }
+    match last_offset {
+        Some(offset) => selectors.push(Selector::EarlierThan(*offset)),
+        None => selectors.push(Selector::All),
+    }
+    selectors
 }
 
 impl Crawler {
@@ -238,5 +256,38 @@ impl Crawler {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn convert_no_offsets_ok() {
+        assert_eq!(convert_offsets_to_selectors(&[]), vec![Selector::All]);
+    }
+
+    #[test]
+    fn convert_one_offset_ok() {
+        let offset: Duration = Duration::seconds(1);
+        assert_eq!(
+            convert_offsets_to_selectors(&[offset]),
+            vec![Selector::SoonerThan(offset), Selector::EarlierThan(offset)]
+        );
+    }
+
+    #[test]
+    fn convert_two_offsets_ok() {
+        let offset_1: Duration = Duration::seconds(1);
+        let offset_2: Duration = Duration::seconds(2);
+        assert_eq!(
+            convert_offsets_to_selectors(&[offset_1, offset_2]),
+            vec![
+                Selector::SoonerThan(offset_1),
+                Selector::Between(offset_1, offset_2),
+                Selector::EarlierThan(offset_2),
+            ]
+        );
     }
 }

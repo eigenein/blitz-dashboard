@@ -7,8 +7,9 @@ use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
+// TODO: move to a separate module.
 /// Specifies an account selection criteria for a batch stream.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Selector {
     /// Select accounts which last played sooner than the specified offset from now.
     /// Intended to scan accounts which are currently playing.
@@ -99,7 +100,7 @@ async fn retrieve_batch(
             // language=SQL
             const QUERY: &str = "
                 SELECT * FROM accounts
-                WHERE account_id > $1 AND last_battle_time BETWEEN now() - $2 AND now() - $3
+                WHERE account_id > $1 AND last_battle_time BETWEEN SYMMETRIC now() - $2 AND now() - $3
                 ORDER BY account_id
                 LIMIT 100
             ";
