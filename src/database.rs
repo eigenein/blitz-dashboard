@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
@@ -123,11 +121,7 @@ where
     Ok(())
 }
 
-pub async fn insert_tank_snapshots(
-    connection: &mut PgConnection,
-    tanks: &[Tank],
-    counter: Arc<AtomicU32>,
-) -> crate::Result {
+pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
 
     // language=SQL
@@ -174,7 +168,6 @@ pub async fn insert_tank_snapshots(
             .execute(&mut *connection)
             .await
             .context("failed to insert tank snapshots")?;
-        counter.fetch_add(1, Ordering::Relaxed);
     }
     Ok(())
 }
