@@ -10,8 +10,9 @@ use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch, Selector};
+use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
+use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
@@ -21,6 +22,7 @@ use crate::wargaming::WargamingApi;
 
 mod batch_stream;
 mod metrics;
+mod selector;
 
 pub struct Crawler {
     api: WargamingApi,
