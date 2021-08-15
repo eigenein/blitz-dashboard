@@ -22,7 +22,6 @@ use crate::wargaming::WargamingApi;
 mod batch_stream;
 mod metrics;
 
-#[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
@@ -134,13 +133,17 @@ impl Crawler {
         fake_infos: bool,
     ) -> crate::Result {
         stream
-            .map(|batch| async move { self.clone().crawl_batch(batch?, fake_infos).await })
+            .map(|batch| async move { self.crawl_batch(batch?, fake_infos).await })
             .buffer_unordered(n_tasks)
             .try_collect()
             .await
     }
 
-    async fn crawl_batch(self, old_infos: Vec<BaseAccountInfo>, fake_infos: bool) -> crate::Result {
+    async fn crawl_batch(
+        &self,
+        old_infos: Vec<BaseAccountInfo>,
+        fake_infos: bool,
+    ) -> crate::Result {
         let account_ids: SmallVec<[i32; 128]> =
             old_infos.iter().map(|account| account.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
