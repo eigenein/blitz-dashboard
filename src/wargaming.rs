@@ -22,9 +22,10 @@ pub mod response;
 
 #[derive(Clone)]
 pub struct WargamingApi {
+    pub request_counter: Arc<AtomicU32>,
+
     application_id: Arc<String>,
     client: reqwest::Client,
-    request_counter: Arc<AtomicU32>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -32,11 +33,7 @@ pub struct WargamingApi {
 pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
-    pub fn new(
-        application_id: &str,
-        timeout: StdDuration,
-        request_counter: Arc<AtomicU32>,
-    ) -> crate::Result<WargamingApi> {
+    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -65,7 +62,7 @@ impl WargamingApi {
                 .deflate(true)
                 .tcp_nodelay(true)
                 .build()?,
-            request_counter,
+            request_counter: Arc::new(AtomicU32::new(0)),
         };
         Ok(this)
     }

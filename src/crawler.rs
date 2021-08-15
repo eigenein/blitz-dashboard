@@ -31,15 +31,13 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let metrics = CrawlerMetrics::new();
-    let api = new_wargaming_api(
-        &opts.crawler.connections.application_id,
-        metrics.n_api_requests.clone(),
-    )?;
+    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
 
     let hot_crawler = Crawler::new(api.clone(), database.clone(), metrics.hot.clone()).await?;
     let cold_crawler = Crawler::new(api.clone(), database.clone(), metrics.cold.clone()).await?;
-    let frozen_crawler = Crawler::new(api, database.clone(), metrics.frozen.clone()).await?;
+    let frozen_crawler =
+        Crawler::new(api.clone(), database.clone(), metrics.frozen.clone()).await?;
 
     log::info!("Starting…");
     futures::future::try_join4(
@@ -61,7 +59,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
             opts.crawler.n_frozen_tasks,
             false,
         ),
-        log_metrics(metrics),
+        log_metrics(metrics, api.request_counter.clone()),
     )
     .await?;
 
@@ -78,10 +76,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let metrics = CrawlerMetrics::new();
-    let api = new_wargaming_api(
-        &opts.crawler.connections.application_id,
-        metrics.n_api_requests.clone(),
-    )?;
+    let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| BaseAccountInfo {
@@ -90,31 +85,27 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         })
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api, database, metrics.frozen.clone()).await?;
+    let crawler = Crawler::new(api.clone(), database, metrics.frozen.clone()).await?;
     futures::future::try_join(
         crawler.run(stream, opts.crawler.n_frozen_tasks, true),
-        log_metrics(metrics),
+        log_metrics(metrics, api.request_counter.clone()),
     )
     .await?;
     Ok(())
 }
 
-async fn log_metrics(mut metrics: CrawlerMetrics) -> crate::Result {
+async fn log_metrics(
+    mut metrics: CrawlerMetrics,
+    request_counter: Arc<AtomicU32>,
+) -> crate::Result {
     loop {
-        metrics.log();
+        metrics.log(&request_counter);
         tokio::time::sleep(StdDuration::from_secs(20)).await;
     }
 }
 
-fn new_wargaming_api(
-    application_id: &str,
-    request_counter: Arc<AtomicU32>,
-) -> crate::Result<WargamingApi> {
-    WargamingApi::new(
-        application_id,
-        StdDuration::from_millis(3000),
-        request_counter,
-    )
+fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
+    WargamingApi::new(application_id, StdDuration::from_millis(3000))
 }
 
 #[derive(Clone)]

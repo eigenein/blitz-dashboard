@@ -1,7 +1,5 @@
 use std::net::IpAddr;
 use std::str::FromStr;
-use std::sync::atomic::AtomicU32;
-use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use maud::PreEscaped;
@@ -30,7 +28,6 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     let api = WargamingApi::new(
         &opts.connections.application_id,
         StdDuration::from_millis(1500),
-        Arc::new(AtomicU32::new(0)),
     )?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone()))

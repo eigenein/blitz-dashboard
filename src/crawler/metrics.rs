@@ -3,8 +3,6 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 pub struct CrawlerMetrics {
-    pub n_api_requests: Arc<AtomicU32>,
-
     pub hot: SubCrawlerMetrics,
     pub cold: SubCrawlerMetrics,
     pub frozen: SubCrawlerMetrics,
@@ -33,7 +31,6 @@ pub struct SubCrawlerMetrics {
 impl CrawlerMetrics {
     pub fn new() -> Self {
         Self {
-            n_api_requests: Arc::new(AtomicU32::new(0)),
             start: Instant::now(),
             hot: SubCrawlerMetrics::new(),
             cold: SubCrawlerMetrics::new(),
@@ -42,9 +39,9 @@ impl CrawlerMetrics {
     }
 
     /// Logs the current metrics and resets the counters.
-    pub fn log(&mut self) {
+    pub fn log(&mut self, n_api_requests: &Arc<AtomicU32>) {
         let elapsed_secs = self.start.elapsed().as_secs_f64();
-        let rps = self.n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
+        let rps = n_api_requests.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
 
         let frozen_aps = self.frozen.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
         let cold_aps = self.cold.n_accounts.swap(0, Ordering::Relaxed) as f64 / elapsed_secs;
