@@ -1,9 +1,9 @@
 //! CLI options.
 
 use std::str::FromStr;
+use std::time::Duration as StdDuration;
 
 use anyhow::anyhow;
-use chrono::Duration;
 use log::LevelFilter;
 use structopt::StructOpt;
 
@@ -73,28 +73,24 @@ pub struct CrawlerOpts {
     pub crawler: CommonCrawlerOpts,
 
     /// Time offsets between different sub-crawlers
-    #[structopt(short, long = "offset", parse(try_from_str = parse_duration))]
-    pub offsets: Vec<Duration>,
+    #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
+    pub offsets: Vec<StdDuration>,
 
     /// «Hot» accounts maximum last battle time offset from now
     #[structopt(
         long,
         default_value = "2hour",
-        parse(try_from_str = parse_duration),
+        parse(try_from_str = humantime::parse_duration),
     )]
-    pub hot_offset: Duration,
+    pub hot_offset: StdDuration,
 
     /// «Frozen» accounts minimum last battle time offset from now
     #[structopt(
         long,
         default_value = "7days",
-        parse(try_from_str = parse_duration),
+        parse(try_from_str = humantime::parse_duration),
     )]
-    pub frozen_offset: Duration,
-}
-
-fn parse_duration(value: &str) -> crate::Result<Duration> {
-    Ok(Duration::from_std(humantime::parse_duration(value)?)?)
+    pub frozen_offset: StdDuration,
 }
 
 fn parse_task_count(value: &str) -> crate::Result<usize> {

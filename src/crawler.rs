@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use futures::future::BoxFuture;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
@@ -114,9 +114,9 @@ fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
 }
 
 /// Converts user-defined offsets to sub-crawler selectors.
-fn convert_offsets_to_selectors(offsets: &[Duration]) -> Vec<Selector> {
+fn convert_offsets_to_selectors(offsets: &[StdDuration]) -> Vec<Selector> {
     let mut selectors = Vec::new();
-    let mut last_offset: Option<&Duration> = None;
+    let mut last_offset: Option<&StdDuration> = None;
     for offset in offsets {
         match last_offset {
             Some(last_offset) => selectors.push(Selector::Between(*last_offset, *offset)),
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn convert_one_offset_ok() {
-        let offset: Duration = Duration::seconds(1);
+        let offset = StdDuration::from_secs(1);
         assert_eq!(
             convert_offsets_to_selectors(&[offset]),
             vec![Selector::LaterThan(offset), Selector::EarlierThan(offset)]
@@ -279,8 +279,8 @@ mod tests {
 
     #[test]
     fn convert_two_offsets_ok() {
-        let offset_1: Duration = Duration::seconds(1);
-        let offset_2: Duration = Duration::seconds(2);
+        let offset_1 = StdDuration::from_secs(1);
+        let offset_2 = StdDuration::from_secs(2);
         assert_eq!(
             convert_offsets_to_selectors(&[offset_1, offset_2]),
             vec![
