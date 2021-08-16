@@ -74,6 +74,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
             frozen_crawler.metrics.clone(),
         )),
     ];
+    // TODO: `tokio::spawn()` each sub-crawler?
     futures::future::try_join_all(futures).await?;
 
     Ok(())
@@ -98,16 +99,13 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .chunks(100)
         .map(Ok);
     let crawler = Crawler::new(api.clone(), database).await?;
-    futures::future::try_join(
-        crawler.run(stream, opts.n_tasks, true),
-        log_metrics(
-            api.request_counter.clone(),
-            Arc::new(Mutex::new(SubCrawlerMetrics::default())),
-            Arc::new(Mutex::new(SubCrawlerMetrics::default())),
-            crawler.metrics.clone(),
-        ),
-    )
-    .await?;
+    tokio::spawn(log_metrics(
+        api.request_counter.clone(),
+        Arc::new(Mutex::new(SubCrawlerMetrics::default())),
+        Arc::new(Mutex::new(SubCrawlerMetrics::default())),
+        crawler.metrics.clone(),
+    ));
+    tokio::spawn(async move { crawler.run(stream, opts.n_tasks, true).await }).await??;
     Ok(())
 }
 

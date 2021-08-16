@@ -145,7 +145,7 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
         ON CONFLICT (account_id, tank_id, last_battle_time) DO NOTHING
     ";
     for snapshot in tanks {
-        log::debug!(
+        log::trace!(
             "Inserting #{}/#{} tank snapshot…",
             snapshot.account_id,
             snapshot.tank_id
