@@ -38,7 +38,7 @@ fn get_batches_stream(
     connection: PgPool,
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    log::info!("Starting stream: {:?}.", selector);
+    log::info!("Starting stream: {}.", selector);
     stream::try_unfold((connection, 0), move |(connection, pointer)| async move {
         let batch = retrieve_batch(&connection, pointer, selector).await?;
         match batch.last() {
@@ -70,7 +70,7 @@ async fn retrieve_batch(
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)
         }
-        Selector::SoonerThan(max_offset) => {
+        Selector::LaterThan(max_offset) => {
             // language=SQL
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time > now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(max_offset)

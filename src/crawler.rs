@@ -47,7 +47,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     let futures: Vec<BoxFuture<crate::Result>> = vec![
         Box::pin(hot_crawler.run(
-            get_infinite_batches_stream(database.clone(), Selector::SoonerThan(opts.hot_offset)),
+            get_infinite_batches_stream(database.clone(), Selector::LaterThan(opts.hot_offset)),
             1,
             false,
         )),
@@ -120,7 +120,7 @@ fn convert_offsets_to_selectors(offsets: &[Duration]) -> Vec<Selector> {
     for offset in offsets {
         match last_offset {
             Some(last_offset) => selectors.push(Selector::Between(*last_offset, *offset)),
-            None => selectors.push(Selector::SoonerThan(*offset)),
+            None => selectors.push(Selector::LaterThan(*offset)),
         }
         last_offset = Some(offset);
     }
@@ -273,7 +273,7 @@ mod tests {
         let offset: Duration = Duration::seconds(1);
         assert_eq!(
             convert_offsets_to_selectors(&[offset]),
-            vec![Selector::SoonerThan(offset), Selector::EarlierThan(offset)]
+            vec![Selector::LaterThan(offset), Selector::EarlierThan(offset)]
         );
     }
 
@@ -284,7 +284,7 @@ mod tests {
         assert_eq!(
             convert_offsets_to_selectors(&[offset_1, offset_2]),
             vec![
-                Selector::SoonerThan(offset_1),
+                Selector::LaterThan(offset_1),
                 Selector::Between(offset_1, offset_2),
                 Selector::EarlierThan(offset_2),
             ]
