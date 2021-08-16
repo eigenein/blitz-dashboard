@@ -4,11 +4,11 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use chrono::{TimeZone, Utc};
-use futures::future::BoxFuture;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
+use tokio::task::JoinHandle;
 
 use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
@@ -35,48 +35,44 @@ pub struct Crawler {
 /// in the database.
 ///
 /// Intended to be run as a system service.
-pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
+pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
     let database = crate::database::open(&opts.crawler.connections.database).await?;
 
-    let hot_crawler = Crawler::new(api.clone(), database.clone()).await?;
-    let cold_crawler = Crawler::new(api.clone(), database.clone()).await?;
-    let frozen_crawler = Crawler::new(api.clone(), database.clone()).await?;
+    opts.offsets.sort_unstable();
+    let selectors = convert_offsets_to_selectors(&opts.offsets);
+    for (i, selector) in selectors.iter().enumerate() {
+        log::info!("Sub-crawler #{}: {}.", i, selector);
+    }
 
-    let futures: Vec<BoxFuture<crate::Result>> = vec![
-        Box::pin(hot_crawler.run(
-            get_infinite_batches_stream(database.clone(), Selector::LaterThan(opts.hot_offset)),
-            1,
-            false,
-        )),
-        Box::pin(cold_crawler.run(
-            get_infinite_batches_stream(
-                database.clone(),
-                Selector::Between(opts.hot_offset, opts.frozen_offset),
-            ),
-            1,
-            false,
-        )),
-        Box::pin(frozen_crawler.run(
-            get_infinite_batches_stream(
-                database.clone(),
-                Selector::EarlierThan(opts.frozen_offset),
-            ),
-            1,
-            false,
-        )),
-        Box::pin(log_metrics(
-            api.request_counter.clone(),
-            hot_crawler.metrics.clone(),
-            cold_crawler.metrics.clone(),
-            frozen_crawler.metrics.clone(),
-        )),
-    ];
-    // TODO: `tokio::spawn()` each sub-crawler?
-    futures::future::try_join_all(futures).await?;
+    log::info!("--------------------------------------------------------------------------------");
 
+    let (metrics, handles): (
+        Vec<Arc<Mutex<SubCrawlerMetrics>>>,
+        Vec<JoinHandle<crate::Result>>,
+    ) = stream::iter(selectors)
+        .then(|selector| {
+            let api = api.clone();
+            let database = database.clone();
+            async move {
+                let crawler = Crawler::new(api, database.clone()).await?;
+                let metrics = crawler.metrics.clone();
+                let join_handle = tokio::spawn(async move {
+                    let stream = get_infinite_batches_stream(database, selector);
+                    crawler.run(stream, 1, false).await
+                });
+                Ok::<_, anyhow::Error>((metrics, join_handle))
+            }
+        })
+        .try_collect::<Vec<_>>()
+        .await?
+        .into_iter()
+        .unzip();
+    tokio::spawn(log_metrics(api.request_counter, metrics));
+
+    futures::future::try_join_all(handles).await?;
     Ok(())
 }
 
@@ -101,9 +97,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     let crawler = Crawler::new(api.clone(), database).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
-        Arc::new(Mutex::new(SubCrawlerMetrics::default())),
-        Arc::new(Mutex::new(SubCrawlerMetrics::default())),
-        crawler.metrics.clone(),
+        vec![crawler.metrics.clone()],
     ));
     tokio::spawn(async move { crawler.run(stream, opts.n_tasks, true).await }).await??;
     Ok(())

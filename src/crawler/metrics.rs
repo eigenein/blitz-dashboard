@@ -2,6 +2,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
+use humantime::format_duration;
 use tokio::sync::Mutex;
 
 #[derive(Default)]
@@ -33,9 +34,7 @@ impl SubCrawlerMetrics {
 
 pub async fn log_metrics(
     request_counter: Arc<AtomicU32>,
-    hot: Arc<Mutex<SubCrawlerMetrics>>,
-    cold: Arc<Mutex<SubCrawlerMetrics>>,
-    frozen: Arc<Mutex<SubCrawlerMetrics>>,
+    metrics: Vec<Arc<Mutex<SubCrawlerMetrics>>>,
 ) -> crate::Result {
     loop {
         let start_instant = Instant::now();
@@ -44,49 +43,19 @@ pub async fn log_metrics(
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
-        let rps = n_requests as f64 / elapsed_secs;
+        log::info!("Total RPS: {:.1}", n_requests as f64 / elapsed_secs);
 
-        let mut hot = hot.lock().await;
-        let mut cold = cold.lock().await;
-        let mut frozen = frozen.lock().await;
-
-        let frozen_aps = frozen.n_accounts as f64 / elapsed_secs;
-        let cold_aps = cold.n_accounts as f64 / elapsed_secs;
-        let hot_aps = hot.n_accounts as f64 / elapsed_secs;
-
-        let cold_tps = cold.n_tanks as f64 / elapsed_secs;
-        let hot_tps = hot.n_tanks as f64 / elapsed_secs;
-
-        let cold_lag_secs = cold.max_lag_secs;
-        let hot_lag_secs = hot.max_lag_secs;
-
-        log::info!(
-            concat!(
-                "RPS: {rps:.1}",
-                " | ",
-                "APS: {hot_aps:.0} - {cold_aps:.0} - {frozen_aps:.0}",
-                " | ",
-                "TPS: {hot_tps:.1} - {cold_tps:.2}",
-                " | ",
-                "max lag: {hot_lag} - {cold_lag}",
-                " | ",
-                "#{last_hot_account_id} - #{last_cold_account_id} - #{last_frozen_account_id}",
-            ),
-            rps = rps,
-            hot_aps = hot_aps,
-            cold_aps = cold_aps,
-            frozen_aps = frozen_aps,
-            hot_tps = hot_tps,
-            cold_tps = cold_tps,
-            last_hot_account_id = hot.last_account_id,
-            last_cold_account_id = cold.last_account_id,
-            last_frozen_account_id = frozen.last_account_id,
-            hot_lag = humantime::format_duration(StdDuration::from_secs(hot_lag_secs)),
-            cold_lag = humantime::format_duration(StdDuration::from_secs(cold_lag_secs)),
-        );
-
-        hot.reset();
-        cold.reset();
-        frozen.reset();
+        for (i, metrics) in metrics.iter().enumerate() {
+            let mut metrics = metrics.lock().await;
+            log::info!(
+                "Sub-crawler #{} | max lag: {} | APS: {:.1} | TPS: {:.2} | at: #{}",
+                i,
+                format_duration(StdDuration::from_secs(metrics.max_lag_secs)),
+                metrics.n_accounts as f64 / elapsed_secs,
+                metrics.n_tanks as f64 / elapsed_secs,
+                metrics.last_account_id,
+            );
+            metrics.reset();
+        }
     }
 }
