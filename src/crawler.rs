@@ -28,6 +28,7 @@ pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     n_tasks: usize,
+    fake_infos: bool,
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 }
@@ -58,11 +59,11 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
             let api = api.clone();
             let database = database.clone();
             async move {
-                let crawler = Crawler::new(api, database.clone(), 1).await?;
+                let crawler = Crawler::new(api, database.clone(), 1, false).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
                     let stream = get_infinite_batches_stream(database, selector);
-                    crawler.run(stream, false).await
+                    crawler.run(stream).await
                 });
                 Ok::<_, anyhow::Error>((metrics, join_handle))
             }
@@ -95,12 +96,12 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         })
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, opts.n_tasks).await?;
+    let crawler = Crawler::new(api.clone(), database, opts.n_tasks, true).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
     ));
-    tokio::spawn(async move { crawler.run(stream, true).await }).await??;
+    tokio::spawn(async move { crawler.run(stream).await }).await??;
     Ok(())
 }
 
@@ -127,12 +128,18 @@ fn convert_offsets_to_selectors(offsets: &[StdDuration]) -> Vec<Selector> {
 }
 
 impl Crawler {
-    pub async fn new(api: WargamingApi, database: PgPool, n_tasks: usize) -> crate::Result<Self> {
+    pub async fn new(
+        api: WargamingApi,
+        database: PgPool,
+        n_tasks: usize,
+        fake_infos: bool,
+    ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             api,
             database,
             n_tasks,
+            fake_infos,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -140,13 +147,9 @@ impl Crawler {
     }
 
     /// Runs the crawler on the stream of batches.
-    pub async fn run(
-        &self,
-        stream: impl Stream<Item = crate::Result<Batch>>,
-        fake_infos: bool,
-    ) -> crate::Result {
+    pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
         stream
-            .map(|batch| async move { self.crawl_batch(batch?, fake_infos).await })
+            .map(|batch| async move { self.crawl_batch(batch?, self.fake_infos).await })
             .buffer_unordered(self.n_tasks)
             .try_collect()
             .await
