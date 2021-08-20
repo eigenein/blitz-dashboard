@@ -15,22 +15,22 @@ pub fn get_infinite_batches_stream(
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
     let initial_stream = Box::pin(get_batches_stream(connection.clone(), selector));
-    stream::unfold(
-        (connection, initial_stream),
-        move |(connection, mut inner_stream)| async move {
+    stream::unfold(initial_stream, move |mut inner_stream| {
+        let connection = connection.clone();
+        async move {
             match inner_stream.next().await {
-                Some(item) => Some((item, (connection, inner_stream))),
+                Some(item) => Some((item, inner_stream)),
                 None => loop {
                     let mut new_stream = Box::pin(get_batches_stream(connection.clone(), selector));
                     if let Some(item) = new_stream.next().await {
-                        break Some((item, (connection.clone(), new_stream)));
+                        break Some((item, new_stream));
                     }
                     log::warn!("New stream is empty. Sleeping…");
                     tokio::time::sleep(StdDuration::from_secs(60)).await;
                 },
             }
-        },
-    )
+        }
+    })
 }
 
 /// Generates a finite stream of batches from the account table.
