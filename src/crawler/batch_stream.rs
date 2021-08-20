@@ -15,9 +15,9 @@ pub fn get_batch_stream(
     connection: PgPool,
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
+    let mut start_instant = Instant::now();
     stream::try_unfold(0, move |mut pointer| {
         let connection = connection.clone();
-        let mut start_instant = Instant::now();
         async move {
             loop {
                 let batch = retrieve_batch(&connection, pointer, selector).await?;
