@@ -1,8 +1,9 @@
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use futures::{stream, Stream, StreamExt};
+use futures::{stream, Stream};
 use sqlx::PgPool;
+use tokio::time::{sleep, Instant};
 
 use crate::crawler::selector::Selector;
 use crate::models::BaseAccountInfo;
@@ -10,51 +11,34 @@ use crate::models::BaseAccountInfo;
 pub type Batch = Vec<BaseAccountInfo>;
 
 /// Generates an infinite stream of batches, looping through the entire account table.
-pub fn get_infinite_batches_stream(
+pub fn get_batch_stream(
     connection: PgPool,
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    let initial_stream = Box::pin(get_batches_stream(connection.clone(), selector));
-    stream::unfold(initial_stream, move |mut inner_stream| {
+    stream::try_unfold(0, move |mut pointer| {
         let connection = connection.clone();
+        let mut start_instant = Instant::now();
         async move {
-            match inner_stream.next().await {
-                Some(item) => Some((item, inner_stream)),
-                None => loop {
-                    let mut new_stream = Box::pin(get_batches_stream(connection.clone(), selector));
-                    if let Some(item) = new_stream.next().await {
-                        break Some((item, new_stream));
+            loop {
+                let batch = retrieve_batch(&connection, pointer, selector).await?;
+                match batch.last() {
+                    Some(last_item) => {
+                        let pointer = last_item.id;
+                        break Ok(Some((batch, pointer)));
                     }
-                    log::warn!("New stream is empty. Sleeping…");
-                    tokio::time::sleep(StdDuration::from_secs(60)).await;
-                },
-            }
-        }
-    })
-}
-
-/// Generates a finite stream of batches from the account table.
-fn get_batches_stream(
-    connection: PgPool,
-    selector: Selector,
-) -> impl Stream<Item = crate::Result<Batch>> {
-    log::info!("Starting stream: {}.", selector);
-    stream::try_unfold(0, move |pointer| {
-        let connection = connection.clone();
-        async move {
-            let batch = retrieve_batch(&connection, pointer, selector).await?;
-            match batch.last() {
-                Some(last_item) => {
-                    let pointer = last_item.id;
-                    Ok(Some((batch, pointer)))
+                    None => {
+                        let elapsed = start_instant.elapsed();
+                        log::info!("Restarting {}: iteration took {:?}.", selector, elapsed);
+                        sleep(StdDuration::from_secs(1)).await;
+                        start_instant = Instant::now();
+                        pointer = 0;
+                    }
                 }
-                None => Ok(None),
             }
         }
     })
 }
 
-// TODO: move to `impl Selector`.
 /// Retrieves a single account batch from the database.
 async fn retrieve_batch(
     connection: &PgPool,

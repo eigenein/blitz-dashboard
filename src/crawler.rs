@@ -10,7 +10,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
-use crate::crawler::batch_stream::{get_infinite_batches_stream, Batch};
+use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
@@ -62,7 +62,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
                 let crawler = Crawler::new(api, database.clone(), 1, false).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
-                    let stream = get_infinite_batches_stream(database, selector);
+                    let stream = get_batch_stream(database, selector);
                     crawler.run(stream).await
                 });
                 Ok::<_, anyhow::Error>((metrics, join_handle))
