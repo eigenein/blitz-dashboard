@@ -39,14 +39,17 @@ fn get_batches_stream(
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
     log::info!("Starting stream: {}.", selector);
-    stream::try_unfold((connection, 0), move |(connection, pointer)| async move {
-        let batch = retrieve_batch(&connection, pointer, selector).await?;
-        match batch.last() {
-            Some(last_item) => {
-                let pointer = last_item.id;
-                Ok(Some((batch, (connection, pointer))))
+    stream::try_unfold(0, move |pointer| {
+        let connection = connection.clone();
+        async move {
+            let batch = retrieve_batch(&connection, pointer, selector).await?;
+            match batch.last() {
+                Some(last_item) => {
+                    let pointer = last_item.id;
+                    Ok(Some((batch, pointer)))
+                }
+                None => Ok(None),
             }
-            None => Ok(None),
         }
     })
 }
