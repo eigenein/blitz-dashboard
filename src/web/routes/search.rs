@@ -43,6 +43,7 @@ pub async fn get(
         .into_iter()
         .filter_map(|(_, info)| info)
         .collect();
+    // TODO: add the account infos to the cache.
     if accounts.len() == 1 {
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
             accounts.first().unwrap().base.id,

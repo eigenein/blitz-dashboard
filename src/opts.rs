@@ -70,7 +70,7 @@ pub struct WebOpts {
 #[derive(StructOpt)]
 pub struct CrawlerOpts {
     #[structopt(flatten)]
-    pub crawler: CommonCrawlerOpts,
+    pub connections: ConnectionOpts,
 
     /// Time offsets between different sub-crawlers
     #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
@@ -90,7 +90,7 @@ fn parse_task_count(value: &str) -> crate::Result<usize> {
 #[derive(StructOpt)]
 pub struct ImportTankopediaOpts {
     /// Wargaming.net API application ID
-    #[structopt(short, long, env = "BLITZ_DASHBOARD_APPLICATION_ID")]
+    #[structopt(short, long)]
     pub application_id: String,
 }
 
@@ -98,7 +98,7 @@ pub struct ImportTankopediaOpts {
 #[derive(StructOpt)]
 pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
-    pub crawler: CommonCrawlerOpts,
+    pub connections: ConnectionOpts,
 
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parse_account_id))]
@@ -135,10 +135,8 @@ pub struct ConnectionOpts {
     /// Wargaming.net API application ID
     #[structopt(short, long)]
     pub application_id: String,
-}
 
-#[derive(StructOpt)]
-pub struct CommonCrawlerOpts {
-    #[structopt(flatten)]
-    pub connections: ConnectionOpts,
+    /// Redis URI
+    #[structopt(short, long, default_value = "redis://127.0.0.1/0")]
+    pub redis_uri: String,
 }

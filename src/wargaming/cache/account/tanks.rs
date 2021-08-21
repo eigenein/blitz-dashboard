@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use moka::future::{Cache, CacheBuilder};
+use redis::aio::Connection as RedisConnection;
 
 use crate::models::{AccountInfo, Tank};
 use crate::wargaming::WargamingApi;
@@ -9,14 +10,18 @@ use crate::wargaming::WargamingApi;
 pub struct AccountTanksCache {
     api: WargamingApi,
     cache: Cache<i32, Entry>,
+
+    #[allow(dead_code)]
+    redis: Arc<RedisConnection>,
 }
 
 type Entry = (DateTime<Utc>, Arc<Vec<Tank>>);
 
 impl AccountTanksCache {
-    pub fn new(api: WargamingApi) -> Self {
+    pub fn new(api: WargamingApi, redis: Arc<RedisConnection>) -> Self {
         Self {
             api,
+            redis,
             cache: CacheBuilder::new(1_000).build(),
         }
     }

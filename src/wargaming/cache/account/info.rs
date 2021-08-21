@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use moka::future::{Cache, CacheBuilder};
+use redis::aio::Connection as RedisConnection;
 
 use crate::models::AccountInfo;
 use crate::time::from_minutes;
@@ -11,12 +12,16 @@ use crate::wargaming::WargamingApi;
 pub struct AccountInfoCache {
     api: WargamingApi,
     cache: Cache<i32, Arc<AccountInfo>>,
+
+    #[allow(dead_code)]
+    redis: Arc<RedisConnection>,
 }
 
 impl AccountInfoCache {
-    pub fn new(api: WargamingApi) -> Self {
+    pub fn new(api: WargamingApi, redis: Arc<RedisConnection>) -> Self {
         Self {
             api,
+            redis,
             cache: CacheBuilder::new(1_000)
                 .time_to_live(from_minutes(1))
                 .build(),
