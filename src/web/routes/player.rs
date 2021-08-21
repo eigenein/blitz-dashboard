@@ -66,6 +66,7 @@ pub async fn get(
         current_info.statistics.all.wins,
     );
     let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
+    let is_account_birthday = current_info.created_at.date() == Utc::today();
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -95,7 +96,11 @@ pub async fn get(
                         }
                         div.navbar-item title="Возраст аккаунта" {
                             span.icon-text {
-                                span.icon { i.far.fa-calendar-alt {} }
+                                @if is_account_birthday {
+                                    span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
+                                } @else {
+                                    span.icon { i.far.fa-calendar-alt {} }
+                                }
                                 span title=(current_info.created_at) {
                                     (datetime(current_info.created_at, Tense::Present))
                                 }
