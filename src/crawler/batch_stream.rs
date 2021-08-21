@@ -15,8 +15,7 @@ pub fn get_batch_stream(
     connection: PgPool,
     selector: Selector,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    let mut start_instant = Instant::now();
-    stream::try_unfold(0, move |mut pointer| {
+    stream::try_unfold((0, Instant::now()), move |(mut pointer, mut start_time)| {
         let connection = connection.clone();
         async move {
             loop {
@@ -24,13 +23,13 @@ pub fn get_batch_stream(
                 match batch.last() {
                     Some(last_item) => {
                         let pointer = last_item.id;
-                        break Ok(Some((batch, pointer)));
+                        break Ok(Some((batch, (pointer, start_time))));
                     }
                     None => {
-                        let elapsed = start_instant.elapsed();
-                        log::info!("Restarting {}: iteration took {:?}.", selector, elapsed);
+                        let elapsed = humantime::format_duration(start_time.elapsed());
+                        log::info!("Restarting {}: iteration took {}.", selector, elapsed);
                         sleep(StdDuration::from_secs(1)).await;
-                        start_instant = Instant::now();
+                        start_time = Instant::now();
                         pointer = 0;
                     }
                 }
