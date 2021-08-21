@@ -129,8 +129,8 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
 #[derive(StructOpt)]
 pub struct ConnectionOpts {
     /// PostgreSQL database URI
-    #[structopt(short, long)]
-    pub database: String,
+    #[structopt(short, long = "database")]
+    pub database_uri: String,
 
     /// Wargaming.net API application ID
     #[structopt(short, long)]

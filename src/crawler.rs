@@ -41,7 +41,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
-    let database = crate::database::open(&opts.crawler.connections.database).await?;
+    let database = crate::database::open(&opts.crawler.connections.database_uri).await?;
 
     opts.offsets.sort_unstable();
     let selectors = convert_offsets_to_selectors(&opts.offsets);
@@ -88,7 +88,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let api = new_wargaming_api(&opts.crawler.connections.application_id)?;
-    let database = crate::database::open(&opts.crawler.connections.database).await?;
+    let database = crate::database::open(&opts.crawler.connections.database_uri).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| BaseAccountInfo {
             id: account_id,

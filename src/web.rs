@@ -33,7 +33,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .manage(AccountInfoCache::new(api.clone()))
         .manage(AccountTanksCache::new(api.clone()))
         .manage(api)
-        .manage(crate::database::open(&opts.connections.database).await?)
+        .manage(crate::database::open(&opts.connections.database_uri).await?)
         .manage(TrackingCode::new(&opts))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
