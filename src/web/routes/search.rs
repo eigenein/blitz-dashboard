@@ -5,7 +5,7 @@ use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
 use rocket::response::Redirect;
-use rocket::State;
+use rocket::{uri, State};
 
 use crate::logging::clear_user;
 use crate::models::AccountInfo;
@@ -13,7 +13,7 @@ use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::response::Response;
-use crate::web::routes::player::get_account_url;
+use crate::web::routes::player::rocket_uri_macro_get as rocket_uri_macro_get_player;
 use crate::web::TrackingCode;
 
 const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
@@ -48,9 +48,10 @@ pub async fn get(
     if accounts.len() == 1 {
         let account_info = accounts.first().unwrap();
         account_info_cache.put(account_info).await?;
-        return Ok(Response::Redirect(Redirect::temporary(get_account_url(
-            account_info.base.id,
-        ))));
+        return Ok(Response::Redirect(Redirect::temporary(uri!(get_player(
+            account_id = account_info.base.id,
+            period = _,
+        )))));
     }
     accounts.sort_unstable_by(|left, right| {
         right.base.last_battle_time.cmp(&left.base.last_battle_time)
@@ -102,7 +103,7 @@ pub async fn get(
                             @for account in &accounts {
                                 div.box {
                                     p.title."is-5" {
-                                        a href=(get_account_url(account.base.id)) { (account.nickname) }
+                                        a href=(uri!(get_player(account_id = account.base.id, period = _))) { (account.nickname) }
                                     }
                                     p.subtitle."is-6" {
                                         span.icon-text.has-text-grey {

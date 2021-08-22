@@ -5,7 +5,7 @@ use log::Level;
 use maud::{html, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
-use rocket::State;
+use rocket::{uri, State};
 use sqlx::PgPool;
 
 use partials::*;
@@ -240,7 +240,7 @@ pub async fn get(
         html lang="en" {
             head {
                 (headers())
-                link rel="canonical" href=(get_account_url(account_id));
+                link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
                 title { (current_info.nickname) " – Я статист!" }
                 script defer="true" src="/static/player.js?v4" {};
             }
@@ -576,8 +576,4 @@ pub async fn get(
     };
 
     Ok(Response::Html(Html(markup.into_string())))
-}
-
-pub fn get_account_url(account_id: i32) -> String {
-    format!("/ru/{}", account_id)
 }
