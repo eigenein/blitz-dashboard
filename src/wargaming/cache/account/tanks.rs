@@ -1,51 +1,56 @@
-use std::sync::Arc;
-
+use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use moka::future::{Cache, CacheBuilder};
 use redis::aio::ConnectionManager as RedisConnection;
+use redis::AsyncCommands;
+use serde::{Deserialize, Serialize};
 
 use crate::models::{AccountInfo, Tank};
 use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
     api: WargamingApi,
-    cache: Cache<i32, Entry>,
-
-    #[allow(dead_code)]
     redis: RedisConnection,
 }
 
-type Entry = (DateTime<Utc>, Arc<Vec<Tank>>);
+#[derive(Serialize, Deserialize)]
+struct Entry {
+    tanks: Vec<Tank>,
+
+    #[serde(with = "chrono::serde::ts_seconds")]
+    last_battle_time: DateTime<Utc>,
+}
 
 impl AccountTanksCache {
+    const TTL_SECS: usize = 15 * 60;
+
     pub fn new(api: WargamingApi, redis: RedisConnection) -> Self {
-        Self {
-            api,
-            redis,
-            cache: CacheBuilder::new(1_000).build(),
-        }
+        Self { api, redis }
     }
 
-    pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Arc<Vec<Tank>>> {
+    pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Vec<Tank>> {
         let account_id = account_info.base.id;
-        match self.cache.get(&account_id) {
-            Some((last_battle_time, snapshots))
-                if last_battle_time == account_info.base.last_battle_time =>
-            {
+        let mut redis = self.redis.clone();
+        let cache_key = Self::cache_key(account_id);
+
+        if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
+            let entry: Entry = rmp_serde::from_read_ref(&blob)?;
+            if entry.last_battle_time == account_info.base.last_battle_time {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
-                Ok(snapshots)
-            }
-            _ => {
-                let snapshots: Arc<Vec<Tank>> =
-                    Arc::new(self.api.get_merged_tanks(account_id).await?);
-                self.cache
-                    .insert(
-                        account_id,
-                        (account_info.base.last_battle_time, snapshots.clone()),
-                    )
-                    .await;
-                Ok(snapshots)
+                return Ok(entry.tanks);
             }
         }
+
+        let entry = Entry {
+            last_battle_time: account_info.base.last_battle_time,
+            tanks: self.api.get_merged_tanks(account_id).await?,
+        };
+        let blob = rmp_serde::to_vec(&entry)?;
+        log::debug!("Caching account #{} tanks: {} B.", account_id, blob.len());
+        redis.set_ex(&cache_key, blob, Self::TTL_SECS).await?;
+        Ok(entry.tanks)
+    }
+
+    fn cache_key(account_id: i32) -> String {
+        format!("account::tanks::{}", account_id)
     }
 }

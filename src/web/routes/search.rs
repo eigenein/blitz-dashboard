@@ -47,7 +47,7 @@ pub async fn get(
         .collect();
     if accounts.len() == 1 {
         let account_info = accounts.first().unwrap();
-        account_info_cache.put(&account_info).await?;
+        account_info_cache.put(account_info).await?;
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
             account_info.base.id,
         ))));

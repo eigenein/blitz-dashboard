@@ -198,7 +198,7 @@ pub enum TankType {
 }
 
 /// Represents a state of a specific player's tank at a specific moment in time.
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
 pub struct Tank {
     pub account_id: i32,
     pub tank_id: i32,
@@ -206,8 +206,13 @@ pub struct Tank {
 
     /// Timestamp when the described state is actual.
     /// Every new [`Tank::last_battle_time`] produces a new record in the database.
+    #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
+    #[serde(
+        serialize_with = "serialize_duration_seconds",
+        deserialize_with = "deserialize_duration_seconds"
+    )]
     pub battle_life_time: Duration,
 }
 

@@ -12,6 +12,8 @@ pub struct AccountInfoCache {
 }
 
 impl AccountInfoCache {
+    const TTL_SECS: usize = 60;
+
     pub fn new(api: WargamingApi, redis: RedisConnection) -> Self {
         Self { api, redis }
     }
@@ -23,7 +25,7 @@ impl AccountInfoCache {
             .get::<_, Option<Bytes>>(Self::cache_key(account_id))
             .await?
         {
-            log::debug!("Cache hit on account #{}.", account_id,);
+            log::debug!("Cache hit on account #{} info.", account_id,);
             return Ok(rmp_serde::from_read_ref(&blob)?);
         }
 
@@ -44,7 +46,7 @@ impl AccountInfoCache {
             .set_ex(
                 Self::cache_key(account_info.base.id),
                 rmp_serde::to_vec(&account_info)?,
-                60,
+                Self::TTL_SECS,
             )
             .await?;
         Ok(())
