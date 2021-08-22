@@ -8,7 +8,3 @@ pub async fn open(uri: &str) -> crate::Result<ConnectionManager> {
         .await
         .context("failed to connect to Redis")?)
 }
-
-pub trait CacheKey {
-    fn cache_key(&self) -> String;
-}
