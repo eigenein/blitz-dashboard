@@ -75,6 +75,10 @@ pub struct CrawlerOpts {
     /// Time offsets between different sub-crawlers
     #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
     pub offsets: Vec<StdDuration>,
+
+    /// Minimum last battle time offset – avoids selecting the same account too soon
+    #[structopt(long = "min-offset", default_value = "3m", parse(try_from_str = humantime::parse_duration))]
+    pub min_offset: StdDuration,
 }
 
 fn parse_task_count(value: &str) -> crate::Result<usize> {

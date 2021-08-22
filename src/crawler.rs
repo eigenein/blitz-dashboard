@@ -44,7 +44,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
     let database = crate::database::open(&opts.connections.database_uri).await?;
 
     opts.offsets.sort_unstable();
-    let selectors = convert_offsets_to_selectors(&opts.offsets);
+    let selectors = convert_offsets_to_selectors(&opts.offsets, opts.min_offset);
     for (i, selector) in selectors.iter().enumerate() {
         log::info!("Sub-crawler #{}: {}.", i, selector);
     }
@@ -110,19 +110,19 @@ fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
 }
 
 /// Converts user-defined offsets to sub-crawler selectors.
-fn convert_offsets_to_selectors(offsets: &[StdDuration]) -> Vec<Selector> {
+fn convert_offsets_to_selectors(offsets: &[StdDuration], min_offset: StdDuration) -> Vec<Selector> {
     let mut selectors = Vec::new();
     let mut last_offset: Option<&StdDuration> = None;
     for offset in offsets {
         match last_offset {
             Some(last_offset) => selectors.push(Selector::Between(*last_offset, *offset)),
-            None => selectors.push(Selector::LaterThan(*offset)),
+            None => selectors.push(Selector::Between(min_offset, *offset)),
         }
         last_offset = Some(offset);
     }
     match last_offset {
         Some(offset) => selectors.push(Selector::EarlierThan(*offset)),
-        None => selectors.push(Selector::All),
+        None => selectors.push(Selector::EarlierThan(min_offset)),
     }
     selectors
 }
@@ -261,28 +261,36 @@ impl Crawler {
 mod tests {
     use super::*;
 
+    const MIN_OFFSET: StdDuration = StdDuration::from_secs(1);
+
     #[test]
     fn convert_no_offsets_ok() {
-        assert_eq!(convert_offsets_to_selectors(&[]), vec![Selector::All]);
+        assert_eq!(
+            convert_offsets_to_selectors(&[], MIN_OFFSET),
+            vec![Selector::EarlierThan(MIN_OFFSET)],
+        );
     }
 
     #[test]
     fn convert_one_offset_ok() {
-        let offset = StdDuration::from_secs(1);
+        let offset = StdDuration::from_secs(2);
         assert_eq!(
-            convert_offsets_to_selectors(&[offset]),
-            vec![Selector::LaterThan(offset), Selector::EarlierThan(offset)]
+            convert_offsets_to_selectors(&[offset], MIN_OFFSET),
+            vec![
+                Selector::Between(MIN_OFFSET, offset),
+                Selector::EarlierThan(offset),
+            ]
         );
     }
 
     #[test]
     fn convert_two_offsets_ok() {
-        let offset_1 = StdDuration::from_secs(1);
-        let offset_2 = StdDuration::from_secs(2);
+        let offset_1 = StdDuration::from_secs(2);
+        let offset_2 = StdDuration::from_secs(3);
         assert_eq!(
-            convert_offsets_to_selectors(&[offset_1, offset_2]),
+            convert_offsets_to_selectors(&[offset_1, offset_2], MIN_OFFSET),
             vec![
-                Selector::LaterThan(offset_1),
+                Selector::Between(MIN_OFFSET, offset_1),
                 Selector::Between(offset_1, offset_2),
                 Selector::EarlierThan(offset_2),
             ]

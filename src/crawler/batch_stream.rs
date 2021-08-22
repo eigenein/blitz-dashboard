@@ -45,21 +45,10 @@ async fn retrieve_batch(
     selector: Selector,
 ) -> crate::Result<Vec<BaseAccountInfo>> {
     let query = match selector {
-        Selector::All => {
-            // language=SQL
-            const QUERY: &str =
-                "SELECT * FROM accounts WHERE account_id > $1 ORDER BY account_id LIMIT 100";
-            sqlx::query_as(QUERY).bind(starting_at)
-        }
         Selector::EarlierThan(min_offset) => {
             // language=SQL
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)
-        }
-        Selector::LaterThan(max_offset) => {
-            // language=SQL
-            const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time > now() - $2 ORDER BY account_id LIMIT 100";
-            sqlx::query_as(QUERY).bind(starting_at).bind(max_offset)
         }
         Selector::Between(min_offset, max_offset) => {
             assert!(min_offset < max_offset);
