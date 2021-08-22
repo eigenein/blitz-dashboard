@@ -1,6 +1,5 @@
 use std::net::IpAddr;
 use std::str::FromStr;
-use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use maud::PreEscaped;
@@ -30,7 +29,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         &opts.connections.application_id,
         StdDuration::from_millis(1500),
     )?;
-    let redis = Arc::new(crate::redis::open(&opts.connections.redis_uri).await?);
+    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))

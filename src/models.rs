@@ -6,7 +6,7 @@ use std::ops::Sub;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::serde::deserialize_duration_seconds;
+use crate::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::statistics::ConfidenceInterval;
 
 /// Search accounts item.
@@ -18,7 +18,7 @@ pub struct FoundAccount {
     pub id: i32,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct BaseAccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
@@ -28,7 +28,7 @@ pub struct BaseAccountInfo {
 }
 
 /// Wargaming.net account information.
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(flatten)]
     pub base: BaseAccountInfo,
@@ -41,13 +41,13 @@ pub struct AccountInfo {
     pub statistics: AccountInfoStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
     #[serde(rename = "all")]
     pub all: AllStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone, Default, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct AllStatistics {
     pub battles: i32,
     pub wins: i32,
@@ -106,7 +106,7 @@ impl Sum for AllStatistics {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BaseTankStatistics {
     pub tank_id: i32,
 
@@ -114,12 +114,15 @@ pub struct BaseTankStatistics {
     pub last_battle_time: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct TankStatistics {
     #[serde(flatten)]
     pub base: BaseTankStatistics,
 
-    #[serde(deserialize_with = "deserialize_duration_seconds")]
+    #[serde(
+        serialize_with = "serialize_duration_seconds",
+        deserialize_with = "deserialize_duration_seconds"
+    )]
     pub battle_life_time: Duration,
 
     #[serde(rename = "all")]

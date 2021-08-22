@@ -1,48 +1,40 @@
-use std::error::Error as StdError;
-use std::sync::Arc;
-
-use anyhow::{anyhow, Context};
-use moka::future::{Cache, CacheBuilder};
-use redis::aio::Connection as RedisConnection;
+use anyhow::anyhow;
+use bytes::Bytes;
+use redis::aio::ConnectionManager as RedisConnection;
+use redis::AsyncCommands;
 
 use crate::models::AccountInfo;
-use crate::time::from_minutes;
 use crate::wargaming::WargamingApi;
 
 pub struct AccountInfoCache {
     api: WargamingApi,
-    cache: Cache<i32, Arc<AccountInfo>>,
-
-    #[allow(dead_code)]
-    redis: Arc<RedisConnection>,
+    redis: RedisConnection,
 }
 
 impl AccountInfoCache {
-    pub fn new(api: WargamingApi, redis: Arc<RedisConnection>) -> Self {
-        Self {
-            api,
-            redis,
-            cache: CacheBuilder::new(1_000)
-                .time_to_live(from_minutes(1))
-                .build(),
-        }
+    pub fn new(api: WargamingApi, redis: RedisConnection) -> Self {
+        Self { api, redis }
     }
 
-    pub async fn get(&self, account_id: i32) -> crate::Result<Arc<AccountInfo>> {
-        self.cache
-            .get_or_try_insert_with(account_id, async {
-                Ok(Arc::new(
-                    self.api
-                        .get_account_info(&[account_id])
-                        .await
-                        .map_err(Into::<Box<dyn StdError + Send + Sync + 'static>>::into)?
-                        .remove(&account_id.to_string())
-                        .flatten()
-                        .ok_or_else(|| anyhow!("account #{} not found", account_id))?,
-                ))
-            })
-            .await
-            .map_err(|error| anyhow::anyhow!(error))
-            .with_context(|| format!("failed to access the cache for account #{}", account_id))
+    pub async fn get(&self, account_id: i32) -> crate::Result<AccountInfo> {
+        let mut redis = self.redis.clone();
+        let cache_key = format!("account::info::{}", account_id);
+
+        if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
+            log::debug!("Cache hit on account #{}.", account_id,);
+            return Ok(rmp_serde::from_read_ref(&blob)?);
+        }
+
+        let account_info = self
+            .api
+            .get_account_info(&[account_id])
+            .await?
+            .remove(&account_id.to_string())
+            .flatten()
+            .ok_or_else(|| anyhow!("account #{} not found", account_id))?;
+        redis
+            .set_ex(&cache_key, rmp_serde::to_vec(&account_info)?, 60)
+            .await?;
+        Ok(account_info)
     }
 }
