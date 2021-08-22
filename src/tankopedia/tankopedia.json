@@ -255,14 +255,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 30,
-          "sides": 40
+          "front": 62,
+          "rear": 31,
+          "sides": 42
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 7,
@@ -534,7 +534,7 @@
       "max_ammo": 104,
       "max_weight": 38500,
       "profile_id": "10277-17699-21282-257828",
-      "protection": 39,
+      "protection": 38,
       "shells": [
         {
           "damage": 160,
@@ -653,13 +653,13 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 56,
-          "rear": 35,
-          "sides": 35
+          "front": 55,
+          "rear": 34,
+          "sides": 34
         },
         "turret": {
-          "front": 55,
-          "rear": 35,
+          "front": 54,
+          "rear": 34,
           "sides": 20
         }
       },
@@ -1496,14 +1496,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 150,
-          "rear": 80,
-          "sides": 80
+          "front": 156,
+          "rear": 83,
+          "sides": 83
         },
         "turret": {
-          "front": 120,
-          "rear": 60,
-          "sides": 60
+          "front": 126,
+          "rear": 63,
+          "sides": 63
         }
       },
       "battle_level_range_max": 10,
@@ -1541,7 +1541,7 @@
       "max_ammo": 60,
       "max_weight": 66000,
       "profile_id": "2324-19731-19733-24338",
-      "protection": 54,
+      "protection": 53,
       "shells": [
         {
           "damage": 220,
@@ -1952,9 +1952,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 80,
-          "rear": 30,
-          "sides": 30
+          "front": 86,
+          "rear": 32,
+          "sides": 32
         },
         "turret": {
           "front": 5,
@@ -1997,7 +1997,7 @@
       "max_ammo": 48,
       "max_weight": 22400,
       "profile_id": "21-2066-4628",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 160,
@@ -2394,14 +2394,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 80,
-          "sides": 80
+          "front": 125,
+          "rear": 83,
+          "sides": 83
         },
         "turret": {
-          "front": 100,
-          "rear": 80,
-          "sides": 80
+          "front": 105,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 9,
@@ -3046,9 +3046,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 40,
-          "sides": 45
+          "front": 62,
+          "rear": 42,
+          "sides": 47
         },
         "turret": {
           "front": 90,
@@ -3299,9 +3299,9 @@
           "sides": 140
         },
         "turret": {
-          "front": 170,
-          "rear": 160,
-          "sides": 170
+          "front": 162,
+          "rear": 152,
+          "sides": 162
         }
       },
       "battle_level_range_max": 10,
@@ -3339,7 +3339,7 @@
       "max_ammo": 30,
       "max_weight": 63500,
       "profile_id": "3844-5637-20227-24834",
-      "protection": 84,
+      "protection": 83,
       "shells": [
         {
           "damage": 400,
@@ -3529,14 +3529,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 200,
-          "rear": 80,
-          "sides": 80
+          "front": 208,
+          "rear": 83,
+          "sides": 83
         },
         "turret": {
-          "front": 100,
-          "rear": 80,
-          "sides": 80
+          "front": 108,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 8,
@@ -3574,7 +3574,7 @@
       "max_ammo": 92,
       "max_weight": 65200,
       "profile_id": "2068-12053-20755-25362",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 220,
@@ -3790,18 +3790,18 @@
         "weight": 1200
       },
       "engine_id": 13093,
-      "firepower": 64,
+      "firepower": 57,
       "gun": {
-        "aim_time": 3.97,
+        "aim_time": 3.95,
         "caliber": 120,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.35,
-        "fire_rate": 6.0,
+        "fire_rate": 5.45,
         "move_down_arc": 8,
         "move_up_arc": 15,
         "name": "120 mm Gun M58",
-        "reload_time": 10.0,
+        "reload_time": 11.0,
         "tier": 10,
         "traverse_speed": 26.25,
         "weight": 3100
@@ -3851,7 +3851,7 @@
         "tier": 10,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
-        "traverse_speed": 20,
+        "traverse_speed": 16,
         "view_range": 250,
         "weight": 11000
       },
@@ -4442,7 +4442,7 @@
       "max_ammo": 60,
       "max_weight": 112560,
       "profile_id": "2564-15109-20995-25602",
-      "protection": 70,
+      "protection": 69,
       "shells": [
         {
           "damage": 320,
@@ -5891,14 +5891,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 90
+          "front": 125,
+          "rear": 62,
+          "sides": 94
         },
         "turret": {
-          "front": 200,
-          "rear": 60,
-          "sides": 90
+          "front": 210,
+          "rear": 63,
+          "sides": 95
         }
       },
       "battle_level_range_max": 10,
@@ -5936,7 +5936,7 @@
       "max_ammo": 50,
       "max_weight": 96000,
       "profile_id": "11541-11794-14099-15380",
-      "protection": 63,
+      "protection": 65,
       "shells": [
         {
           "damage": 560,
@@ -6426,14 +6426,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 150,
-          "rear": 45,
-          "sides": 75
+          "front": 156,
+          "rear": 47,
+          "sides": 78
         },
         "turret": {
-          "front": 150,
-          "rear": 65,
-          "sides": 35
+          "front": 162,
+          "rear": 70,
+          "sides": 38
         }
       },
       "battle_level_range_max": 8,
@@ -6595,9 +6595,9 @@
           "sides": 80
         },
         "turret": {
-          "front": 201,
-          "rear": 50,
-          "sides": 148
+          "front": 191,
+          "rear": 48,
+          "sides": 141
         }
       },
       "battle_level_range_max": 10,
@@ -6870,7 +6870,7 @@
       "max_ammo": 60,
       "max_weight": 36000,
       "profile_id": "1410-1667-1668-1925",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 225,
@@ -7060,14 +7060,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 40,
-          "sides": 60
+          "front": 104,
+          "rear": 42,
+          "sides": 62
         },
         "turret": {
-          "front": 18,
-          "rear": 16,
-          "sides": 16
+          "front": 19,
+          "rear": 17,
+          "sides": 17
         }
       },
       "battle_level_range_max": 9,
@@ -7518,9 +7518,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 80,
-          "rear": 60,
-          "sides": 40
+          "front": 78,
+          "rear": 59,
+          "sides": 39
         },
         "turret": {
           "front": 20,
@@ -8939,7 +8939,7 @@
       "max_ammo": 80,
       "max_weight": 59300,
       "profile_id": "4421-11332-20546",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 225,
@@ -9117,14 +9117,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 150,
-          "rear": 80,
-          "sides": 80
+          "front": 156,
+          "rear": 83,
+          "sides": 83
         },
         "turret": {
-          "front": 250,
-          "rear": 80,
-          "sides": 80
+          "front": 263,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 11,
@@ -9137,18 +9137,18 @@
         "weight": 750
       },
       "engine_id": 15637,
-      "firepower": 73,
+      "firepower": 76,
       "gun": {
         "aim_time": 3.93,
         "caliber": 105,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.3,
-        "fire_rate": 7.69,
+        "fire_rate": 8.0,
         "move_down_arc": 8,
         "move_up_arc": 20,
         "name": "10,5 cm Kw.K. L/52 Ausf. K",
-        "reload_time": 7.8,
+        "reload_time": 7.5,
         "tier": 10,
         "traverse_speed": 21.88,
         "weight": 3000
@@ -9325,7 +9325,7 @@
       "max_ammo": 50,
       "max_weight": 40000,
       "profile_id": "6692-19493-21539-25378",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 150,
@@ -9486,7 +9486,7 @@
       "max_ammo": 51,
       "max_weight": 65900,
       "profile_id": "1797-7684-12803-15874",
-      "protection": 86,
+      "protection": 85,
       "shells": [
         {
           "damage": 350,
@@ -9605,14 +9605,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 110,
-          "rear": 40,
-          "sides": 50
+          "front": 114,
+          "rear": 42,
+          "sides": 52
         },
         "turret": {
-          "front": 100,
-          "rear": 45,
-          "sides": 45
+          "front": 105,
+          "rear": 47,
+          "sides": 47
         }
       },
       "battle_level_range_max": 8,
@@ -9842,14 +9842,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 30,
-          "rear": 15,
-          "sides": 20
+          "front": 32,
+          "rear": 16,
+          "sides": 22
         },
         "turret": {
-          "front": 30,
-          "rear": 15,
-          "sides": 15
+          "front": 32,
+          "rear": 16,
+          "sides": 16
         }
       },
       "battle_level_range_max": 4,
@@ -10006,7 +10006,7 @@
           "sides": 76
         },
         "turret": {
-          "front": 203,
+          "front": 230,
           "rear": 152,
           "sides": 152
         }
@@ -10023,7 +10023,7 @@
       "engine_id": 13093,
       "firepower": 67,
       "gun": {
-        "aim_time": 5.63,
+        "aim_time": 5.61,
         "caliber": 155,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -10082,7 +10082,7 @@
         "tier": 10,
         "traverse_left_arc": 90,
         "traverse_right_arc": 90,
-        "traverse_speed": 16,
+        "traverse_speed": 20,
         "view_range": 250,
         "weight": 20000
       },
@@ -10212,7 +10212,7 @@
       "max_ammo": 71,
       "max_weight": 34500,
       "profile_id": "2084-2594-2595-3365",
-      "protection": 27,
+      "protection": 26,
       "shells": [
         {
           "damage": 160,
@@ -10402,14 +10402,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 65,
-          "rear": 50,
-          "sides": 50
+          "front": 68,
+          "rear": 53,
+          "sides": 53
         },
         "turret": {
-          "front": 75,
-          "rear": 50,
-          "sides": 50
+          "front": 79,
+          "rear": 53,
+          "sides": 53
         }
       },
       "battle_level_range_max": 5,
@@ -10566,14 +10566,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 178,
-          "rear": 51,
-          "sides": 76
+          "front": 187,
+          "rear": 53,
+          "sides": 80
         },
         "turret": {
-          "front": 102,
-          "rear": 76,
-          "sides": 76
+          "front": 107,
+          "rear": 80,
+          "sides": 80
         }
       },
       "battle_level_range_max": 9,
@@ -10730,9 +10730,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 187,
-          "rear": 50,
-          "sides": 100
+          "front": 195,
+          "rear": 52,
+          "sides": 104
         },
         "turret": {
           "front": 18,
@@ -11090,7 +11090,7 @@
       "max_ammo": 88,
       "max_weight": 21300,
       "profile_id": "2149-2403-2658-3684",
-      "protection": 23,
+      "protection": 22,
       "shells": [
         {
           "damage": 140,
@@ -11267,9 +11267,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 45,
-          "sides": 75
+          "front": 106,
+          "rear": 47,
+          "sides": 78
         },
         "turret": {
           "front": 240,
@@ -11701,7 +11701,7 @@
       "max_ammo": 27,
       "max_weight": 78000,
       "profile_id": "13093-19492-27170",
-      "protection": 68,
+      "protection": 66,
       "shells": [
         {
           "damage": 640,
@@ -11977,14 +11977,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 150,
-          "rear": 40,
-          "sides": 80
+          "front": 156,
+          "rear": 42,
+          "sides": 83
         },
         "turret": {
-          "front": 120,
-          "rear": 80,
-          "sides": 80
+          "front": 130,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 8,
@@ -12186,7 +12186,7 @@
       "max_ammo": 63,
       "max_weight": 36000,
       "profile_id": "1922-1924-2179-2437",
-      "protection": 27,
+      "protection": 26,
       "shells": [
         {
           "damage": 160,
@@ -12376,14 +12376,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 50,
-          "sides": 40
+          "front": 62,
+          "rear": 52,
+          "sides": 42
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 7,
@@ -12614,14 +12614,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 110,
-          "rear": 35,
-          "sides": 76
+          "front": 116,
+          "rear": 37,
+          "sides": 80
         },
         "turret": {
-          "front": 178,
-          "rear": 51,
-          "sides": 76
+          "front": 187,
+          "rear": 53,
+          "sides": 80
         }
       },
       "battle_level_range_max": 11,
@@ -12634,18 +12634,18 @@
         "weight": 569
       },
       "engine_id": 16165,
-      "firepower": 73,
+      "firepower": 81,
       "gun": {
         "aim_time": 3.81,
         "caliber": 105,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.35,
-        "fire_rate": 7.71,
+        "fire_rate": 8.45,
         "move_down_arc": 9,
         "move_up_arc": 19,
         "name": "105 mm Gun M68",
-        "reload_time": 7.78,
+        "reload_time": 7.1,
         "tier": 10,
         "traverse_speed": 35.0,
         "weight": 2850
@@ -12663,7 +12663,7 @@
       "shells": [
         {
           "damage": 350,
-          "penetration": 250,
+          "penetration": 255,
           "type": "ARMOR_PIERCING_CR"
         },
         {
@@ -12677,7 +12677,7 @@
           "type": "HIGH_EXPLOSIVE"
         }
       ],
-      "shot_efficiency": 84,
+      "shot_efficiency": 86,
       "signal_range": null,
       "speed_backward": 20,
       "speed_forward": 48,
@@ -12991,7 +12991,7 @@
         "hull": {
           "front": 250,
           "rear": 50,
-          "sides": 80
+          "sides": 100
         },
         "turret": {
           "front": 18,
@@ -13011,11 +13011,11 @@
       "engine_id": 9221,
       "firepower": 89,
       "gun": {
-        "aim_time": 4.66,
+        "aim_time": 4.94,
         "caliber": 130,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
-        "dispersion": 0.32,
+        "dispersion": 0.39,
         "fire_rate": 7.06,
         "move_down_arc": 4,
         "move_up_arc": 18,
@@ -13026,15 +13026,15 @@
         "weight": 2980
       },
       "gun_id": 27652,
-      "hp": 1750,
-      "hull_hp": 1400,
+      "hp": 1850,
+      "hull_hp": 1500,
       "hull_weight": 44700,
       "is_default": true,
-      "maneuverability": 47,
+      "maneuverability": 54,
       "max_ammo": 42,
       "max_weight": 62500,
       "profile_id": "9221-27652-32258",
-      "protection": 54,
+      "protection": 59,
       "shells": [
         {
           "damage": 460,
@@ -13052,7 +13052,7 @@
           "type": "HIGH_EXPLOSIVE"
         }
       ],
-      "shot_efficiency": 98,
+      "shot_efficiency": 88,
       "signal_range": null,
       "speed_backward": 20,
       "speed_forward": 55,
@@ -13060,7 +13060,7 @@
         "load_limit": 62500,
         "name": "Объект 263",
         "tier": 10,
-        "traverse_speed": 30,
+        "traverse_speed": 38,
         "weight": 11000
       },
       "suspension_id": 32258,
@@ -14632,14 +14632,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 80,
-          "rear": 20,
-          "sides": 40
+          "front": 86,
+          "rear": 22,
+          "sides": 43
         },
         "turret": {
-          "front": 80,
-          "rear": 80,
-          "sides": 80
+          "front": 86,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 7,
@@ -15069,9 +15069,9 @@
           "sides": 51
         },
         "turret": {
-          "front": 89,
-          "rear": 64,
-          "sides": 64
+          "front": 85,
+          "rear": 60,
+          "sides": 60
         }
       },
       "battle_level_range_max": 8,
@@ -15447,9 +15447,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 70,
-          "rear": 45,
-          "sides": 45
+          "front": 73,
+          "rear": 47,
+          "sides": 47
         },
         "turret": {
           "front": 170,
@@ -15720,14 +15720,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 70,
-          "rear": 40,
-          "sides": 40
+          "front": 73,
+          "rear": 42,
+          "sides": 42
         },
         "turret": {
-          "front": 100,
-          "rear": 45,
-          "sides": 45
+          "front": 105,
+          "rear": 47,
+          "sides": 47
         }
       },
       "battle_level_range_max": 7,
@@ -15881,14 +15881,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 115,
-          "rear": 25,
-          "sides": 85
+          "front": 121,
+          "rear": 27,
+          "sides": 89
         },
         "turret": {
-          "front": 185,
-          "rear": 51,
-          "sides": 76
+          "front": 194,
+          "rear": 53,
+          "sides": 80
         }
       },
       "battle_level_range_max": 11,
@@ -15901,18 +15901,18 @@
         "weight": 2053
       },
       "engine_id": 18981,
-      "firepower": 74,
+      "firepower": 81,
       "gun": {
         "aim_time": 3.57,
         "caliber": 105,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.35,
-        "fire_rate": 7.79,
+        "fire_rate": 8.45,
         "move_down_arc": 10,
         "move_up_arc": 20,
         "name": "105 mm Gun M68",
-        "reload_time": 7.7,
+        "reload_time": 7.1,
         "tier": 10,
         "traverse_speed": 35.0,
         "weight": 2850
@@ -15930,7 +15930,7 @@
       "shells": [
         {
           "damage": 350,
-          "penetration": 250,
+          "penetration": 255,
           "type": "ARMOR_PIERCING_CR"
         },
         {
@@ -15944,7 +15944,7 @@
           "type": "HIGH_EXPLOSIVE"
         }
       ],
-      "shot_efficiency": 84,
+      "shot_efficiency": 86,
       "signal_range": null,
       "speed_backward": 20,
       "speed_forward": 48,
@@ -16397,9 +16397,9 @@
           "sides": 30
         },
         "turret": {
-          "front": 40,
-          "rear": 35,
-          "sides": 40
+          "front": 39,
+          "rear": 34,
+          "sides": 39
         }
       },
       "battle_level_range_max": 3,
@@ -16743,7 +16743,7 @@
       "max_ammo": 90,
       "max_weight": 43300,
       "profile_id": "2131-2386-20821-259156",
-      "protection": 23,
+      "protection": 22,
       "shells": [
         {
           "damage": 160,
@@ -17302,7 +17302,7 @@
       "max_ammo": 45,
       "max_weight": 30000,
       "profile_id": "6677-22804-40210",
-      "protection": 28,
+      "protection": 29,
       "shells": [
         {
           "damage": 460,
@@ -17841,7 +17841,7 @@
       "max_ammo": 100,
       "max_weight": 28000,
       "profile_id": "1284-2565-31235-37378",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 90,
@@ -19049,14 +19049,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 95,
-          "rear": 35,
-          "sides": 45
+          "front": 103,
+          "rear": 38,
+          "sides": 49
         },
         "turret": {
-          "front": 65,
-          "rear": 40,
-          "sides": 45
+          "front": 70,
+          "rear": 43,
+          "sides": 49
         }
       },
       "battle_level_range_max": 6,
@@ -19318,7 +19318,7 @@
       "max_ammo": 122,
       "max_weight": 22000,
       "profile_id": "21268-34835-36629-41490",
-      "protection": 8,
+      "protection": 7,
       "shells": [
         {
           "damage": 120,
@@ -19847,7 +19847,7 @@
       "max_ammo": 80,
       "max_weight": 25000,
       "profile_id": "20-277-35091-42002",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 95,
@@ -21135,18 +21135,18 @@
         "weight": 952
       },
       "engine_id": 12373,
-      "firepower": 87,
+      "firepower": 91,
       "gun": {
         "aim_time": 4.6,
         "caliber": 123,
         "clip_capacity": 3,
         "clip_reload_time": 3.0,
         "dispersion": 0.36,
-        "fire_rate": 6.92,
+        "fire_rate": 7.2,
         "move_down_arc": 10,
         "move_up_arc": 8,
         "name": "OQF 123 mm Mk. 2",
-        "reload_time": 20.0,
+        "reload_time": 19.0,
         "tier": 10,
         "traverse_speed": 26.25,
         "weight": 2850
@@ -21281,14 +21281,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 15,
-          "sides": 30
+          "front": 65,
+          "rear": 16,
+          "sides": 32
         },
         "turret": {
-          "front": 40,
-          "rear": 40,
-          "sides": 40
+          "front": 43,
+          "rear": 43,
+          "sides": 43
         }
       },
       "battle_level_range_max": 5,
@@ -21326,7 +21326,7 @@
       "max_ammo": 42,
       "max_weight": 18500,
       "profile_id": "2325-3090-4372",
-      "protection": 13,
+      "protection": 12,
       "shells": [
         {
           "damage": 160,
@@ -21536,7 +21536,7 @@
       "max_ammo": 34,
       "max_weight": 34000,
       "profile_id": "3332-26629-35075-41730",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 280,
@@ -21937,14 +21937,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 35,
-          "rear": 25,
-          "sides": 30
+          "front": 38,
+          "rear": 27,
+          "sides": 32
         },
         "turret": {
-          "front": 35,
-          "rear": 30,
-          "sides": 30
+          "front": 36,
+          "rear": 31,
+          "sides": 31
         }
       },
       "battle_level_range_max": 2,
@@ -21952,23 +21952,23 @@
       "engine": {
         "fire_chance": 0.2,
         "name": "Continental W-670-7",
-        "power": 205,
+        "power": 140,
         "tier": 1,
         "weight": 256
       },
       "engine_id": 4645,
-      "firepower": 1,
+      "firepower": 3,
       "gun": {
-        "aim_time": 4.31,
+        "aim_time": 4.28,
         "caliber": 20,
         "clip_capacity": 4,
         "clip_reload_time": 0.1,
-        "dispersion": 0.42,
-        "fire_rate": 32.88,
-        "move_down_arc": 6,
+        "dispersion": 0.38,
+        "fire_rate": 38.1,
+        "move_down_arc": 7,
         "move_up_arc": 19,
         "name": "Hispano-Suiza Birkigt Gun",
-        "reload_time": 7.0,
+        "reload_time": 6.0,
         "tier": 1,
         "traverse_speed": 43.75,
         "weight": 68
@@ -21978,7 +21978,7 @@
       "hull_hp": 224,
       "hull_weight": 4701,
       "is_default": true,
-      "maneuverability": 64,
+      "maneuverability": 54,
       "max_ammo": 564,
       "max_weight": 11500,
       "profile_id": "292-3619-3874-4645",
@@ -21990,15 +21990,15 @@
           "type": "ARMOR_PIERCING"
         }
       ],
-      "shot_efficiency": 26,
+      "shot_efficiency": 32,
       "signal_range": null,
-      "speed_backward": 18,
-      "speed_forward": 46,
+      "speed_backward": 15,
+      "speed_forward": 36,
       "suspension": {
         "load_limit": 11500,
         "name": "VVSS T16E2",
         "tier": 2,
-        "traverse_speed": 42,
+        "traverse_speed": 49,
         "weight": 3300
       },
       "suspension_id": 3874,
@@ -22008,7 +22008,7 @@
         "tier": 1,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
-        "traverse_speed": 36,
+        "traverse_speed": 45,
         "view_range": 220,
         "weight": 700
       },
@@ -22345,9 +22345,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 45,
-          "sides": 80
+          "front": 104,
+          "rear": 47,
+          "sides": 83
         },
         "turret": {
           "front": 200,
@@ -22873,7 +22873,7 @@
       "max_ammo": 41,
       "max_weight": 28000,
       "profile_id": "24340-27157-38163-45330",
-      "protection": 21,
+      "protection": 22,
       "shells": [
         {
           "damage": 225,
@@ -23079,7 +23079,7 @@
       "max_ammo": 40,
       "max_weight": 60000,
       "profile_id": "23125-260179-260690-261460",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 440,
@@ -23243,7 +23243,7 @@
       "max_ammo": 48,
       "max_weight": 32000,
       "profile_id": "10565-16708-23363-28994",
-      "protection": 28,
+      "protection": 29,
       "shells": [
         {
           "damage": 225,
@@ -23991,7 +23991,7 @@
       "max_ammo": 25,
       "max_weight": 52600,
       "profile_id": "65541-256514-257028",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 460,
@@ -24551,7 +24551,7 @@
       "max_ammo": 64,
       "max_weight": 48000,
       "profile_id": "23637-260691-261202-261972",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 190,
@@ -24670,14 +24670,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 60,
-          "sides": 60
+          "front": 104,
+          "rear": 62,
+          "sides": 62
         },
         "turret": {
-          "front": 130,
-          "rear": 60,
-          "sides": 80
+          "front": 140,
+          "rear": 65,
+          "sides": 86
         }
       },
       "battle_level_range_max": 9,
@@ -25106,7 +25106,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "28948-32533-51986",
-      "protection": 28,
+      "protection": 29,
       "shells": [
         {
           "damage": 640,
@@ -25257,7 +25257,7 @@
       "max_ammo": 100,
       "max_weight": 70000,
       "profile_id": "20005-257058-257059-257316",
-      "protection": 62,
+      "protection": 61,
       "shells": [
         {
           "damage": 310,
@@ -25579,7 +25579,7 @@
       "max_ammo": 60,
       "max_weight": 35000,
       "profile_id": "11028-33045-257042-257043",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 160,
@@ -26067,7 +26067,7 @@
       "max_ammo": 90,
       "max_weight": 34500,
       "profile_id": "65797-257282-257283-258052",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -26389,7 +26389,7 @@
       "max_ammo": 70,
       "max_weight": 50000,
       "profile_id": "20517-257570-257571-258852",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 240,
@@ -26759,7 +26759,7 @@
       "max_ammo": 90,
       "max_weight": 39000,
       "profile_id": "30468-66053-257538-257539",
-      "protection": 70,
+      "protection": 69,
       "shells": [
         {
           "damage": 310,
@@ -26920,7 +26920,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "33557-257554-257555-257556",
-      "protection": 18,
+      "protection": 19,
       "shells": [
         {
           "damage": 460,
@@ -27502,7 +27502,7 @@
       "max_ammo": 40,
       "max_weight": 20000,
       "profile_id": "20773-258338-258339-260132",
-      "protection": 33,
+      "protection": 34,
       "shells": [
         {
           "damage": 560,
@@ -27826,7 +27826,7 @@
       "max_ammo": 30,
       "max_weight": 58000,
       "profile_id": "66309-257794-257795-259076",
-      "protection": 94,
+      "protection": 92,
       "shells": [
         {
           "damage": 420,
@@ -27945,14 +27945,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 45,
-          "rear": 35,
-          "sides": 35
+          "front": 47,
+          "rear": 37,
+          "sides": 37
         },
         "turret": {
-          "front": 45,
-          "rear": 35,
-          "sides": 40
+          "front": 49,
+          "rear": 38,
+          "sides": 43
         }
       },
       "battle_level_range_max": 5,
@@ -28569,7 +28569,7 @@
       "max_ammo": 50,
       "max_weight": 66000,
       "profile_id": "24149-263250-263764",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 330,
@@ -28676,14 +28676,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 30,
-          "rear": 15,
-          "sides": 20
+          "front": 32,
+          "rear": 16,
+          "sides": 22
         },
         "turret": {
-          "front": 30,
-          "rear": 15,
-          "sides": 15
+          "front": 32,
+          "rear": 16,
+          "sides": 16
         }
       },
       "battle_level_range_max": 2,
@@ -29262,7 +29262,7 @@
       "max_ammo": 90,
       "max_weight": 40000,
       "profile_id": "13349-258850-258851-260644",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 225,
@@ -29381,9 +29381,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 120
+          "front": 125,
+          "rear": 62,
+          "sides": 125
         },
         "turret": {
           "front": 220,
@@ -29819,7 +29819,7 @@
       "max_ammo": 48,
       "max_weight": 40000,
       "profile_id": "34837-258324-258835-259346",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 225,
@@ -29980,7 +29980,7 @@
       "max_ammo": 90,
       "max_weight": 43000,
       "profile_id": "21285-259106-259107-260900",
-      "protection": 49,
+      "protection": 48,
       "shells": [
         {
           "damage": 225,
@@ -30096,14 +30096,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 60,
-          "sides": 60
+          "front": 108,
+          "rear": 65,
+          "sides": 65
         },
         "turret": {
-          "front": 110,
-          "rear": 90,
-          "sides": 90
+          "front": 105,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 7,
@@ -30463,7 +30463,7 @@
       "max_ammo": 71,
       "max_weight": 38500,
       "profile_id": "22309-259362-259363-261156",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 160,
@@ -31065,7 +31065,7 @@
       "max_ammo": 51,
       "max_weight": 38300,
       "profile_id": "65541-258818-258819-261380",
-      "protection": 39,
+      "protection": 38,
       "shells": [
         {
           "damage": 200,
@@ -31342,14 +31342,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 40,
-          "sides": 60
+          "front": 78,
+          "rear": 42,
+          "sides": 62
         },
         "turret": {
-          "front": 75,
-          "rear": 30,
-          "sides": 30
+          "front": 81,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 8,
@@ -32087,7 +32087,7 @@
       "max_ammo": 40,
       "max_weight": 20000,
       "profile_id": "22821-259874-259875-261668",
-      "protection": 33,
+      "protection": 34,
       "shells": [
         {
           "damage": 560,
@@ -32203,14 +32203,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 30,
-          "sides": 40
+          "front": 62,
+          "rear": 31,
+          "sides": 42
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 7,
@@ -32359,14 +32359,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 127,
-          "rear": 41,
-          "sides": 86
+          "front": 137,
+          "rear": 44,
+          "sides": 93
         },
         "turret": {
-          "front": 140,
-          "rear": 83,
-          "sides": 86
+          "front": 151,
+          "rear": 90,
+          "sides": 93
         }
       },
       "battle_level_range_max": 7,
@@ -32404,7 +32404,7 @@
       "max_ammo": 52,
       "max_weight": 61000,
       "profile_id": "23077-260130-260131-262180",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 225,
@@ -32565,7 +32565,7 @@
       "max_ammo": 45,
       "max_weight": 74950,
       "profile_id": "68357-259586-259587-262148",
-      "protection": 89,
+      "protection": 88,
       "shells": [
         {
           "damage": 420,
@@ -32875,7 +32875,7 @@
       "max_ammo": 40,
       "max_weight": 65000,
       "profile_id": "23589-260642-262692",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 400,
@@ -33483,12 +33483,12 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 60,
-          "sides": 60
+          "front": 79,
+          "rear": 63,
+          "sides": 63
         },
         "turret": {
-          "front": 70,
+          "front": 74,
           "rear": 0,
           "sides": 0
         }
@@ -33927,14 +33927,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 60,
-          "sides": 80
+          "front": 108,
+          "rear": 65,
+          "sides": 86
         },
         "turret": {
-          "front": 80,
-          "rear": 60,
-          "sides": 60
+          "front": 84,
+          "rear": 63,
+          "sides": 63
         }
       },
       "battle_level_range_max": 7,
@@ -34207,7 +34207,7 @@
       "max_ammo": 60,
       "max_weight": 66800,
       "profile_id": "4388-24357-261411-261666",
-      "protection": 55,
+      "protection": 54,
       "shells": [
         {
           "damage": 310,
@@ -34964,13 +34964,13 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 40,
-          "rear": 40,
-          "sides": 20
+          "front": 41,
+          "rear": 41,
+          "sides": 21
         },
         "turret": {
-          "front": 40,
-          "rear": 20,
+          "front": 41,
+          "rear": 21,
           "sides": 0
         }
       },
@@ -35111,14 +35111,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 14,
+          "front": 15,
           "rear": 9,
           "sides": 9
         },
         "turret": {
-          "front": 14,
-          "rear": 14,
-          "sides": 14
+          "front": 15,
+          "rear": 15,
+          "sides": 15
         }
       },
       "battle_level_range_max": 4,
@@ -35156,7 +35156,7 @@
       "max_ammo": 80,
       "max_weight": 19500,
       "profile_id": "5714-5715-21077-258132",
-      "protection": 5,
+      "protection": 6,
       "shells": [
         {
           "damage": 70,
@@ -35600,14 +35600,14 @@
       "engine": {
         "fire_chance": 0.2,
         "name": "American la France “J” V-12",
-        "power": 220,
+        "power": 310,
         "tier": 3,
         "weight": 510
       },
       "engine_id": 3973,
-      "firepower": 8,
+      "firepower": 10,
       "gun": {
-        "aim_time": 2.97,
+        "aim_time": 2.83,
         "caliber": 37,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -35626,14 +35626,14 @@
       "hull_hp": 328,
       "hull_weight": 6500,
       "is_default": true,
-      "maneuverability": 56,
+      "maneuverability": 73,
       "max_ammo": 100,
       "max_weight": 12700,
       "profile_id": "3460-3970-3973-4227",
       "protection": 5,
       "shells": [
         {
-          "damage": 45,
+          "damage": 50,
           "penetration": 51,
           "type": "ARMOR_PIERCING"
         }
@@ -35646,7 +35646,7 @@
         "load_limit": 12700,
         "name": "C.L.P. 10TP",
         "tier": 2,
-        "traverse_speed": 43,
+        "traverse_speed": 48,
         "weight": 4000
       },
       "suspension_id": 3970,
@@ -35776,9 +35776,9 @@
           "sides": 45
         },
         "turret": {
-          "front": 90,
-          "rear": 52,
-          "sides": 75
+          "front": 86,
+          "rear": 49,
+          "sides": 71
         }
       },
       "battle_level_range_max": 7,
@@ -36019,12 +36019,12 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 45,
-          "rear": 40,
-          "sides": 45
+          "front": 47,
+          "rear": 42,
+          "sides": 47
         },
         "turret": {
-          "front": 45,
+          "front": 47,
           "rear": 0,
           "sides": 0
         }
@@ -36217,14 +36217,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 50,
-          "sides": 80
+          "front": 108,
+          "rear": 54,
+          "sides": 86
         },
         "turret": {
-          "front": 100,
-          "rear": 60,
-          "sides": 80
+          "front": 105,
+          "rear": 63,
+          "sides": 84
         }
       },
       "battle_level_range_max": 6,
@@ -37266,18 +37266,18 @@
         "weight": 545
       },
       "engine_id": 4485,
-      "firepower": 1,
+      "firepower": 2,
       "gun": {
-        "aim_time": 4.19,
+        "aim_time": 4.21,
         "caliber": 37,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.34,
-        "fire_rate": 9.68,
+        "fire_rate": 10.34,
         "move_down_arc": 10,
         "move_up_arc": 20,
         "name": "Psvk-36",
-        "reload_time": 6.2,
+        "reload_time": 5.8,
         "tier": 1,
         "traverse_speed": 43.75,
         "weight": 78
@@ -37291,7 +37291,7 @@
       "max_ammo": 80,
       "max_weight": 12700,
       "profile_id": "3972-4482-4483-4485",
-      "protection": 5,
+      "protection": 4,
       "shells": [
         {
           "damage": 35,
@@ -37317,7 +37317,7 @@
         "tier": 1,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
-        "traverse_speed": 38,
+        "traverse_speed": 44,
         "view_range": 210,
         "weight": 650
       },
@@ -37430,14 +37430,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 60,
-          "sides": 60
+          "front": 81,
+          "rear": 65,
+          "sides": 65
         },
         "turret": {
-          "front": 82,
-          "rear": 75,
-          "sides": 75
+          "front": 78,
+          "rear": 71,
+          "sides": 71
         }
       },
       "battle_level_range_max": 7,
@@ -37666,9 +37666,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 51,
-          "sides": 76
+          "front": 106,
+          "rear": 53,
+          "sides": 79
         },
         "turret": {
           "front": 279,
@@ -37711,7 +37711,7 @@
       "max_ammo": 34,
       "max_weight": 71850,
       "profile_id": "5667-5922-12837-15652",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 400,
@@ -37830,9 +37830,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 90
+          "front": 125,
+          "rear": 62,
+          "sides": 94
         },
         "turret": {
           "front": 130,
@@ -38052,14 +38052,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 70,
-          "rear": 40,
-          "sides": 65
+          "front": 68,
+          "rear": 39,
+          "sides": 63
         },
         "turret": {
-          "front": 80,
-          "rear": 60,
-          "sides": 60
+          "front": 78,
+          "rear": 59,
+          "sides": 59
         }
       },
       "battle_level_range_max": 5,
@@ -38216,14 +38216,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 40,
-          "rear": 25,
-          "sides": 20
+          "front": 42,
+          "rear": 26,
+          "sides": 21
         },
         "turret": {
-          "front": 40,
-          "rear": 30,
-          "sides": 35
+          "front": 42,
+          "rear": 31,
+          "sides": 36
         }
       },
       "battle_level_range_max": 3,
@@ -38231,23 +38231,23 @@
       "engine": {
         "fire_chance": 0.2,
         "name": "Continental W-670",
-        "power": 245,
+        "power": 330,
         "tier": 3,
         "weight": 256
       },
       "engine_id": 293,
-      "firepower": 7,
+      "firepower": 9,
       "gun": {
-        "aim_time": 2.64,
+        "aim_time": 2.78,
         "caliber": 37,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.38,
-        "fire_rate": 11.54,
+        "fire_rate": 11.76,
         "move_down_arc": 10,
         "move_up_arc": 20,
         "name": "M5E1",
-        "reload_time": 5.2,
+        "reload_time": 5.1,
         "tier": 2,
         "traverse_speed": 43.75,
         "weight": 78
@@ -38257,14 +38257,14 @@
       "hull_hp": 304,
       "hull_weight": 7228,
       "is_default": true,
-      "maneuverability": 59,
+      "maneuverability": 77,
       "max_ammo": 98,
       "max_weight": 14500,
       "profile_id": "291-293-546-259108",
       "protection": 7,
       "shells": [
         {
-          "damage": 45,
+          "damage": 50,
           "penetration": 48,
           "type": "ARMOR_PIERCING"
         }
@@ -38272,12 +38272,12 @@
       "shot_efficiency": 33,
       "signal_range": null,
       "speed_backward": 20,
-      "speed_forward": 50,
+      "speed_forward": 44,
       "suspension": {
         "load_limit": 14500,
         "name": "Stuart E2",
         "tier": 3,
-        "traverse_speed": 39,
+        "traverse_speed": 47,
         "weight": 3000
       },
       "suspension_id": 546,
@@ -38402,9 +38402,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 178,
-          "rear": 51,
-          "sides": 64
+          "front": 187,
+          "rear": 53,
+          "sides": 67
         },
         "turret": {
           "front": 102,
@@ -38957,14 +38957,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 22,
-          "rear": 15,
-          "sides": 15
+          "front": 24,
+          "rear": 16,
+          "sides": 16
         },
         "turret": {
-          "front": 30,
-          "rear": 15,
-          "sides": 15
+          "front": 32,
+          "rear": 16,
+          "sides": 16
         }
       },
       "battle_level_range_max": 4,
@@ -39765,7 +39765,7 @@
       "max_ammo": 140,
       "max_weight": 53000,
       "profile_id": "7250-7251-7509-7764",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 160,
@@ -39934,9 +39934,9 @@
           "sides": 40
         },
         "turret": {
-          "front": 40,
-          "rear": 40,
-          "sides": 40
+          "front": 39,
+          "rear": 39,
+          "sides": 39
         }
       },
       "battle_level_range_max": 4,
@@ -40043,8 +40043,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -40135,14 +40135,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 51,
-          "rear": 51,
-          "sides": 51
+          "front": 53,
+          "rear": 53,
+          "sides": 53
         },
         "turret": {
-          "front": 101,
-          "rear": 101,
-          "sides": 101
+          "front": 109,
+          "rear": 109,
+          "sides": 109
         }
       },
       "battle_level_range_max": 6,
@@ -40299,14 +40299,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 25,
-          "rear": 15,
-          "sides": 15
+          "front": 27,
+          "rear": 16,
+          "sides": 16
         },
         "turret": {
-          "front": 25,
-          "rear": 15,
-          "sides": 15
+          "front": 27,
+          "rear": 16,
+          "sides": 16
         }
       },
       "battle_level_range_max": 4,
@@ -40458,14 +40458,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 140,
-          "rear": 41,
-          "sides": 76
+          "front": 151,
+          "rear": 44,
+          "sides": 82
         },
         "turret": {
-          "front": 115,
-          "rear": 83,
-          "sides": 83
+          "front": 124,
+          "rear": 90,
+          "sides": 90
         }
       },
       "battle_level_range_max": 6,
@@ -40503,7 +40503,7 @@
       "max_ammo": 56,
       "max_weight": 61500,
       "profile_id": "1828-2597-6435-6690",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 160,
@@ -41452,14 +41452,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 45,
-          "sides": 45
+          "front": 79,
+          "rear": 47,
+          "sides": 47
         },
         "turret": {
-          "front": 75,
-          "rear": 60,
-          "sides": 60
+          "front": 79,
+          "rear": 63,
+          "sides": 63
         }
       },
       "battle_level_range_max": 7,
@@ -41819,9 +41819,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 90
+          "front": 125,
+          "rear": 62,
+          "sides": 94
         },
         "turret": {
           "front": 100,
@@ -42265,7 +42265,7 @@
       "max_ammo": 50,
       "max_weight": 40000,
       "profile_id": "4709-5732-6755-7266",
-      "protection": 54,
+      "protection": 53,
       "shells": [
         {
           "damage": 350,
@@ -42383,14 +42383,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 80,
-          "sides": 80
+          "front": 104,
+          "rear": 83,
+          "sides": 83
         },
         "turret": {
-          "front": 130,
-          "rear": 45,
-          "sides": 45
+          "front": 140,
+          "rear": 49,
+          "sides": 49
         }
       },
       "battle_level_range_max": 8,
@@ -42428,7 +42428,7 @@
       "max_ammo": 32,
       "max_weight": 58000,
       "profile_id": "2421-2674-3188-3443",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 400,
@@ -42935,12 +42935,12 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 40,
-          "sides": 50
+          "front": 125,
+          "rear": 42,
+          "sides": 52
         },
         "turret": {
-          "front": 80,
+          "front": 83,
           "rear": 0,
           "sides": 0
         }
@@ -43161,9 +43161,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 51,
-          "sides": 76
+          "front": 125,
+          "rear": 53,
+          "sides": 79
         },
         "turret": {
           "front": 279,
@@ -43617,9 +43617,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 130,
-          "rear": 38,
-          "sides": 51
+          "front": 135,
+          "rear": 40,
+          "sides": 53
         },
         "turret": {
           "front": 152,
@@ -44061,7 +44061,7 @@
       "max_ammo": 50,
       "max_weight": 39800,
       "profile_id": "16756-17269-28787-29042",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 310,
@@ -44415,14 +44415,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 50,
-          "sides": 45
+          "front": 104,
+          "rear": 52,
+          "sides": 47
         },
         "turret": {
-          "front": 100,
-          "rear": 45,
-          "sides": 45
+          "front": 105,
+          "rear": 47,
+          "sides": 47
         }
       },
       "battle_level_range_max": 8,
@@ -44650,9 +44650,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 80
+          "front": 125,
+          "rear": 62,
+          "sides": 83
         },
         "turret": {
           "front": 240,
@@ -44695,7 +44695,7 @@
       "max_ammo": 40,
       "max_weight": 42000,
       "profile_id": "6453-6708-6962-6963",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 420,
@@ -44861,7 +44861,7 @@
       "max_ammo": 50,
       "max_weight": 79000,
       "profile_id": "3429-7012-8034",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 460,
@@ -45267,7 +45267,7 @@
       "max_ammo": 58,
       "max_weight": 35300,
       "profile_id": "3076-4357-7171-8706",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 200,
@@ -45482,14 +45482,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 54,
+          "rear": 32,
+          "sides": 32
         },
         "turret": {
-          "front": 30,
-          "rear": 25,
-          "sides": 30
+          "front": 32,
+          "rear": 27,
+          "sides": 32
         }
       },
       "battle_level_range_max": 4,
@@ -45746,7 +45746,7 @@
       "max_ammo": 54,
       "max_weight": 60500,
       "profile_id": "37-4132-7971-8738",
-      "protection": 63,
+      "protection": 62,
       "shells": [
         {
           "damage": 225,
@@ -45981,7 +45981,7 @@
       "max_ammo": 99,
       "max_weight": 18000,
       "profile_id": "4405-7219-7474-11828",
-      "protection": 11,
+      "protection": 10,
       "shells": [
         {
           "damage": 65,
@@ -46301,9 +46301,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 130,
-          "rear": 38,
-          "sides": 51
+          "front": 135,
+          "rear": 40,
+          "sides": 53
         },
         "turret": {
           "front": 165,
@@ -46604,7 +46604,7 @@
       "max_ammo": 28,
       "max_weight": 48400,
       "profile_id": "5733-7524-7779-8546",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 400,
@@ -46765,7 +46765,7 @@
       "max_ammo": 50,
       "max_weight": 34000,
       "profile_id": "17780-17781-29554-29811",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 190,
@@ -46906,7 +46906,7 @@
       "engine_id": 7045,
       "firepower": 100,
       "gun": {
-        "aim_time": 4.27,
+        "aim_time": 4.17,
         "caliber": 120,
         "clip_capacity": 3,
         "clip_reload_time": 3.53,
@@ -46921,15 +46921,15 @@
         "weight": 1600
       },
       "gun_id": 6788,
-      "hp": 2500,
-      "hull_hp": 2000,
+      "hp": 2350,
+      "hull_hp": 1900,
       "hull_weight": 17398,
       "is_default": true,
       "maneuverability": 27,
       "max_ammo": 48,
       "max_weight": 48000,
       "profile_id": "6788-7043-7045-7298",
-      "protection": 67,
+      "protection": 65,
       "shells": [
         {
           "damage": 400,
@@ -46960,12 +46960,12 @@
       },
       "suspension_id": 7298,
       "turret": {
-        "hp": 500,
+        "hp": 450,
         "name": "Kranvagn",
         "tier": 10,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
-        "traverse_speed": 28,
+        "traverse_speed": 16,
         "view_range": 250,
         "weight": 15000
       },
@@ -47236,9 +47236,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 45,
-          "sides": 50
+          "front": 52,
+          "rear": 47,
+          "sides": 52
         },
         "turret": {
           "front": 55,
@@ -48058,7 +48058,7 @@
       "max_ammo": 90,
       "max_weight": 28000,
       "profile_id": "7044-7299-7301-7554",
-      "protection": 43,
+      "protection": 44,
       "shells": [
         {
           "damage": 310,
@@ -48177,14 +48177,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 15,
-          "rear": 15,
-          "sides": 15
+          "front": 16,
+          "rear": 16,
+          "sides": 16
         },
         "turret": {
-          "front": 30,
-          "rear": 30,
-          "sides": 30
+          "front": 32,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 4,
@@ -48336,14 +48336,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 32,
-          "rear": 13,
-          "sides": 18
+          "front": 35,
+          "rear": 14,
+          "sides": 20
         },
         "turret": {
-          "front": 38,
-          "rear": 25,
-          "sides": 25
+          "front": 41,
+          "rear": 27,
+          "sides": 27
         }
       },
       "battle_level_range_max": 4,
@@ -48537,7 +48537,7 @@
       "max_ammo": 34,
       "max_weight": 39800,
       "profile_id": "50-51-52-53",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 280,
@@ -49294,7 +49294,7 @@
       "max_ammo": 90,
       "max_weight": 37000,
       "profile_id": "18292-18293-30066-30323",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 160,
@@ -49468,7 +49468,7 @@
       "max_ammo": 60,
       "max_weight": 36000,
       "profile_id": "7300-7555-7557-7810",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 225,
@@ -49587,14 +49587,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 80,
-          "sides": 100
+          "front": 104,
+          "rear": 83,
+          "sides": 104
         },
         "turret": {
-          "front": 90,
-          "rear": 75,
-          "sides": 75
+          "front": 94,
+          "rear": 78,
+          "sides": 78
         }
       },
       "battle_level_range_max": 6,
@@ -49632,7 +49632,7 @@
       "max_ammo": 120,
       "max_weight": 70400,
       "profile_id": "7429-11267-13826-18948",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 160,
@@ -49898,9 +49898,9 @@
           "sides": 90
         },
         "turret": {
-          "front": 100,
-          "rear": 90,
-          "sides": 90
+          "front": 95,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 8,
@@ -50128,14 +50128,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 160,
-          "rear": 80,
-          "sides": 100
+          "front": 166,
+          "rear": 83,
+          "sides": 104
         },
         "turret": {
-          "front": 100,
-          "rear": 80,
-          "sides": 80
+          "front": 105,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 9,
@@ -50364,14 +50364,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 55,
-          "sides": 70
+          "front": 78,
+          "rear": 57,
+          "sides": 73
         },
         "turret": {
-          "front": 75,
-          "rear": 75,
-          "sides": 75
+          "front": 81,
+          "rear": 81,
+          "sides": 81
         }
       },
       "battle_level_range_max": 6,
@@ -50528,14 +50528,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 85,
-          "rear": 40,
-          "sides": 40
+          "front": 88,
+          "rear": 42,
+          "sides": 42
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 54,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 6,
@@ -50891,7 +50891,7 @@
       "max_ammo": 100,
       "max_weight": 17400,
       "profile_id": "805-9763-10530-259364",
-      "protection": 9,
+      "protection": 8,
       "shells": [
         {
           "damage": 65,
@@ -51060,9 +51060,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 45,
-          "rear": 40,
-          "sides": 45
+          "front": 47,
+          "rear": 42,
+          "sides": 47
         },
         "turret": {
           "front": 90,
@@ -51298,14 +51298,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 176,
-          "rear": 51,
-          "sides": 76
+          "front": 185,
+          "rear": 53,
+          "sides": 80
         },
         "turret": {
-          "front": 88,
-          "rear": 76,
-          "sides": 88
+          "front": 92,
+          "rear": 80,
+          "sides": 92
         }
       },
       "battle_level_range_max": 6,
@@ -51515,7 +51515,7 @@
       "max_ammo": 400,
       "max_weight": 18850,
       "profile_id": "5653-10515-11284-13330",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 15,
@@ -52174,14 +52174,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 36,
-          "rear": 25,
-          "sides": 35
+          "front": 39,
+          "rear": 27,
+          "sides": 38
         },
         "turret": {
-          "front": 56,
-          "rear": 46,
-          "sides": 46
+          "front": 61,
+          "rear": 50,
+          "sides": 50
         }
       },
       "battle_level_range_max": 4,
@@ -52487,14 +52487,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 15,
-          "sides": 30
+          "front": 65,
+          "rear": 16,
+          "sides": 32
         },
         "turret": {
-          "front": 40,
-          "rear": 40,
-          "sides": 40
+          "front": 43,
+          "rear": 43,
+          "sides": 43
         }
       },
       "battle_level_range_max": 5,
@@ -52532,7 +52532,7 @@
       "max_ammo": 40,
       "max_weight": 18500,
       "profile_id": "4965-5988-7522",
-      "protection": 13,
+      "protection": 12,
       "shells": [
         {
           "damage": 160,
@@ -52836,14 +52836,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 25,
-          "rear": 16,
-          "sides": 20
+          "front": 27,
+          "rear": 17,
+          "sides": 22
         },
         "turret": {
-          "front": 25,
-          "rear": 25,
-          "sides": 25
+          "front": 27,
+          "rear": 27,
+          "sides": 27
         }
       },
       "battle_level_range_max": 4,
@@ -52995,14 +52995,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 55,
-          "sides": 60
+          "front": 65,
+          "rear": 59,
+          "sides": 65
         },
         "turret": {
-          "front": 46,
-          "rear": 46,
-          "sides": 46
+          "front": 50,
+          "rear": 50,
+          "sides": 50
         }
       },
       "battle_level_range_max": 4,
@@ -53360,7 +53360,7 @@
       "max_ammo": 36,
       "max_weight": 60800,
       "profile_id": "18549-18804-30322-30579",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 640,
@@ -53479,14 +53479,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 60,
-          "sides": 60
+          "front": 62,
+          "rear": 62,
+          "sides": 62
         },
         "turret": {
-          "front": 65,
-          "rear": 65,
-          "sides": 65
+          "front": 70,
+          "rear": 70,
+          "sides": 70
         }
       },
       "battle_level_range_max": 4,
@@ -53643,14 +53643,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 40,
-          "rear": 40,
-          "sides": 40
+          "front": 38,
+          "rear": 38,
+          "sides": 38
         },
         "turret": {
-          "front": 40,
-          "rear": 40,
-          "sides": 40
+          "front": 38,
+          "rear": 38,
+          "sides": 38
         }
       },
       "battle_level_range_max": 3,
@@ -53797,14 +53797,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 191,
-          "rear": 41,
-          "sides": 44
+          "front": 199,
+          "rear": 43,
+          "sides": 46
         },
         "turret": {
-          "front": 191,
-          "rear": 208,
-          "sides": 89
+          "front": 199,
+          "rear": 216,
+          "sides": 93
         }
       },
       "battle_level_range_max": 8,
@@ -54006,7 +54006,7 @@
       "max_ammo": 60,
       "max_weight": 81000,
       "profile_id": "338-340-341",
-      "protection": 72,
+      "protection": 71,
       "shells": [
         {
           "damage": 300,
@@ -54330,14 +54330,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 25,
-          "rear": 13,
-          "sides": 13
+          "front": 26,
+          "rear": 14,
+          "sides": 14
         },
         "turret": {
-          "front": 25,
-          "rear": 25,
-          "sides": 25
+          "front": 26,
+          "rear": 26,
+          "sides": 26
         }
       },
       "battle_level_range_max": 4,
@@ -54489,14 +54489,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 165,
-          "rear": 82,
-          "sides": 82
+          "front": 178,
+          "rear": 89,
+          "sides": 89
         },
         "turret": {
-          "front": 82,
-          "rear": 65,
-          "sides": 82
+          "front": 89,
+          "rear": 70,
+          "sides": 89
         }
       },
       "battle_level_range_max": 8,
@@ -54711,14 +54711,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 35,
-          "rear": 16,
-          "sides": 30
+          "front": 37,
+          "rear": 17,
+          "sides": 32
         },
         "turret": {
-          "front": 35,
-          "rear": 35,
-          "sides": 35
+          "front": 38,
+          "rear": 38,
+          "sides": 38
         }
       },
       "battle_level_range_max": 5,
@@ -54872,14 +54872,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 191,
-          "rear": 41,
-          "sides": 44
+          "front": 199,
+          "rear": 43,
+          "sides": 46
         },
         "turret": {
-          "front": 191,
-          "rear": 89,
-          "sides": 90
+          "front": 199,
+          "rear": 93,
+          "sides": 94
         }
       },
       "battle_level_range_max": 9,
@@ -55526,14 +55526,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 55,
-          "sides": 70
+          "front": 78,
+          "rear": 57,
+          "sides": 73
         },
         "turret": {
-          "front": 89,
-          "rear": 76,
-          "sides": 76
+          "front": 93,
+          "rear": 80,
+          "sides": 80
         }
       },
       "battle_level_range_max": 6,
@@ -55690,9 +55690,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 50,
-          "sides": 30
+          "front": 63,
+          "rear": 53,
+          "sides": 32
         },
         "turret": {
           "front": 0,
@@ -55847,9 +55847,9 @@
           "sides": 90
         },
         "turret": {
-          "front": 150,
-          "rear": 80,
-          "sides": 90
+          "front": 143,
+          "rear": 76,
+          "sides": 86
         }
       },
       "battle_level_range_max": 9,
@@ -55887,7 +55887,7 @@
       "max_ammo": 28,
       "max_weight": 53900,
       "profile_id": "3588-5637-8707-10754",
-      "protection": 61,
+      "protection": 60,
       "shells": [
         {
           "damage": 400,
@@ -56134,7 +56134,7 @@
       "max_ammo": 144,
       "max_weight": 85000,
       "profile_id": "9300-13909-15443-16210",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 160,
@@ -56253,14 +56253,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 6,
@@ -56478,14 +56478,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 45,
-          "rear": 35,
-          "sides": 35
+          "front": 47,
+          "rear": 36,
+          "sides": 36
         },
         "turret": {
-          "front": 55,
-          "rear": 35,
-          "sides": 45
+          "front": 58,
+          "rear": 37,
+          "sides": 47
         }
       },
       "battle_level_range_max": 5,
@@ -56761,7 +56761,7 @@
       "max_ammo": 70,
       "max_weight": 68000,
       "profile_id": "9556-14165-16978",
-      "protection": 48,
+      "protection": 50,
       "shells": [
         {
           "damage": 200,
@@ -56868,9 +56868,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 70,
-          "sides": 120
+          "front": 125,
+          "rear": 73,
+          "sides": 125
         },
         "turret": {
           "front": 260,
@@ -57034,9 +57034,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 50,
-          "sides": 30
+          "front": 63,
+          "rear": 53,
+          "sides": 32
         },
         "turret": {
           "front": 0,
@@ -57181,14 +57181,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 150,
-          "rear": 80,
-          "sides": 80
+          "front": 158,
+          "rear": 84,
+          "sides": 84
         },
         "turret": {
-          "front": 120,
-          "rear": 80,
-          "sides": 80
+          "front": 126,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 9,
@@ -57226,7 +57226,7 @@
       "max_ammo": 40,
       "max_weight": 99850,
       "profile_id": "10261-13076-17171-21778",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 310,
@@ -58214,14 +58214,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 60,
-          "sides": 60
+          "front": 63,
+          "rear": 63,
+          "sides": 63
         },
         "turret": {
-          "front": 60,
-          "rear": 16,
-          "sides": 20
+          "front": 63,
+          "rear": 17,
+          "sides": 21
         }
       },
       "battle_level_range_max": 7,
@@ -58366,14 +58366,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 30,
-          "rear": 12,
-          "sides": 20
+          "front": 32,
+          "rear": 13,
+          "sides": 21
         },
         "turret": {
-          "front": 30,
-          "rear": 25,
-          "sides": 25
+          "front": 32,
+          "rear": 26,
+          "sides": 26
         }
       },
       "battle_level_range_max": 4,
@@ -59003,14 +59003,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 20,
-          "sides": 30
+          "front": 54,
+          "rear": 22,
+          "sides": 32
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 54,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 6,
@@ -59473,14 +59473,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 250,
-          "rear": 80,
-          "sides": 80
+          "front": 263,
+          "rear": 84,
+          "sides": 84
         },
         "turret": {
-          "front": 80,
-          "rear": 80,
-          "sides": 80
+          "front": 84,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 9,
@@ -60274,14 +60274,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 22,
-          "rear": 22,
-          "sides": 22
+          "front": 24,
+          "rear": 24,
+          "sides": 24
         },
         "turret": {
-          "front": 25,
-          "rear": 25,
-          "sides": 25
+          "front": 27,
+          "rear": 27,
+          "sides": 27
         }
       },
       "battle_level_range_max": 3,
@@ -60470,7 +60470,7 @@
       "max_ammo": 45,
       "max_weight": 42000,
       "profile_id": "7218-7221-8244-9267",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 350,
@@ -60782,7 +60782,7 @@
       "hull_hp": 1264,
       "hull_weight": 27730,
       "is_default": true,
-      "maneuverability": 35,
+      "maneuverability": 37,
       "max_ammo": 72,
       "max_weight": 54000,
       "profile_id": "3413-7252-12371-12882",
@@ -60807,7 +60807,7 @@
       "shot_efficiency": 82,
       "signal_range": null,
       "speed_backward": 20,
-      "speed_forward": 40,
+      "speed_forward": 50,
       "suspension": {
         "load_limit": 54000,
         "name": "Centurion Mk. 7",
@@ -61002,14 +61002,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 80,
-          "rear": 20,
-          "sides": 30
+          "front": 86,
+          "rear": 22,
+          "sides": 32
         },
         "turret": {
-          "front": 120,
-          "rear": 60,
-          "sides": 60
+          "front": 130,
+          "rear": 65,
+          "sides": 65
         }
       },
       "battle_level_range_max": 7,
@@ -61549,14 +61549,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 85,
-          "rear": 40,
-          "sides": 50
+          "front": 88,
+          "rear": 42,
+          "sides": 52
         },
         "turret": {
-          "front": 100,
-          "rear": 45,
-          "sides": 45
+          "front": 105,
+          "rear": 47,
+          "sides": 47
         }
       },
       "battle_level_range_max": 8,
@@ -61594,7 +61594,7 @@
       "max_ammo": 82,
       "max_weight": 49000,
       "profile_id": "15893-17940-25363-30994",
-      "protection": 33,
+      "protection": 34,
       "shells": [
         {
           "damage": 160,
@@ -61758,7 +61758,7 @@
       "max_ammo": 42,
       "max_weight": 130000,
       "profile_id": "17173-21012-28947-34834",
-      "protection": 95,
+      "protection": 94,
       "shells": [
         {
           "damage": 640,
@@ -61924,7 +61924,7 @@
       "max_ammo": 30,
       "max_weight": 54900,
       "profile_id": "28933-35332-36867-44034",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 400,
@@ -62253,8 +62253,8 @@
         "module_id": 9731,
         "name": "КВ-3",
         "next_modules": [
-          3588,
-          3332
+          3332,
+          3588
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -62336,7 +62336,7 @@
       "max_ammo": 28,
       "max_weight": 48400,
       "profile_id": "27909-34308-37379-44546",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 400,
@@ -62455,14 +62455,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 51,
-          "sides": 76
+          "front": 107,
+          "rear": 53,
+          "sides": 80
         },
         "turret": {
-          "front": 102,
-          "rear": 76,
-          "sides": 76
+          "front": 107,
+          "rear": 80,
+          "sides": 80
         }
       },
       "battle_level_range_max": 9,
@@ -62943,7 +62943,7 @@
       "max_ammo": 54,
       "max_weight": 39000,
       "profile_id": "53-8500-10291-10546",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 225,
@@ -63107,7 +63107,7 @@
       "max_ammo": 56,
       "max_weight": 19000,
       "profile_id": "7493-8771-10818-18756",
-      "protection": 10,
+      "protection": 9,
       "shells": [
         {
           "damage": 45,
@@ -63852,7 +63852,7 @@
       "max_ammo": 34,
       "max_weight": 38700,
       "profile_id": "28677-35076-38147-45314",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 280,
@@ -64177,7 +64177,7 @@
       "max_ammo": 40,
       "max_weight": 58400,
       "profile_id": "29445-36100-39683-46850",
-      "protection": 66,
+      "protection": 67,
       "shells": [
         {
           "damage": 400,
@@ -64750,7 +64750,7 @@
       "max_ammo": 30,
       "max_weight": 53560,
       "profile_id": "29189-35332-38915-46082",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 400,
@@ -64914,7 +64914,7 @@
       "max_ammo": 40,
       "max_weight": 14800,
       "profile_id": "11013-35844-39427-46594",
-      "protection": 6,
+      "protection": 5,
       "shells": [
         {
           "damage": 120,
@@ -65033,9 +65033,9 @@
           "sides": 140
         },
         "turret": {
-          "front": 250,
-          "rear": 170,
-          "sides": 200
+          "front": 238,
+          "rear": 162,
+          "sides": 190
         }
       },
       "battle_level_range_max": 11,
@@ -65050,7 +65050,7 @@
       "engine_id": 5893,
       "firepower": 58,
       "gun": {
-        "aim_time": 6.03,
+        "aim_time": 6.01,
         "caliber": 122,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -65065,15 +65065,15 @@
         "weight": 3397
       },
       "gun_id": 23812,
-      "hp": 2650,
-      "hull_hp": 2120,
+      "hp": 2500,
+      "hull_hp": 2020,
       "hull_weight": 30750,
       "is_default": true,
       "maneuverability": 31,
       "max_ammo": 40,
       "max_weight": 66300,
       "profile_id": "5893-10243-12290-23812",
-      "protection": 97,
+      "protection": 93,
       "shells": [
         {
           "damage": 420,
@@ -65104,12 +65104,12 @@
       },
       "suspension_id": 12290,
       "turret": {
-        "hp": 530,
+        "hp": 480,
         "name": "ИС-4М",
         "tier": 10,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
-        "traverse_speed": 17,
+        "traverse_speed": 14,
         "view_range": 250,
         "weight": 14200
       },
@@ -65194,14 +65194,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 30,
-          "rear": 20,
-          "sides": 20
+          "front": 32,
+          "rear": 22,
+          "sides": 22
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 53,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 5,
@@ -65353,14 +65353,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 51,
-          "rear": 25,
-          "sides": 32
+          "front": 49,
+          "rear": 24,
+          "sides": 30
         },
         "turret": {
-          "front": 51,
-          "rear": 44,
-          "sides": 25
+          "front": 49,
+          "rear": 42,
+          "sides": 24
         }
       },
       "battle_level_range_max": 3,
@@ -65822,14 +65822,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 152,
-          "rear": 76,
-          "sides": 102
+          "front": 159,
+          "rear": 79,
+          "sides": 106
         },
         "turret": {
-          "front": 254,
-          "rear": 102,
-          "sides": 152
+          "front": 264,
+          "rear": 106,
+          "sides": 159
         }
       },
       "battle_level_range_max": 11,
@@ -65842,18 +65842,18 @@
         "weight": 952
       },
       "engine_id": 12373,
-      "firepower": 75,
+      "firepower": 66,
       "gun": {
         "aim_time": 3.4,
         "caliber": 120,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
         "dispersion": 0.33,
-        "fire_rate": 6.9,
+        "fire_rate": 6.19,
         "move_down_arc": 7,
         "move_up_arc": 15,
         "name": "120 mm Gun L1A1",
-        "reload_time": 8.7,
+        "reload_time": 9.7,
         "tier": 10,
         "traverse_speed": 26.25,
         "weight": 2850
@@ -66033,7 +66033,7 @@
       "max_ammo": 102,
       "max_weight": 31000,
       "profile_id": "370-371-372-373",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 160,
@@ -66738,7 +66738,7 @@
       "max_ammo": 56,
       "max_weight": 37000,
       "profile_id": "23299-28162-28677-65540",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 280,
@@ -67185,14 +67185,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 100,
-          "rear": 82,
-          "sides": 82
+          "front": 108,
+          "rear": 89,
+          "sides": 89
         },
         "turret": {
-          "front": 100,
-          "rear": 82,
-          "sides": 82
+          "front": 108,
+          "rear": 89,
+          "sides": 89
         }
       },
       "battle_level_range_max": 7,
@@ -68545,14 +68545,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 60,
-          "rear": 40,
-          "sides": 60
+          "front": 62,
+          "rear": 42,
+          "sides": 62
         },
         "turret": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 54,
+          "rear": 32,
+          "sides": 32
         }
       },
       "battle_level_range_max": 6,
@@ -68873,14 +68873,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 250,
-          "rear": 80,
-          "sides": 80
+          "front": 263,
+          "rear": 84,
+          "sides": 84
         },
         "turret": {
-          "front": 80,
-          "rear": 80,
-          "sides": 80
+          "front": 84,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 9,
@@ -69351,7 +69351,7 @@
         "hull": {
           "front": 230,
           "rear": 70,
-          "sides": 80
+          "sides": 100
         },
         "turret": {
           "front": 120,
@@ -69364,14 +69364,14 @@
       "engine": {
         "fire_chance": 0.12,
         "name": "V-2-54SCG",
-        "power": 750,
+        "power": 800,
         "tier": 10,
         "weight": 1045
       },
       "engine_id": 7477,
       "firepower": 69,
       "gun": {
-        "aim_time": 5.3,
+        "aim_time": 5.27,
         "caliber": 152,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -69390,11 +69390,11 @@
       "hull_hp": 1440,
       "hull_weight": 40015,
       "is_default": true,
-      "maneuverability": 34,
+      "maneuverability": 40,
       "max_ammo": 35,
       "max_weight": 60000,
       "profile_id": "7477-9268-11058",
-      "protection": 58,
+      "protection": 66,
       "shells": [
         {
           "damage": 640,
@@ -69420,7 +69420,7 @@
         "load_limit": 60000,
         "name": "WZ-113G FT",
         "tier": 10,
-        "traverse_speed": 27,
+        "traverse_speed": 33,
         "weight": 10000
       },
       "suspension_id": 11058,
@@ -69503,14 +69503,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 30,
-          "sides": 30
+          "front": 52,
+          "rear": 31,
+          "sides": 31
         },
         "turret": {
           "front": 0,
-          "rear": 16,
-          "sides": 16
+          "rear": 17,
+          "sides": 17
         }
       },
       "battle_level_range_max": 8,
@@ -69697,7 +69697,7 @@
       "max_ammo": 45,
       "max_weight": 49000,
       "profile_id": "564-6965-10035-10290",
-      "protection": 63,
+      "protection": 62,
       "shells": [
         {
           "damage": 400,
@@ -70354,9 +70354,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 51,
-          "sides": 76
+          "front": 106,
+          "rear": 53,
+          "sides": 79
         },
         "turret": {
           "front": 279,
@@ -70399,7 +70399,7 @@
       "max_ammo": 34,
       "max_weight": 71850,
       "profile_id": "256034-256035-256036-256293",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 400,
@@ -71277,7 +71277,7 @@
       "max_ammo": 52,
       "max_weight": 23300,
       "profile_id": "98-99-100-101",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 160,
@@ -71401,9 +71401,9 @@
           "sides": 75
         },
         "turret": {
-          "front": 80,
-          "rear": 60,
-          "sides": 80
+          "front": 76,
+          "rear": 57,
+          "sides": 76
         }
       },
       "battle_level_range_max": 8,
@@ -71441,7 +71441,7 @@
       "max_ammo": 60,
       "max_weight": 37300,
       "profile_id": "3077-8964-10755-13314",
-      "protection": 39,
+      "protection": 38,
       "shells": [
         {
           "damage": 200,
@@ -71937,14 +71937,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 35,
-          "rear": 25,
-          "sides": 25
+          "front": 38,
+          "rear": 27,
+          "sides": 27
         },
         "turret": {
-          "front": 35,
-          "rear": 15,
-          "sides": 20
+          "front": 38,
+          "rear": 16,
+          "sides": 22
         }
       },
       "battle_level_range_max": 3,
@@ -72123,9 +72123,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 60
+          "front": 117,
+          "rear": 59,
+          "sides": 59
         },
         "turret": {
           "front": 100,
@@ -72168,7 +72168,7 @@
       "max_ammo": 74,
       "max_weight": 40000,
       "profile_id": "6468-6981-8002-9795",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 160,
@@ -72506,14 +72506,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 25,
-          "rear": 15,
-          "sides": 25
+          "front": 27,
+          "rear": 16,
+          "sides": 27
         },
         "turret": {
-          "front": 45,
+          "front": 49,
           "rear": 0,
-          "sides": 45
+          "sides": 49
         }
       },
       "battle_level_range_max": 5,
@@ -72729,7 +72729,7 @@
         "caliber": 128,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
-        "dispersion": 0.38,
+        "dispersion": 0.4,
         "fire_rate": 4.62,
         "move_down_arc": 8,
         "move_up_arc": 24,
@@ -72740,15 +72740,15 @@
         "weight": 3480
       },
       "gun_id": 9492,
-      "hp": 3000,
-      "hull_hp": 2400,
+      "hp": 2850,
+      "hull_hp": 2250,
       "hull_weight": 89040,
       "is_default": true,
       "maneuverability": 16,
       "max_ammo": 68,
       "max_weight": 192900,
       "profile_id": "6421-9492-11539-14610",
-      "protection": 100,
+      "protection": 97,
       "shells": [
         {
           "damage": 460,
@@ -72766,7 +72766,7 @@
           "type": "HIGH_EXPLOSIVE"
         }
       ],
-      "shot_efficiency": 79,
+      "shot_efficiency": 76,
       "signal_range": null,
       "speed_backward": 15,
       "speed_forward": 25,
@@ -72914,7 +72914,7 @@
       "max_ammo": 54,
       "max_weight": 31700,
       "profile_id": "3109-9508-12579-14114",
-      "protection": 14,
+      "protection": 13,
       "shells": [
         {
           "damage": 160,
@@ -73148,7 +73148,7 @@
       "max_ammo": 35,
       "max_weight": 39000,
       "profile_id": "7989-10036-11570",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 400,
@@ -73728,7 +73728,7 @@
       "max_ammo": 90,
       "max_weight": 70000,
       "profile_id": "20085-20340-32114-32371",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 350,
@@ -74013,9 +74013,9 @@
           "sides": 150
         },
         "turret": {
-          "front": 240,
-          "rear": 94,
-          "sides": 185
+          "front": 228,
+          "rear": 89,
+          "sides": 176
         }
       },
       "battle_level_range_max": 11,
@@ -74174,14 +74174,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 40,
-          "sides": 60
+          "front": 81,
+          "rear": 43,
+          "sides": 65
         },
         "turret": {
-          "front": 80,
-          "rear": 60,
-          "sides": 60
+          "front": 86,
+          "rear": 65,
+          "sides": 65
         }
       },
       "battle_level_range_max": 7,
@@ -74859,7 +74859,7 @@
       "hull_hp": 1440,
       "hull_weight": 20634,
       "is_default": true,
-      "maneuverability": 68,
+      "maneuverability": 70,
       "max_ammo": 72,
       "max_weight": 42500,
       "profile_id": "8532-13141-14675-15442",
@@ -74884,7 +74884,7 @@
       "shot_efficiency": 90,
       "signal_range": null,
       "speed_backward": 20,
-      "speed_forward": 50,
+      "speed_forward": 60,
       "suspension": {
         "load_limit": 42500,
         "name": "FV4202",
@@ -75039,7 +75039,7 @@
       "max_ammo": 50,
       "max_weight": 49000,
       "profile_id": "20341-20596-32370-32627",
-      "protection": 91,
+      "protection": 89,
       "shells": [
         {
           "damage": 400,
@@ -75158,12 +75158,12 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 90,
-          "rear": 60,
-          "sides": 90
+          "front": 95,
+          "rear": 63,
+          "sides": 95
         },
         "turret": {
-          "front": 70,
+          "front": 74,
           "rear": 0,
           "sides": 0
         }
@@ -75393,14 +75393,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 200,
-          "rear": 100,
-          "sides": 100
+          "front": 208,
+          "rear": 104,
+          "sides": 104
         },
         "turret": {
-          "front": 220,
-          "rear": 150,
-          "sides": 150
+          "front": 231,
+          "rear": 158,
+          "sides": 158
         }
       },
       "battle_level_range_max": 10,
@@ -76054,9 +76054,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 80,
-          "rear": 30,
-          "sides": 30
+          "front": 86,
+          "rear": 32,
+          "sides": 32
         },
         "turret": {
           "front": 5,
@@ -76099,7 +76099,7 @@
       "max_ammo": 36,
       "max_weight": 22400,
       "profile_id": "20597-20852-32626",
-      "protection": 22,
+      "protection": 21,
       "shells": [
         {
           "damage": 280,
@@ -76206,14 +76206,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 40,
-          "rear": 15,
-          "sides": 25
+          "front": 42,
+          "rear": 16,
+          "sides": 26
         },
         "turret": {
-          "front": 40,
-          "rear": 35,
-          "sides": 35
+          "front": 43,
+          "rear": 38,
+          "sides": 38
         }
       },
       "battle_level_range_max": 4,
@@ -77356,7 +77356,7 @@
       "max_ammo": 90,
       "max_weight": 66800,
       "profile_id": "20853-21108-32882-33139",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 210,
@@ -77475,14 +77475,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 35,
-          "rear": 25,
-          "sides": 25
+          "front": 38,
+          "rear": 27,
+          "sides": 27
         },
         "turret": {
-          "front": 35,
-          "rear": 25,
-          "sides": 25
+          "front": 38,
+          "rear": 27,
+          "sides": 27
         }
       },
       "battle_level_range_max": 3,
@@ -77662,9 +77662,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 45,
-          "sides": 80
+          "front": 125,
+          "rear": 47,
+          "sides": 83
         },
         "turret": {
           "front": 200,
@@ -77707,7 +77707,7 @@
       "max_ammo": 50,
       "max_weight": 39800,
       "profile_id": "4613-14339-17666-19460",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 280,
@@ -77913,12 +77913,12 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 250,
-          "rear": 80,
-          "sides": 100
+          "front": 263,
+          "rear": 84,
+          "sides": 105
         },
         "turret": {
-          "front": 80,
+          "front": 84,
           "rear": 0,
           "sides": 0
         }
@@ -78156,7 +78156,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "9269-11316-13106",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 400,
@@ -78469,14 +78469,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 41,
-          "sides": 86
+          "front": 110,
+          "rear": 44,
+          "sides": 93
         },
         "turret": {
-          "front": 140,
-          "rear": 83,
-          "sides": 75
+          "front": 151,
+          "rear": 90,
+          "sides": 81
         }
       },
       "battle_level_range_max": 7,
@@ -78514,7 +78514,7 @@
       "max_ammo": 75,
       "max_weight": 61000,
       "profile_id": "1570-1571-1828-2853",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 160,
@@ -78650,8 +78650,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -78908,7 +78908,7 @@
       "max_ammo": 48,
       "max_weight": 25000,
       "profile_id": "21109-21364-33138-33395",
-      "protection": 17,
+      "protection": 16,
       "shells": [
         {
           "damage": 160,
@@ -79024,9 +79024,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 80
+          "front": 125,
+          "rear": 62,
+          "sides": 83
         },
         "turret": {
           "front": 230,
@@ -79188,9 +79188,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 60,
-          "sides": 90
+          "front": 125,
+          "rear": 62,
+          "sides": 94
         },
         "turret": {
           "front": 0,
@@ -79382,14 +79382,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 50,
-          "rear": 10,
-          "sides": 25
+          "front": 54,
+          "rear": 11,
+          "sides": 27
         },
         "turret": {
-          "front": 50,
-          "rear": 10,
-          "sides": 25
+          "front": 54,
+          "rear": 11,
+          "sides": 27
         }
       },
       "battle_level_range_max": 5,
@@ -79591,7 +79591,7 @@
       "max_ammo": 72,
       "max_weight": 62450,
       "profile_id": "9509-11300-16930",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 225,
@@ -80243,14 +80243,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 120,
-          "rear": 40,
-          "sides": 60
+          "front": 125,
+          "rear": 42,
+          "sides": 62
         },
         "turret": {
-          "front": 120,
-          "rear": 45,
-          "sides": 60
+          "front": 126,
+          "rear": 47,
+          "sides": 63
         }
       },
       "battle_level_range_max": 9,
@@ -80900,7 +80900,7 @@
       "max_ammo": 50,
       "max_weight": 38000,
       "profile_id": "8003-14914-16964-18757",
-      "protection": 63,
+      "protection": 62,
       "shells": [
         {
           "damage": 350,
@@ -81064,7 +81064,7 @@
       "max_ammo": 70,
       "max_weight": 66000,
       "profile_id": "15957-18258-263508",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 200,
@@ -81485,7 +81485,7 @@
       "max_ammo": 62,
       "max_weight": 91890,
       "profile_id": "9509-11556-17954",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 310,
@@ -82008,14 +82008,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 90,
-          "rear": 40,
-          "sides": 40
+          "front": 94,
+          "rear": 42,
+          "sides": 42
         },
         "turret": {
-          "front": 100,
-          "rear": 40,
-          "sides": 40
+          "front": 108,
+          "rear": 43,
+          "sides": 43
         }
       },
       "battle_level_range_max": 8,
@@ -82177,9 +82177,9 @@
           "sides": 85
         },
         "turret": {
-          "front": 100,
-          "rear": 90,
-          "sides": 90
+          "front": 95,
+          "rear": 86,
+          "sides": 86
         }
       },
       "battle_level_range_max": 8,
@@ -82571,14 +82571,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 102,
-          "rear": 51,
-          "sides": 76
+          "front": 107,
+          "rear": 53,
+          "sides": 80
         },
         "turret": {
-          "front": 102,
-          "rear": 76,
-          "sides": 76
+          "front": 107,
+          "rear": 80,
+          "sides": 80
         }
       },
       "battle_level_range_max": 10,
@@ -82693,8 +82693,8 @@
         "module_id": 14372,
         "name": "90 mm Gun M36",
         "next_modules": [
-          7972,
-          10276
+          10276,
+          7972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -82815,9 +82815,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 45,
-          "rear": 40,
-          "sides": 45
+          "front": 47,
+          "rear": 42,
+          "sides": 47
         },
         "turret": {
           "front": 90,
@@ -83563,14 +83563,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 127,
-          "rear": 76,
-          "sides": 51
+          "front": 132,
+          "rear": 79,
+          "sides": 53
         },
         "turret": {
-          "front": 127,
-          "rear": 76,
-          "sides": 102
+          "front": 132,
+          "rear": 79,
+          "sides": 106
         }
       },
       "battle_level_range_max": 11,
@@ -83774,7 +83774,7 @@
       "max_ammo": 72,
       "max_weight": 150000,
       "profile_id": "9492-11285-18451-23058",
-      "protection": 95,
+      "protection": 94,
       "shells": [
         {
           "damage": 460,
@@ -83953,7 +83953,7 @@
       "max_ammo": 60,
       "max_weight": 62500,
       "profile_id": "4388-11301-16675-20002",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 310,
@@ -84188,7 +84188,7 @@
       "max_ammo": 120,
       "max_weight": 44500,
       "profile_id": "13140-14421-18770",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 90,
@@ -84366,14 +84366,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 160,
-          "rear": 120,
-          "sides": 120
+          "front": 166,
+          "rear": 125,
+          "sides": 125
         },
         "turret": {
-          "front": 185,
-          "rear": 80,
-          "sides": 80
+          "front": 194,
+          "rear": 84,
+          "sides": 84
         }
       },
       "battle_level_range_max": 10,
@@ -84836,9 +84836,9 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 75,
-          "rear": 35,
-          "sides": 35
+          "front": 73,
+          "rear": 34,
+          "sides": 34
         },
         "turret": {
           "front": 18,
@@ -85230,7 +85230,7 @@
       "max_ammo": 36,
       "max_weight": 37500,
       "profile_id": "4357-21252-22274",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 280,
