@@ -47,9 +47,9 @@ impl Drop for Stopwatch {
                 Some(threshold) if elapsed >= threshold => Level::Warn,
                 _ => self.log_level,
             },
-            "{} in {:?}.",
+            "{} in {}.",
             self.message,
-            elapsed,
+            humantime::format_duration(elapsed),
         );
     }
 }
