@@ -18,9 +18,11 @@ impl AccountInfoCache {
 
     pub async fn get(&self, account_id: i32) -> crate::Result<AccountInfo> {
         let mut redis = self.redis.clone();
-        let cache_key = format!("account::info::{}", account_id);
 
-        if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
+        if let Some(blob) = redis
+            .get::<_, Option<Bytes>>(Self::cache_key(account_id))
+            .await?
+        {
             log::debug!("Cache hit on account #{}.", account_id,);
             return Ok(rmp_serde::from_read_ref(&blob)?);
         }
@@ -32,9 +34,23 @@ impl AccountInfoCache {
             .remove(&account_id.to_string())
             .flatten()
             .ok_or_else(|| anyhow!("account #{} not found", account_id))?;
-        redis
-            .set_ex(&cache_key, rmp_serde::to_vec(&account_info)?, 60)
-            .await?;
+        self.put(&account_info).await?;
         Ok(account_info)
+    }
+
+    pub async fn put(&self, account_info: &AccountInfo) -> crate::Result {
+        self.redis
+            .clone()
+            .set_ex(
+                Self::cache_key(account_info.base.id),
+                rmp_serde::to_vec(&account_info)?,
+                60,
+            )
+            .await?;
+        Ok(())
+    }
+
+    fn cache_key(account_id: i32) -> String {
+        format!("account::info::{}", account_id)
     }
 }

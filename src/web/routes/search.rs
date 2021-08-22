@@ -9,6 +9,7 @@ use rocket::State;
 
 use crate::logging::clear_user;
 use crate::models::AccountInfo;
+use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::response::Response;
@@ -24,6 +25,7 @@ pub async fn get(
     query: String,
     tracking_code: &State<TrackingCode>,
     api: &State<WargamingApi>,
+    account_info_cache: &State<AccountInfoCache>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
 
@@ -43,10 +45,11 @@ pub async fn get(
         .into_iter()
         .filter_map(|(_, info)| info)
         .collect();
-    // TODO: add the account infos to the cache.
     if accounts.len() == 1 {
+        let account_info = accounts.first().unwrap();
+        account_info_cache.put(&account_info).await?;
         return Ok(Response::Redirect(Redirect::temporary(get_account_url(
-            accounts.first().unwrap().base.id,
+            account_info.base.id,
         ))));
     }
     accounts.sort_unstable_by(|left, right| {
