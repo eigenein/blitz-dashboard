@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use chrono_humanize::Tense;
-use maud::{html, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
 use rocket::response::Redirect;
@@ -53,6 +53,13 @@ pub async fn get(
             period = _,
         )))));
     }
+    let exact_match = accounts
+        .iter()
+        .position(|account| account.nickname == query)
+        .map(|index| accounts.remove(index));
+    if let Some(exact_match) = &exact_match {
+        account_info_cache.put(exact_match).await?;
+    }
     accounts.sort_unstable_by(|left, right| {
         right.base.last_battle_time.cmp(&left.base.last_battle_time)
     });
@@ -84,7 +91,7 @@ pub async fn get(
                 }
             }
 
-            section.section."p-0"."m-4" {
+            section.section."p-0"."m-6" {
                 div.container {
                     div.columns.is-centered {
                         div.column."is-6-widescreen"."is-10-tablet" {
@@ -100,18 +107,13 @@ pub async fn get(
                                     }
                                 }
                             }
+                            @if let Some(exact_match) = exact_match {
+                                h1.title."is-4" { "Точное совпадение" }
+                                (account_card(&exact_match))
+                                h1.title."is-4"."mt-6" { "Другие результаты" }
+                            }
                             @for account in &accounts {
-                                div.box {
-                                    p.title."is-5" {
-                                        a href=(uri!(get_player(account_id = account.base.id, period = _))) { (account.nickname) }
-                                    }
-                                    p.subtitle."is-6" {
-                                        span.icon-text.has-text-grey {
-                                            span.icon { i.far.fa-dot-circle {} }
-                                            span { (datetime(account.base.last_battle_time, Tense::Past)) }
-                                        }
-                                    }
-                                }
+                                (account_card(&account))
                             }
                         }
                     }
@@ -123,4 +125,20 @@ pub async fn get(
     };
 
     Ok(Response::Html(Html(markup.into_string())))
+}
+
+fn account_card(account_info: &AccountInfo) -> Markup {
+    html! {
+        div.box {
+            p.title."is-5" {
+                a href=(uri!(get_player(account_id = account_info.base.id, period = _))) { (account_info.nickname) }
+            }
+            p.subtitle."is-6" {
+                span.icon-text.has-text-grey {
+                    span.icon { i.far.fa-dot-circle {} }
+                    span { (datetime(account_info.base.last_battle_time, Tense::Past)) }
+                }
+            }
+        }
+    }
 }
