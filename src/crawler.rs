@@ -247,8 +247,8 @@ impl Crawler {
         last_battle_time: DateTime<Utc>,
         n_tanks: usize,
     ) -> crate::Result {
-        let mut metrics = self.metrics.lock().await;
         let lag_secs = (Utc::now() - last_battle_time).num_seconds().try_into()?;
+        let mut metrics = self.metrics.lock().await;
         metrics.max_lag_secs = metrics.max_lag_secs.max(lag_secs);
         metrics.n_tanks += n_tanks;
         Ok(())
