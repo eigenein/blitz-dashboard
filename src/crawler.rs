@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use chrono::{TimeZone, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
@@ -167,13 +167,9 @@ impl Crawler {
         let mut tx = self.database.begin().await?;
         for old_info in old_infos.iter() {
             let new_info = new_infos.remove(&old_info.id.to_string()).flatten();
-            self.maybe_crawl_account(&mut tx, old_info, new_info, fake_infos)
+            self.crawl_stored_account(&mut tx, old_info, new_info, fake_infos)
                 .await?;
-            {
-                let mut metrics = self.metrics.lock().await;
-                metrics.last_account_id = old_info.id;
-                metrics.n_accounts += 1;
-            }
+            self.update_metrics_for_account(old_info.id).await;
         }
         log::debug!("Committing…");
         tx.commit().await?;
@@ -181,7 +177,13 @@ impl Crawler {
         Ok(())
     }
 
-    async fn maybe_crawl_account(
+    async fn update_metrics_for_account(&self, account_id: i32) {
+        let mut metrics = self.metrics.lock().await;
+        metrics.last_account_id = account_id;
+        metrics.n_accounts += 1;
+    }
+
+    async fn crawl_stored_account(
         &self,
         connection: &mut PgConnection,
         old_info: &BaseAccountInfo,
@@ -197,12 +199,17 @@ impl Crawler {
             }
             None => {
                 if !fake_info {
-                    log::warn!("Account #{} does not exist. Deleting…", old_info.id);
-                    database::delete_account(&mut *connection, old_info.id).await?;
+                    Self::delete_account(&mut *connection, old_info.id).await?;
                 }
             }
         };
 
+        Ok(())
+    }
+
+    async fn delete_account(connection: &mut PgConnection, account_id: i32) -> crate::Result {
+        log::warn!("Account #{} does not exist. Deleting…", account_id);
+        database::delete_account(connection, account_id).await?;
         Ok(())
     }
 
@@ -226,18 +233,24 @@ impl Crawler {
             self.insert_vehicles(&mut *connection, &tanks).await?;
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
-            {
-                let mut metrics = self.metrics.lock().await;
-                let lag_secs = (Utc::now() - new_info.base.last_battle_time)
-                    .num_seconds()
-                    .try_into()?;
-                metrics.max_lag_secs = metrics.max_lag_secs.max(lag_secs);
-                metrics.n_tanks += tanks.len();
-            }
+            self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
+                .await?;
         } else {
             log::debug!("Account #{} haven't played.", old_info.id)
         }
 
+        Ok(())
+    }
+
+    async fn update_metrics_for_tanks(
+        &self,
+        last_battle_time: DateTime<Utc>,
+        n_tanks: usize,
+    ) -> crate::Result {
+        let mut metrics = self.metrics.lock().await;
+        let lag_secs = (Utc::now() - last_battle_time).num_seconds().try_into()?;
+        metrics.max_lag_secs = metrics.max_lag_secs.max(lag_secs);
+        metrics.n_tanks += n_tanks;
         Ok(())
     }
 
