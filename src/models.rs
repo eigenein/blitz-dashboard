@@ -4,6 +4,7 @@ use std::iter::Sum;
 use std::ops::Sub;
 
 use chrono::{DateTime, Duration, Utc};
+use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
 use crate::serde::{deserialize_duration_seconds, serialize_duration_seconds};
@@ -110,6 +111,8 @@ impl Sum for AllStatistics {
 pub struct BaseTankStatistics {
     pub tank_id: i32,
 
+    /// The moment in time when the related state is actual.
+    /// Every new timestamp produces a new tank snapshot in the database.
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 }
@@ -202,10 +205,10 @@ pub enum TankType {
 pub struct Tank {
     pub account_id: i32,
     pub tank_id: i32,
+
+    // TODO: include statistics and achievements as attributes. Don't need to copy the inner attributes.
     pub all_statistics: AllStatistics,
 
-    /// Timestamp when the described state is actual.
-    /// Every new [`Tank::last_battle_time`] produces a new record in the database.
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
 
@@ -269,6 +272,31 @@ impl AccountInfo {
     pub fn has_recently_played(&self) -> bool {
         self.base.last_battle_time > (Utc::now() - Duration::hours(1))
     }
+}
+
+/// Merges tank statistics and tank achievements into a single tank structure.
+pub fn merge_tanks(
+    account_id: i32,
+    mut statistics: Vec<TankStatistics>,
+    mut achievements: Vec<TankAchievements>,
+) -> Vec<Tank> {
+    statistics.sort_unstable_by_key(|snapshot| snapshot.base.tank_id);
+    achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
+
+    merge_join_by(statistics, achievements, |left, right| {
+        left.base.tank_id.cmp(&right.tank_id)
+    })
+    .filter_map(|item| match item {
+        EitherOrBoth::Both(statistics, _achievements) => Some(Tank {
+            account_id,
+            tank_id: statistics.base.tank_id,
+            all_statistics: statistics.all,
+            last_battle_time: statistics.base.last_battle_time,
+            battle_life_time: statistics.battle_life_time,
+        }),
+        _ => None,
+    })
+    .collect()
 }
 
 pub fn subtract_tanks(left: &[Tank], right: &HashMap<i32, Tank>) -> Vec<Tank> {

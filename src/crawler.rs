@@ -224,7 +224,7 @@ impl Crawler {
             database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
             let tanks: Vec<Tank> = self
                 .api
-                .get_merged_tanks(old_info.id)
+                .get_merged_tanks(old_info.id) // TODO: should first filter changed tanks.
                 .await?
                 .into_iter()
                 .filter(|tank| tank.last_battle_time > old_info.last_battle_time)

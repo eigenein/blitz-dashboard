@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::{anyhow, Context};
-use itertools::{merge_join_by, EitherOrBoth, Itertools};
+use itertools::Itertools;
 use reqwest::header;
 use reqwest::Url;
 use sentry::{capture_message, Level};
@@ -142,28 +142,11 @@ impl WargamingApi {
         .context("failed to get the tankopedia")
     }
 
+    #[deprecated = "use `models::merge_tanks`"]
     pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<models::Tank>> {
-        let mut statistics = self.get_tanks_stats(account_id).await?;
-        let mut achievements = self.get_tanks_achievements(account_id).await?;
-
-        statistics.sort_unstable_by_key(|snapshot| snapshot.base.tank_id);
-        achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
-
-        let tanks: Vec<models::Tank> = merge_join_by(statistics, achievements, |left, right| {
-            left.base.tank_id.cmp(&right.tank_id)
-        })
-        .filter_map(|item| match item {
-            EitherOrBoth::Both(statistics, _achievements) => Some(models::Tank {
-                account_id,
-                tank_id: statistics.base.tank_id,
-                all_statistics: statistics.all,
-                last_battle_time: statistics.base.last_battle_time,
-                battle_life_time: statistics.battle_life_time,
-            }),
-            _ => None,
-        })
-        .collect();
-        Ok(tanks)
+        let statistics = self.get_tanks_stats(account_id).await?;
+        let achievements = self.get_tanks_achievements(account_id).await?;
+        Ok(models::merge_tanks(account_id, statistics, achievements))
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
