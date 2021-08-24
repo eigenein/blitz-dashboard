@@ -113,7 +113,7 @@ pub async fn get(
                                 h1.title."is-4"."mt-6" { "Другие результаты" }
                             }
                             @for account in &accounts {
-                                (account_card(&account))
+                                (account_card(account))
                             }
                         }
                     }
