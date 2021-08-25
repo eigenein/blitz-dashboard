@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.51.3"
+version = "0.52.0"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
 resolver = "2"
@@ -27,6 +27,7 @@ humantime = "2.1.0"
 itertools = "0.10.0"
 log = "0.4.14"
 maud = "0.22.2"
+miniz_oxide = "0.4.4"
 phf = { version = "0.10.0", features = ["macros"] }
 rmp-serde = "0.15.5"
 rocket = "0.5.0-rc.1"

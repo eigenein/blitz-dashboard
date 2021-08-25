@@ -14,6 +14,7 @@ mod crawler;
 mod database;
 mod logging;
 mod metrics;
+mod miniz;
 mod models;
 mod opts;
 mod redis;

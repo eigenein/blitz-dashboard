@@ -41,13 +41,15 @@ impl AccountInfoCache {
     }
 
     pub async fn put(&self, account_info: &AccountInfo) -> crate::Result {
+        let blob = rmp_serde::to_vec(&account_info)?;
+        log::debug!(
+            "Caching account #{} info: {} B.",
+            account_info.base.id,
+            blob.len(),
+        );
         self.redis
             .clone()
-            .set_ex(
-                Self::cache_key(account_info.base.id),
-                rmp_serde::to_vec(&account_info)?,
-                Self::TTL_SECS,
-            )
+            .set_ex(Self::cache_key(account_info.base.id), blob, Self::TTL_SECS)
             .await?;
         Ok(())
     }
