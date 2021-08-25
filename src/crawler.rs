@@ -16,7 +16,7 @@ use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
-use crate::models::{AccountInfo, BaseAccountInfo, Tank};
+use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
 
@@ -219,25 +219,34 @@ impl Crawler {
         old_info: &BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result {
-        if new_info.base.last_battle_time != old_info.last_battle_time {
-            log::debug!("Crawling account #{}…", old_info.id);
-            database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
-            let tanks: Vec<Tank> = self
-                .api
-                .get_merged_tanks(old_info.id) // TODO: should first filter changed tanks.
-                .await?
-                .into_iter()
-                .filter(|tank| tank.last_battle_time > old_info.last_battle_time)
-                .collect();
-            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
-            self.insert_vehicles(&mut *connection, &tanks).await?;
-
-            log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
-            self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
-                .await?;
-        } else {
-            log::debug!("Account #{} haven't played.", old_info.id)
+        if new_info.base.last_battle_time == old_info.last_battle_time {
+            log::debug!("#{}: last battle time is not changed.", old_info.id);
+            return Ok(());
         }
+
+        log::debug!("Crawling account #{}…", old_info.id);
+        database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
+
+        let statistics: Vec<TankStatistics> = self
+            .api
+            .get_tanks_stats(old_info.id)
+            .await?
+            .into_iter()
+            .filter(|tank| tank.base.last_battle_time > old_info.last_battle_time)
+            .collect();
+        if statistics.is_empty() {
+            log::debug!("#{}: tanks are not updated.", old_info.id);
+            return Ok(());
+        }
+
+        let achievements = self.api.get_tanks_achievements(old_info.id).await?;
+        let tanks = merge_tanks(old_info.id, statistics, achievements);
+        database::insert_tank_snapshots(&mut *connection, &tanks).await?;
+        self.insert_vehicles(&mut *connection, &tanks).await?;
+
+        log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
+        self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
+            .await?;
 
         Ok(())
     }
