@@ -7,10 +7,12 @@ use chrono::{DateTime, Duration, Utc};
 use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{ConnectOptions, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
+use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
 
 use crate::metrics::Stopwatch;
-use crate::models::{AllStatistics, BaseAccountInfo, Tank};
+use crate::models::{
+    AllStatistics, BaseAccountInfo, BaseTankStatistics, Tank, TankAchievements, TankStatistics,
+};
 
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
@@ -66,7 +68,7 @@ pub async fn retrieve_latest_tank_snapshots(
         .await
         .context("failed to retrieve the latest tank snapshots")?
         .into_iter()
-        .map(|tank: Tank| (tank.tank_id, tank))
+        .map(|tank: Tank| (tank.statistics.base.tank_id, tank))
         .collect();
     Ok(tanks)
 }
@@ -148,23 +150,23 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
         log::trace!(
             "Inserting #{}/#{} tank snapshot…",
             snapshot.account_id,
-            snapshot.tank_id
+            snapshot.statistics.base.tank_id
         );
         sqlx::query(QUERY)
             .bind(snapshot.account_id)
-            .bind(snapshot.tank_id)
-            .bind(snapshot.last_battle_time)
-            .bind(snapshot.battle_life_time.num_seconds())
-            .bind(snapshot.all_statistics.battles)
-            .bind(snapshot.all_statistics.wins)
-            .bind(snapshot.all_statistics.survived_battles)
-            .bind(snapshot.all_statistics.win_and_survived)
-            .bind(snapshot.all_statistics.damage_dealt)
-            .bind(snapshot.all_statistics.damage_received)
-            .bind(snapshot.all_statistics.shots)
-            .bind(snapshot.all_statistics.hits)
-            .bind(snapshot.all_statistics.frags)
-            .bind(snapshot.all_statistics.xp)
+            .bind(snapshot.statistics.base.tank_id)
+            .bind(snapshot.statistics.base.last_battle_time)
+            .bind(snapshot.statistics.battle_life_time.num_seconds())
+            .bind(snapshot.statistics.all.battles)
+            .bind(snapshot.statistics.all.wins)
+            .bind(snapshot.statistics.all.survived_battles)
+            .bind(snapshot.statistics.all.win_and_survived)
+            .bind(snapshot.statistics.all.damage_dealt)
+            .bind(snapshot.statistics.all.damage_received)
+            .bind(snapshot.statistics.all.shots)
+            .bind(snapshot.statistics.all.hits)
+            .bind(snapshot.statistics.all.frags)
+            .bind(snapshot.statistics.all.xp)
             .execute(&mut *connection)
             .await
             .context("failed to insert tank snapshots")?;
@@ -215,13 +217,40 @@ pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
 
 impl<'r> FromRow<'r, PgRow> for Tank {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        let battle_life_time: i64 = row.try_get("battle_life_time")?;
         Ok(Self {
             account_id: row.try_get("account_id")?,
+            statistics: TankStatistics::from_row(row)?,
+            achievements: TankAchievements::from_row(row)?,
+        })
+    }
+}
+
+impl<'r> FromRow<'r, PgRow> for TankStatistics {
+    fn from_row(row: &'r PgRow) -> Result<Self, Error> {
+        let battle_life_time: i64 = row.try_get("battle_life_time")?;
+        Ok(Self {
+            base: BaseTankStatistics::from_row(row)?,
+            battle_life_time: Duration::seconds(battle_life_time),
+            all: AllStatistics::from_row(row)?,
+        })
+    }
+}
+
+impl<'r> FromRow<'r, PgRow> for BaseTankStatistics {
+    fn from_row(row: &'r PgRow) -> Result<Self, Error> {
+        Ok(Self {
             tank_id: row.try_get("tank_id")?,
             last_battle_time: row.try_get("last_battle_time")?,
-            battle_life_time: Duration::seconds(battle_life_time),
-            all_statistics: AllStatistics::from_row(row)?,
+        })
+    }
+}
+
+impl<'r> FromRow<'r, PgRow> for TankAchievements {
+    fn from_row(row: &'r PgRow) -> Result<Self, Error> {
+        Ok(Self {
+            tank_id: row.try_get("tank_id")?,
+            achievements: Default::default(), // TODO
+            max_series: Default::default(),   // TODO
         })
     }
 }

@@ -49,17 +49,19 @@ pub async fn get(
     set_user(&current_info.nickname);
     insert_account_or_ignore(database, &current_info.base).await?;
 
-    let tanks = account_tanks_cache.get(&current_info).await?;
+    let tanks = account_tanks_cache
+        .get(current_info.base.id, current_info.base.last_battle_time)
+        .await?;
     let tanks_delta = {
         let before = Utc::now() - Duration::from_std(period)?;
         let old_tank_snapshots =
             retrieve_latest_tank_snapshots(database, account_id, &before).await?;
-        subtract_tanks(&tanks, &old_tank_snapshots)
+        subtract_tanks(tanks, old_tank_snapshots)
     };
-    let stats_delta: AllStatistics = tanks_delta.iter().map(|tank| tank.all_statistics).sum();
+    let stats_delta: AllStatistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
-        .map(|tank| tank.battle_life_time.num_seconds())
+        .map(|tank| tank.statistics.battle_life_time.num_seconds())
         .sum();
     let total_win_rate = ConfidenceInterval::default_wilson_score_interval(
         current_info.statistics.all.battles,
@@ -459,8 +461,8 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let vehicle = get_vehicle(tank.tank_id);
-                                                @let true_win_rate = tank.all_statistics.true_win_rate();
+                                                @let vehicle = get_vehicle(tank.statistics.base.tank_id);
+                                                @let true_win_rate = tank.statistics.all.true_win_rate();
                                                 @let win_rate_ordering = true_win_rate.partial_cmp(&total_win_rate);
 
                                                 tr.(partial_cmp_class(win_rate_ordering)) {
@@ -473,14 +475,14 @@ pub async fn get(
                                                     td {
                                                         (format!("{:?}", vehicle.type_))
                                                     }
-                                                    td data-sort="battles" data-value=(tank.all_statistics.battles) {
-                                                        (tank.all_statistics.battles)
+                                                    td data-sort="battles" data-value=(tank.statistics.all.battles) {
+                                                        (tank.statistics.all.battles)
                                                     }
-                                                    td data-sort="wins" data-value=(tank.all_statistics.wins) {
-                                                        (tank.all_statistics.wins)
+                                                    td data-sort="wins" data-value=(tank.statistics.all.wins) {
+                                                        (tank.statistics.all.wins)
                                                     }
 
-                                                    @let win_rate = tank.all_statistics.current_win_rate();
+                                                    @let win_rate = tank.statistics.all.current_win_rate();
                                                     td data-sort="win-rate" data-value=(win_rate) {
                                                         strong { (render_percentage(win_rate)) }
                                                     }
@@ -516,7 +518,7 @@ pub async fn get(
                                                         }
                                                     }
 
-                                                    @let gold = 10 * tank.all_statistics.battles + vehicle.tier * tank.all_statistics.wins;
+                                                    @let gold = 10 * tank.statistics.all.battles + vehicle.tier * tank.statistics.all.wins;
                                                     td data-sort="gold" data-value=(gold) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon.has-text-warning-dark { i.fas.fa-coins {} }
@@ -537,20 +539,20 @@ pub async fn get(
                                                         }
                                                     }
 
-                                                    td data-sort="damage-dealt" data-value=(tank.all_statistics.damage_dealt) {
-                                                        (tank.all_statistics.damage_dealt)
+                                                    td data-sort="damage-dealt" data-value=(tank.statistics.all.damage_dealt) {
+                                                        (tank.statistics.all.damage_dealt)
                                                     }
 
-                                                    @let damage_per_battle = tank.all_statistics.damage_dealt as f64 / tank.all_statistics.battles as f64;
+                                                    @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
                                                     td data-sort="damage-per-battle" data-value=(damage_per_battle) {
                                                         (render_f64(damage_per_battle, 0))
                                                     }
 
-                                                    td data-sort="survived-battles" data-value=(tank.all_statistics.survived_battles) {
-                                                        (tank.all_statistics.survived_battles)
+                                                    td data-sort="survived-battles" data-value=(tank.statistics.all.survived_battles) {
+                                                        (tank.statistics.all.survived_battles)
                                                     }
 
-                                                    @let survival_rate = tank.all_statistics.survived_battles as f64 / tank.all_statistics.battles as f64;
+                                                    @let survival_rate = tank.statistics.all.survived_battles as f64 / tank.statistics.all.battles as f64;
                                                     td data-sort="survival-rate" data-value=(survival_rate) {
                                                         span.icon-text.is-flex-wrap-nowrap {
                                                             span.icon { i.fas.fa-heart.has-text-danger {} }

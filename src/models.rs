@@ -107,7 +107,7 @@ impl Sum for AllStatistics {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct BaseTankStatistics {
     pub tank_id: i32,
 
@@ -117,7 +117,7 @@ pub struct BaseTankStatistics {
     pub last_battle_time: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 pub struct TankStatistics {
     #[serde(flatten)]
     pub base: BaseTankStatistics,
@@ -132,7 +132,7 @@ pub struct TankStatistics {
     pub all: AllStatistics,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct TankAchievements {
     pub tank_id: i32,
     pub achievements: HashMap<String, i32>,
@@ -201,35 +201,50 @@ pub enum TankType {
 }
 
 /// Represents a state of a specific player's tank at a specific moment in time.
-#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Tank {
     pub account_id: i32,
-    pub tank_id: i32,
-
-    // TODO: include statistics and achievements as attributes. Don't need to copy the inner attributes.
-    pub all_statistics: AllStatistics,
-
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub last_battle_time: DateTime<Utc>,
-
-    #[serde(
-        serialize_with = "serialize_duration_seconds",
-        deserialize_with = "deserialize_duration_seconds"
-    )]
-    pub battle_life_time: Duration,
+    pub statistics: TankStatistics,
+    pub achievements: TankAchievements,
 }
 
 impl Tank {
     pub fn wins_per_hour(&self) -> f64 {
-        self.all_statistics.wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+        self.statistics.all.wins as f64 / self.statistics.battle_life_time.num_seconds() as f64
+            * 3600.0
     }
 
     pub fn battles_per_hour(&self) -> f64 {
-        self.all_statistics.battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+        self.statistics.all.battles as f64 / self.statistics.battle_life_time.num_seconds() as f64
+            * 3600.0
     }
 }
 
-impl Sub for &AllStatistics {
+impl Sub for TankStatistics {
+    type Output = TankStatistics;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            base: self.base,
+            battle_life_time: self.battle_life_time - rhs.battle_life_time,
+            all: self.all - rhs.all,
+        }
+    }
+}
+
+impl Sub for TankAchievements {
+    type Output = TankAchievements;
+
+    fn sub(self, _rhs: Self) -> Self::Output {
+        Self::Output {
+            tank_id: self.tank_id,
+            achievements: Default::default(), // TODO
+            max_series: Default::default(),   // TODO
+        }
+    }
+}
+
+impl Sub for AllStatistics {
     type Output = AllStatistics;
 
     #[must_use]
@@ -249,17 +264,15 @@ impl Sub for &AllStatistics {
     }
 }
 
-impl Sub for &Tank {
+impl Sub for Tank {
     type Output = Tank;
 
     #[must_use]
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
             account_id: self.account_id,
-            tank_id: self.tank_id,
-            all_statistics: &self.all_statistics - &rhs.all_statistics,
-            last_battle_time: self.last_battle_time,
-            battle_life_time: self.battle_life_time - rhs.battle_life_time,
+            statistics: self.statistics - rhs.statistics,
+            achievements: self.achievements - rhs.achievements,
         }
     }
 }
@@ -287,30 +300,30 @@ pub fn merge_tanks(
         left.base.tank_id.cmp(&right.tank_id)
     })
     .filter_map(|item| match item {
-        EitherOrBoth::Both(statistics, _achievements) => Some(Tank {
+        EitherOrBoth::Both(statistics, achievements) => Some(Tank {
             account_id,
-            tank_id: statistics.base.tank_id,
-            all_statistics: statistics.all,
-            last_battle_time: statistics.base.last_battle_time,
-            battle_life_time: statistics.battle_life_time,
+            statistics,
+            achievements,
         }),
         _ => None,
     })
     .collect()
 }
 
-pub fn subtract_tanks(left: &[Tank], right: &HashMap<i32, Tank>) -> Vec<Tank> {
-    left.iter()
-        .filter_map(|left_tank| match right.get(&left_tank.tank_id) {
-            Some(right_tank) => {
-                if left_tank.all_statistics.battles != right_tank.all_statistics.battles {
-                    Some(left_tank - right_tank)
-                } else {
-                    None
+pub fn subtract_tanks(left: Vec<Tank>, mut right: HashMap<i32, Tank>) -> Vec<Tank> {
+    left.into_iter()
+        .filter_map(
+            |left_tank| match right.remove(&left_tank.statistics.base.tank_id) {
+                Some(right_tank) => {
+                    if left_tank.statistics.all.battles != right_tank.statistics.all.battles {
+                        Some(left_tank - right_tank)
+                    } else {
+                        None
+                    }
                 }
-            }
-            None => Some(*left_tank),
-        })
+                None => Some(left_tank),
+            },
+        )
         .collect()
 }
 

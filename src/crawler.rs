@@ -287,9 +287,10 @@ impl Crawler {
         tanks: &[Tank],
     ) -> crate::Result {
         for tank in tanks {
-            if !self.vehicle_cache.read().await.contains(&tank.tank_id) {
-                self.vehicle_cache.write().await.insert(tank.tank_id);
-                database::insert_vehicle_or_ignore(&mut *connection, tank.tank_id).await?;
+            let tank_id = tank.statistics.base.tank_id;
+            if !self.vehicle_cache.read().await.contains(&tank_id) {
+                self.vehicle_cache.write().await.insert(tank_id);
+                database::insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
             }
         }
         Ok(())

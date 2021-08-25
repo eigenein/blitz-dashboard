@@ -4,7 +4,7 @@ use redis::aio::ConnectionManager as RedisConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
-use crate::models::{merge_tanks, AccountInfo, Tank};
+use crate::models::{merge_tanks, Tank};
 use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
@@ -27,14 +27,17 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
-    pub async fn get(&self, account_info: &AccountInfo) -> crate::Result<Vec<Tank>> {
-        let account_id = account_info.base.id;
+    pub async fn get(
+        &self,
+        account_id: i32,
+        last_battle_time: DateTime<Utc>,
+    ) -> crate::Result<Vec<Tank>> {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);
 
         if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
             let entry: Entry = rmp_serde::from_read_ref(&blob)?;
-            if entry.last_battle_time == account_info.base.last_battle_time {
+            if entry.last_battle_time == last_battle_time {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
                 return Ok(entry.tanks);
             }
@@ -43,7 +46,7 @@ impl AccountTanksCache {
         let statistics = self.api.get_tanks_stats(account_id).await?;
         let achievements = self.api.get_tanks_achievements(account_id).await?;
         let entry = Entry {
-            last_battle_time: account_info.base.last_battle_time,
+            last_battle_time,
             tanks: merge_tanks(account_id, statistics, achievements),
         };
         let blob = rmp_serde::to_vec(&entry)?;
