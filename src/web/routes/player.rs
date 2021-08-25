@@ -13,7 +13,7 @@ use partials::*;
 use crate::database::{insert_account_or_ignore, retrieve_latest_tank_snapshots};
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
-use crate::models::{subtract_tanks, AllStatistics};
+use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::time::{from_days, from_hours, from_minutes, from_months};
@@ -58,7 +58,7 @@ pub async fn get(
             retrieve_latest_tank_snapshots(database, account_id, &before).await?;
         subtract_tanks(tanks, old_tank_snapshots)
     };
-    let stats_delta: AllStatistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
+    let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())

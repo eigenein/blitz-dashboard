@@ -45,11 +45,11 @@ pub struct AccountInfo {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
     #[serde(rename = "all")]
-    pub all: AllStatistics,
+    pub all: Statistics,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
-pub struct AllStatistics {
+pub struct Statistics {
     pub battles: i32,
     pub wins: i32,
     pub survived_battles: i32,
@@ -62,7 +62,7 @@ pub struct AllStatistics {
     pub xp: i32,
 }
 
-impl AllStatistics {
+impl Statistics {
     pub fn damage_per_battle(&self) -> f64 {
         self.damage_dealt as f64 / self.battles as f64
     }
@@ -88,7 +88,7 @@ impl AllStatistics {
     }
 }
 
-impl Sum for AllStatistics {
+impl Sum for Statistics {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let mut sum = Self::default();
         for component in iter {
@@ -129,7 +129,7 @@ pub struct TankStatistics {
     pub battle_life_time: Duration,
 
     #[serde(rename = "all")]
-    pub all: AllStatistics,
+    pub all: Statistics,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -244,8 +244,8 @@ impl Sub for TankAchievements {
     }
 }
 
-impl Sub for AllStatistics {
-    type Output = AllStatistics;
+impl Sub for Statistics {
+    type Output = Statistics;
 
     #[must_use]
     fn sub(self, rhs: Self) -> Self::Output {

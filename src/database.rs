@@ -11,7 +11,7 @@ use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Postg
 
 use crate::metrics::Stopwatch;
 use crate::models::{
-    AllStatistics, BaseAccountInfo, BaseTankStatistics, Tank, TankAchievements, TankStatistics,
+    BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
 
 /// Open and initialize the database.
@@ -231,7 +231,7 @@ impl<'r> FromRow<'r, PgRow> for TankStatistics {
         Ok(Self {
             base: BaseTankStatistics::from_row(row)?,
             battle_life_time: Duration::seconds(battle_life_time),
-            all: AllStatistics::from_row(row)?,
+            all: Statistics::from_row(row)?,
         })
     }
 }
@@ -264,7 +264,7 @@ impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for AllStatistics {
+impl<'r> FromRow<'r, PgRow> for Statistics {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             battles: row.try_get("battles")?,
