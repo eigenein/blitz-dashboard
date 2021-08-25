@@ -1,5 +1,7 @@
 #![warn(clippy::all)]
 
+pub use std::time::Duration as StdDuration;
+
 use log::{Level, LevelFilter};
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;

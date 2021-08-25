@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter};
-use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
+
+use crate::StdDuration;
 
 /// Specifies an account selection criteria for a batch stream.
 #[derive(Debug, Copy, Clone, PartialEq)]
