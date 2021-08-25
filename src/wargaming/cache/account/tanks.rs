@@ -4,7 +4,7 @@ use redis::aio::ConnectionManager as RedisConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
-use crate::models::{AccountInfo, Tank};
+use crate::models::{merge_tanks, AccountInfo, Tank};
 use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
@@ -40,9 +40,11 @@ impl AccountTanksCache {
             }
         }
 
+        let statistics = self.api.get_tanks_stats(account_id).await?;
+        let achievements = self.api.get_tanks_achievements(account_id).await?;
         let entry = Entry {
             last_battle_time: account_info.base.last_battle_time,
-            tanks: self.api.get_merged_tanks(account_id).await?,
+            tanks: merge_tanks(account_id, statistics, achievements),
         };
         let blob = rmp_serde::to_vec(&entry)?;
         log::debug!("Caching account #{} tanks: {} B.", account_id, blob.len());

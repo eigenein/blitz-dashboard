@@ -28,9 +28,15 @@ pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     n_tasks: usize,
-    fake_infos: bool,
-    vehicle_cache: Arc<RwLock<HashSet<i32>>>,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
+
+    /// Indicates that the old account infos coming from the stream aren't real –
+    /// they're generated on the fly instead of being read from the database.
+    fake_infos: bool,
+
+    /// Used to maintain the vehicles table in the database.
+    /// The cache contains tank IDs which are for sure existing in the database at the moment.
+    vehicle_cache: Arc<RwLock<HashSet<i32>>>,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts

@@ -142,13 +142,6 @@ impl WargamingApi {
         .context("failed to get the tankopedia")
     }
 
-    #[deprecated = "use `models::merge_tanks`"]
-    pub async fn get_merged_tanks(&self, account_id: i32) -> crate::Result<Vec<models::Tank>> {
-        let statistics = self.get_tanks_stats(account_id).await?;
-        let achievements = self.get_tanks_achievements(account_id).await?;
-        Ok(models::merge_tanks(account_id, statistics, achievements))
-    }
-
     /// Convenience method for endpoints that return data in the form of a map by account ID.
     async fn call_by_account<T: DeserializeOwned>(
         &self,
