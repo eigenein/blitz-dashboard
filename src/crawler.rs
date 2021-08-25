@@ -227,13 +227,9 @@ impl Crawler {
         log::debug!("Crawling account #{}…", old_info.id);
         database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
 
-        let statistics: Vec<TankStatistics> = self
-            .api
-            .get_tanks_stats(old_info.id)
-            .await?
-            .into_iter()
-            .filter(|tank| tank.base.last_battle_time > old_info.last_battle_time)
-            .collect();
+        let statistics = self
+            .get_updated_tanks_statistics(old_info.id, old_info.last_battle_time)
+            .await?;
         if statistics.is_empty() {
             log::debug!("#{}: tanks are not updated.", old_info.id);
             return Ok(());
@@ -249,6 +245,21 @@ impl Crawler {
             .await?;
 
         Ok(())
+    }
+
+    /// Gets account tanks which have their last battle time updated since the specified timestamp.
+    async fn get_updated_tanks_statistics(
+        &self,
+        account_id: i32,
+        since: DateTime<Utc>,
+    ) -> crate::Result<Vec<TankStatistics>> {
+        Ok(self
+            .api
+            .get_tanks_stats(account_id)
+            .await?
+            .into_iter()
+            .filter(|tank| tank.base.last_battle_time > since)
+            .collect())
     }
 
     async fn update_metrics_for_tanks(
