@@ -29,7 +29,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         &opts.connections.application_id,
         StdDuration::from_millis(1500),
     )?;
-    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
+    let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))

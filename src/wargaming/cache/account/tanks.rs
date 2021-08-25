@@ -5,8 +5,8 @@ use redis::aio::ConnectionManager as RedisConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
-use crate::miniz::decompress_to_vec;
 use crate::models::{merge_tanks, Tank};
+use crate::thirdparty::miniz::decompress_to_vec;
 use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {

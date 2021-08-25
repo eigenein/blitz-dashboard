@@ -7,8 +7,8 @@ use chrono::{DateTime, Duration, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
-use crate::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::statistics::ConfidenceInterval;
+use crate::thirdparty::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
