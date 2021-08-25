@@ -1,12 +1,11 @@
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use miniz_oxide::deflate::compress_to_vec;
 use redis::aio::ConnectionManager as RedisConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
 use crate::models::{merge_tanks, Tank};
-use crate::thirdparty::miniz::decompress_to_vec;
+use crate::thirdparty::miniz::{compress_to_vec, decompress_to_vec};
 use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
@@ -38,7 +37,7 @@ impl AccountTanksCache {
         let cache_key = Self::cache_key(account_id);
 
         if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
-            let entry: Entry = rmp_serde::from_read_ref(&decompress_to_vec(&blob)?)?;
+            let entry: Entry = rmp_serde::from_read_ref(&decompress_to_vec(blob).await?)?;
             if entry.last_battle_time == last_battle_time {
                 log::debug!("Cache hit on account #{} tanks.", account_id);
                 return Ok(entry.tanks);
@@ -51,7 +50,7 @@ impl AccountTanksCache {
             last_battle_time,
             tanks: merge_tanks(account_id, statistics, achievements),
         };
-        let blob = compress_to_vec(&rmp_serde::to_vec(&entry)?, 1);
+        let blob = compress_to_vec(rmp_serde::to_vec(&entry)?, 1).await?;
         log::debug!("Caching account #{} tanks: {} B.", account_id, blob.len());
         redis.set_ex(&cache_key, blob, Self::TTL_SECS).await?;
         Ok(entry.tanks)
