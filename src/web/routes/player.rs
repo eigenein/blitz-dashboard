@@ -15,7 +15,6 @@ use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
-use crate::tankopedia::get_vehicle;
 use crate::time::{from_days, from_hours, from_minutes, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
@@ -461,105 +460,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let vehicle = get_vehicle(tank.statistics.base.tank_id);
-                                                @let true_win_rate = tank.statistics.all.true_win_rate();
-                                                @let win_rate_ordering = true_win_rate.partial_cmp(&total_win_rate);
-
-                                                tr.(partial_cmp_class(win_rate_ordering)) {
-                                                    (vehicle_th(&vehicle))
-                                                    td.has-text-centered data-sort="tier" data-value=(vehicle.tier) {
-                                                        @if let Some(tier_markup) = TIER_MARKUP.get(&vehicle.tier) {
-                                                            strong { (tier_markup) }
-                                                        }
-                                                    }
-                                                    td {
-                                                        (format!("{:?}", vehicle.type_))
-                                                    }
-                                                    td data-sort="battles" data-value=(tank.statistics.all.battles) {
-                                                        (tank.statistics.all.battles)
-                                                    }
-                                                    td data-sort="wins" data-value=(tank.statistics.all.wins) {
-                                                        (tank.statistics.all.wins)
-                                                    }
-
-                                                    @let win_rate = tank.statistics.all.current_win_rate();
-                                                    td data-sort="win-rate" data-value=(win_rate) {
-                                                        strong { (render_percentage(win_rate)) }
-                                                    }
-
-                                                    td.is-white-space-nowrap
-                                                        data-sort="true-win-rate-mean"
-                                                        data-value=(true_win_rate.mean)
-                                                    {
-                                                        span.icon-text.is-flex-wrap-nowrap {
-                                                            span {
-                                                                strong { (render_percentage(true_win_rate.mean)) }
-                                                                span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                                                                    " ±" (render_f64(100.0 * true_win_rate.margin, 1))
-                                                                }
-                                                                (partial_cmp_icon(win_rate_ordering))
-                                                            }
-                                                        }
-                                                    }
-
-                                                    @let wins_per_hour = tank.wins_per_hour();
-                                                    td data-sort="wins-per-hour" data-value=(wins_per_hour) {
-                                                        (render_f64(wins_per_hour, 1))
-                                                    }
-
-                                                    @let expected_wins_per_hour = true_win_rate * tank.battles_per_hour();
-                                                    td.is-white-space-nowrap
-                                                        data-sort="expected-wins-per-hour"
-                                                        data-value=(expected_wins_per_hour.mean)
-                                                    {
-                                                        strong { (render_f64(expected_wins_per_hour.mean, 1)) }
-                                                        span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                                                            " ±" (render_f64(expected_wins_per_hour.margin, 1))
-                                                        }
-                                                    }
-
-                                                    @let gold = 10 * tank.statistics.all.battles + vehicle.tier * tank.statistics.all.wins;
-                                                    td data-sort="gold" data-value=(gold) {
-                                                        span.icon-text.is-flex-wrap-nowrap {
-                                                            span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                            span { (gold) }
-                                                        }
-                                                    }
-
-                                                    @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
-                                                    td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
-                                                        span.icon-text.is-flex-wrap-nowrap {
-                                                            span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                                                            span {
-                                                                strong { (render_f64(expected_gold.mean, 1)) }
-                                                                span.(margin_class(expected_gold.margin, 2.0, 3.0)) {
-                                                                    " ±" (render_f64(expected_gold.margin, 1))
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    td data-sort="damage-dealt" data-value=(tank.statistics.all.damage_dealt) {
-                                                        (tank.statistics.all.damage_dealt)
-                                                    }
-
-                                                    @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
-                                                    td data-sort="damage-per-battle" data-value=(damage_per_battle) {
-                                                        (render_f64(damage_per_battle, 0))
-                                                    }
-
-                                                    td data-sort="survived-battles" data-value=(tank.statistics.all.survived_battles) {
-                                                        (tank.statistics.all.survived_battles)
-                                                    }
-
-                                                    @let survival_rate = tank.statistics.all.survived_battles as f64 / tank.statistics.all.battles as f64;
-                                                    td data-sort="survival-rate" data-value=(survival_rate) {
-                                                        span.icon-text.is-flex-wrap-nowrap {
-                                                            span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                            span { (render_percentage(survival_rate)) }
-                                                        }
-                                                    }
-                                                }
+                                                (render_tank_tr(tank, &total_win_rate))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
