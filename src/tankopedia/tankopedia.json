@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -30091,6 +30091,155 @@
     ],
     "type": "mediumTank"
   },
+  "21073": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 175,
+          "rear": 51,
+          "sides": 90
+        },
+        "turret": {
+          "front": 225,
+          "rear": 0,
+          "sides": 0
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Bedford Twin-Six B",
+        "power": 420,
+        "tier": 6,
+        "weight": 1531
+      },
+      "engine_id": 24661,
+      "firepower": 50,
+      "gun": {
+        "aim_time": 4.87,
+        "caliber": 94,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 6.52,
+        "move_down_arc": 10,
+        "move_up_arc": 12,
+        "name": "OQF 32-pdr Mk. XVII",
+        "reload_time": 9.2,
+        "tier": 7,
+        "traverse_speed": 40.25,
+        "weight": 681
+      },
+      "gun_id": 264276,
+      "hp": 950,
+      "hull_hp": 780,
+      "hull_weight": 32000,
+      "is_default": true,
+      "maneuverability": 30,
+      "max_ammo": 50,
+      "max_weight": 48000,
+      "profile_id": "24661-263762-264276",
+      "protection": 33,
+      "shells": [
+        {
+          "damage": 300,
+          "penetration": 182,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 260,
+          "penetration": 230,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 350,
+          "penetration": 50,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 64,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 26,
+      "suspension": {
+        "load_limit": 48000,
+        "name": "Дредноут",
+        "tier": 6,
+        "traverse_speed": 36,
+        "weight": 10000
+      },
+      "suspension_id": 263762,
+      "turret": {
+        "hp": 170,
+        "name": "Дредноут",
+        "tier": 6,
+        "traverse_left_arc": 7,
+        "traverse_right_arc": 7,
+        "traverse_speed": 26,
+        "view_range": 240,
+        "weight": 170
+      },
+      "turret_id": null,
+      "weight": 44657
+    },
+    "description": "Особая версия Churchill Gun Carrier, ставшая ударной силой Операции «Лендшип». Эта могучая машина прорвёт линию обороны и превратит изнурительный позиционный бой в решительное наступление. Её толстая лобовая броня крепко держит удар, а мощная пробивная пушка каждым выстрелом сминает вражескую технику!",
+    "engines": [
+      24661
+    ],
+    "guns": [
+      264276
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/GB40_Gun_Carrier_BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/GB40_Gun_Carrier_BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "24661": {
+        "is_default": true,
+        "module_id": 24661,
+        "name": "Bedford Twin-Six B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "263762": {
+        "is_default": true,
+        "module_id": 263762,
+        "name": "Дредноут",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "264276": {
+        "is_default": true,
+        "module_id": 264276,
+        "name": "OQF 32-pdr Mk. XVII",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      }
+    },
+    "name": "Дредноут",
+    "nation": "uk",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      263762
+    ],
+    "tank_id": 21073,
+    "tier": 6,
+    "turrets": [],
+    "type": "AT-SPG"
+  },
   "21249": {
     "cost": null,
     "default_profile": {
@@ -34573,6 +34722,157 @@
     ],
     "type": "lightTank"
   },
+  "23553": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 25,
+          "rear": 16,
+          "sides": 16
+        },
+        "turret": {
+          "front": 25,
+          "rear": 16,
+          "sides": 18
+        }
+      },
+      "battle_level_range_max": 3,
+      "battle_level_range_min": 2,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "ГАЗ-М1",
+        "power": 80,
+        "tier": 2,
+        "weight": 900
+      },
+      "engine_id": 69637,
+      "firepower": 11,
+      "gun": {
+        "aim_time": 2.4,
+        "caliber": 45,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.4,
+        "fire_rate": 11.76,
+        "move_down_arc": 8,
+        "move_up_arc": 25,
+        "name": "45 мм обр. 1932 г.",
+        "reload_time": 5.1,
+        "tier": 2,
+        "traverse_speed": 43.75,
+        "weight": 77
+      },
+      "gun_id": 263940,
+      "hp": 410,
+      "hull_hp": 300,
+      "hull_weight": 2750,
+      "is_default": true,
+      "maneuverability": 48,
+      "max_ammo": 90,
+      "max_weight": 7500,
+      "profile_id": "69637-260610-260867-263940",
+      "protection": 7,
+      "shells": [
+        {
+          "damage": 55,
+          "penetration": 51,
+          "type": "ARMOR_PIERCING"
+        }
+      ],
+      "shot_efficiency": 30,
+      "signal_range": null,
+      "speed_backward": 10,
+      "speed_forward": 37,
+      "suspension": {
+        "load_limit": 7500,
+        "name": "Т-18",
+        "tier": 2,
+        "traverse_speed": 44,
+        "weight": 1200
+      },
+      "suspension_id": 260610,
+      "turret": {
+        "hp": 110,
+        "name": "МС-1",
+        "tier": 2,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 38,
+        "view_range": 210,
+        "weight": 500
+      },
+      "turret_id": 260867,
+      "weight": 5677
+    },
+    "description": "МС-1 — первый советский танк, запущенный в массовое производство. С 1928 по 1931 год выпустили 959 машин.",
+    "engines": [
+      69637
+    ],
+    "guns": [
+      263940
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/MS-1obr21.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/MS-1obr21.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "260610": {
+        "is_default": true,
+        "module_id": 260610,
+        "name": "Т-18",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "260867": {
+        "is_default": true,
+        "module_id": 260867,
+        "name": "МС-1",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "263940": {
+        "is_default": true,
+        "module_id": 263940,
+        "name": "45 мм обр. 1932 г.",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "69637": {
+        "is_default": true,
+        "module_id": 69637,
+        "name": "ГАЗ-М1",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "МС-1",
+    "nation": "ussr",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      260610
+    ],
+    "tank_id": 23553,
+    "tier": 2,
+    "turrets": [
+      260867
+    ],
+    "type": "lightTank"
+  },
   "23569": {
     "cost": null,
     "default_profile": {
@@ -37564,8 +37864,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -53635,6 +53935,167 @@
     ],
     "type": "lightTank"
   },
+  "5249": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 70,
+          "rear": 20,
+          "sides": 35
+        },
+        "turret": {
+          "front": 100,
+          "rear": 20,
+          "sides": 45
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 230 TRM P30 pl.",
+        "power": 900,
+        "tier": 8,
+        "weight": 1200
+      },
+      "engine_id": 7813,
+      "firepower": 40,
+      "gun": {
+        "aim_time": 4.41,
+        "caliber": 75,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.33,
+        "fire_rate": 10.0,
+        "move_down_arc": 7,
+        "move_up_arc": 18,
+        "name": "7,5 cm Kw.K. 42 L/70 pl.",
+        "reload_time": 6.0,
+        "tier": 6,
+        "traverse_speed": 35.0,
+        "weight": 955
+      },
+      "gun_id": 7556,
+      "hp": 1000,
+      "hull_hp": 800,
+      "hull_weight": 18775,
+      "is_default": true,
+      "maneuverability": 58,
+      "max_ammo": 80,
+      "max_weight": 45000,
+      "profile_id": "7556-7811-7813-8066",
+      "protection": 22,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 160,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 135,
+          "penetration": 182,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 200,
+          "penetration": 20,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 66,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 50,
+      "suspension": {
+        "load_limit": 45000,
+        "name": "Pz.Kpfw. V Ausf. G pl.",
+        "tier": 6,
+        "traverse_speed": 38,
+        "weight": 15000
+      },
+      "suspension_id": 8066,
+      "turret": {
+        "hp": 200,
+        "name": "Pz.Kpfw. V Ausf. G pl.",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 30,
+        "view_range": 245,
+        "weight": 7760
+      },
+      "turret_id": 7811,
+      "weight": 43965
+    },
+    "description": "Эта машина — образец самой массовой модификации немецкого танка Panther — Pz.Kpfw. V Panther Ausf.G. Два немецких танка Panther Ausf.G. были захвачены поляками 2 августа 1944 г. во время Варшавского восстания. Повстанцы нанесли на машины национальные цвета и другие эмблемы, что стало отличительным элементом танка в игре. Танк известен под прозвищем «Пудель» (в оригинале Pudel). Использовался в уличных боях.",
+    "engines": [
+      7813
+    ],
+    "guns": [
+      7556
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl03_PzV_Pudel.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl03_PzV_Pudel.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "7556": {
+        "is_default": true,
+        "module_id": 7556,
+        "name": "7,5 cm Kw.K. 42 L/70 pl.",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "7811": {
+        "is_default": true,
+        "module_id": 7811,
+        "name": "Pz.Kpfw. V Ausf. G pl.",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "7813": {
+        "is_default": true,
+        "module_id": 7813,
+        "name": "Maybach HL 230 TRM P30 pl.",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "8066": {
+        "is_default": true,
+        "module_id": 8066,
+        "name": "Pz.Kpfw. V Ausf. G pl.",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "Pudel",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      8066
+    ],
+    "tank_id": 5249,
+    "tier": 6,
+    "turrets": [
+      7811
+    ],
+    "type": "mediumTank"
+  },
   "52497": {
     "cost": {
       "price_credit": 0,
@@ -62253,8 +62714,8 @@
         "module_id": 9731,
         "name": "КВ-3",
         "next_modules": [
-          3332,
-          3588
+          3588,
+          3332
         ],
         "next_tanks": null,
         "price_credit": 0,
