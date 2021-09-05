@@ -314,14 +314,13 @@ pub fn subtract_tanks(left: Vec<Tank>, mut right: HashMap<i32, Tank>) -> Vec<Tan
     left.into_iter()
         .filter_map(
             |left_tank| match right.remove(&left_tank.statistics.base.tank_id) {
-                Some(right_tank) => {
-                    if left_tank.statistics.all.battles != right_tank.statistics.all.battles {
-                        Some(left_tank - right_tank)
-                    } else {
-                        None
-                    }
+                Some(right_tank)
+                    if left_tank.statistics.all.battles != right_tank.statistics.all.battles =>
+                {
+                    Some(left_tank - right_tank)
                 }
-                None => Some(left_tank),
+                None if left_tank.statistics.all.battles != 0 => Some(left_tank),
+                _ => None,
             },
         )
         .collect()
