@@ -9,6 +9,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Build Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create a GitHub Release
         id: release
         uses: actions/create-release@v1
@@ -17,6 +23,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
+          body: ${{steps.changelog.outputs.changelog}}
           draft: false
           prerelease: false
 
