@@ -9,13 +9,16 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - name: Build Changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v2
+        uses: Bullrich/generate-release-changelog@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          commitMode: true
+          REPO: ${{ github.repository }}
 
       - name: Create a GitHub Release
         id: release
@@ -41,9 +44,6 @@ jobs:
         run: cargo install cross
         env:
           CARGO_TARGET_DIR: ./target
-
-      - name: Checkout code
-        uses: actions/checkout@v2
 
       - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
         run: cross build --target armv7-unknown-linux-gnueabihf --release
