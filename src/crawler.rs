@@ -5,7 +5,6 @@ use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, TimeZone, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
-use smallvec::SmallVec;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
@@ -166,8 +165,7 @@ impl Crawler {
         old_infos: Vec<BaseAccountInfo>,
         fake_infos: bool,
     ) -> crate::Result {
-        let account_ids: SmallVec<[i32; 128]> =
-            old_infos.iter().map(|account| account.id).collect();
+        let account_ids: Vec<i32> = old_infos.iter().map(|account| account.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
         let mut tx = self.database.begin().await?;
