@@ -16,7 +16,7 @@ jobs:
 
       - name: Build Changelog
         id: changelog
-        uses: Bullrich/generate-release-changelog@v2
+        uses: Bullrich/generate-release-changelog@master
         env:
           REPO: ${{ github.repository }}
 
