@@ -13,6 +13,7 @@ mod backoff;
 mod crawler;
 mod database;
 mod logging;
+mod math;
 mod metrics;
 mod models;
 mod opts;
