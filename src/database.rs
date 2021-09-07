@@ -7,7 +7,7 @@ use chrono::{DateTime, Duration, Utc};
 use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Postgres, Row};
+use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 
 use crate::metrics::Stopwatch;
 use crate::models::{
@@ -38,7 +38,7 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
 }
 
 pub async fn retrieve_latest_tank_snapshots(
-    executor: &PgPool,
+    connection: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
 ) -> crate::Result<HashMap<i32, Tank>> {
@@ -66,7 +66,7 @@ pub async fn retrieve_latest_tank_snapshots(
     let tanks = sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(before)
-        .fetch_all(executor)
+        .fetch_all(connection)
         .await
         .context("failed to retrieve the latest tank snapshots")?
         .into_iter()
@@ -75,8 +75,8 @@ pub async fn retrieve_latest_tank_snapshots(
     Ok(tanks)
 }
 
-pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>(
-    connection: E,
+pub async fn insert_account_or_replace(
+    connection: &mut PgConnection,
     info: &BaseAccountInfo,
 ) -> crate::Result {
     // language=SQL
@@ -95,7 +95,10 @@ pub async fn insert_account_or_replace<'e, E: Executor<'e, Database = Postgres>>
     Ok(())
 }
 
-pub async fn insert_account_or_ignore(executor: &PgPool, info: &BaseAccountInfo) -> crate::Result {
+pub async fn insert_account_or_ignore(
+    connection: &PgPool,
+    info: &BaseAccountInfo,
+) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time)
@@ -105,21 +108,18 @@ pub async fn insert_account_or_ignore(executor: &PgPool, info: &BaseAccountInfo)
     sqlx::query(QUERY)
         .bind(info.id)
         .bind(info.last_battle_time)
-        .execute(executor)
+        .execute(connection)
         .await
         .context("failed to insert the account or ignore")?;
     Ok(())
 }
 
-pub async fn delete_account<'e, E>(executor: E, account_id: i32) -> crate::Result
-where
-    E: Executor<'e, Database = Postgres>,
-{
+pub async fn delete_account(connection: &mut PgConnection, account_id: i32) -> crate::Result {
     // language=SQL
     const QUERY: &str = "DELETE FROM accounts WHERE account_id = $1";
     sqlx::query(QUERY)
         .bind(account_id)
-        .execute(executor)
+        .execute(connection)
         .await
         .context("failed to delete account")?;
     Ok(())

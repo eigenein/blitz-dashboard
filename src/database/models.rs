@@ -1,5 +1,5 @@
 use sqlx::postgres::PgRow;
-use sqlx::{FromRow, Row};
+use sqlx::FromRow;
 
 use crate::models::BaseAccountInfo;
 

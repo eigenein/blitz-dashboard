@@ -7,7 +7,6 @@ use tokio::time::{sleep, Instant};
 
 use crate::crawler::selector::Selector;
 use crate::database::models::Account;
-use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<Account>;
 
