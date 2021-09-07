@@ -16,19 +16,34 @@ pub struct SubCrawlerMetrics {
     /// Last scanned account ID.
     pub last_account_id: i32,
 
-    /// Maximum lag – time after an account last battle time and now – in seconds.
-    /// Note: by the time a sub-crawler scans an account, it may have already played more than 1 battle.
-    /// So, the real maximum lag may be greater than that.
-    /// It's also useful to check the full-scan time for a specific sub-crawler («hot» or «cold»).
-    pub max_lag_secs: u64,
+    lags: Vec<u64>,
 }
 
 impl SubCrawlerMetrics {
     pub fn reset(&mut self) {
         self.n_accounts = 0;
         self.n_tanks = 0;
-        self.last_account_id = 0;
-        self.max_lag_secs = 0;
+        self.lags.clear();
+    }
+
+    pub fn push_lag(&mut self, secs: u64) {
+        self.lags.push(secs);
+    }
+
+    pub fn lags(&mut self) -> (StdDuration, StdDuration) {
+        if self.lags.is_empty() {
+            return (StdDuration::default(), StdDuration::default());
+        }
+
+        let index = self.lags.len() / 2;
+        let (_, secs, _) = self.lags.select_nth_unstable(index);
+        let lag_p50 = StdDuration::from_secs(*secs);
+
+        let index = self.lags.len() * 9 / 10;
+        let (_, secs, _) = self.lags.select_nth_unstable(index);
+        let lag_p90 = StdDuration::from_secs(*secs);
+
+        (lag_p50, lag_p90)
     }
 }
 
@@ -39,7 +54,7 @@ pub async fn log_metrics(
     loop {
         let start_instant = Instant::now();
         let n_requests_start = request_counter.load(Ordering::Relaxed);
-        tokio::time::sleep(StdDuration::from_secs(20)).await;
+        tokio::time::sleep(StdDuration::from_secs(60)).await;
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
@@ -47,10 +62,12 @@ pub async fn log_metrics(
 
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
+            let (lag_p50, lag_p90) = metrics.lags();
             log::info!(
-                "Sub-crawler #{} | max lag: {} | APS: {:.1} | TPS: {:.2} | at: #{}",
+                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:9}",
                 i,
-                format_duration(StdDuration::from_secs(metrics.max_lag_secs)),
+                format_duration(lag_p50).to_string(),
+                format_duration(lag_p90).to_string(),
                 metrics.n_accounts as f64 / elapsed_secs,
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
