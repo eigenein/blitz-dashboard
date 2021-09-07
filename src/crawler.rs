@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
@@ -16,9 +16,10 @@ use crate::database;
 use crate::database::models::Account;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
-use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
+use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
+use anyhow::Context;
 
 mod batch_stream;
 mod metrics;
@@ -55,8 +56,6 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
         log::info!("Sub-crawler #{}: {}.", i, selector);
     }
 
-    log::info!("Running…");
-
     let (metrics, handles): (
         Vec<Arc<Mutex<SubCrawlerMetrics>>>,
         Vec<JoinHandle<crate::Result>>,
@@ -68,8 +67,10 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
                 let crawler = Crawler::new(api, database.clone(), 1, false).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
-                    let stream = get_batch_stream(database, selector);
-                    crawler.run(stream).await
+                    crawler
+                        .run(get_batch_stream(database, selector))
+                        .await
+                        .with_context(|| format!("failed to run the sub-crawler: {}", selector))
                 });
                 Ok::<_, anyhow::Error>((metrics, join_handle))
             }
@@ -80,8 +81,11 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
         .unzip();
     tokio::spawn(log_metrics(api.request_counter, metrics));
 
-    futures::future::try_join_all(handles).await?;
-    Ok(())
+    log::info!("Running…");
+    futures::future::try_join_all(handles)
+        .await?
+        .into_iter()
+        .collect()
 }
 
 /// Performs a very slow one-time account scan.
@@ -96,12 +100,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let database = crate::database::open(&opts.connections.database_uri).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
-        .map(|account_id| Account {
-            base: BaseAccountInfo {
-                id: account_id,
-                last_battle_time: Utc.timestamp(0, 0),
-            },
-        })
+        .map(Account::empty)
         .chunks(100)
         .map(Ok);
     let crawler = Crawler::new(api.clone(), database, opts.n_tasks, true).await?;

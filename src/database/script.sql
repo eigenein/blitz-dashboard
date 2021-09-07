@@ -28,3 +28,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_key
 CREATE TABLE IF NOT EXISTS vehicles (
     tank_id INTEGER PRIMARY KEY
 );
+
+-- 0.54.0
+
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS bias double precision NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS factors double precision ARRAY NOT NULL DEFAULT '{}';
