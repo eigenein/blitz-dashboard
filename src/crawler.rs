@@ -15,6 +15,7 @@ use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::models::Account;
 use crate::database::retrieve_tank_ids;
+use crate::math::ensure_vector_length;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -24,6 +25,8 @@ use anyhow::Context;
 mod batch_stream;
 mod metrics;
 mod selector;
+
+const N_FACTORS: usize = 8;
 
 pub struct Crawler {
     api: WargamingApi,
@@ -167,11 +170,12 @@ impl Crawler {
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
         let mut tx = self.database.begin().await?;
-        for account in batch.iter() {
-            let new_info = new_infos.remove(&account.base.id.to_string()).flatten();
+        for account in batch.into_iter() {
+            let account_id = account.base.id;
+            let new_info = new_infos.remove(&account_id.to_string()).flatten();
             self.crawl_account(&mut tx, account, new_info, non_incremental)
                 .await?;
-            self.update_metrics_for_account(account.base.id).await;
+            self.update_metrics_for_account(account_id).await;
         }
         log::debug!("Committing…");
         tx.commit().await?;
@@ -188,7 +192,7 @@ impl Crawler {
     async fn crawl_account(
         &self,
         connection: &mut PgConnection,
-        account: &Account,
+        account: Account,
         new_info: Option<AccountInfo>,
         non_incremental: bool,
     ) -> crate::Result {
@@ -213,11 +217,11 @@ impl Crawler {
     async fn crawl_existing_account(
         &self,
         connection: &mut PgConnection,
-        account: &Account,
+        mut account: Account,
         new_info: AccountInfo,
     ) -> crate::Result {
         if new_info.base.last_battle_time == account.base.last_battle_time {
-            log::debug!("#{}: last battle time is not changed.", account.base.id);
+            log::trace!("#{}: last battle time is not changed.", account.base.id);
             return Ok(());
         }
 
@@ -229,16 +233,26 @@ impl Crawler {
             let achievements = self.api.get_tanks_achievements(account.base.id).await?;
             let tanks = merge_tanks(account.base.id, statistics, achievements);
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
-            self.insert_vehicles(&mut *connection, &tanks).await?;
+            self.insert_missing_vehicles(&mut *connection, &tanks)
+                .await?;
+
+            ensure_vector_length(&mut account.cf.factors, N_FACTORS); // TODO: #29.
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.base.id);
             self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
                 .await?;
         } else {
-            log::debug!("#{}: tanks are not updated.", account.base.id);
+            log::trace!("#{}: tanks are not updated.", account.base.id);
         }
 
-        database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
+        database::replace_account(
+            &mut *connection,
+            Account {
+                base: new_info.base,
+                cf: account.cf,
+            },
+        )
+        .await?;
 
         Ok(())
     }
@@ -270,7 +284,7 @@ impl Crawler {
     }
 
     /// Inserts missing tank IDs into the database.
-    async fn insert_vehicles(
+    async fn insert_missing_vehicles(
         &self,
         connection: &mut PgConnection,
         tanks: &[Tank],

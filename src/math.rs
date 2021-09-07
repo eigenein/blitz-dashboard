@@ -9,7 +9,6 @@ pub fn dot(left: &[f64], right: &[f64]) -> f64 {
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
-#[allow(dead_code)]
 pub fn ensure_vector_length(v: &mut Vec<f64>, length: usize) {
     v.truncate(length);
     while v.len() < length {

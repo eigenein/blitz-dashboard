@@ -9,6 +9,7 @@ use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 
+use crate::database::models::Account;
 use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
@@ -75,27 +76,29 @@ pub async fn retrieve_latest_tank_snapshots(
     Ok(tanks)
 }
 
-pub async fn insert_account_or_replace(
-    connection: &mut PgConnection,
-    info: &BaseAccountInfo,
-) -> crate::Result {
+pub async fn replace_account(connection: &mut PgConnection, account: Account) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time)
-        VALUES ($1, $2)
+        INSERT INTO accounts (account_id, last_battle_time, bias, factors)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (account_id) DO UPDATE SET
-            last_battle_time = EXCLUDED.last_battle_time
+            last_battle_time = excluded.last_battle_time,
+            bias = excluded.bias,
+            factors = excluded.factors
     ";
+    let account_id = account.base.id;
     sqlx::query(QUERY)
-        .bind(info.id)
-        .bind(info.last_battle_time)
+        .bind(account.base.id)
+        .bind(account.base.last_battle_time)
+        .bind(account.cf.bias)
+        .bind(account.cf.factors)
         .execute(connection)
         .await
-        .with_context(|| format!("failed to insert the account #{} or replace", info.id))?;
+        .with_context(|| format!("failed to replace the account #{}", account_id))?;
     Ok(())
 }
 
-pub async fn insert_account_or_ignore(
+pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     info: &BaseAccountInfo,
 ) -> crate::Result {
@@ -110,7 +113,7 @@ pub async fn insert_account_or_ignore(
         .bind(info.last_battle_time)
         .execute(connection)
         .await
-        .context("failed to insert the account or ignore")?;
+        .context("failed to insert the account if not exists")?;
     Ok(())
 }
 

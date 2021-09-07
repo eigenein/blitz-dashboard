@@ -10,7 +10,7 @@ use sqlx::PgPool;
 
 use partials::*;
 
-use crate::database::{insert_account_or_ignore, retrieve_latest_tank_snapshots};
+use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
@@ -46,7 +46,7 @@ pub async fn get(
 
     let current_info = account_info_cache.get(account_id).await?;
     set_user(&current_info.nickname);
-    insert_account_or_ignore(database, &current_info.base).await?;
+    insert_account_if_not_exists(database, &current_info.base).await?;
 
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
