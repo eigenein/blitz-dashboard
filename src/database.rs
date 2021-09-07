@@ -76,6 +76,29 @@ pub async fn retrieve_latest_tank_snapshots(
     Ok(tanks)
 }
 
+#[allow(dead_code)]
+pub async fn retrieve_tank_battle_count(
+    connection: &mut PgConnection,
+    account_id: i32,
+    tank_id: i32,
+) -> crate::Result<(i32, i32)> {
+    // language=SQL
+    const QUERY: &str = "
+        SELECT battles, wins
+        FROM tank_snapshots
+        WHERE account_id = $1 AND tank_id = $2
+        ORDER BY last_battle_time DESC 
+        LIMIT 1
+    ";
+    Ok(sqlx::query_as(QUERY)
+        .bind(account_id)
+        .bind(tank_id)
+        .fetch_optional(connection)
+        .await
+        .context("failed to retrieve tank battle count")?
+        .unwrap_or((0, 0)))
+}
+
 pub async fn replace_account(connection: &mut PgConnection, account: Account) -> crate::Result {
     // language=SQL
     const QUERY: &str = "

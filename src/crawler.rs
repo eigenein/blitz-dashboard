@@ -236,7 +236,8 @@ impl Crawler {
             self.insert_missing_vehicles(&mut *connection, &tanks)
                 .await?;
 
-            ensure_vector_length(&mut account.cf.factors, N_FACTORS); // TODO: #29.
+            // TODO: extract SGD to a separate function #29.
+            ensure_vector_length(&mut account.cf.factors, N_FACTORS);
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.base.id);
             self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
