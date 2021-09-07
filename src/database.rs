@@ -14,6 +14,8 @@ use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
 
+pub mod models;
+
 /// Open and initialize the database.
 pub async fn open(uri: &str) -> crate::Result<PgPool> {
     log::info!("Connecting to the database…");

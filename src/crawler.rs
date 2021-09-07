@@ -13,6 +13,7 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
+use crate::database::models::Account;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
@@ -29,9 +30,9 @@ pub struct Crawler {
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 
-    /// Indicates that the old account infos coming from the stream aren't real –
+    /// Indicates that the accounts coming from the stream aren't real –
     /// they're generated on the fly instead of being read from the database.
-    fake_infos: bool,
+    non_incremental: bool,
 
     /// Used to maintain the vehicles table in the database.
     /// The cache contains tank IDs which are for sure existing in the database at the moment.
@@ -95,9 +96,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let database = crate::database::open(&opts.connections.database_uri).await?;
     let stream = stream::iter(opts.start_id..opts.end_id)
-        .map(|account_id| BaseAccountInfo {
-            id: account_id,
-            last_battle_time: Utc.timestamp(0, 0),
+        .map(|account_id| Account {
+            base: BaseAccountInfo {
+                id: account_id,
+                last_battle_time: Utc.timestamp(0, 0),
+            },
         })
         .chunks(100)
         .map(Ok);
@@ -137,14 +140,14 @@ impl Crawler {
         api: WargamingApi,
         database: PgPool,
         n_tasks: usize,
-        fake_infos: bool,
+        non_incremental: bool,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             api,
             database,
             n_tasks,
-            fake_infos,
+            non_incremental,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -154,26 +157,22 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
         stream
-            .map(|batch| async move { self.crawl_batch(batch?, self.fake_infos).await })
+            .map(|batch| async move { self.crawl_batch(batch?, self.non_incremental).await })
             .buffer_unordered(self.n_tasks)
             .try_collect()
             .await
     }
 
-    async fn crawl_batch(
-        &self,
-        old_infos: Vec<BaseAccountInfo>,
-        fake_infos: bool,
-    ) -> crate::Result {
-        let account_ids: Vec<i32> = old_infos.iter().map(|account| account.id).collect();
+    async fn crawl_batch(&self, batch: Batch, non_incremental: bool) -> crate::Result {
+        let account_ids: Vec<i32> = batch.iter().map(|account| account.base.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
         let mut tx = self.database.begin().await?;
-        for old_info in old_infos.iter() {
-            let new_info = new_infos.remove(&old_info.id.to_string()).flatten();
-            self.crawl_stored_account(&mut tx, old_info, new_info, fake_infos)
+        for account in batch.iter() {
+            let new_info = new_infos.remove(&account.base.id.to_string()).flatten();
+            self.crawl_stored_account(&mut tx, account, new_info, non_incremental)
                 .await?;
-            self.update_metrics_for_account(old_info.id).await;
+            self.update_metrics_for_account(account.base.id).await;
         }
         log::debug!("Committing…");
         tx.commit().await?;
@@ -190,20 +189,20 @@ impl Crawler {
     async fn crawl_stored_account(
         &self,
         connection: &mut PgConnection,
-        old_info: &BaseAccountInfo,
+        account: &Account,
         new_info: Option<AccountInfo>,
-        fake_info: bool,
+        non_incremental: bool,
     ) -> crate::Result {
-        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", old_info.id));
+        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.base.id));
 
         match new_info {
             Some(new_info) => {
-                self.crawl_existing_account(&mut *connection, old_info, new_info)
+                self.crawl_existing_account(&mut *connection, account, new_info)
                     .await?;
             }
             None => {
-                if !fake_info {
-                    Self::delete_account(&mut *connection, old_info.id).await?;
+                if !non_incremental {
+                    Self::delete_account(&mut *connection, account.base.id).await?;
                 }
             }
         };
@@ -220,31 +219,31 @@ impl Crawler {
     async fn crawl_existing_account(
         &self,
         connection: &mut PgConnection,
-        old_info: &BaseAccountInfo,
+        account: &Account,
         new_info: AccountInfo,
     ) -> crate::Result {
-        if new_info.base.last_battle_time == old_info.last_battle_time {
-            log::debug!("#{}: last battle time is not changed.", old_info.id);
+        if new_info.base.last_battle_time == account.base.last_battle_time {
+            log::debug!("#{}: last battle time is not changed.", account.base.id);
             return Ok(());
         }
 
-        log::debug!("Crawling account #{}…", old_info.id);
+        log::debug!("Crawling account #{}…", account.base.id);
         database::insert_account_or_replace(&mut *connection, &new_info.base).await?;
 
         let statistics = self
-            .get_updated_tanks_statistics(old_info.id, old_info.last_battle_time)
+            .get_updated_tanks_statistics(account.base.id, account.base.last_battle_time)
             .await?;
         if statistics.is_empty() {
-            log::debug!("#{}: tanks are not updated.", old_info.id);
+            log::debug!("#{}: tanks are not updated.", account.base.id);
             return Ok(());
         }
 
-        let achievements = self.api.get_tanks_achievements(old_info.id).await?;
-        let tanks = merge_tanks(old_info.id, statistics, achievements);
+        let achievements = self.api.get_tanks_achievements(account.base.id).await?;
+        let tanks = merge_tanks(account.base.id, statistics, achievements);
         database::insert_tank_snapshots(&mut *connection, &tanks).await?;
         self.insert_vehicles(&mut *connection, &tanks).await?;
 
-        log::debug!("Inserted {} tanks for #{}.", tanks.len(), old_info.id);
+        log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.base.id);
         self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
             .await?;
 

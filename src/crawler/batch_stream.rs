@@ -6,9 +6,10 @@ use sqlx::PgPool;
 use tokio::time::{sleep, Instant};
 
 use crate::crawler::selector::Selector;
+use crate::database::models::Account;
 use crate::models::BaseAccountInfo;
 
-pub type Batch = Vec<BaseAccountInfo>;
+pub type Batch = Vec<Account>;
 
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub fn get_batch_stream(
@@ -22,7 +23,7 @@ pub fn get_batch_stream(
                 let batch = retrieve_batch(&connection, pointer, selector).await?;
                 match batch.last() {
                     Some(last_item) => {
-                        let pointer = last_item.id;
+                        let pointer = last_item.base.id;
                         break Ok(Some((batch, (pointer, start_time))));
                     }
                     None => {
@@ -43,7 +44,7 @@ async fn retrieve_batch(
     connection: &PgPool,
     starting_at: i32,
     selector: Selector,
-) -> crate::Result<Vec<BaseAccountInfo>> {
+) -> crate::Result<Batch> {
     let query = match selector {
         Selector::EarlierThan(min_offset) => {
             // language=SQL
