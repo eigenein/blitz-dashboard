@@ -369,7 +369,9 @@ impl Crawler {
                     + dot(&account.factors, &vehicle_factors[1..]);
                 assert!(
                     !prediction.is_nan(),
-                    "{} {:?} {:?}",
+                    "#{}/#{} {} {:?} {:?}",
+                    account_id,
+                    tank_id,
                     account.bias,
                     vehicle_factors,
                     account.factors
