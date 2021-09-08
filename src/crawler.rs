@@ -343,7 +343,7 @@ impl Crawler {
                 database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
             let n_battles = tank.statistics.all.battles - n_battles;
             if n_battles <= 0 {
-                log::warn!("Tank #{}/#{} is a weirdo.", account_id, tank_id);
+                log::debug!("Tank #{}/#{} is a weirdo.", account_id, tank_id);
                 continue;
             }
             let n_wins = tank.statistics.all.wins - n_wins;
