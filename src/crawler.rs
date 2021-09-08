@@ -338,6 +338,16 @@ impl Crawler {
             let tank_id = tank.statistics.base.tank_id;
             let vehicle_key = format!("t:{}:factors", tank_id);
 
+            // Let's see how much battles and losses the account has made.
+            let (n_battles, n_wins) =
+                database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
+            let n_battles = tank.statistics.all.battles - n_battles;
+            if n_battles <= 0 {
+                log::warn!("Tank #{}/#{} is a weirdo.", account_id, tank_id);
+                continue;
+            }
+            let n_wins = tank.statistics.all.wins - n_wins;
+
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
             let mut vehicle_factors: Vec<f64> = redis
@@ -346,20 +356,6 @@ impl Crawler {
                 .map(|factors| rmp_serde::from_read_ref(&factors))
                 .unwrap_or_else(|| Ok(Vec::new()))?;
             ensure_vector_length(&mut vehicle_factors, N_FACTORS + 1);
-
-            // Let's see how much battles and losses the account has made.
-            let (n_battles, n_wins) =
-                database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
-            assert!(
-                tank.statistics.all.battles >= n_battles,
-                "account_id: {}, tank_id: {}, all_battles: {}, n_battles: {}",
-                account_id,
-                tank_id,
-                tank.statistics.all.battles,
-                n_battles,
-            );
-            let n_wins = tank.statistics.all.wins - n_wins;
-            let n_battles = tank.statistics.all.battles - n_battles;
 
             let mut metrics = self.metrics.lock().await;
             metrics.n_battles += n_battles;
