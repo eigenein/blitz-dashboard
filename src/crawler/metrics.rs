@@ -60,7 +60,7 @@ pub async fn log_metrics(
     loop {
         let start_instant = Instant::now();
         let n_requests_start = request_counter.load(Ordering::Relaxed);
-        tokio::time::sleep(StdDuration::from_secs(10)).await;
+        tokio::time::sleep(StdDuration::from_secs(60)).await;
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
@@ -70,7 +70,7 @@ pub async fn log_metrics(
             let mut metrics = metrics.lock().await;
             let (lag_p50, lag_p90) = metrics.lags();
             log::info!(
-                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:9} | CFME: {:2.3} ({})",
+                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9} | CFME: {:2.3} | NB: {:>3}",
                 i,
                 format_duration(lag_p50).to_string(),
                 format_duration(lag_p90).to_string(),
