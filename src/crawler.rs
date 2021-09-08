@@ -251,10 +251,10 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
+            self.train(base.id, &mut cf, &tanks).await?;
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
                 .await?;
-            self.train(base.id, &mut cf, &tanks).await?;
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), base.id);
             self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
