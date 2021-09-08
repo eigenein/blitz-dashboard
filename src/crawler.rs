@@ -358,7 +358,6 @@ impl Crawler {
             ensure_vector_length(&mut vehicle_factors, N_FACTORS + 1);
 
             let mut metrics = self.metrics.lock().await;
-            metrics.n_battles += n_battles;
 
             // For each battle doing the SGD step.
             for i in 0..n_battles {
@@ -377,7 +376,7 @@ impl Crawler {
                     account.factors
                 );
                 let error = prediction - outcome;
-                metrics.cf_error += error;
+                metrics.push_cf_error(error);
 
                 account.bias -= ACCOUNT_LEARNING_RATE * error;
                 vehicle_factors[0] -= VEHICLE_LEARNING_RATE * error;

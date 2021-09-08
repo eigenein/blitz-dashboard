@@ -18,9 +18,9 @@ pub struct SubCrawlerMetrics {
 
     pub n_battles: i32,
 
-    pub cf_error: f64,
-
     lags: Vec<u64>,
+
+    cf_errors: Vec<f64>,
 }
 
 impl SubCrawlerMetrics {
@@ -28,12 +28,28 @@ impl SubCrawlerMetrics {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
-        self.cf_error = 0.0;
+        self.cf_errors.clear();
         self.lags.clear();
     }
 
     pub fn push_lag(&mut self, secs: u64) {
         self.lags.push(secs);
+    }
+
+    pub fn push_cf_error(&mut self, error: f64) {
+        self.cf_errors.push(error);
+    }
+
+    pub fn cf_error(&self) -> (f64, f64) {
+        let n = self.cf_errors.len().max(1);
+        let mean = self.cf_errors.iter().sum::<f64>() / n as f64;
+        let variance = self
+            .cf_errors
+            .iter()
+            .map(|value| (value - mean).powi(2))
+            .sum::<f64>()
+            / ((n - 1).max(1)) as f64;
+        (mean, variance.sqrt())
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
@@ -69,16 +85,17 @@ pub async fn log_metrics(
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
             let (lag_p50, lag_p90) = metrics.lags();
+            let (cfe_mean, cfe_std) = metrics.cf_error();
             log::info!(
-                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9} | CFME: {:>+.3} | NB: {:>3}",
+                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9} | CFME: {:>+.3} ±{:>.3}",
                 i,
                 format_duration(lag_p50).to_string(),
                 format_duration(lag_p90).to_string(),
                 metrics.n_accounts as f64 / elapsed_secs,
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
-                metrics.cf_error / metrics.n_battles.max(1) as f64,
-                metrics.n_battles,
+                cfe_mean,
+                cfe_std,
             );
             metrics.reset();
         }
