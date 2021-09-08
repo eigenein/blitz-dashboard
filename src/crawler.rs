@@ -352,7 +352,14 @@ impl Crawler {
                 database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
             let n_wins = tank.statistics.all.wins - n_wins;
             let n_battles = tank.statistics.all.battles - n_battles;
-            assert!(n_battles >= 0);
+            assert!(
+                n_battles >= 0,
+                "account_id: {}, tank_id: {}, all_battles: {}, n_battles: {}",
+                account_id,
+                tank_id,
+                tank.statistics.all.battles,
+                n_battles,
+            );
 
             let mut metrics = self.metrics.lock().await;
             metrics.n_battles += n_battles;
