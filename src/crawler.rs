@@ -367,6 +367,13 @@ impl Crawler {
                     + account.bias
                     + vehicle_factors[0]
                     + dot(&account.factors, &vehicle_factors[1..]);
+                assert!(
+                    !prediction.is_nan(),
+                    "{} {:?} {:?}",
+                    account.bias,
+                    vehicle_factors,
+                    account.factors
+                );
                 let error = prediction - outcome;
                 metrics.cf_error += error;
 
