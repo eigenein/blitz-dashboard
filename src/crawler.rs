@@ -53,7 +53,11 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
-    let database = crate::database::open(&opts.connections.database_uri).await?;
+    let database = crate::database::open(
+        &opts.connections.database_uri,
+        opts.connections.initialize_schema,
+    )
+    .await?;
     let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
 
     opts.offsets.sort_unstable();
@@ -106,7 +110,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
-    let database = crate::database::open(&opts.connections.database_uri).await?;
+    let database = crate::database::open(
+        &opts.connections.database_uri,
+        opts.connections.initialize_schema,
+    )
+    .await?;
     let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
 
     let stream = stream::iter(opts.start_id..opts.end_id)

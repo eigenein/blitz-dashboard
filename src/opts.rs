@@ -136,6 +136,10 @@ pub struct ConnectionOpts {
     #[structopt(short, long = "database")]
     pub database_uri: String,
 
+    /// Initialize the database schema
+    #[structopt(long)]
+    pub initialize_schema: bool,
+
     /// Wargaming.net API application ID
     #[structopt(short, long)]
     pub application_id: String,

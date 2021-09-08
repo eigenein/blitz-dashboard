@@ -29,12 +29,17 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         &opts.connections.application_id,
         StdDuration::from_millis(1500),
     )?;
+    let database = crate::database::open(
+        &opts.connections.database_uri,
+        opts.connections.initialize_schema,
+    )
+    .await?;
     let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
         .manage(api)
-        .manage(crate::database::open(&opts.connections.database_uri).await?)
+        .manage(database)
         .manage(TrackingCode::new(&opts))
         .manage(redis)
         .mount("/", routes![r#static::get_site_manifest])

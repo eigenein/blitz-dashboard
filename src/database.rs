@@ -18,7 +18,7 @@ use crate::models::{
 pub mod models;
 
 /// Open and initialize the database.
-pub async fn open(uri: &str) -> crate::Result<PgPool> {
+pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     log::info!("Connecting to the database…");
     let mut options = PgConnectOptions::from_str(uri)?;
     options.log_statements(LevelFilter::Trace);
@@ -28,11 +28,13 @@ pub async fn open(uri: &str) -> crate::Result<PgPool> {
         .await
         .context("failed to connect")?;
 
-    log::info!("Initializing the database schema…");
-    inner
-        .execute(include_str!("database/script.sql"))
-        .await
-        .context("failed to run the script")?;
+    if initialize_schema {
+        log::info!("Initializing the database schema…");
+        inner
+            .execute(include_str!("database/script.sql"))
+            .await
+            .context("failed to run the script")?;
+    }
 
     log::info!("The database is ready.");
     Ok(inner)
