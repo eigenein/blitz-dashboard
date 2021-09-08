@@ -16,9 +16,9 @@ pub fn ensure_vector_length(v: &mut Vec<f64>, length: usize) {
     }
 }
 
-pub fn add_vector(to: &mut [f64], vector: &[f64], scaling: f64) {
-    assert_eq!(to.len(), vector.len());
-    for i in 0..vector.len() {
-        to[i] += scaling * vector[i];
+pub fn sub_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
+    assert_eq!(minuend.len(), subtrahend.len());
+    for i in 0..subtrahend.len() {
+        minuend[i] -= scaling * subtrahend[i];
     }
 }

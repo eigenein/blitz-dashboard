@@ -17,7 +17,7 @@ use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::models::{Account, AccountFactors};
 use crate::database::retrieve_tank_ids;
-use crate::math::{add_vector, dot, ensure_vector_length};
+use crate::math::{dot, ensure_vector_length, sub_vector};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -379,15 +379,15 @@ impl Crawler {
                 let error = prediction - outcome;
                 metrics.cf_error += error;
 
-                account.bias += ACCOUNT_LEARNING_RATE * (error - account.bias);
-                vehicle_factors[0] += VEHICLE_LEARNING_RATE * (error - vehicle_factors[0]);
+                account.bias -= ACCOUNT_LEARNING_RATE * error;
+                vehicle_factors[0] -= VEHICLE_LEARNING_RATE * error;
 
-                add_vector(
+                sub_vector(
                     &mut account.factors,
                     &vehicle_factors[1..],
                     ACCOUNT_LEARNING_RATE * error,
                 );
-                add_vector(
+                sub_vector(
                     &mut vehicle_factors[1..],
                     &account.factors,
                     VEHICLE_LEARNING_RATE * error,
