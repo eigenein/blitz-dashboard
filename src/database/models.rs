@@ -6,7 +6,7 @@ use crate::models::BaseAccountInfo;
 
 pub struct Account {
     pub base: BaseAccountInfo,
-    pub cf: CfProfile,
+    pub cf: AccountFactors,
 }
 
 impl Account {
@@ -30,14 +30,14 @@ impl<'r> FromRow<'r, PgRow> for Account {
     }
 }
 
-/// Collaborative filtering profile.
+/// Account profile for the collaborative filtering.
 #[derive(Default)]
-pub struct CfProfile {
+pub struct AccountFactors {
     pub bias: f64,
     pub factors: Vec<f64>,
 }
 
-impl<'r> FromRow<'r, PgRow> for CfProfile {
+impl<'r> FromRow<'r, PgRow> for AccountFactors {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             bias: row.try_get("bias")?,

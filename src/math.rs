@@ -15,3 +15,10 @@ pub fn ensure_vector_length(v: &mut Vec<f64>, length: usize) {
         v.push(fastrand::f64() - 0.5);
     }
 }
+
+pub fn add_vector(to: &mut [f64], vector: &[f64], scaling: f64) {
+    assert_eq!(to.len(), vector.len());
+    for i in 0..vector.len() {
+        to[i] += scaling * vector[i];
+    }
+}

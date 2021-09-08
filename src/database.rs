@@ -76,9 +76,8 @@ pub async fn retrieve_latest_tank_snapshots(
     Ok(tanks)
 }
 
-#[allow(dead_code)]
 pub async fn retrieve_tank_battle_count(
-    connection: &mut PgConnection,
+    connection: &PgPool,
     account_id: i32,
     tank_id: i32,
 ) -> crate::Result<(i32, i32)> {

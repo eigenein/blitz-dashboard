@@ -16,6 +16,10 @@ pub struct SubCrawlerMetrics {
     /// Last scanned account ID.
     pub last_account_id: i32,
 
+    pub n_battles: i32,
+
+    pub cf_error: f64,
+
     lags: Vec<u64>,
 }
 
@@ -23,6 +27,8 @@ impl SubCrawlerMetrics {
     pub fn reset(&mut self) {
         self.n_accounts = 0;
         self.n_tanks = 0;
+        self.n_battles = 0;
+        self.cf_error = 0.0;
         self.lags.clear();
     }
 
@@ -54,7 +60,7 @@ pub async fn log_metrics(
     loop {
         let start_instant = Instant::now();
         let n_requests_start = request_counter.load(Ordering::Relaxed);
-        tokio::time::sleep(StdDuration::from_secs(60)).await;
+        tokio::time::sleep(StdDuration::from_secs(10)).await;
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
@@ -64,13 +70,15 @@ pub async fn log_metrics(
             let mut metrics = metrics.lock().await;
             let (lag_p50, lag_p90) = metrics.lags();
             log::info!(
-                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:9}",
+                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:9} | CFME: {:2.3} ({})",
                 i,
                 format_duration(lag_p50).to_string(),
                 format_duration(lag_p90).to_string(),
                 metrics.n_accounts as f64 / elapsed_secs,
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
+                metrics.cf_error / metrics.n_battles.max(1) as f64,
+                metrics.n_battles,
             );
             metrics.reset();
         }

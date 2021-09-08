@@ -15,24 +15,23 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
-use crate::database::models::Account;
+use crate::database::models::{Account, AccountFactors};
 use crate::database::retrieve_tank_ids;
-use crate::math::ensure_vector_length;
+use crate::math::{add_vector, dot, ensure_vector_length};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
+use redis::AsyncCommands;
 
 mod batch_stream;
 mod metrics;
 mod selector;
 
-const N_FACTORS: usize = 8;
-
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
-    redis: Redis,
+    redis: Mutex<Redis>,
 
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
@@ -157,7 +156,7 @@ impl Crawler {
         let this = Self {
             api,
             database,
-            redis,
+            redis: Mutex::new(redis),
             n_tasks,
             non_incremental,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
@@ -227,7 +226,7 @@ impl Crawler {
     async fn crawl_existing_account(
         &self,
         connection: &mut PgConnection,
-        mut account: Account,
+        account: Account,
         new_info: AccountInfo,
     ) -> crate::Result {
         if new_info.base.last_battle_time == account.base.last_battle_time {
@@ -235,32 +234,32 @@ impl Crawler {
             return Ok(());
         }
 
-        log::debug!("Crawling account #{}…", account.base.id);
+        let base = account.base;
+        let mut cf = account.cf;
+        log::debug!("Crawling account #{}…", base.id);
         let statistics = self
-            .get_updated_tanks_statistics(account.base.id, account.base.last_battle_time)
+            .get_updated_tanks_statistics(base.id, base.last_battle_time)
             .await?;
         if !statistics.is_empty() {
-            let achievements = self.api.get_tanks_achievements(account.base.id).await?;
-            let tanks = merge_tanks(account.base.id, statistics, achievements);
+            let achievements = self.api.get_tanks_achievements(base.id).await?;
+            let tanks = merge_tanks(base.id, statistics, achievements);
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
                 .await?;
+            self.train(base.id, &mut cf, &tanks).await?;
 
-            // TODO: extract SGD to a separate function #29.
-            ensure_vector_length(&mut account.cf.factors, N_FACTORS);
-
-            log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.base.id);
+            log::debug!("Inserted {} tanks for #{}.", tanks.len(), base.id);
             self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
                 .await?;
         } else {
-            log::trace!("#{}: tanks are not updated.", account.base.id);
+            log::trace!("#{}: tanks are not updated.", base.id);
         }
 
         database::replace_account(
             &mut *connection,
             Account {
                 base: new_info.base,
-                cf: account.cf,
+                cf,
             },
         )
         .await?;
@@ -307,6 +306,80 @@ impl Crawler {
                 database::insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
             }
         }
+        Ok(())
+    }
+
+    /// Trains the account and vehicle factors on the new data.
+    /// Implements a stochastic gradient descent for matrix factorization.
+    ///
+    /// https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
+    async fn train(
+        &self,
+        account_id: i32,
+        account: &mut AccountFactors,
+        tanks: &[Tank],
+    ) -> crate::Result {
+        const GLOBAL_BIAS: f64 = 0.5;
+        const ACCOUNT_LEARNING_RATE: f64 = 0.01;
+        const VEHICLE_LEARNING_RATE: f64 = 0.001;
+        const N_FACTORS: usize = 8;
+
+        ensure_vector_length(&mut account.factors, N_FACTORS);
+
+        for tank in tanks {
+            let tank_id = tank.statistics.base.tank_id;
+            let vehicle_key = format!("t:{}:factors", tank_id);
+
+            // Read the vehicle profile and initialize it, if needed.
+            let mut redis = self.redis.lock().await;
+            let mut vehicle_factors: Vec<f64> = redis
+                .get::<'_, _, Option<Vec<u8>>>(&vehicle_key)
+                .await?
+                .map(|factors| rmp_serde::from_read_ref(&factors))
+                .unwrap_or_else(|| Ok(Vec::new()))?;
+            ensure_vector_length(&mut vehicle_factors, N_FACTORS + 1);
+
+            // Let's see how much battles and losses the account has made.
+            let (n_battles, n_wins) =
+                database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
+            let n_wins = tank.statistics.all.wins - n_wins;
+            let n_battles = tank.statistics.all.battles - n_battles;
+            assert!(n_battles >= 0);
+
+            let mut metrics = self.metrics.lock().await;
+            metrics.n_battles += n_battles;
+
+            // For each battle doing the SGD step.
+            for i in 0..n_battles {
+                let outcome = if i < n_wins { 1.0 } else { 0.0 };
+                let prediction = GLOBAL_BIAS
+                    + account.bias
+                    + vehicle_factors[0]
+                    + dot(&account.factors, &vehicle_factors[1..]);
+                let error = prediction - outcome;
+                metrics.cf_error += error;
+
+                account.bias += ACCOUNT_LEARNING_RATE * (error - account.bias);
+                vehicle_factors[0] += VEHICLE_LEARNING_RATE * (error - vehicle_factors[0]);
+
+                add_vector(
+                    &mut account.factors,
+                    &vehicle_factors[1..],
+                    ACCOUNT_LEARNING_RATE * error,
+                );
+                add_vector(
+                    &mut vehicle_factors[1..],
+                    &account.factors,
+                    VEHICLE_LEARNING_RATE * error,
+                )
+            }
+
+            log::trace!("Vehicle #{} factors: {:?}.", tank_id, vehicle_factors);
+            redis
+                .set(&vehicle_key, rmp_serde::to_vec(&vehicle_factors)?)
+                .await?;
+        }
+
         Ok(())
     }
 }
