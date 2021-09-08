@@ -3,8 +3,10 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
+use redis::aio::ConnectionManager as Redis;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
@@ -20,7 +22,6 @@ use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
-use anyhow::Context;
 
 mod batch_stream;
 mod metrics;
@@ -31,6 +32,8 @@ const N_FACTORS: usize = 8;
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
+    redis: Redis,
+
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 
@@ -52,6 +55,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let database = crate::database::open(&opts.connections.database_uri).await?;
+    let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
 
     opts.offsets.sort_unstable();
     let selectors = convert_offsets_to_selectors(&opts.offsets, opts.min_offset);
@@ -66,8 +70,10 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
         .then(|selector| {
             let api = api.clone();
             let database = database.clone();
+            let redis = redis.clone();
+
             async move {
-                let crawler = Crawler::new(api, database.clone(), 1, false).await?;
+                let crawler = Crawler::new(api, database.clone(), redis, 1, false).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
                     crawler
@@ -102,11 +108,13 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let database = crate::database::open(&opts.connections.database_uri).await?;
+    let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
+
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, opts.n_tasks, true).await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, true).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -141,6 +149,7 @@ impl Crawler {
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
+        redis: Redis,
         n_tasks: usize,
         non_incremental: bool,
     ) -> crate::Result<Self> {
@@ -148,6 +157,7 @@ impl Crawler {
         let this = Self {
             api,
             database,
+            redis,
             n_tasks,
             non_incremental,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
