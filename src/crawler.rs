@@ -11,18 +11,17 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
+use crate::cf::{dot, initialize_factors, subtract_vector};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::models::{Account, AccountFactors};
 use crate::database::retrieve_tank_ids;
-use crate::math::{dot, initialize_random_vector, subtract_vector};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
-use redis::AsyncCommands;
 
 mod batch_stream;
 mod metrics;
@@ -58,7 +57,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
         opts.connections.initialize_schema,
     )
     .await?;
-    let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
+    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
 
     opts.offsets.sort_unstable();
     let selectors = convert_offsets_to_selectors(&opts.offsets, opts.min_offset);
@@ -115,7 +114,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         opts.connections.initialize_schema,
     )
     .await?;
-    let redis = crate::thirdparty::redis::open(&opts.connections.redis_uri).await?;
+    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
 
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(Account::empty)
@@ -328,11 +327,11 @@ impl Crawler {
         tanks: &[Tank],
     ) -> crate::Result {
         const GLOBAL_BIAS: f64 = 0.5;
-        const ACCOUNT_LEARNING_RATE: f64 = 0.01;
-        const VEHICLE_LEARNING_RATE: f64 = 0.001;
+        const ACCOUNT_LEARNING_RATE: f64 = 0.1;
+        const VEHICLE_LEARNING_RATE: f64 = 0.01;
         const N_FACTORS: usize = 8;
 
-        initialize_random_vector(&mut account.factors, N_FACTORS);
+        initialize_factors(&mut account.factors, N_FACTORS);
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
@@ -350,13 +349,9 @@ impl Crawler {
 
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
-            let vehicle_key = format!("t:{}:factors", tank_id);
-            let mut vehicle_factors: Vec<f64> = redis
-                .get::<'_, _, Option<Vec<u8>>>(&vehicle_key)
-                .await?
-                .map(|factors| rmp_serde::from_read_ref(&factors))
-                .unwrap_or_else(|| Ok(Vec::new()))?;
-            initialize_random_vector(&mut vehicle_factors, N_FACTORS + 1);
+            let mut vehicle_factors =
+                crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
+            initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             // Make a prediction.
             let prediction = GLOBAL_BIAS
@@ -385,9 +380,7 @@ impl Crawler {
 
             // Write the updated vehicle profile.
             log::trace!("Vehicle #{} factors: {:?}.", tank_id, vehicle_factors);
-            redis
-                .set(&vehicle_key, rmp_serde::to_vec(&vehicle_factors)?)
-                .await?;
+            crate::redis::set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
         }
 
         Ok(())
