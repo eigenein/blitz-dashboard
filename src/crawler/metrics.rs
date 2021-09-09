@@ -18,9 +18,14 @@ pub struct SubCrawlerMetrics {
 
     pub n_battles: i32,
 
-    lags: Vec<u64>,
+    cf_error: f64,
 
-    cf_errors: Vec<f64>,
+    // Predictive information.
+    cf_entropy: f64,
+
+    cf_n: i32,
+
+    lags: Vec<u64>,
 }
 
 impl SubCrawlerMetrics {
@@ -28,7 +33,9 @@ impl SubCrawlerMetrics {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
-        self.cf_errors.clear();
+        self.cf_error = 0.0;
+        self.cf_entropy = 0.0;
+        self.cf_n = 0;
         self.lags.clear();
     }
 
@@ -36,20 +43,26 @@ impl SubCrawlerMetrics {
         self.lags.push(secs);
     }
 
-    pub fn push_cf_error(&mut self, error: f64) {
-        self.cf_errors.push(error);
+    pub fn push_cf_loss(&mut self, prediction: f64, target: f64) {
+        const EPSILON: f64 = 0.01;
+
+        self.cf_n += 1;
+        self.cf_error += prediction - target;
+
+        if target.abs() > EPSILON && prediction.abs() > EPSILON {
+            self.cf_entropy -= target * prediction.ln();
+        }
+
+        let inverse_target = 1.0 - target;
+        let inverse_prediction = 1.0 - prediction;
+        if inverse_target.abs() > EPSILON && inverse_prediction.abs() > EPSILON {
+            self.cf_entropy -= inverse_target * inverse_prediction.ln();
+        }
     }
 
-    pub fn cf_error(&self) -> (f64, f64) {
-        let n = self.cf_errors.len().max(1);
-        let mean = self.cf_errors.iter().sum::<f64>() / n as f64;
-        let variance = self
-            .cf_errors
-            .iter()
-            .map(|value| (value - mean).powi(2))
-            .sum::<f64>()
-            / ((n - 1).max(1)) as f64;
-        (mean, variance.sqrt())
+    pub fn cf_losses(&self) -> (f64, f64) {
+        let n = self.cf_n.max(1) as f64;
+        (self.cf_error / n, self.cf_entropy / n)
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
@@ -85,17 +98,17 @@ pub async fn log_metrics(
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
             let (lag_p50, lag_p90) = metrics.lags();
-            let (cfe_mean, cfe_std) = metrics.cf_error();
+            let (cf_mean_error, cf_ce) = metrics.cf_losses();
             log::info!(
-                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9} | CFME: {:>+.3} ±{:>.3}",
+                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9} | CFME: {:>+.3} | CFCE: {:>.3}",
                 i,
                 format_duration(lag_p50).to_string(),
                 format_duration(lag_p90).to_string(),
                 metrics.n_accounts as f64 / elapsed_secs,
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
-                cfe_mean,
-                cfe_std,
+                cf_mean_error,
+                cf_ce,
             );
             metrics.reset();
         }

@@ -364,8 +364,8 @@ impl Crawler {
                 + vehicle_factors[0]
                 + dot(&account.factors, &vehicle_factors[1..]);
             assert!(!prediction.is_nan());
+            self.metrics.lock().await.push_cf_loss(prediction, win_rate);
             let error = prediction - win_rate;
-            self.metrics.lock().await.push_cf_error(error);
 
             // Adjust the biases.
             account.bias -= ACCOUNT_LEARNING_RATE * error;
