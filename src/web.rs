@@ -50,7 +50,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![r#static::get_android_chrome_192x192])
         .mount("/", routes![r#static::get_android_chrome_512x512])
         .mount("/", routes![r#static::get_apple_touch_icon])
-        .mount("/", routes![r#static::get_player_js])
+        .mount("/", routes![r#static::get_table_js])
         .mount("/", routes![r#static::get_robots_txt])
         .mount("/", routes![r#static::get_theme_css])
         .mount("/", routes![routes::index::get])

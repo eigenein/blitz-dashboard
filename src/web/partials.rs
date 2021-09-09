@@ -1,9 +1,11 @@
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
+use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
+use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
 
 pub fn account_search(
     class: &str,
@@ -140,6 +142,12 @@ pub fn footer() -> Markup {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-code-branch.has-text-success {} }
                                 span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Пул-реквесты" } }
+                            }
+                        }
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fas.fa-desktop.has-text-warning {} }
+                                span { a href=(uri!(get_status())) { "Статус" } }
                             }
                         }
                     }

@@ -11,8 +11,6 @@ use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
 use crate::web::TrackingCode;
-use itertools::Itertools;
-use std::cmp::Ordering;
 
 #[rocket::get("/status")]
 pub async fn get(
@@ -22,14 +20,7 @@ pub async fn get(
     clear_user();
 
     let mut redis = Redis::clone(redis);
-    // TODO: this should be cached.
-    let vehicle_factors: Vec<(i32, Vec<f64>)> = get_all_vehicle_factors(&mut redis)
-        .await?
-        .into_iter()
-        .sorted_unstable_by(|(_, left), (_, right)| {
-            right[0].partial_cmp(&left[0]).unwrap_or(Ordering::Equal)
-        })
-        .collect();
+    let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -58,7 +49,7 @@ pub async fn get(
                     h2.title."is-4" { "Vehicle Latent Factors" }
                     div.box {
                         div.table-container {
-                            table.table.is-hoverable.is-striped.is-fullwidth {
+                            table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {
                                     th { "Vehicle" }
                                     th { "Tier" }
@@ -68,7 +59,7 @@ pub async fn get(
                                     }
                                 }
                                 tbody {
-                                    @for (tank_id, factors) in vehicle_factors {
+                                    @for (tank_id, factors) in vehicle_factors.into_iter() {
                                         tr {
                                             @let vehicle = get_vehicle(tank_id);
                                             (vehicle_th(&vehicle))

@@ -245,7 +245,7 @@ pub async fn get(
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
                 title { (current_info.nickname) " – Я статист!" }
-                script defer="true" src="/static/player.js?v4" {};
+                script defer="true" src="/static/table.js?v4" {};
             }
             body {
                 (tracking_code.0)
