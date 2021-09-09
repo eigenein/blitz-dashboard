@@ -250,7 +250,9 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
-            self.train(base.id, &mut cf, &tanks).await?;
+            if !self.non_incremental {
+                self.train(base.id, &mut cf, &tanks).await?;
+            }
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
                 .await?;
