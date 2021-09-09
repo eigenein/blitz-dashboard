@@ -35,9 +35,9 @@ pub struct Crawler {
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 
-    /// Indicates that the accounts coming from the stream aren't real –
-    /// they're generated on the fly instead of being read from the database.
-    non_incremental: bool,
+    /// Indicates that only tanks with updated last battle time must be crawled.
+    /// Also enables the collaborative filtering.
+    incremental: bool,
 
     /// Used to maintain the vehicles table in the database.
     /// The cache contains tank IDs which are for sure existing in the database at the moment.
@@ -75,7 +75,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
             let redis = redis.clone();
 
             async move {
-                let crawler = Crawler::new(api, database.clone(), redis, 1, false).await?;
+                let crawler = Crawler::new(api, database.clone(), redis, 1, true).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
                     crawler
@@ -120,7 +120,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, true).await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, false).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -157,7 +157,7 @@ impl Crawler {
         database: PgPool,
         redis: Redis,
         n_tasks: usize,
-        non_incremental: bool,
+        incremental: bool,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -165,7 +165,7 @@ impl Crawler {
             database,
             redis: Mutex::new(redis),
             n_tasks,
-            non_incremental,
+            incremental,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -175,13 +175,13 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
         stream
-            .map(|batch| async move { self.crawl_batch(batch?, self.non_incremental).await })
+            .map(|batch| async move { self.crawl_batch(batch?).await })
             .buffer_unordered(self.n_tasks)
             .try_collect()
             .await
     }
 
-    async fn crawl_batch(&self, batch: Batch, non_incremental: bool) -> crate::Result {
+    async fn crawl_batch(&self, batch: Batch) -> crate::Result {
         let account_ids: Vec<i32> = batch.iter().map(|account| account.base.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
@@ -189,8 +189,7 @@ impl Crawler {
         for account in batch.into_iter() {
             let account_id = account.base.id;
             let new_info = new_infos.remove(&account_id.to_string()).flatten();
-            self.crawl_account(&mut tx, account, new_info, non_incremental)
-                .await?;
+            self.crawl_account(&mut tx, account, new_info).await?;
             self.update_metrics_for_account(account_id).await;
         }
         log::debug!("Committing…");
@@ -210,14 +209,13 @@ impl Crawler {
         connection: &mut PgConnection,
         account: Account,
         new_info: Option<AccountInfo>,
-        non_incremental: bool,
     ) -> crate::Result {
         let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.base.id));
 
         if let Some(new_info) = new_info {
             self.crawl_existing_account(&mut *connection, account, new_info)
                 .await?;
-        } else if !non_incremental {
+        } else if self.incremental {
             Self::delete_account(&mut *connection, account.base.id).await?;
         }
 
@@ -250,7 +248,7 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
-            if !self.non_incremental {
+            if self.incremental {
                 self.train(base.id, &mut cf, &tanks).await?;
             }
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
