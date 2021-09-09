@@ -1,5 +1,7 @@
 //! Collaborative filtering.
 
+const GLOBAL_BIAS: f64 = 0.5;
+
 /// Vector dot product.
 #[must_use]
 pub fn dot(left: &[f64], right: &[f64]) -> f64 {
@@ -24,5 +26,23 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
     assert_eq!(minuend.len(), subtrahend.len());
     for i in 0..subtrahend.len() {
         minuend[i] -= scaling * subtrahend[i];
+    }
+}
+
+pub fn predict_win_rate(
+    vehicle_bias: f64,
+    vehicle_factors: &[f64],
+    account_bias: f64,
+    account_factors: &[f64],
+) -> f64 {
+    let prediction =
+        GLOBAL_BIAS + account_bias + vehicle_bias + dot(account_factors, vehicle_factors);
+    assert!(!prediction.is_nan());
+    if prediction < 0.0 {
+        0.0
+    } else if prediction > 1.0 {
+        1.0
+    } else {
+        prediction
     }
 }

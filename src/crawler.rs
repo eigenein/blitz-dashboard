@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
-use crate::cf::{dot, initialize_factors, subtract_vector};
+use crate::cf::{initialize_factors, predict_win_rate, subtract_vector};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
@@ -326,7 +326,6 @@ impl Crawler {
         account: &mut AccountFactors,
         tanks: &[Tank],
     ) -> crate::Result {
-        const GLOBAL_BIAS: f64 = 0.5;
         const ACCOUNT_LEARNING_RATE: f64 = 0.1;
         const VEHICLE_LEARNING_RATE: f64 = 0.01;
         const N_FACTORS: usize = 8;
@@ -354,11 +353,12 @@ impl Crawler {
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             // Make a prediction.
-            let prediction = GLOBAL_BIAS
-                + account.bias
-                + vehicle_factors[0]
-                + dot(&account.factors, &vehicle_factors[1..]);
-            assert!(!prediction.is_nan());
+            let prediction = predict_win_rate(
+                vehicle_factors[0],
+                &vehicle_factors[1..],
+                account.bias,
+                &account.factors,
+            );
             self.metrics.lock().await.push_cf_loss(prediction, win_rate);
             let error = prediction - win_rate;
 
