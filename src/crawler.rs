@@ -327,7 +327,7 @@ impl Crawler {
         tanks: &[Tank],
     ) -> crate::Result {
         const ACCOUNT_LEARNING_RATE: f64 = 0.1;
-        const VEHICLE_LEARNING_RATE: f64 = 0.01;
+        const VEHICLE_LEARNING_RATE: f64 = 0.005;
 
         initialize_factors(&mut account.factors, N_FACTORS);
 
