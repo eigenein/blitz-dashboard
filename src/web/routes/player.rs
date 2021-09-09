@@ -2,7 +2,7 @@ use chrono::{Duration, TimeZone, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
 use log::Level;
-use maud::{html, DOCTYPE};
+use maud::{html, PreEscaped, DOCTYPE};
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
 use rocket::{uri, State};
@@ -245,7 +245,7 @@ pub async fn get(
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
                 title { (current_info.nickname) " – Я статист!" }
-                script defer="true" src="/static/table.js?v4" {};
+                script type="module" src="/static/table.js?v5" {};
             }
             body {
                 (tracking_code.0)
@@ -476,6 +476,21 @@ pub async fn get(
                 }
 
                 (footer())
+
+                script type="module" {
+                    (PreEscaped(r#"""
+                        "use strict";
+                        
+                        import { initSortableTable } from "/static/table.js?v5";
+                        
+                        (function () {
+                            const vehicles = document.getElementById("vehicles");
+                            if (vehicles != null) {
+                                initSortableTable(vehicles, "battles");
+                            }
+                        })();
+                    """#))
+                }
             }
         }
     };

@@ -1,4 +1,4 @@
-use maud::{html, DOCTYPE};
+use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::ConnectionManager as Redis;
 use rocket::response::content::Html;
 use rocket::State;
@@ -52,10 +52,28 @@ pub async fn get(
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {
                                     th { "Vehicle" }
-                                    th { "Tier" }
-                                    th { "Bias" }
-                                    @for i in 0..N_FACTORS {
-                                        th.is-white-space-nowrap { "Factor #" (i) }
+                                    th {
+                                        a data-sort="tier" {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span { "Tier" }
+                                            }
+                                        }
+                                    }
+                                    th {
+                                        a data-sort="factor-0" {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span { "Bias" }
+                                            }
+                                        }
+                                    }
+                                    @for i in 1..(N_FACTORS + 1) {
+                                        th {
+                                            a data-sort=(format!("factor-{}", i)) {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span { "Factor #" (i) }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 tbody {
@@ -64,8 +82,8 @@ pub async fn get(
                                             @let vehicle = get_vehicle(tank_id);
                                             (vehicle_th(&vehicle))
                                             (tier_td(vehicle.tier))
-                                            @for factor in factors {
-                                                td.(sign_class(factor)) {
+                                            @for (i, factor) in factors.into_iter().enumerate() {
+                                                td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
                                                     (render_f64(factor, 3))
                                                 }
                                             }
@@ -79,6 +97,18 @@ pub async fn get(
             }
 
             (footer())
+
+            script type="module" {
+                (PreEscaped(r#"""
+                    "use strict";
+                    
+                    import { initSortableTable } from "/static/table.js?v5";
+                    
+                    (function () {
+                        initSortableTable(document.getElementById("vehicle-factors"), "factor-0");
+                    })();
+                """#))
+            }
         }
     };
 
