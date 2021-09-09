@@ -36,6 +36,10 @@ pub fn predict_win_rate(
     account_bias: f64,
     account_factors: &[f64],
 ) -> f64 {
+    if vehicle_factors.len() != account_factors.len() {
+        // FIXME.
+        return 0.0;
+    }
     let prediction =
         GLOBAL_BIAS + account_bias + vehicle_bias + dot(account_factors, vehicle_factors);
     assert!(!prediction.is_nan());

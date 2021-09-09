@@ -4,10 +4,13 @@ use std::time::Duration as StdDuration;
 use humantime::format_duration;
 use maud::{html, Markup};
 
+use crate::cf::predict_win_rate;
+use crate::database::models::Account;
 use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
+use std::collections::HashMap;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -51,7 +54,12 @@ pub fn render_percentage(value: f64) -> Markup {
     }
 }
 
-pub fn render_tank_tr(tank: &Tank, total_win_rate: &ConfidenceInterval) -> Markup {
+pub fn render_tank_tr(
+    account: &Account,
+    tank: &Tank,
+    total_win_rate: &ConfidenceInterval,
+    vehicles_factors: &HashMap<i32, Vec<f64>>,
+) -> Markup {
     html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();
@@ -88,6 +96,16 @@ pub fn render_tank_tr(tank: &Tank, total_win_rate: &ConfidenceInterval) -> Marku
                         (partial_cmp_icon(win_rate_ordering))
                     }
                 }
+            }
+
+            @let vehicle_factors = vehicles_factors.get(&vehicle.tank_id);
+            @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
+                predict_win_rate(vehicle_factors[0], &vehicle_factors[1..], account.cf.bias, &account.cf.factors)
+            } else {
+                0.0
+            };
+            td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
+                strong { (render_percentage(predicted_win_rate)) }
             }
 
             @let wins_per_hour = tank.wins_per_hour();

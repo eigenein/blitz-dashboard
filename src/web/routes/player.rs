@@ -3,6 +3,7 @@ use chrono_humanize::Tense;
 use humantime::parse_duration;
 use log::Level;
 use maud::{html, PreEscaped, DOCTYPE};
+use redis::aio::ConnectionManager as Redis;
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
 use rocket::{uri, State};
@@ -14,6 +15,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
+use crate::redis::get_all_vehicle_factors;
 use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_minutes, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
@@ -34,6 +36,7 @@ pub async fn get(
     account_info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     account_tanks_cache: &State<AccountTanksCache>,
+    redis: &State<Redis>,
 ) -> crate::web::result::Result<Response> {
     let period = match period {
         Some(period) => match parse_duration(&period) {
@@ -48,7 +51,7 @@ pub async fn get(
 
     let current_info = account_info_cache.get(account_id).await?;
     set_user(&current_info.nickname);
-    let _account = insert_account_if_not_exists(database, &current_info.base).await?;
+    let account = insert_account_if_not_exists(database, &current_info.base).await?;
 
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
@@ -70,6 +73,8 @@ pub async fn get(
     );
     let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
     let is_account_birthday = current_info.created_at.date() == Utc::today();
+
+    let vehicles_factors = get_all_vehicle_factors(&mut Redis::clone(redis)).await?;
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -176,7 +181,15 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Истинный процент побед" { "TWR" } }
+                        span { abbr title="Истинный процент побед – это WR, скорректированный на число боев" { "TWR" } }
+                    }
+                }
+            }
+            th.is-white-space-nowrap {
+                sup { strong.has-text-danger-dark { "β" } }
+                a data-sort="predicted-win-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Предсказанный процент побед – тестирование" { "PWR" } }
                     }
                 }
             }
@@ -462,7 +475,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                (render_tank_tr(tank, &total_win_rate))
+                                                (render_tank_tr(&account, tank, &total_win_rate, &vehicles_factors))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
