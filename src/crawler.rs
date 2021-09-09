@@ -17,7 +17,7 @@ use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::models::{Account, AccountFactors};
 use crate::database::retrieve_tank_ids;
-use crate::math::{dot, ensure_vector_length, sub_vector};
+use crate::math::{dot, initialize_random_vector, subtract_vector};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -332,11 +332,10 @@ impl Crawler {
         const VEHICLE_LEARNING_RATE: f64 = 0.001;
         const N_FACTORS: usize = 8;
 
-        ensure_vector_length(&mut account.factors, N_FACTORS);
+        initialize_random_vector(&mut account.factors, N_FACTORS);
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
-            let vehicle_key = format!("t:{}:factors", tank_id);
 
             // Let's see how much battles and losses the account has made.
             let (n_battles, n_wins) =
@@ -347,52 +346,44 @@ impl Crawler {
                 continue;
             }
             let n_wins = tank.statistics.all.wins - n_wins;
+            let win_rate = n_wins as f64 / n_battles as f64;
 
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
+            let vehicle_key = format!("t:{}:factors", tank_id);
             let mut vehicle_factors: Vec<f64> = redis
                 .get::<'_, _, Option<Vec<u8>>>(&vehicle_key)
                 .await?
                 .map(|factors| rmp_serde::from_read_ref(&factors))
                 .unwrap_or_else(|| Ok(Vec::new()))?;
-            ensure_vector_length(&mut vehicle_factors, N_FACTORS + 1);
+            initialize_random_vector(&mut vehicle_factors, N_FACTORS + 1);
 
-            let mut metrics = self.metrics.lock().await;
+            // Make a prediction.
+            let prediction = GLOBAL_BIAS
+                + account.bias
+                + vehicle_factors[0]
+                + dot(&account.factors, &vehicle_factors[1..]);
+            assert!(!prediction.is_nan());
+            let error = prediction - win_rate;
+            self.metrics.lock().await.push_cf_error(error);
 
-            // For each battle doing the SGD step.
-            for i in 0..n_battles {
-                let outcome = if i < n_wins { 1.0 } else { 0.0 };
-                let prediction = GLOBAL_BIAS
-                    + account.bias
-                    + vehicle_factors[0]
-                    + dot(&account.factors, &vehicle_factors[1..]);
-                assert!(
-                    !prediction.is_nan(),
-                    "#{}/#{} {} {:?} {:?}",
-                    account_id,
-                    tank_id,
-                    account.bias,
-                    vehicle_factors,
-                    account.factors
-                );
-                let error = prediction - outcome;
-                metrics.push_cf_error(error);
+            // Adjust the biases.
+            account.bias -= ACCOUNT_LEARNING_RATE * error;
+            vehicle_factors[0] -= VEHICLE_LEARNING_RATE * error;
 
-                account.bias -= ACCOUNT_LEARNING_RATE * error;
-                vehicle_factors[0] -= VEHICLE_LEARNING_RATE * error;
+            // Adjust the latent factors.
+            subtract_vector(
+                &mut account.factors,
+                &vehicle_factors[1..],
+                ACCOUNT_LEARNING_RATE * error,
+            );
+            subtract_vector(
+                &mut vehicle_factors[1..],
+                &account.factors,
+                VEHICLE_LEARNING_RATE * error,
+            );
 
-                sub_vector(
-                    &mut account.factors,
-                    &vehicle_factors[1..],
-                    ACCOUNT_LEARNING_RATE * error,
-                );
-                sub_vector(
-                    &mut vehicle_factors[1..],
-                    &account.factors,
-                    VEHICLE_LEARNING_RATE * error,
-                )
-            }
-
+            // Write the updated vehicle profile.
             log::trace!("Vehicle #{} factors: {:?}.", tank_id, vehicle_factors);
             redis
                 .set(&vehicle_key, rmp_serde::to_vec(&vehicle_factors)?)
