@@ -18,7 +18,9 @@ use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_minutes, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
-use crate::web::partials::{account_search, datetime, footer, headers, home_button, icon_text};
+use crate::web::partials::{
+    account_search, datetime, footer, headers, home_button, icon_text, render_f64,
+};
 use crate::web::response::Response;
 use crate::web::TrackingCode;
 

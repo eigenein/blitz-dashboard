@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
-use crate::cf::{initialize_factors, predict_win_rate, subtract_vector};
+use crate::cf::{initialize_factors, predict_win_rate, subtract_vector, N_FACTORS};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
@@ -328,7 +328,6 @@ impl Crawler {
     ) -> crate::Result {
         const ACCOUNT_LEARNING_RATE: f64 = 0.1;
         const VEHICLE_LEARNING_RATE: f64 = 0.01;
-        const N_FACTORS: usize = 8;
 
         initialize_factors(&mut account.factors, N_FACTORS);
 

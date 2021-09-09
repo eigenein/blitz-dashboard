@@ -1,5 +1,6 @@
 //! Collaborative filtering.
 
+pub const N_FACTORS: usize = 8;
 const GLOBAL_BIAS: f64 = 0.5;
 
 /// Vector dot product.

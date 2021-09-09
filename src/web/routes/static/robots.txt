@@ -4,3 +4,4 @@ Disallow: /*.js$
 Disallow: /*.png$
 Disallow: /*.txt$
 Disallow: /*?*
+Disallow: /status
