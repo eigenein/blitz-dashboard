@@ -189,7 +189,7 @@ pub async fn get(
                 sup { strong.has-text-danger-dark { "β" } }
                 a data-sort="predicted-win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Предсказанный процент побед – тестирование" { "PWR" } }
+                        span { abbr title="Предсказанный процент побед – в реальном времени (live predicted win rate)" { "LPWR" } }
                     }
                 }
             }
