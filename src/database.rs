@@ -125,20 +125,26 @@ pub async fn replace_account(connection: &mut PgConnection, account: Account) ->
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     info: &BaseAccountInfo,
-) -> crate::Result {
+) -> crate::Result<Account> {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time)
-        VALUES ($1, $2)
-        ON CONFLICT (account_id) DO NOTHING
+        -- noinspection SqlInsertValues
+        WITH existing AS (
+            INSERT INTO accounts (account_id, last_battle_time)
+            VALUES ($1, $2)
+            ON CONFLICT (account_id) DO NOTHING
+            RETURNING *
+        )
+        SELECT * FROM existing
+        UNION SELECT * FROM accounts WHERE account_id = $1;
     ";
-    sqlx::query(QUERY)
+    let account = sqlx::query_as(QUERY)
         .bind(info.id)
         .bind(info.last_battle_time)
-        .execute(connection)
+        .fetch_one(connection)
         .await
         .context("failed to insert the account if not exists")?;
-    Ok(())
+    Ok(account)
 }
 
 pub async fn delete_account(connection: &mut PgConnection, account_id: i32) -> crate::Result {
