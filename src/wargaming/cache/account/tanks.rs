@@ -57,6 +57,6 @@ impl AccountTanksCache {
     }
 
     fn cache_key(account_id: i32) -> String {
-        format!("a:t:ru:{}", account_id)
+        format!("a::t::ru::{}", account_id)
     }
 }

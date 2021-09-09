@@ -26,8 +26,13 @@ pub async fn set_vehicle_factors(
     tank_id: i32,
     factors: &[f64],
 ) -> crate::Result {
+    // TODO: remove when `cf::vehicles` is populated.
     let key = get_vehicle_factors_key(tank_id);
     redis.set(&key, rmp_serde::to_vec(factors)?).await?;
+
+    redis
+        .hset("cf::vehicles", tank_id, rmp_serde::to_vec(factors)?)
+        .await?;
     Ok(())
 }
 
