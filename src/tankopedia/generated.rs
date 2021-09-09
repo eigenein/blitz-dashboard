@@ -1397,6 +1397,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Ussr,
         type_: TankType::Heavy,
     },
+    22305_i32 => Vehicle {
+        tank_id: 22305,
+        name: Cow::Borrowed("AE Phase I"),
+        tier: 9,
+        is_premium: true,
+        nation: Nation::Usa,
+        type_: TankType::Heavy,
+    },
     22545_i32 => Vehicle {
         tank_id: 22545,
         name: Cow::Borrowed("Kanonenjagdpanzer 105"),
@@ -1517,6 +1525,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::France,
         type_: TankType::AT,
     },
+    23825_i32 => Vehicle {
+        tank_id: 23825,
+        name: Cow::Borrowed("Steyr WT"),
+        tier: 7,
+        is_premium: true,
+        nation: Nation::Germany,
+        type_: TankType::AT,
+    },
     2385_i32 => Vehicle {
         tank_id: 2385,
         name: Cow::Borrowed("Vickers Medium Mk. III"),
@@ -1556,6 +1572,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: false,
         nation: Nation::Europe,
         type_: TankType::Light,
+    },
+    24337_i32 => Vehicle {
+        tank_id: 24337,
+        name: Cow::Borrowed("M48A2 Räumpanzer"),
+        tier: 8,
+        is_premium: true,
+        nation: Nation::Germany,
+        type_: TankType::Medium,
     },
     2561_i32 => Vehicle {
         tank_id: 2561,
@@ -1731,6 +1755,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         tier: 7,
         is_premium: false,
         nation: Nation::Uk,
+        type_: TankType::Heavy,
+    },
+    3201_i32 => Vehicle {
+        tank_id: 3201,
+        name: Cow::Borrowed("50TP prototyp"),
+        tier: 9,
+        is_premium: true,
+        nation: Nation::Europe,
         type_: TankType::Heavy,
     },
     321_i32 => Vehicle {
@@ -3331,6 +3363,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         tier: 7,
         is_premium: true,
         nation: Nation::Other,
+        type_: TankType::Heavy,
+    },
+    7297_i32 => Vehicle {
+        tank_id: 7297,
+        name: Cow::Borrowed("60TP"),
+        tier: 10,
+        is_premium: true,
+        nation: Nation::Europe,
         type_: TankType::Heavy,
     },
     7425_i32 => Vehicle {
