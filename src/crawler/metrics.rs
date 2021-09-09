@@ -44,7 +44,7 @@ impl SubCrawlerMetrics {
     }
 
     pub fn push_cf_loss(&mut self, prediction: f64, target: f64) {
-        const EPSILON: f64 = 0.01;
+        const EPSILON: f64 = 0.000001;
 
         self.cf_n += 1;
         self.cf_error += prediction - target;
