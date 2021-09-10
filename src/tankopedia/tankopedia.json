@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -9782,8 +9782,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          11796,
-          2068
+          2068,
+          11796
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -37864,8 +37864,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -40343,8 +40343,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -45886,8 +45886,8 @@
         "name": "Kw.K. 39 L/60",
         "next_modules": null,
         "next_tanks": [
-          1809,
-          17425
+          17425,
+          1809
         ],
         "price_credit": 0,
         "price_xp": 1050,
@@ -78253,8 +78253,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
