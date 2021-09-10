@@ -158,10 +158,14 @@ pub struct ConnectionOpts {
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
     /// Account factor learning rate for the win rate prediction.
-    #[structopt(long = "account-lr", default_value = "0.05")]
+    #[structopt(long = "account-lr", default_value = "0.1")]
     pub account_learning_rate: f64,
 
     /// Vehicle factor learning rate for the win rate prediction.
     #[structopt(long = "vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
+
+    /// Global bias learning rate for the win rate prediction.
+    #[structopt(long = "bias-lr", default_value = "0.001")]
+    pub bias_learning_rate: f64,
 }

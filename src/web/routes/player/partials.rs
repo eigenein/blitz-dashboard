@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
@@ -10,7 +11,6 @@ use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
-use std::collections::HashMap;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -58,6 +58,7 @@ pub fn render_tank_tr(
     account: &Account,
     tank: &Tank,
     total_win_rate: &ConfidenceInterval,
+    global_bias: f64,
     vehicles_factors: &HashMap<i32, Vec<f64>>,
 ) -> Markup {
     html! {
@@ -100,7 +101,7 @@ pub fn render_tank_tr(
 
             @let vehicle_factors = vehicles_factors.get(&vehicle.tank_id);
             @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
-                predict_win_rate(vehicle_factors, account.cf.bias, &account.cf.factors)
+                predict_win_rate(global_bias, vehicle_factors, account.cf.bias, &account.cf.factors)
             } else {
                 0.0
             };

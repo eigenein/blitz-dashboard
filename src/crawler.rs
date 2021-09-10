@@ -37,6 +37,7 @@ pub struct Crawler {
 
     account_learning_rate: f64,
     vehicle_learning_rate: f64,
+    bias_learning_rate: f64,
 
     /// Indicates that only tanks with updated last battle time must be crawled.
     /// Also enables the collaborative filtering.
@@ -87,6 +88,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
                     true,
                     cf_opts.account_learning_rate,
                     cf_opts.vehicle_learning_rate,
+                    cf_opts.bias_learning_rate,
                 )
                 .await?;
                 let metrics = crawler.metrics.clone();
@@ -141,6 +143,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         false,
         opts.cf.account_learning_rate,
         opts.cf.vehicle_learning_rate,
+        opts.cf.bias_learning_rate,
     )
     .await?;
     tokio::spawn(log_metrics(
@@ -174,6 +177,7 @@ fn convert_offsets_to_selectors(offsets: &[StdDuration], min_offset: StdDuration
 }
 
 impl Crawler {
+    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
@@ -182,6 +186,7 @@ impl Crawler {
         incremental: bool,
         account_learning_rate: f64,
         vehicle_learning_rate: f64,
+        bias_learning_rate: f64,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -192,6 +197,7 @@ impl Crawler {
             incremental,
             account_learning_rate,
             vehicle_learning_rate,
+            bias_learning_rate,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -379,11 +385,18 @@ impl Crawler {
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             // Make a prediction.
-            let prediction = predict_win_rate(&vehicle_factors, account.bias, &account.factors);
+            let mut global_bias = crate::redis::get_global_bias(&mut redis).await?;
+            let prediction = predict_win_rate(
+                global_bias,
+                &vehicle_factors,
+                account.bias,
+                &account.factors,
+            );
             self.metrics.lock().await.push_cf_loss(prediction, win_rate);
             let error = prediction - win_rate;
 
             // Adjust the biases.
+            global_bias -= self.bias_learning_rate * error;
             account.bias -= self.account_learning_rate * error;
             vehicle_factors[0] -= self.vehicle_learning_rate * error;
 
@@ -399,8 +412,8 @@ impl Crawler {
                 self.vehicle_learning_rate * error,
             );
 
-            // Write the updated vehicle profile.
-            log::trace!("Vehicle #{} factors: {:?}.", tank_id, vehicle_factors);
+            // Write the updated factors.
+            crate::redis::set_global_bias(&mut redis, global_bias).await?;
             crate::redis::set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
         }
 
