@@ -72,12 +72,15 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
+    #[structopt(flatten)]
+    pub cf: CfOpts,
+
     /// Time offsets between different sub-crawlers
     #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
     pub offsets: Vec<StdDuration>,
 
     /// Minimum last battle time offset – avoids selecting the same account too soon
-    #[structopt(long = "min-offset", default_value = "3m", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long = "min-offset", default_value = "5m", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 }
 
@@ -103,6 +106,9 @@ pub struct ImportTankopediaOpts {
 pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
+
+    #[structopt(flatten)]
+    pub cf: CfOpts,
 
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parse_account_id))]
@@ -147,4 +153,15 @@ pub struct ConnectionOpts {
     /// Redis URI
     #[structopt(short, long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
+}
+
+#[derive(StructOpt, Clone)]
+pub struct CfOpts {
+    /// Account factor learning rate for the win rate prediction.
+    #[structopt(long = "account-lr", default_value = "0.05")]
+    pub account_learning_rate: f64,
+
+    /// Vehicle factor learning rate for the win rate prediction.
+    #[structopt(long = "vehicle-lr", default_value = "0.005")]
+    pub vehicle_learning_rate: f64,
 }
