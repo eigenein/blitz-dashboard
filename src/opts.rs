@@ -162,6 +162,6 @@ pub struct CfOpts {
     pub account_learning_rate: f64,
 
     /// Vehicle factor learning rate for the win rate prediction.
-    #[structopt(long = "vehicle-lr", default_value = "0.005")]
+    #[structopt(long = "vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
 }
