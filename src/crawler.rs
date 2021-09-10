@@ -380,37 +380,39 @@ impl Crawler {
 
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
+            let mut global_bias = crate::redis::get_global_bias(&mut redis).await?;
             let mut vehicle_factors =
                 crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
-            // Make a prediction.
-            let mut global_bias = crate::redis::get_global_bias(&mut redis).await?;
-            let prediction = predict_win_rate(
-                global_bias,
-                &vehicle_factors,
-                account.bias,
-                &account.factors,
-            );
-            self.metrics.lock().await.push_cf_loss(prediction, win_rate);
-            let error = prediction - win_rate;
+            for _ in 0..n_battles {
+                // Make a prediction.
+                let prediction = predict_win_rate(
+                    global_bias,
+                    &vehicle_factors,
+                    account.bias,
+                    &account.factors,
+                );
+                self.metrics.lock().await.push_cf_loss(prediction, win_rate);
+                let error = prediction - win_rate;
 
-            // Adjust the biases.
-            global_bias -= self.bias_learning_rate * error;
-            account.bias -= self.account_learning_rate * error;
-            vehicle_factors[0] -= self.vehicle_learning_rate * error;
+                // Adjust the biases.
+                global_bias -= self.bias_learning_rate * error;
+                account.bias -= self.account_learning_rate * error;
+                vehicle_factors[0] -= self.vehicle_learning_rate * error;
 
-            // Adjust the latent factors.
-            subtract_vector(
-                &mut account.factors,
-                &vehicle_factors[1..],
-                self.account_learning_rate * error,
-            );
-            subtract_vector(
-                &mut vehicle_factors[1..],
-                &account.factors,
-                self.vehicle_learning_rate * error,
-            );
+                // Adjust the latent factors.
+                subtract_vector(
+                    &mut account.factors,
+                    &vehicle_factors[1..],
+                    self.account_learning_rate * error,
+                );
+                subtract_vector(
+                    &mut vehicle_factors[1..],
+                    &account.factors,
+                    self.vehicle_learning_rate * error,
+                );
+            }
 
             // Write the updated factors.
             crate::redis::set_global_bias(&mut redis, global_bias).await?;
