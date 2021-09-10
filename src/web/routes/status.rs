@@ -74,7 +74,7 @@ pub async fn get(
                                         th {
                                             a data-sort=(format!("factor-{}", i)) {
                                                 span.icon-text.is-flex-wrap-nowrap {
-                                                    span { "Factor #" (i) }
+                                                    span { "#" (i) }
                                                 }
                                             }
                                         }
