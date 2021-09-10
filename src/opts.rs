@@ -166,6 +166,6 @@ pub struct CfOpts {
     pub vehicle_learning_rate: f64,
 
     /// Global bias learning rate for the win rate prediction.
-    #[structopt(long = "bias-lr", default_value = "0.0001")]
+    #[structopt(long = "bias-lr", default_value = "0.00001")]
     pub bias_learning_rate: f64,
 }
