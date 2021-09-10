@@ -1,6 +1,6 @@
 //! Collaborative filtering.
 
-pub const N_FACTORS: usize = 8;
+pub const N_FACTORS: usize = 9;
 
 /// Vector dot product.
 #[must_use]
