@@ -51,7 +51,7 @@ pub async fn get(
 
     let current_info = account_info_cache.get(account_id).await?;
     set_user(&current_info.nickname);
-    let account = insert_account_if_not_exists(database, &current_info.base).await?;
+    let account = insert_account_if_not_exists(database, account_id).await?;
 
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
