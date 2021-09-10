@@ -34,3 +34,9 @@ CREATE TABLE IF NOT EXISTS vehicles (
 ALTER TABLE accounts
     ADD COLUMN IF NOT EXISTS bias double precision NOT NULL DEFAULT 0,
     ADD COLUMN IF NOT EXISTS factors double precision ARRAY NOT NULL DEFAULT '{}';
+
+-- 0.59.1
+
+ALTER TABLE tank_snapshots
+    ALTER CONSTRAINT tank_snapshots_account_id_fkey
+    DEFERRABLE INITIALLY DEFERRED;

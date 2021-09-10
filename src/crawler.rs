@@ -193,7 +193,11 @@ impl Crawler {
             self.update_metrics_for_account(account_id).await;
         }
         log::debug!("Committing…");
-        tx.commit().await?;
+        tx.commit().await.with_context(|| {
+            let first_id = account_ids.first();
+            let last_id = account_ids.last();
+            format!("failed to commit the batch {:?}..{:?}", first_id, last_id)
+        })?;
 
         Ok(())
     }
