@@ -84,7 +84,7 @@ pub async fn get(
                                             (tier_td(vehicle.tier))
                                             @for (i, factor) in factors.into_iter().enumerate() {
                                                 td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
-                                                    (render_f64(factor, 3))
+                                                    (render_f64(factor, 4))
                                                 }
                                             }
                                         }
