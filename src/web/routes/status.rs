@@ -48,7 +48,7 @@ pub async fn get(
                     h1.title { "Collaborative Filtering" }
 
                     h2.title."is-4" { "Global Bias" }
-                    p.content { span.tag.is-large { (render_f64(global_bias, 4)) } }
+                    p.content { span.tag.is-large { (render_f64(global_bias, 5)) } }
 
                     h2.title."is-4" { "Vehicle Latent Factors" }
                     div.box {
