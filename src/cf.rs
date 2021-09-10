@@ -1,7 +1,6 @@
 //! Collaborative filtering.
 
 pub const N_FACTORS: usize = 8;
-const GLOBAL_BIAS: f64 = 0.5;
 
 /// Vector dot product.
 #[must_use]
@@ -30,24 +29,22 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
     }
 }
 
+/// Note: vehicle bias is the 0-th element in the factor array.
 pub fn predict_win_rate(
-    vehicle_bias: f64,
     vehicle_factors: &[f64],
     account_bias: f64,
     account_factors: &[f64],
 ) -> f64 {
-    if vehicle_factors.len() != account_factors.len() {
-        // FIXME.
-        return 0.0;
+    const GLOBAL_BIAS: f64 = 0.5;
+
+    if account_factors.is_empty() || vehicle_factors.is_empty() {
+        return 0.5; // FIXME.
     }
-    let prediction =
-        GLOBAL_BIAS + account_bias + vehicle_bias + dot(account_factors, vehicle_factors);
+
+    let prediction = GLOBAL_BIAS
+        + account_bias
+        + vehicle_factors[0] // vehicle bias
+        + dot(account_factors, &vehicle_factors[1..]);
     assert!(!prediction.is_nan());
-    if prediction < 0.0 {
-        0.0
-    } else if prediction > 1.0 {
-        1.0
-    } else {
-        prediction
-    }
+    prediction.clamp(0.0, 1.0)
 }

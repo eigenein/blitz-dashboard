@@ -379,12 +379,7 @@ impl Crawler {
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             // Make a prediction.
-            let prediction = predict_win_rate(
-                vehicle_factors[0],
-                &vehicle_factors[1..],
-                account.bias,
-                &account.factors,
-            );
+            let prediction = predict_win_rate(&vehicle_factors, account.bias, &account.factors);
             self.metrics.lock().await.push_cf_loss(prediction, win_rate);
             let error = prediction - win_rate;
 
