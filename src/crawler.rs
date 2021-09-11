@@ -386,32 +386,8 @@ impl Crawler {
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             for _ in 0..n_battles {
-                // Make a prediction.
-                let prediction = predict_win_rate(
-                    global_bias,
-                    &vehicle_factors,
-                    account.bias,
-                    &account.factors,
-                );
-                self.metrics.lock().await.push_cf_loss(prediction, win_rate);
-                let error = prediction - win_rate;
-
-                // Adjust the biases.
-                global_bias -= self.bias_learning_rate * error;
-                account.bias -= self.account_learning_rate * error;
-                vehicle_factors[0] -= self.vehicle_learning_rate * error;
-
-                // Adjust the latent factors.
-                subtract_vector(
-                    &mut account.factors,
-                    &vehicle_factors[1..],
-                    self.account_learning_rate * error,
-                );
-                subtract_vector(
-                    &mut vehicle_factors[1..],
-                    &account.factors,
-                    self.vehicle_learning_rate * error,
-                );
+                self.train_step(&mut global_bias, account, &mut vehicle_factors, win_rate)
+                    .await;
             }
 
             // Write the updated factors.
@@ -420,6 +396,41 @@ impl Crawler {
         }
 
         Ok(())
+    }
+
+    async fn train_step(
+        &self,
+        global_bias: &mut f64,
+        account: &mut AccountFactors,
+        vehicle_factors: &mut [f64],
+        target: f64,
+    ) {
+        // Make a prediction.
+        let prediction = predict_win_rate(
+            *global_bias,
+            &vehicle_factors,
+            account.bias,
+            &account.factors,
+        );
+        self.metrics.lock().await.push_cf_loss(prediction, target);
+        let error = prediction - target;
+
+        // Adjust the biases.
+        *global_bias -= self.bias_learning_rate * error;
+        account.bias -= self.account_learning_rate * error;
+        vehicle_factors[0] -= self.vehicle_learning_rate * error;
+
+        // Adjust the latent factors.
+        subtract_vector(
+            &mut account.factors,
+            &vehicle_factors[1..],
+            self.account_learning_rate * error,
+        );
+        subtract_vector(
+            &mut vehicle_factors[1..],
+            &account.factors,
+            self.vehicle_learning_rate * error,
+        );
     }
 }
 
