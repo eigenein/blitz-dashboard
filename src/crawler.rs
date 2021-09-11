@@ -37,7 +37,7 @@ pub struct Crawler {
 
     account_learning_rate: f64,
     vehicle_learning_rate: f64,
-    bias_learning_rate: f64,
+    global_bias_learning_rate: f64,
 
     /// Indicates that only tanks with updated last battle time must be crawled.
     /// Also enables the collaborative filtering.
@@ -186,7 +186,7 @@ impl Crawler {
         incremental: bool,
         account_learning_rate: f64,
         vehicle_learning_rate: f64,
-        bias_learning_rate: f64,
+        global_bias_learning_rate: f64,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -197,7 +197,7 @@ impl Crawler {
             incremental,
             account_learning_rate,
             vehicle_learning_rate,
-            bias_learning_rate,
+            global_bias_learning_rate,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -408,7 +408,7 @@ impl Crawler {
         // Make a prediction.
         let prediction = predict_win_rate(
             *global_bias,
-            &vehicle_factors,
+            vehicle_factors,
             account.bias,
             &account.factors,
         );
@@ -416,7 +416,7 @@ impl Crawler {
         let error = prediction - target;
 
         // Adjust the biases.
-        *global_bias -= self.bias_learning_rate * error;
+        *global_bias -= self.global_bias_learning_rate * error;
         account.bias -= self.account_learning_rate * error;
         vehicle_factors[0] -= self.vehicle_learning_rate * error;
 
