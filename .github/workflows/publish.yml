@@ -14,6 +14,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Rustup
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Install Cross
+        run: cargo install cross
+        env:
+          CARGO_TARGET_DIR: ./target
+
+      - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
+        run: cross build --target armv7-unknown-linux-gnueabihf --release
+
       - name: Build Changelog
         id: changelog
         uses: Bullrich/generate-release-changelog@master
@@ -32,21 +48,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Rustup
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-
-      - uses: Swatinem/rust-cache@v1
-
-      - name: Install Cross
-        run: cargo install cross
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
         env:
-          CARGO_TARGET_DIR: ./target
-
-      - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
-        run: cross build --target armv7-unknown-linux-gnueabihf --release
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: eigenein
+          SENTRY_PROJECT: yastatist
+        with:
+          version: ${{ github.ref }}
 
       - name: Upload blitz-dashboard.armv7-unknown-linux-gnueabihf
         uses: actions/upload-release-asset@v1
@@ -70,12 +79,3 @@ jobs:
           asset_path: target/arm-unknown-linux-gnueabihf/release/blitz-dashboard
           asset_name: blitz-dashboard.arm-unknown-linux-gnueabihf
           asset_content_type: application/octet-stream
-
-      - name: Create Sentry release
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: eigenein
-          SENTRY_PROJECT: yastatist
-        with:
-          version: ${{ github.ref }}
