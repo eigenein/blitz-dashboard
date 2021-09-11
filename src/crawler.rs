@@ -88,7 +88,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
                     true,
                     cf_opts.account_learning_rate,
                     cf_opts.vehicle_learning_rate,
-                    cf_opts.bias_learning_rate,
+                    cf_opts.global_bias_learning_rate,
                 )
                 .await?;
                 let metrics = crawler.metrics.clone();
@@ -143,7 +143,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         false,
         opts.cf.account_learning_rate,
         opts.cf.vehicle_learning_rate,
-        opts.cf.bias_learning_rate,
+        opts.cf.global_bias_learning_rate,
     )
     .await?;
     tokio::spawn(log_metrics(
