@@ -155,6 +155,7 @@ pub struct ConnectionOpts {
     pub redis_uri: String,
 }
 
+// TODO: add `account_bias_learning_rate`, defaults to `0.01`.
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
     /// Account factor learning rate for the win rate prediction.

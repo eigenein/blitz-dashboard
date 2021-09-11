@@ -177,13 +177,13 @@ fn convert_offsets_to_selectors(offsets: &[StdDuration], min_offset: StdDuration
 }
 
 impl Crawler {
-    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
         redis: Redis,
         n_tasks: usize,
         incremental: bool,
+        // TODO: accept a single `cf_opts` parameter.
         account_learning_rate: f64,
         vehicle_learning_rate: f64,
         global_bias_learning_rate: f64,
@@ -417,7 +417,7 @@ impl Crawler {
 
         // Adjust the biases.
         *global_bias -= self.global_bias_learning_rate * error;
-        account.bias -= self.account_learning_rate * error;
+        account.bias -= self.account_learning_rate * error; // TODO: `account_bias_learning_rate`,
         vehicle_factors[0] -= self.vehicle_learning_rate * error;
 
         // Adjust the latent factors.
