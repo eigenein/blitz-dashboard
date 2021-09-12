@@ -175,6 +175,14 @@ pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
 }
 
 pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
+    html! {
+        th.is-white-space-nowrap title=(vehicle.tank_id) {
+            (vehicle_title(vehicle))
+        }
+    }
+}
+
+pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     let flag = match vehicle.nation {
         Nation::China => "🇨🇳",
         Nation::Europe => "🇪🇺",
@@ -193,11 +201,10 @@ pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
     } else {
         ""
     };
+
     html! {
-        th.is-white-space-nowrap title=(vehicle.tank_id) {
-            span."mx-1" { (flag) }
-            strong."mx-1".(name_class) { (vehicle.name) }
-        }
+        span."mx-1" { (flag) }
+        strong."mx-1".(name_class) { (vehicle.name) }
     }
 }
 

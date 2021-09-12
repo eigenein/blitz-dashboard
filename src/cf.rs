@@ -52,49 +52,40 @@ pub fn predict_win_rate(
 }
 
 #[must_use]
-fn magnitude(x: &[f64]) -> f64 {
-    x.iter().map(|value| value * value).sum::<f64>().sqrt()
+fn magnitude(x: &[f64], length: usize) -> f64 {
+    debug_assert!(length <= x.len());
+    x[..length]
+        .iter()
+        .map(|value| value * value)
+        .sum::<f64>()
+        .sqrt()
 }
 
 #[must_use]
-fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
-    debug_assert_eq!(
-        x.len(),
-        y.len(),
-        "trying to calculate a cosine similarity for vectors of sizes {} and {}",
-        x.len(),
-        y.len(),
-    );
-    dot(x, y) / magnitude(x) / magnitude(y)
+pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
+    let length = min_length(x, y);
+    dot(x, y) / magnitude(x, length) / magnitude(y, length)
 }
 
 #[must_use]
-fn mean(vector: &[f64]) -> f64 {
-    debug_assert!(
-        !vector.is_empty(),
-        "trying to calculate a mean for an empty vector",
-    );
-    vector.iter().sum::<f64>() / vector.len() as f64
+fn mean(x: &[f64], length: usize) -> f64 {
+    debug_assert!(length <= x.len());
+    debug_assert_ne!(length, 0, "the specified length is zero");
+    x[..length].iter().sum::<f64>() / x.len() as f64
 }
 
 /// https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#For_a_sample
 #[must_use]
-fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
-    covariance(x, y) / std(x) / std(y)
+pub fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
+    let length = min_length(x, y);
+    covariance(x, y) / std(x, length) / std(y, length)
 }
 
 #[must_use]
 fn covariance(x: &[f64], y: &[f64]) -> f64 {
-    debug_assert_eq!(
-        x.len(),
-        y.len(),
-        "trying to calculate a covariance for vectors of sizes {} and {}",
-        x.len(),
-        y.len(),
-    );
-
-    let x_mean = mean(x);
-    let y_mean = mean(y);
+    let length = min_length(x, y);
+    let x_mean = mean(x, length);
+    let y_mean = mean(y, length);
 
     x.iter()
         .zip(y)
@@ -103,13 +94,22 @@ fn covariance(x: &[f64], y: &[f64]) -> f64 {
 }
 
 #[must_use]
-fn std(x: &[f64]) -> f64 {
+fn std(x: &[f64], length: usize) -> f64 {
+    debug_assert!(length <= x.len());
     debug_assert_ne!(
-        x.len(),
-        1,
+        length, 1,
         "standard deviation is not defined for a vector of length 1",
     );
 
-    let mean = mean(x);
-    x.iter().map(|xi| (xi - mean).powi(2)).sum::<f64>().sqrt()
+    let mean = mean(x, length);
+    x[..length]
+        .iter()
+        .map(|xi| (xi - mean).powi(2))
+        .sum::<f64>()
+        .sqrt()
+}
+
+#[must_use]
+fn min_length(x: &[f64], y: &[f64]) -> usize {
+    x.len().min(y.len())
 }
