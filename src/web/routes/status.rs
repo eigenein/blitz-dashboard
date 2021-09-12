@@ -13,6 +13,7 @@ use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
 use crate::web::TrackingCode;
+use redis::AsyncCommands;
 
 #[rocket::get("/status")]
 pub async fn get(
@@ -22,6 +23,11 @@ pub async fn get(
     clear_user();
 
     let mut redis = Redis::clone(redis);
+    const CACHE_KEY: &str = "html::status";
+    if let Some(cached_response) = redis.get(CACHE_KEY).await? {
+        return Ok(Html(cached_response));
+    }
+
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
     let global_bias = get_global_bias(&mut redis).await?;
 
@@ -118,5 +124,7 @@ pub async fn get(
         }
     };
 
-    Ok(Html(markup.into_string()))
+    let response = markup.into_string();
+    redis.set_ex(CACHE_KEY, &response, 60).await?;
+    Ok(Html(response))
 }
