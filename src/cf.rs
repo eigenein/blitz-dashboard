@@ -51,6 +51,32 @@ pub fn predict_win_rate(
     prediction.clamp(0.0, 1.0)
 }
 
+/// https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#For_a_sample
+#[must_use]
+pub fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
+    let length = min_length(x, y);
+    covariance(x, y) / std(x, length) / std(y, length)
+}
+
+#[must_use]
+pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
+    let length = min_length(x, y);
+    dot(x, y) / magnitude(x, length) / magnitude(y, length)
+}
+
+#[must_use]
+pub fn euclidean_distance(x: &[f64], y: &[f64]) -> f64 {
+    x.iter()
+        .zip(y)
+        .map(|(xi, yi)| (xi - yi).powi(2))
+        .sum::<f64>()
+}
+
+#[must_use]
+pub fn euclidean_similarity(x: &[f64], y: &[f64]) -> f64 {
+    -euclidean_distance(x, y)
+}
+
 #[must_use]
 fn magnitude(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
@@ -62,23 +88,10 @@ fn magnitude(x: &[f64], length: usize) -> f64 {
 }
 
 #[must_use]
-pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
-    let length = min_length(x, y);
-    dot(x, y) / magnitude(x, length) / magnitude(y, length)
-}
-
-#[must_use]
 fn mean(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
     debug_assert_ne!(length, 0, "the specified length is zero");
     x[..length].iter().sum::<f64>() / x.len() as f64
-}
-
-/// https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#For_a_sample
-#[must_use]
-pub fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
-    let length = min_length(x, y);
-    covariance(x, y) / std(x, length) / std(y, length)
 }
 
 #[must_use]
