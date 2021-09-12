@@ -35,7 +35,7 @@ pub async fn get(
 
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     let vehicle_factors = match vehicles_factors.get(&tank_id) {
-        Some(factors) => factors,
+        Some(factors) => &factors[1..],
         None => return Ok(Response::NotFound(NotFound(()))),
     };
 
@@ -47,7 +47,7 @@ pub async fn get(
         .map(|f| {
             vehicles_factors
                 .iter()
-                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, other_factors)))
+                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, &other_factors[1..])))
                 .sorted_unstable_by(|(_, left), (_, right)| {
                     right.partial_cmp(left).unwrap_or(Ordering::Equal)
                 })
