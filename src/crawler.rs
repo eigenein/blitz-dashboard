@@ -392,7 +392,7 @@ impl Crawler {
         // Adjust the biases.
         *global_bias -= self.cf_opts.global_bias_learning_rate * error;
         account.bias -= self.cf_opts.account_bias_learning_rate * error;
-        vehicle_factors[0] -= self.cf_opts.vehicle_learning_rate * error;
+        vehicle_factors[0] -= self.cf_opts.vehicle_bias_learning_rate * error;
 
         // Adjust the latent factors.
         subtract_vector(
