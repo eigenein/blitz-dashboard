@@ -29,9 +29,9 @@ pub async fn get(
 
     let mut redis = Redis::clone(redis);
     let cache_key = format!("html::status::vehicle::{}", tank_id);
-    // if let Some(cached_response) = redis.get(&cache_key).await? {
-    //     return Ok(Response::Html(Html(cached_response)));
-    // }
+    if let Some(cached_response) = redis.get(&cache_key).await? {
+        return Ok(Response::Html(Html(cached_response)));
+    }
 
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     let vehicle_factors = match vehicles_factors.get(&tank_id) {
@@ -99,7 +99,7 @@ pub async fn get(
                                                     (vehicle_th(&get_vehicle(*tank_id)))
                                                     td.(sign_class(*coefficient)) {
                                                         a href=(uri!(get_vehicle(tank_id = tank_id))) {
-                                                            span.icon-text {
+                                                            span.icon-text.is-flex-wrap-nowrap {
                                                                 (render_f64(*coefficient, 3))
                                                                 span.icon { { i.fas.fa-link {} } }
                                                             }
