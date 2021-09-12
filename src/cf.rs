@@ -20,7 +20,13 @@ pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
 /// Subtracts the right vector from the left vector inplace.
 /// The scaling is applied to the subtrahend.
 pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
-    debug_assert_eq!(minuend.len(), subtrahend.len());
+    debug_assert_eq!(
+        minuend.len(),
+        subtrahend.len(),
+        "trying to subtract a vector of length {} from a vector of length {}",
+        subtrahend.len(),
+        minuend.len(),
+    );
     for i in 0..subtrahend.len() {
         minuend[i] -= scaling * subtrahend[i];
     }
@@ -52,13 +58,22 @@ fn magnitude(x: &[f64]) -> f64 {
 
 #[must_use]
 fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
-    debug_assert_eq!(x.len(), y.len());
+    debug_assert_eq!(
+        x.len(),
+        y.len(),
+        "trying to calculate a cosine similarity for vectors of sizes {} and {}",
+        x.len(),
+        y.len(),
+    );
     dot(x, y) / magnitude(x) / magnitude(y)
 }
 
 #[must_use]
 fn mean(vector: &[f64]) -> f64 {
-    debug_assert_ne!(vector.len(), 0);
+    debug_assert!(
+        !vector.is_empty(),
+        "trying to calculate a mean for an empty vector",
+    );
     vector.iter().sum::<f64>() / vector.len() as f64
 }
 
@@ -70,7 +85,13 @@ fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
 
 #[must_use]
 fn covariance(x: &[f64], y: &[f64]) -> f64 {
-    debug_assert_eq!(x.len(), y.len());
+    debug_assert_eq!(
+        x.len(),
+        y.len(),
+        "trying to calculate a covariance for vectors of sizes {} and {}",
+        x.len(),
+        y.len(),
+    );
 
     let x_mean = mean(x);
     let y_mean = mean(y);
@@ -83,7 +104,11 @@ fn covariance(x: &[f64], y: &[f64]) -> f64 {
 
 #[must_use]
 fn std(x: &[f64]) -> f64 {
-    debug_assert_ne!(x.len(), 1);
+    debug_assert_ne!(
+        x.len(),
+        1,
+        "standard deviation is not defined for a vector of length 1",
+    );
 
     let mean = mean(x);
     x.iter().map(|xi| (xi - mean).powi(2)).sum::<f64>().sqrt()
