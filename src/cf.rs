@@ -4,26 +4,23 @@ pub const N_FACTORS: usize = 9;
 
 /// Vector dot product.
 #[must_use]
-pub fn dot(left: &[f64], right: &[f64]) -> f64 {
-    left.iter()
-        .zip(right)
-        .map(|(left, right)| left * right)
-        .sum()
+pub fn dot(x: &[f64], y: &[f64]) -> f64 {
+    x.iter().zip(y).map(|(left, right)| left * right).sum()
 }
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
-pub fn initialize_factors(v: &mut Vec<f64>, length: usize) {
-    v.truncate(length);
-    while v.len() < length {
-        v.push(fastrand::f64() - 0.5);
+pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
+    x.truncate(length);
+    while x.len() < length {
+        x.push(fastrand::f64() - 0.5);
     }
 }
 
 /// Subtracts the right vector from the left vector inplace.
 /// The scaling is applied to the subtrahend.
 pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
-    assert_eq!(minuend.len(), subtrahend.len());
+    debug_assert_eq!(minuend.len(), subtrahend.len());
     for i in 0..subtrahend.len() {
         minuend[i] -= scaling * subtrahend[i];
     }
@@ -44,6 +41,50 @@ pub fn predict_win_rate(
         + account_bias
         + vehicle_factors[0] // vehicle bias
         + dot(account_factors, &vehicle_factors[1..]);
-    assert!(!prediction.is_nan());
+    debug_assert!(!prediction.is_nan());
     prediction.clamp(0.0, 1.0)
+}
+
+#[must_use]
+fn magnitude(x: &[f64]) -> f64 {
+    x.iter().map(|value| value * value).sum::<f64>().sqrt()
+}
+
+#[must_use]
+fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
+    debug_assert_eq!(x.len(), y.len());
+    dot(x, y) / magnitude(x) / magnitude(y)
+}
+
+#[must_use]
+fn mean(vector: &[f64]) -> f64 {
+    debug_assert_ne!(vector.len(), 0);
+    vector.iter().sum::<f64>() / vector.len() as f64
+}
+
+/// https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#For_a_sample
+#[must_use]
+fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
+    covariance(x, y) / std(x) / std(y)
+}
+
+#[must_use]
+fn covariance(x: &[f64], y: &[f64]) -> f64 {
+    debug_assert_eq!(x.len(), y.len());
+
+    let x_mean = mean(x);
+    let y_mean = mean(y);
+
+    x.iter()
+        .zip(y)
+        .map(|(xi, yi)| (xi - x_mean) * (yi - y_mean))
+        .sum()
+}
+
+#[must_use]
+fn std(x: &[f64]) -> f64 {
+    debug_assert_ne!(x.len(), 1);
+
+    let mean = mean(x);
+    x.iter().map(|xi| (xi - mean).powi(2)).sum::<f64>().sqrt()
 }
