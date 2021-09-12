@@ -58,6 +58,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![routes::player::get])
         .mount("/", routes![routes::random::get])
         .mount("/", routes![routes::status::get])
+        .mount("/", routes![routes::status::vehicle::get])
         .mount("/", routes![routes::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)

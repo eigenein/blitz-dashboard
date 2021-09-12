@@ -1,9 +1,11 @@
+pub mod vehicle;
+
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::ConnectionManager as Redis;
 use rocket::response::content::Html;
 use rocket::State;
 
-use crate::cf::N_FACTORS;
+use crate::cf::N_FACTORS; // TODO: the view should be independent of this.
 use crate::logging::clear_user;
 use crate::redis::{get_all_vehicle_factors, get_global_bias};
 use crate::tankopedia::get_vehicle;
