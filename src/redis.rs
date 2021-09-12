@@ -16,6 +16,10 @@ const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const GLOBAL_BIAS_KEY: &str = "cf::global_bias";
 
 pub async fn get_vehicle_factors(redis: &mut Connection, tank_id: i32) -> crate::Result<Vec<f64>> {
+    let tank_id = match tank_id {
+        64273 => 55313, // 8,8 cm Pak 43 Jagdtiger
+        _ => tank_id,
+    };
     let value: Option<Vec<u8>> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
     match value {
         Some(value) => Ok(rmp_serde::from_read_ref(&value)?),
@@ -38,9 +42,14 @@ pub async fn set_vehicle_factors(
     tank_id: i32,
     factors: &[f64],
 ) -> crate::Result {
-    redis
-        .hset(VEHICLE_FACTORS_KEY, tank_id, rmp_serde::to_vec(factors)?)
-        .await?;
+    let bytes = rmp_serde::to_vec(factors)?;
+    let mut pipeline = ::redis::pipe();
+    pipeline.hset(VEHICLE_FACTORS_KEY, tank_id, &bytes);
+    if tank_id == 55313 {
+        // 8,8 cm Pak 43 Jagdtiger
+        pipeline.hset(VEHICLE_FACTORS_KEY, 64273, bytes);
+    }
+    pipeline.query_async(redis).await?;
     Ok(())
 }
 
