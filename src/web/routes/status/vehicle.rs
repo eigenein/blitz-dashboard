@@ -42,26 +42,18 @@ pub async fn get(
     let vehicle = get_vehicle(tank_id);
     let vehicle_title = vehicle_title(&vehicle);
 
-    let pearson_table = vehicles_factors
+    let tables: Vec<Vec<(i32, f64)>> = [pearson_coefficient, cosine_similarity]
         .iter()
-        .map(|(tank_id, other_factors)| {
-            (
-                *tank_id,
-                pearson_coefficient(vehicle_factors, other_factors),
-            )
+        .map(|f| {
+            vehicles_factors
+                .iter()
+                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, other_factors)))
+                .sorted_unstable_by(|(_, left), (_, right)| {
+                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
+                })
+                .collect()
         })
-        .sorted_unstable_by(|(_, left), (_, right)| {
-            right.partial_cmp(left).unwrap_or(Ordering::Equal)
-        });
-
-    let cosine_table = vehicles_factors
-        .iter()
-        .map(|(tank_id, other_factors)| {
-            (*tank_id, cosine_similarity(vehicle_factors, other_factors))
-        })
-        .sorted_unstable_by(|(_, left), (_, right)| {
-            right.partial_cmp(left).unwrap_or(Ordering::Equal)
-        });
+        .collect();
 
     let markup = html! {
         (DOCTYPE)
@@ -97,13 +89,13 @@ pub async fn get(
                                         th { "Coef" }
                                     }
                                     tbody {
-                                        @for (tank_id, coefficient) in pearson_table {
+                                        @for (tank_id, coefficient) in &tables[0] {
                                             tr {
-                                                (vehicle_th(&get_vehicle(tank_id)))
-                                                td.(sign_class(coefficient)) {
+                                                (vehicle_th(&get_vehicle(*tank_id)))
+                                                td.(sign_class(*coefficient)) {
                                                     a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                         span.icon-text {
-                                                            (render_f64(coefficient, 3))
+                                                            (render_f64(*coefficient, 3))
                                                             span.icon { { i.fas.fa-link {} } }
                                                         }
                                                     }
@@ -124,13 +116,13 @@ pub async fn get(
                                         th { "Coef" }
                                     }
                                     tbody {
-                                        @for (tank_id, coefficient) in cosine_table {
+                                        @for (tank_id, coefficient) in &tables[1] {
                                             tr {
-                                                (vehicle_th(&get_vehicle(tank_id)))
-                                                td.(sign_class(coefficient)) {
+                                                (vehicle_th(&get_vehicle(*tank_id)))
+                                                td.(sign_class(*coefficient)) {
                                                     a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                         span.icon-text {
-                                                            (render_f64(coefficient, 3))
+                                                            (render_f64(*coefficient, 3))
                                                             span.icon { { i.fas.fa-link {} } }
                                                         }
                                                     }
@@ -144,7 +136,7 @@ pub async fn get(
 
                         div.column."is-4" {
                             div.box {
-                                h2.title."is-4" { "TODO" }
+                                h2.title."is-4" { "Euclidean" }
                             }
                         }
                     }
