@@ -89,13 +89,11 @@ pub fn render_tank_tr(
                 data-value=(true_win_rate.mean)
             {
                 span.icon-text.is-flex-wrap-nowrap {
-                    span {
-                        strong { (render_percentage(true_win_rate.mean)) }
-                        span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                            " ±" (render_f64(100.0 * true_win_rate.margin, 1))
-                        }
-                        (partial_cmp_icon(win_rate_ordering))
+                    strong { (render_percentage(true_win_rate.mean)) }
+                    span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
+                        " ±" (render_f64(100.0 * true_win_rate.margin, 1))
                     }
+                    (partial_cmp_icon(win_rate_ordering))
                 }
             }
 
@@ -103,10 +101,15 @@ pub fn render_tank_tr(
             @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
                 predict_win_rate(global_bias, vehicle_factors, account.cf.bias, &account.cf.factors)
             } else {
-                0.0
+                0.5
             };
             td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
-                strong { (render_percentage(predicted_win_rate)) }
+                span.icon-text.is-flex-wrap-nowrap {
+                    span { strong { (render_percentage(predicted_win_rate)) } }
+                    @if tank.statistics.base.last_battle_time > account.base.last_battle_time {
+                        span.icon title="Робот еще не обработал последние бои на этом танке" { i.fas.fa-hourglass-half.has-text-grey-light {} }
+                    }
+                }
             }
 
             @let wins_per_hour = tank.wins_per_hour();
