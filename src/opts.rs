@@ -5,10 +5,11 @@ use std::time::Duration as StdDuration;
 
 use anyhow::anyhow;
 use log::LevelFilter;
+use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
-#[structopt(rename_all = "kebab-case")]
+#[structopt(rename_all = "kebab-case", global_settings(&[AppSettings::ColoredHelp]))]
 pub struct Opts {
     /// Sentry DSN
     #[structopt(short, long)]
@@ -79,7 +80,7 @@ pub struct CrawlerOpts {
     #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
     pub offsets: Vec<StdDuration>,
 
-    /// Minimum last battle time offset – avoids selecting the same account too soon
+    /// Minimum last battle time offset for account selection
     #[structopt(long = "min-offset", default_value = "5m", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 }
@@ -155,18 +156,22 @@ pub struct ConnectionOpts {
     pub redis_uri: String,
 }
 
-// TODO: add `account_bias_learning_rate`, defaults to `0.01`.
+/// Collaborative filtering (machine learning) options.
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
-    /// Account factor learning rate for the win rate prediction.
+    /// Account latent factors learning rate
     #[structopt(long = "account-lr", default_value = "0.1")]
     pub account_learning_rate: f64,
 
-    /// Vehicle factor learning rate for the win rate prediction.
+    /// Account bias learning rate
+    #[structopt(long = "account-bias-lr", default_value = "0.01")]
+    pub account_bias_learning_rate: f64,
+
+    /// Vehicle latent factors learning rate
     #[structopt(long = "vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
 
-    /// Global bias learning rate for the win rate prediction.
-    #[structopt(long = "--global-bias-lr", default_value = "0.00001")]
+    /// Global bias learning rate
+    #[structopt(long = "global-bias-lr", default_value = "0.00001")]
     pub global_bias_learning_rate: f64,
 }
