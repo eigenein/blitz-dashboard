@@ -20,7 +20,7 @@ use crate::database::models::{Account, AccountFactors};
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
-use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
+use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -35,10 +35,6 @@ pub struct Crawler {
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 
-    account_learning_rate: f64,
-    vehicle_learning_rate: f64,
-    global_bias_learning_rate: f64,
-
     /// Indicates that only tanks with updated last battle time must be crawled.
     /// Also enables the collaborative filtering.
     incremental: bool,
@@ -46,6 +42,9 @@ pub struct Crawler {
     /// Used to maintain the vehicle table in the database.
     /// The cache contains tank IDs which are for sure existing at the moment in the database.
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
+
+    /// Collaborative filtering options.
+    cf_opts: CfOpts,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -80,17 +79,7 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
             let cf_opts = opts.cf.clone();
 
             async move {
-                let crawler = Crawler::new(
-                    api,
-                    database.clone(),
-                    redis,
-                    1,
-                    true,
-                    cf_opts.account_learning_rate,
-                    cf_opts.vehicle_learning_rate,
-                    cf_opts.global_bias_learning_rate,
-                )
-                .await?;
+                let crawler = Crawler::new(api, database.clone(), redis, 1, true, cf_opts).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
                     crawler
@@ -135,17 +124,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(
-        api.clone(),
-        database,
-        redis,
-        opts.n_tasks,
-        false,
-        opts.cf.account_learning_rate,
-        opts.cf.vehicle_learning_rate,
-        opts.cf.global_bias_learning_rate,
-    )
-    .await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, false, opts.cf).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -183,10 +162,7 @@ impl Crawler {
         redis: Redis,
         n_tasks: usize,
         incremental: bool,
-        // TODO: accept a single `cf_opts` parameter.
-        account_learning_rate: f64,
-        vehicle_learning_rate: f64,
-        global_bias_learning_rate: f64,
+        cf_opts: CfOpts,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -195,9 +171,7 @@ impl Crawler {
             redis: Mutex::new(redis),
             n_tasks,
             incremental,
-            account_learning_rate,
-            vehicle_learning_rate,
-            global_bias_learning_rate,
+            cf_opts,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -416,20 +390,20 @@ impl Crawler {
         let error = prediction - target;
 
         // Adjust the biases.
-        *global_bias -= self.global_bias_learning_rate * error;
-        account.bias -= self.account_learning_rate * error; // TODO: `account_bias_learning_rate`,
-        vehicle_factors[0] -= self.vehicle_learning_rate * error;
+        *global_bias -= self.cf_opts.global_bias_learning_rate * error;
+        account.bias -= self.cf_opts.account_learning_rate * error; // TODO: `account_bias_learning_rate`,
+        vehicle_factors[0] -= self.cf_opts.vehicle_learning_rate * error;
 
         // Adjust the latent factors.
         subtract_vector(
             &mut account.factors,
             &vehicle_factors[1..],
-            self.account_learning_rate * error,
+            self.cf_opts.account_learning_rate * error,
         );
         subtract_vector(
             &mut vehicle_factors[1..],
             &account.factors,
-            self.vehicle_learning_rate * error,
+            self.cf_opts.vehicle_learning_rate * error,
         );
     }
 }
