@@ -76,7 +76,10 @@ pub fn render_tank_tr(
                 (tank.statistics.all.battles)
             }
             td data-sort="wins" data-value=(tank.statistics.all.wins) {
-                (tank.statistics.all.wins)
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-success { i.fas.fa-check {} }
+                    span { (tank.statistics.all.wins) }
+                }
             }
 
             @let win_rate = tank.statistics.all.current_win_rate();
@@ -112,9 +115,20 @@ pub fn render_tank_tr(
                 }
             }
 
+            @let frags_per_battle = tank.statistics.all.frags_per_battle();
+            td data-sort="frags-per-battle" data-value=(frags_per_battle) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
+                    span { (render_f64(frags_per_battle, 1)) }
+                }
+            }
+
             @let wins_per_hour = tank.wins_per_hour();
             td data-sort="wins-per-hour" data-value=(wins_per_hour) {
-                (render_f64(wins_per_hour, 1))
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-success { i.fas.fa-check {} }
+                    span { (render_f64(wins_per_hour, 1)) }
+                }
             }
 
             @let expected_wins_per_hour = true_win_rate * tank.battles_per_hour();

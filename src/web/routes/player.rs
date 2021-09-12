@@ -196,6 +196,13 @@ pub async fn get(
                 }
             }
             th {
+                a data-sort="frags-per-battle" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Среднее число фрагов за бой" { "FPB" } }
+                    }
+                }
+            }
+            th {
                 a data-sort="wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "WPH" } }
@@ -226,7 +233,7 @@ pub async fn get(
             th {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Ущерб" }
+                        span { "Общий ущерб" }
                     }
                 }
             }
