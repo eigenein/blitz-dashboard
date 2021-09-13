@@ -100,7 +100,11 @@ pub fn footer() -> Markup {
                                 span.icon { i.fas.fa-home.has-text-info {} }
                                 span {
                                     a href="https://github.com/eigenein/blitz-dashboard" {
-                                        "Blitz Dashboard " (crate::CRATE_VERSION)
+                                        "Blitz Dashboard"
+                                    }
+                                    " "
+                                    a href=(format!("https://github.com/eigenein/blitz-dashboard/releases/tag/{}", crate::CRATE_VERSION)) {
+                                        (crate::CRATE_VERSION)
                                     }
                                     " © "
                                     a href="https://github.com/eigenein" { "@eigenein" }
@@ -144,10 +148,14 @@ pub fn footer() -> Markup {
                                 span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Пул-реквесты" } }
                             }
                         }
+                    }
+
+                    div.column."is-2" {
+                        p.title."is-6" { "Состояние" }
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-desktop.has-text-warning {} }
-                                span { a href=(uri!(get_status())) { "Статус" } }
+                                span.icon { i.fas.fa-chalkboard.has-text-info {} }
+                                span { a href=(uri!(get_status())) { "Мониторинг" } }
                             }
                         }
                     }
