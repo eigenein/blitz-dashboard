@@ -31,8 +31,8 @@ pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
 }
 
 /// Adjusts the latent factors.
-///
 /// See: https://sifter.org/~simon/journal/20061211.html.
+/// I use actual error instead of residual error, hence the inverted signs.
 ///
 /// ```java
 /// userValue[user] += lrate * (err * movieValue[movie] - K * userValue[user]);
@@ -43,10 +43,14 @@ pub fn adjust_factors(
     subtrahend: &[f64],
     error: f64,
     learning_rate: f64,
-    _regularization: f64,
+    regularization: f64,
 ) {
+    debug_assert!(learning_rate >= 0.0);
+    debug_assert!(regularization >= 0.0);
+    debug_assert!(!error.is_nan());
+
     for i in 0..min_length(minuend, subtrahend) {
-        minuend[i] -= learning_rate * error * subtrahend[i];
+        minuend[i] -= learning_rate * (error * subtrahend[i] + regularization * minuend[i]);
     }
 }
 
