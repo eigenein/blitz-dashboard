@@ -14,15 +14,12 @@ pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
 pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
     const GLOBAL_BASELINE: f64 = 0.49;
 
-    // TODO: clamp after each component.
-    let prediction = GLOBAL_BASELINE
-        + dot(
-            account_factors,
-            vehicle_factors,
-            min_length(vehicle_factors, account_factors),
-        );
-    debug_assert!(!prediction.is_nan());
-    prediction.clamp(0.0, 1.0)
+    let length = min_length(vehicle_factors, account_factors);
+    let prediction = (0..length).fold(GLOBAL_BASELINE, |prediction, i| {
+        (prediction + vehicle_factors[i] * account_factors[i]).clamp(0.0, 1.0)
+    });
+    assert!(!prediction.is_nan());
+    prediction
 }
 
 /// Vector dot product.
