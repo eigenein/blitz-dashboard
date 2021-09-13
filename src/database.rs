@@ -113,7 +113,7 @@ pub async fn replace_account(connection: &mut PgConnection, account: Account) ->
     sqlx::query(QUERY)
         .bind(account.base.id)
         .bind(account.base.last_battle_time)
-        .bind(account.cf.factors)
+        .bind(account.factors)
         .execute(connection)
         .await
         .with_context(|| format!("failed to replace the account #{}", account_id))?;

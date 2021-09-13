@@ -16,7 +16,7 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
-use crate::database::models::{Account, AccountFactors};
+use crate::database::models::Account;
 use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
@@ -250,7 +250,7 @@ impl Crawler {
         }
 
         let base = account.base;
-        let mut cf = account.cf;
+        let mut account_factors = account.factors;
         log::debug!("Crawling account #{}…", base.id);
         let statistics = self
             .get_updated_tanks_statistics(base.id, base.last_battle_time)
@@ -259,7 +259,7 @@ impl Crawler {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
             if self.incremental {
-                self.train(base.id, &mut cf, &tanks).await?;
+                self.train(base.id, &mut account_factors, &tanks).await?;
             }
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
@@ -276,7 +276,7 @@ impl Crawler {
             &mut *connection,
             Account {
                 base: new_info.base,
-                cf,
+                factors: account_factors,
             },
         )
         .await?;
@@ -333,10 +333,10 @@ impl Crawler {
     async fn train(
         &self,
         account_id: i32,
-        account: &mut AccountFactors,
+        account_factors: &mut Vec<f64>,
         tanks: &[Tank],
     ) -> crate::Result {
-        initialize_factors(&mut account.factors, N_FACTORS);
+        initialize_factors(account_factors, N_FACTORS);
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
@@ -359,7 +359,7 @@ impl Crawler {
             initialize_factors(&mut vehicle_factors, N_FACTORS);
 
             for _ in 0..n_battles {
-                self.train_step(account, &mut vehicle_factors, win_rate)
+                self.train_step(account_factors, &mut vehicle_factors, win_rate)
                     .await;
             }
 
@@ -372,24 +372,24 @@ impl Crawler {
 
     async fn train_step(
         &self,
-        account: &mut AccountFactors,
+        account_factors: &mut [f64],
         vehicle_factors: &mut [f64],
         target: f64,
     ) {
         // Make a prediction.
-        let prediction = predict_win_rate(vehicle_factors, &account.factors);
+        let prediction = predict_win_rate(vehicle_factors, account_factors);
         self.metrics.lock().await.push_cf_loss(prediction, target);
         let error = prediction - target;
 
         // Adjust the latent factors.
         subtract_vector(
-            &mut account.factors,
+            account_factors,
             vehicle_factors,
             self.cf_opts.account_learning_rate * error,
         );
         subtract_vector(
             vehicle_factors,
-            &account.factors,
+            account_factors,
             self.cf_opts.vehicle_learning_rate * error,
         );
     }

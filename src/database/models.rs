@@ -6,7 +6,7 @@ use crate::models::BaseAccountInfo;
 
 pub struct Account {
     pub base: BaseAccountInfo,
-    pub cf: AccountFactors,
+    pub factors: Vec<f64>,
 }
 
 impl Account {
@@ -16,7 +16,7 @@ impl Account {
                 id: account_id,
                 last_battle_time: Utc.timestamp(0, 0),
             },
-            cf: Default::default(),
+            factors: Default::default(),
         }
     }
 }
@@ -25,20 +25,6 @@ impl<'r> FromRow<'r, PgRow> for Account {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             base: FromRow::from_row(row)?,
-            cf: FromRow::from_row(row)?,
-        })
-    }
-}
-
-/// Account profile for the collaborative filtering.
-#[derive(Default)]
-pub struct AccountFactors {
-    pub factors: Vec<f64>,
-}
-
-impl<'r> FromRow<'r, PgRow> for AccountFactors {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        Ok(Self {
             factors: row.try_get("factors")?,
         })
     }

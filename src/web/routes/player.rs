@@ -483,7 +483,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                (render_tank_tr(&account, tank, &total_win_rate, &vehicles_factors))
+                                                (render_tank_tr(&account, tank, &total_win_rate, vehicles_factors.get(&tank.statistics.base.tank_id)))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {

@@ -15,28 +15,28 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
     const GLOBAL_BASELINE: f64 = 0.49;
 
     // TODO: clamp after each component.
-    let prediction = GLOBAL_BASELINE + dot(account_factors, vehicle_factors);
+    let prediction = GLOBAL_BASELINE
+        + dot(
+            account_factors,
+            vehicle_factors,
+            min_length(vehicle_factors, account_factors),
+        );
     debug_assert!(!prediction.is_nan());
     prediction.clamp(0.0, 1.0)
 }
 
 /// Vector dot product.
 #[must_use]
-pub fn dot(x: &[f64], y: &[f64]) -> f64 {
-    x.iter().zip(y).map(|(left, right)| left * right).sum()
+pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
+    debug_assert!(x.len() <= length);
+    debug_assert!(y.len() <= length);
+    (0..length).map(|i| x[i] * y[i]).sum()
 }
 
 /// Subtracts the right vector from the left vector inplace.
 /// The scaling is applied to the subtrahend.
 pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
-    debug_assert_eq!(
-        minuend.len(),
-        subtrahend.len(),
-        "trying to subtract a vector of length {} from a vector of length {}",
-        subtrahend.len(),
-        minuend.len(),
-    );
-    for i in 0..subtrahend.len() {
+    for i in 0..min_length(minuend, subtrahend) {
         minuend[i] -= scaling * subtrahend[i];
     }
 }
@@ -45,13 +45,13 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
 #[must_use]
 pub fn pearson_coefficient(x: &[f64], y: &[f64]) -> f64 {
     let length = min_length(x, y);
-    covariance(x, y) / std(x, length) / std(y, length)
+    covariance(x, y, length) / std(x, length) / std(y, length)
 }
 
 #[must_use]
 pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
     let length = min_length(x, y);
-    dot(x, y) / magnitude(x, length) / magnitude(y, length)
+    dot(x, y, length) / magnitude(x, length) / magnitude(y, length)
 }
 
 #[must_use]
@@ -80,30 +80,21 @@ fn magnitude(x: &[f64], length: usize) -> f64 {
 #[must_use]
 fn mean(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
-    debug_assert_ne!(length, 0, "the specified length is zero");
+    debug_assert_ne!(length, 0);
     x[..length].iter().sum::<f64>() / x.len() as f64
 }
 
 #[must_use]
-fn covariance(x: &[f64], y: &[f64]) -> f64 {
-    let length = min_length(x, y);
+fn covariance(x: &[f64], y: &[f64], length: usize) -> f64 {
     let x_mean = mean(x, length);
     let y_mean = mean(y, length);
-
-    x.iter()
-        .zip(y)
-        .map(|(xi, yi)| (xi - x_mean) * (yi - y_mean))
-        .sum()
+    (0..length)
+        .map(|i| (x[i] - x_mean) * (y[i] - y_mean))
+        .sum::<f64>()
 }
 
 #[must_use]
 fn std(x: &[f64], length: usize) -> f64 {
-    debug_assert!(length <= x.len());
-    debug_assert_ne!(
-        length, 1,
-        "standard deviation is not defined for a vector of length 1",
-    );
-
     let mean = mean(x, length);
     x[..length]
         .iter()

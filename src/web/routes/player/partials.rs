@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
@@ -58,7 +57,7 @@ pub fn render_tank_tr(
     account: &Account,
     tank: &Tank,
     total_win_rate: &ConfidenceInterval,
-    vehicles_factors: &HashMap<i32, Vec<f64>>,
+    vehicle_factors: Option<&Vec<f64>>,
 ) -> Markup {
     html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
@@ -99,9 +98,8 @@ pub fn render_tank_tr(
                 }
             }
 
-            @let vehicle_factors = vehicles_factors.get(&vehicle.tank_id);
             @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
-                predict_win_rate(vehicle_factors, &account.cf.factors)
+                predict_win_rate(vehicle_factors, &account.factors)
             } else {
                 0.5
             };
