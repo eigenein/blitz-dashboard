@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
-use crate::cf::{initialize_factors, predict_win_rate, subtract_vector, N_FACTORS};
+use crate::cf::{adjust_factors, initialize_factors, predict_win_rate, N_FACTORS};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
@@ -383,15 +383,19 @@ impl Crawler {
 
         // Adjust the latent factors.
         let frozen_account_factors = account_factors.to_vec();
-        subtract_vector(
+        adjust_factors(
             account_factors,
             vehicle_factors,
-            self.cf_opts.account_learning_rate * error,
+            error,
+            self.cf_opts.account_learning_rate,
+            self.cf_opts.r,
         );
-        subtract_vector(
+        adjust_factors(
             vehicle_factors,
             &frozen_account_factors,
-            self.cf_opts.vehicle_learning_rate * error,
+            error,
+            self.cf_opts.vehicle_learning_rate,
+            self.cf_opts.r,
         );
     }
 }

@@ -30,11 +30,23 @@ pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
     (0..length).map(|i| x[i] * y[i]).sum()
 }
 
-/// Subtracts the right vector from the left vector inplace.
-/// The scaling is applied to the subtrahend.
-pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
+/// Adjusts the latent factors.
+///
+/// See: https://sifter.org/~simon/journal/20061211.html.
+///
+/// ```java
+/// userValue[user] += lrate * (err * movieValue[movie] - K * userValue[user]);
+/// movieValue[movie] += lrate * (err * userValue[user] - K * movieValue[movie]);
+/// ```
+pub fn adjust_factors(
+    minuend: &mut [f64],
+    subtrahend: &[f64],
+    error: f64,
+    learning_rate: f64,
+    _regularization: f64,
+) {
     for i in 0..min_length(minuend, subtrahend) {
-        minuend[i] -= scaling * subtrahend[i];
+        minuend[i] -= learning_rate * error * subtrahend[i];
     }
 }
 
