@@ -382,6 +382,7 @@ impl Crawler {
         let error = prediction - target;
 
         // Adjust the latent factors.
+        let frozen_account_factors = account_factors.to_vec();
         subtract_vector(
             account_factors,
             vehicle_factors,
@@ -389,7 +390,7 @@ impl Crawler {
         );
         subtract_vector(
             vehicle_factors,
-            account_factors,
+            &frozen_account_factors,
             self.cf_opts.vehicle_learning_rate * error,
         );
     }
