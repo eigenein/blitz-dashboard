@@ -170,4 +170,8 @@ pub struct CfOpts {
     /// CF regularization parameter
     #[structopt(long = "cf-r", default_value = "0.001")]
     pub r: f64,
+
+    /// CF latent factor count
+    #[structopt(long = "cf-factors", default_value = "9")]
+    pub n_factors: usize,
 }

@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::JoinHandle;
 
-use crate::cf::{adjust_factors, initialize_factors, predict_win_rate, N_FACTORS};
+use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
@@ -336,7 +336,7 @@ impl Crawler {
         account_factors: &mut Vec<f64>,
         tanks: &[Tank],
     ) -> crate::Result {
-        initialize_factors(account_factors, N_FACTORS);
+        initialize_factors(account_factors, self.cf_opts.n_factors);
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
@@ -356,7 +356,7 @@ impl Crawler {
             let mut redis = self.redis.lock().await;
             let mut vehicle_factors =
                 crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
-            initialize_factors(&mut vehicle_factors, N_FACTORS);
+            initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
 
             for _ in 0..n_battles {
                 self.train_step(account_factors, &mut vehicle_factors, win_rate)

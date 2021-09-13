@@ -1,7 +1,5 @@
 //! Collaborative filtering.
 
-pub const N_FACTORS: usize = 9; // TODO: should be configurable.
-
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
 pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
