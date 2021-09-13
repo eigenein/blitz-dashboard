@@ -33,14 +33,12 @@ impl<'r> FromRow<'r, PgRow> for Account {
 /// Account profile for the collaborative filtering.
 #[derive(Default)]
 pub struct AccountFactors {
-    pub bias: f64,
     pub factors: Vec<f64>,
 }
 
 impl<'r> FromRow<'r, PgRow> for AccountFactors {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
-            bias: row.try_get("bias")?,
             factors: row.try_get("factors")?,
         })
     }

@@ -377,12 +377,11 @@ impl Crawler {
         target: f64,
     ) {
         // Make a prediction.
-        let prediction = predict_win_rate(vehicle_factors, account.bias, &account.factors);
+        let prediction = predict_win_rate(vehicle_factors, &account.factors);
         self.metrics.lock().await.push_cf_loss(prediction, target);
         let error = prediction - target;
 
         // Adjust the biases.
-        account.bias -= self.cf_opts.account_bias_learning_rate * error;
         vehicle_factors[0] -= self.cf_opts.vehicle_bias_learning_rate * error;
 
         // Adjust the latent factors.

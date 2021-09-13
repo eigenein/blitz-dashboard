@@ -103,18 +103,16 @@ pub async fn retrieve_tank_battle_count(
 pub async fn replace_account(connection: &mut PgConnection, account: Account) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time, bias, factors)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO accounts (account_id, last_battle_time, factors)
+        VALUES ($1, $2, $3)
         ON CONFLICT (account_id) DO UPDATE SET
             last_battle_time = excluded.last_battle_time,
-            bias = excluded.bias,
             factors = excluded.factors
     ";
     let account_id = account.base.id;
     sqlx::query(QUERY)
         .bind(account.base.id)
         .bind(account.base.last_battle_time)
-        .bind(account.cf.bias)
         .bind(account.cf.factors)
         .execute(connection)
         .await
