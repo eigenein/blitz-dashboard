@@ -5,7 +5,6 @@ use redis::aio::ConnectionManager as Redis;
 use rocket::response::content::Html;
 use rocket::State;
 
-use crate::cf::N_FACTORS; // TODO: the view should be independent of this.
 use crate::logging::clear_user;
 use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
@@ -29,6 +28,11 @@ pub async fn get(
     }
 
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
+    let n_factors = vehicle_factors
+        .values()
+        .map(|factors| factors.len())
+        .max()
+        .unwrap_or(0);
 
     let markup = html! {
         (DOCTYPE)
@@ -67,7 +71,7 @@ pub async fn get(
                                             }
                                         }
                                     }
-                                    @for i in 0..N_FACTORS {
+                                    @for i in 0..n_factors {
                                         th {
                                             a data-sort=(format!("factor-{}", i)) {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -83,7 +87,8 @@ pub async fn get(
                                             @let vehicle = get_vehicle(tank_id);
                                             (vehicle_th(&vehicle))
                                             (tier_td(vehicle.tier))
-                                            @for (i, factor) in factors.into_iter().enumerate() {
+                                            @for i in 0..n_factors {
+                                                @let factor = factors.get(i).copied().unwrap_or(0.0);
                                                 td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
                                                     (render_f64(factor, 4))
                                                 }
