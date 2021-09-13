@@ -67,14 +67,7 @@ pub async fn get(
                                             }
                                         }
                                     }
-                                    th {
-                                        a data-sort="factor-0" {
-                                            span.icon-text.is-flex-wrap-nowrap {
-                                                span { "Bias" }
-                                            }
-                                        }
-                                    }
-                                    @for i in 1..(N_FACTORS + 1) {
+                                    @for i in 0..N_FACTORS {
                                         th {
                                             a data-sort=(format!("factor-{}", i)) {
                                                 span.icon-text.is-flex-wrap-nowrap {

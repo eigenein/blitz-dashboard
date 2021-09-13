@@ -36,9 +36,7 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
 pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
     const GLOBAL_BASELINE: f64 = 0.49;
 
-    let prediction = GLOBAL_BASELINE
-        + vehicle_factors[0] // vehicle bias
-        + dot(account_factors, &vehicle_factors[1..]);
+    let prediction = GLOBAL_BASELINE + dot(account_factors, vehicle_factors);
     debug_assert!(!prediction.is_nan());
     prediction.clamp(0.0, 1.0)
 }

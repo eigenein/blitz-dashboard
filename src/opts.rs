@@ -159,17 +159,9 @@ pub struct ConnectionOpts {
 /// Collaborative filtering (machine learning) options.
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
-    /// Account bias learning rate
-    #[structopt(long = "account-bias-lr", default_value = "0.001")]
-    pub account_bias_learning_rate: f64,
-
     /// Account latent factors learning rate
-    #[structopt(long = "account-lr", default_value = "0.1")]
+    #[structopt(long = "account-lr", default_value = "0.01")]
     pub account_learning_rate: f64,
-
-    /// Vehicle bias learning rate
-    #[structopt(long = "vehicle-bias-lr", default_value = "0.001")]
-    pub vehicle_bias_learning_rate: f64,
 
     /// Vehicle latent factors learning rate
     #[structopt(long = "vehicle-lr", default_value = "0.01")]

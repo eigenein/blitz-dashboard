@@ -356,7 +356,7 @@ impl Crawler {
             let mut redis = self.redis.lock().await;
             let mut vehicle_factors =
                 crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
-            initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
+            initialize_factors(&mut vehicle_factors, N_FACTORS);
 
             for _ in 0..n_battles {
                 self.train_step(account, &mut vehicle_factors, win_rate)
@@ -381,17 +381,14 @@ impl Crawler {
         self.metrics.lock().await.push_cf_loss(prediction, target);
         let error = prediction - target;
 
-        // Adjust the biases.
-        vehicle_factors[0] -= self.cf_opts.vehicle_bias_learning_rate * error;
-
         // Adjust the latent factors.
         subtract_vector(
             &mut account.factors,
-            &vehicle_factors[1..],
+            vehicle_factors,
             self.cf_opts.account_learning_rate * error,
         );
         subtract_vector(
-            &mut vehicle_factors[1..],
+            vehicle_factors,
             &account.factors,
             self.cf_opts.vehicle_learning_rate * error,
         );
