@@ -40,3 +40,7 @@ ALTER TABLE accounts
 ALTER TABLE tank_snapshots
     ALTER CONSTRAINT tank_snapshots_account_id_fkey
     DEFERRABLE INITIALLY DEFERRED;
+
+-- 0.71.0
+
+ALTER TABLE accounts DROP COLUMN IF EXISTS bias;
