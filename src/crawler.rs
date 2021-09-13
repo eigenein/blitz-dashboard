@@ -354,18 +354,16 @@ impl Crawler {
 
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
-            let mut global_bias = crate::redis::get_global_bias(&mut redis).await?;
             let mut vehicle_factors =
                 crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
             initialize_factors(&mut vehicle_factors, N_FACTORS + 1);
 
             for _ in 0..n_battles {
-                self.train_step(&mut global_bias, account, &mut vehicle_factors, win_rate)
+                self.train_step(account, &mut vehicle_factors, win_rate)
                     .await;
             }
 
             // Write the updated factors.
-            crate::redis::set_global_bias(&mut redis, global_bias).await?;
             crate::redis::set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
         }
 
@@ -374,23 +372,16 @@ impl Crawler {
 
     async fn train_step(
         &self,
-        global_bias: &mut f64,
         account: &mut AccountFactors,
         vehicle_factors: &mut [f64],
         target: f64,
     ) {
         // Make a prediction.
-        let prediction = predict_win_rate(
-            *global_bias,
-            vehicle_factors,
-            account.bias,
-            &account.factors,
-        );
+        let prediction = predict_win_rate(vehicle_factors, account.bias, &account.factors);
         self.metrics.lock().await.push_cf_loss(prediction, target);
         let error = prediction - target;
 
         // Adjust the biases.
-        *global_bias -= self.cf_opts.global_bias_learning_rate * error;
         account.bias -= self.cf_opts.account_bias_learning_rate * error;
         vehicle_factors[0] -= self.cf_opts.vehicle_bias_learning_rate * error;
 

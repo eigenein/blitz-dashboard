@@ -7,7 +7,7 @@ use rocket::State;
 
 use crate::cf::N_FACTORS; // TODO: the view should be independent of this.
 use crate::logging::clear_user;
-use crate::redis::{get_all_vehicle_factors, get_global_bias};
+use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
@@ -29,7 +29,6 @@ pub async fn get(
     }
 
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
-    let global_bias = get_global_bias(&mut redis).await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -53,13 +52,10 @@ pub async fn get(
 
             section.section {
                 div.container {
-                    h1.title { "Collaborative Filtering" }
+                    h1.title { "Machine Learning" }
 
-                    h2.title."is-4" { "Global Bias" }
-                    p.content { span.tag.is-large { (render_f64(global_bias, 5)) } }
-
-                    h2.title."is-4" { "Vehicle Latent Factors" }
                     div.box {
+                        h2.title."is-4" { "Vehicle Latent Factors" }
                         div.table-container {
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {

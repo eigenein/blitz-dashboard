@@ -75,7 +75,6 @@ pub async fn get(
     let is_account_birthday = current_info.created_at.date() == Utc::today();
 
     let mut redis = Redis::clone(redis);
-    let global_bias = crate::redis::get_global_bias(&mut redis).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
     let navbar = html! {
@@ -484,7 +483,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                (render_tank_tr(&account, tank, &total_win_rate, global_bias, &vehicles_factors))
+                                                (render_tank_tr(&account, tank, &total_win_rate, &vehicles_factors))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {

@@ -58,7 +58,6 @@ pub fn render_tank_tr(
     account: &Account,
     tank: &Tank,
     total_win_rate: &ConfidenceInterval,
-    global_bias: f64,
     vehicles_factors: &HashMap<i32, Vec<f64>>,
 ) -> Markup {
     html! {
@@ -102,7 +101,7 @@ pub fn render_tank_tr(
 
             @let vehicle_factors = vehicles_factors.get(&vehicle.tank_id);
             @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
-                predict_win_rate(global_bias, vehicle_factors, account.cf.bias, &account.cf.factors)
+                predict_win_rate(vehicle_factors, account.cf.bias, &account.cf.factors)
             } else {
                 0.5
             };

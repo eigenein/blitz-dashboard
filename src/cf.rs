@@ -34,16 +34,13 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
 
 /// Note: vehicle bias is the 0-th element in the factor array.
 pub fn predict_win_rate(
-    global_bias: f64,
     vehicle_factors: &[f64],
     account_bias: f64,
     account_factors: &[f64],
 ) -> f64 {
-    if account_factors.is_empty() || vehicle_factors.is_empty() {
-        return 0.5; // FIXME.
-    }
+    const GLOBAL_BASELINE: f64 = 0.49;
 
-    let prediction = global_bias
+    let prediction = GLOBAL_BASELINE
         + account_bias
         + vehicle_factors[0] // vehicle bias
         + dot(account_factors, &vehicle_factors[1..]);

@@ -174,8 +174,4 @@ pub struct CfOpts {
     /// Vehicle latent factors learning rate
     #[structopt(long = "vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
-
-    /// Global bias learning rate
-    #[structopt(long = "global-bias-lr", default_value = "0.000005")]
-    pub global_bias_learning_rate: f64,
 }
