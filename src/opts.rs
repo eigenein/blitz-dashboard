@@ -159,11 +159,15 @@ pub struct ConnectionOpts {
 /// Collaborative filtering (machine learning) options.
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
-    /// Account latent factors learning rate
+    /// CF account latent factors learning rate
     #[structopt(long = "account-lr", default_value = "0.01")]
     pub account_learning_rate: f64,
 
-    /// Vehicle latent factors learning rate
+    /// CF vehicle latent factors learning rate
     #[structopt(long = "vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
+
+    /// CF regularization parameter
+    #[structopt(long = "cf-r", default_value = "0.001")]
+    pub r: f64,
 }
