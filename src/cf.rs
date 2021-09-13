@@ -1,12 +1,6 @@
 //! Collaborative filtering.
 
-pub const N_FACTORS: usize = 9;
-
-/// Vector dot product.
-#[must_use]
-pub fn dot(x: &[f64], y: &[f64]) -> f64 {
-    x.iter().zip(y).map(|(left, right)| left * right).sum()
-}
+pub const N_FACTORS: usize = 9; // TODO: should be configurable.
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
@@ -15,6 +9,21 @@ pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
     while x.len() < length {
         x.push(fastrand::f64() - 0.5);
     }
+}
+
+pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
+    const GLOBAL_BASELINE: f64 = 0.49;
+
+    // TODO: clamp after each component.
+    let prediction = GLOBAL_BASELINE + dot(account_factors, vehicle_factors);
+    debug_assert!(!prediction.is_nan());
+    prediction.clamp(0.0, 1.0)
+}
+
+/// Vector dot product.
+#[must_use]
+pub fn dot(x: &[f64], y: &[f64]) -> f64 {
+    x.iter().zip(y).map(|(left, right)| left * right).sum()
 }
 
 /// Subtracts the right vector from the left vector inplace.
@@ -30,15 +39,6 @@ pub fn subtract_vector(minuend: &mut [f64], subtrahend: &[f64], scaling: f64) {
     for i in 0..subtrahend.len() {
         minuend[i] -= scaling * subtrahend[i];
     }
-}
-
-/// Note: vehicle bias is the 0-th element in the factor array.
-pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
-    const GLOBAL_BASELINE: f64 = 0.49;
-
-    let prediction = GLOBAL_BASELINE + dot(account_factors, vehicle_factors);
-    debug_assert!(!prediction.is_nan());
-    prediction.clamp(0.0, 1.0)
 }
 
 /// https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#For_a_sample
