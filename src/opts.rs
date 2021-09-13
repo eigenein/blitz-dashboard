@@ -160,11 +160,11 @@ pub struct ConnectionOpts {
 #[derive(StructOpt, Clone)]
 pub struct CfOpts {
     /// CF account latent factors learning rate
-    #[structopt(long = "account-lr", default_value = "0.01")]
+    #[structopt(long = "cf-account-lr", default_value = "0.01")]
     pub account_learning_rate: f64,
 
     /// CF vehicle latent factors learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.01")]
+    #[structopt(long = "cf-vehicle-lr", default_value = "0.01")]
     pub vehicle_learning_rate: f64,
 
     /// CF regularization parameter
