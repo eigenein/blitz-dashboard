@@ -1,9 +1,8 @@
-pub mod vehicle;
-
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::ConnectionManager as Redis;
+use redis::AsyncCommands;
 use rocket::response::content::Html;
-use rocket::State;
+use rocket::{uri, State};
 
 use crate::logging::clear_user;
 use crate::redis::get_all_vehicle_factors;
@@ -11,8 +10,10 @@ use crate::tankopedia::get_vehicle;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
+use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
 use crate::web::TrackingCode;
-use redis::AsyncCommands;
+
+pub mod vehicle;
 
 #[rocket::get("/status")]
 pub async fn get(
@@ -64,6 +65,7 @@ pub async fn get(
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {
                                     th { "Vehicle" }
+                                    th { "Status" }
                                     th {
                                         a data-sort="tier" {
                                             span.icon-text.is-flex-wrap-nowrap {
@@ -86,6 +88,13 @@ pub async fn get(
                                         tr {
                                             @let vehicle = get_vehicle(tank_id);
                                             (vehicle_th(&vehicle))
+                                            td.has-text-centered {
+                                                a href=(uri!(get_vehicle_status(tank_id = tank_id))) {
+                                                    span.icon-text.is-flex-wrap-nowrap {
+                                                        span.icon { { i.fas.fa-link {} } }
+                                                    }
+                                                }
+                                            }
                                             (tier_td(vehicle.tier))
                                             @for i in 0..n_factors {
                                                 @let factor = factors.get(i).copied().unwrap_or(0.0);
