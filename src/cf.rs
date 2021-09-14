@@ -23,8 +23,8 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
 /// Vector dot product.
 #[must_use]
 pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
-    debug_assert!(x.len() <= length);
-    debug_assert!(y.len() <= length);
+    debug_assert!(length <= x.len());
+    debug_assert!(length <= y.len());
     (0..length).map(|i| x[i] * y[i]).sum()
 }
 
