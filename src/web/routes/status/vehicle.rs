@@ -54,6 +54,7 @@ pub async fn get(
                     .sorted_unstable_by(|(_, left), (_, right)| {
                         right.partial_cmp(left).unwrap_or(Ordering::Equal)
                     })
+                    .take(25)
                     .collect()
             })
             .zip(["Pearson", "Cosine", "Euclidean"])
