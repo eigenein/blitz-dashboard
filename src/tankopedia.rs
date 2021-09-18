@@ -196,17 +196,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
     insert_missing_vehicle(
         vehicles,
         Vehicle {
-            tank_id: 3201,
-            name: Cow::Borrowed("50TP prototyp"),
-            tier: 9,
-            is_premium: true,
-            nation: Nation::Europe,
-            type_: TankType::Heavy,
-        },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
-        Vehicle {
             tank_id: 24337,
             name: Cow::Borrowed("M48A2 Räumpanzer"),
             tier: 8,
@@ -290,6 +279,28 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             is_premium: true,
             nation: Nation::Usa,
             type_: TankType::Light,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 23313,
+            name: Cow::Borrowed("Kampfpanzer 50 t"),
+            tier: 10,
+            is_premium: true,
+            nation: Nation::Germany,
+            type_: TankType::Medium,
+        },
+    )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 15617,
+            name: Cow::Borrowed("Об. 907"),
+            tier: 10,
+            is_premium: true,
+            nation: Nation::Ussr,
+            type_: TankType::Medium,
         },
     )?;
     Ok(())

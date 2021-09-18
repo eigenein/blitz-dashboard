@@ -605,6 +605,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Germany,
         type_: TankType::AT,
     },
+    15617_i32 => Vehicle {
+        tank_id: 15617,
+        name: Cow::Borrowed("Об. 907"),
+        tier: 10,
+        is_premium: true,
+        nation: Nation::Ussr,
+        type_: TankType::Medium,
+    },
     15649_i32 => Vehicle {
         tank_id: 15649,
         name: Cow::Borrowed("T71"),
@@ -1492,6 +1500,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Ussr,
         type_: TankType::Heavy,
+    },
+    23313_i32 => Vehicle {
+        tank_id: 23313,
+        name: Cow::Borrowed("Kampfpanzer 50 t"),
+        tier: 10,
+        is_premium: true,
+        nation: Nation::Germany,
+        type_: TankType::Medium,
     },
     23329_i32 => Vehicle {
         tank_id: 23329,

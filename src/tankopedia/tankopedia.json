@@ -9782,8 +9782,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          2068,
-          11796
+          11796,
+          2068
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -33937,9 +33937,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34018,8 +34018,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -40221,6 +40221,167 @@
     ],
     "type": "heavyTank"
   },
+  "3201": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 80,
+          "rear": 80,
+          "sides": 80
+        },
+        "turret": {
+          "front": 270,
+          "rear": 100,
+          "sides": 150
+        }
+      },
+      "battle_level_range_max": 10,
+      "battle_level_range_min": 9,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "W12-5",
+        "power": 750,
+        "tier": 9,
+        "weight": 1400
+      },
+      "engine_id": 4997,
+      "firepower": 50,
+      "gun": {
+        "aim_time": 5.22,
+        "caliber": 122,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 4.41,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "122 mm wz.43/50",
+        "reload_time": 13.6,
+        "tier": 9,
+        "traverse_speed": 26.25,
+        "weight": 2590
+      },
+      "gun_id": 4996,
+      "hp": 2050,
+      "hull_hp": 1640,
+      "hull_weight": 24280,
+      "is_default": true,
+      "maneuverability": 40,
+      "max_ammo": 40,
+      "max_weight": 59900,
+      "profile_id": "4994-4996-4997-5251",
+      "protection": 58,
+      "shells": [
+        {
+          "damage": 440,
+          "penetration": 246,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 380,
+          "penetration": 320,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 560,
+          "penetration": 68,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 79,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 48,
+      "suspension": {
+        "load_limit": 59900,
+        "name": "50TP prototyp",
+        "tier": 8,
+        "traverse_speed": 30,
+        "weight": 11000
+      },
+      "suspension_id": 4994,
+      "turret": {
+        "hp": 410,
+        "name": "50TP prototyp",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 25,
+        "view_range": 250,
+        "weight": 12500
+      },
+      "turret_id": 5251,
+      "weight": 52045
+    },
+    "description": "Первоначальный проект тяжёлого танка курсанта Тадеуша Тышкевича. Разрабатывался в Военно-технической академии Варшавы в начале 1950-х годов и предусматривал проектирование машины массой до 50 тонн. Разработка была прекращена на стадии аванпроекта.",
+    "engines": [
+      4997
+    ],
+    "guns": [
+      4996
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl08_50TP_prot.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl08_50TP_prot.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "4994": {
+        "is_default": true,
+        "module_id": 4994,
+        "name": "50TP prototyp",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "4996": {
+        "is_default": true,
+        "module_id": 4996,
+        "name": "122 mm wz.43/50",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "4997": {
+        "is_default": true,
+        "module_id": 4997,
+        "name": "W12-5",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "5251": {
+        "is_default": true,
+        "module_id": 5251,
+        "name": "50TP prototyp",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      }
+    },
+    "name": "50TP prototyp",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      4994
+    ],
+    "tank_id": 3201,
+    "tier": 9,
+    "turrets": [
+      5251
+    ],
+    "type": "heavyTank"
+  },
   "321": {
     "cost": {
       "price_credit": 6000,
@@ -45886,8 +46047,8 @@
         "name": "Kw.K. 39 L/60",
         "next_modules": null,
         "next_tanks": [
-          17425,
-          1809
+          1809,
+          17425
         ],
         "price_credit": 0,
         "price_xp": 1050,
@@ -74474,9 +74635,9 @@
           "sides": 150
         },
         "turret": {
-          "front": 228,
-          "rear": 89,
-          "sides": 176
+          "front": 240,
+          "rear": 94,
+          "sides": 185
         }
       },
       "battle_level_range_max": 11,
@@ -74514,7 +74675,7 @@
       "max_ammo": 40,
       "max_weight": 70950,
       "profile_id": "9221-12035-14850-14852",
-      "protection": 89,
+      "protection": 96,
       "shells": [
         {
           "damage": 460,
@@ -78253,8 +78414,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -79111,8 +79272,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -84235,7 +84396,7 @@
       "max_ammo": 72,
       "max_weight": 150000,
       "profile_id": "9492-11285-18451-23058",
-      "protection": 94,
+      "protection": 97,
       "shells": [
         {
           "damage": 460,
