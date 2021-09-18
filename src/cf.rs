@@ -66,19 +66,6 @@ pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
 }
 
 #[must_use]
-pub fn euclidean_distance(x: &[f64], y: &[f64]) -> f64 {
-    x.iter()
-        .zip(y)
-        .map(|(xi, yi)| (xi - yi).powi(2))
-        .sum::<f64>()
-}
-
-#[must_use]
-pub fn euclidean_similarity(x: &[f64], y: &[f64]) -> f64 {
-    -euclidean_distance(x, y)
-}
-
-#[must_use]
 fn magnitude(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
     x[..length]

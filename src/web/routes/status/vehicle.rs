@@ -8,7 +8,7 @@ use rocket::response::content::Html;
 use rocket::response::status::NotFound;
 use rocket::{uri, State};
 
-use crate::cf::{cosine_similarity, euclidean_similarity, pearson_coefficient};
+use crate::cf::{cosine_similarity, pearson_coefficient};
 use crate::logging::clear_user;
 use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
@@ -42,23 +42,20 @@ pub async fn get(
     let vehicle = get_vehicle(tank_id);
     let vehicle_title = vehicle_title(&vehicle);
 
-    let tables: Vec<(Vec<(i32, f64)>, &'static str)> =
-        [pearson_coefficient, cosine_similarity, euclidean_similarity]
-            .iter()
-            .map(|f| {
-                vehicles_factors
-                    .iter()
-                    .map(|(tank_id, other_factors)| {
-                        (*tank_id, f(vehicle_factors, &other_factors[1..]))
-                    })
-                    .sorted_unstable_by(|(_, left), (_, right)| {
-                        right.partial_cmp(left).unwrap_or(Ordering::Equal)
-                    })
-                    .take(25)
-                    .collect()
-            })
-            .zip(["Pearson", "Cosine", "Euclidean"])
-            .collect();
+    let tables: Vec<(Vec<(i32, f64)>, &'static str)> = [pearson_coefficient, cosine_similarity]
+        .iter()
+        .map(|f| {
+            vehicles_factors
+                .iter()
+                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, &other_factors[1..])))
+                .sorted_unstable_by(|(_, left), (_, right)| {
+                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
+                })
+                .take(25)
+                .collect()
+        })
+        .zip(["Pearson", "Cosine"])
+        .collect();
 
     let markup = html! {
         (DOCTYPE)
@@ -86,14 +83,14 @@ pub async fn get(
 
                     div.columns {
                         @for (table, title) in &tables {
-                            div.column."is-4" {
+                            div.column."is-6" {
                                 div.box {
                                     h2.title."is-4" { (title) }
-                                    table.table {
+                                    table.table.is-hoverable.is-striped.is-fullwidth {
                                         thead {
                                             th { "Vehicle" }
-                                            th { "Tier" }
-                                            th { "Coef" }
+                                            th.has-text-centered { "Tier" }
+                                            th { "Correlation" }
                                         }
                                         tbody {
                                             @for (tank_id, coefficient) in table {
