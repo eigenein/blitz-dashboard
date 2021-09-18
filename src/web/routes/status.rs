@@ -120,7 +120,7 @@ pub async fn get(
                     import { initSortableTable } from "/static/table.js?v5";
                     
                     (function () {
-                        initSortableTable(document.getElementById("vehicle-factors"), "factor-0");
+                        initSortableTable(document.getElementById("vehicle-factors"), "tier");
                     })();
                 """#))
             }
