@@ -14,11 +14,15 @@ pub async fn open(uri: &str) -> crate::Result<Connection> {
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
+/// Some vehicles are just copies of some other vehicles.
+/// Remap them to improve the latent factors.
+static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
+    64273_i32 => 55313, // 8,8 cm Pak 43 Jagdtiger
+    64801_i32 => 2849, // T34 Independence
+};
+
 pub async fn get_vehicle_factors(redis: &mut Connection, tank_id: i32) -> crate::Result<Vec<f64>> {
-    let tank_id = match tank_id {
-        64273 => 55313, // 8,8 cm Pak 43 Jagdtiger
-        _ => tank_id,
-    };
+    let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
     let value: Option<Vec<u8>> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
     match value {
         Some(value) => Ok(rmp_serde::from_read_ref(&value)?),
@@ -44,9 +48,8 @@ pub async fn set_vehicle_factors(
     let bytes = rmp_serde::to_vec(factors)?;
     let mut pipeline = ::redis::pipe();
     pipeline.hset(VEHICLE_FACTORS_KEY, tank_id, &bytes);
-    if tank_id == 55313 {
-        // 8,8 cm Pak 43 Jagdtiger
-        pipeline.hset(VEHICLE_FACTORS_KEY, 64273, bytes);
+    if let Some(tank_id) = REMAP_TANK_ID.get(&tank_id) {
+        pipeline.hset(VEHICLE_FACTORS_KEY, *tank_id, bytes);
     }
     pipeline.query_async(redis).await?;
     Ok(())
