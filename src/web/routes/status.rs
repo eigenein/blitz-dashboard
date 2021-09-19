@@ -4,6 +4,7 @@ use redis::AsyncCommands;
 use rocket::response::content::Html;
 use rocket::{uri, State};
 
+use crate::cf::magnitude;
 use crate::logging::clear_user;
 use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
@@ -57,19 +58,26 @@ pub async fn get(
 
             section.section {
                 div.container {
-                    h1.title { "Machine Learning" }
+                    h1.title { "Машинное обучение" }
 
                     div.box {
-                        h2.title."is-4" { "Vehicle Latent Factors" }
+                        h2.title."is-4" { "Признаки техники" }
                         div.table-container {
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {
-                                    th { "Vehicle" }
-                                    th { "Status" }
+                                    th { "Техника" }
+                                    th { "Детали" }
                                     th {
                                         a data-sort="tier" {
                                             span.icon-text.is-flex-wrap-nowrap {
-                                                span { "Tier" }
+                                                span { "Уровень" }
+                                            }
+                                        }
+                                    }
+                                    th {
+                                        a data-sort="magnitude" {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span { "Длина вектора"  }
                                             }
                                         }
                                     }
@@ -96,6 +104,10 @@ pub async fn get(
                                                 }
                                             }
                                             (tier_td(vehicle.tier))
+
+                                            @let magnitude = magnitude(&factors, factors.len());
+                                            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 3)) }
+
                                             @for i in 0..n_factors {
                                                 @let factor = factors.get(i).copied().unwrap_or(0.0);
                                                 td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {

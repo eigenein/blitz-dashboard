@@ -66,7 +66,7 @@ pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
 }
 
 #[must_use]
-fn magnitude(x: &[f64], length: usize) -> f64 {
+pub fn magnitude(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
     x[..length]
         .iter()

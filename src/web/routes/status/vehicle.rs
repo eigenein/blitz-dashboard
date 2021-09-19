@@ -49,12 +49,15 @@ pub async fn get(
                 .iter()
                 .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, &other_factors[1..])))
                 .sorted_unstable_by(|(_, left), (_, right)| {
-                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
+                    right
+                        .abs()
+                        .partial_cmp(&left.abs())
+                        .unwrap_or(Ordering::Equal)
                 })
                 .take(25)
                 .collect()
         })
-        .zip(["Pearson", "Cosine"])
+        .zip(["r-Пирсона", "Косинусное сходство"])
         .collect();
 
     let markup = html! {
@@ -88,9 +91,9 @@ pub async fn get(
                                     h2.title."is-4" { (title) }
                                     table.table.is-hoverable.is-striped.is-fullwidth {
                                         thead {
-                                            th { "Vehicle" }
-                                            th.has-text-centered { "Tier" }
-                                            th { "Correlation" }
+                                            th { "Техника" }
+                                            th.has-text-centered { "Уровень" }
+                                            th { "Сходство" }
                                         }
                                         tbody {
                                             @for (tank_id, coefficient) in table {
