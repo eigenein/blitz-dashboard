@@ -13,7 +13,7 @@ use crate::logging::clear_user;
 use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{
-    footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th, vehicle_title,
+    footer, headers, home_button, sign_class, tier_td, vehicle_th, vehicle_title,
 };
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
@@ -104,7 +104,7 @@ pub async fn get(
                                                     td.(sign_class(*coefficient)) {
                                                         a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                             span.icon-text.is-flex-wrap-nowrap {
-                                                                (render_f64(*coefficient, 3))
+                                                                (format!("{:+.3}", coefficient))
                                                                 span.icon { { i.fas.fa-link {} } }
                                                             }
                                                         }

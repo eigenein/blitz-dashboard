@@ -50,10 +50,8 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-pub fn render_percentage(value: f64) -> Markup {
-    html! {
-        (render_f64(value * 100.0, 1)) "%"
-    }
+pub fn render_percentage(value: f64) -> String {
+    format!("{:.1}%", value * 100.0)
 }
 
 pub fn render_tank_tr(

@@ -446,7 +446,7 @@ pub async fn get(
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.survived_battles);
                                                             (render_percentage(expected_period_survival_rate.mean))
-                                                            span.has-text-grey-light { " ±" (render_f64(100.0 * expected_period_survival_rate.margin, 1)) }
+                                                            span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }
                                                     }
                                                 }
