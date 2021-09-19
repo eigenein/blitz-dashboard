@@ -17,7 +17,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::redis::get_all_vehicle_factors;
 use crate::statistics::ConfidenceInterval;
-use crate::time::{from_days, from_hours, from_minutes, from_months};
+use crate::time::{from_days, from_hours, from_months};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
@@ -38,12 +38,10 @@ pub async fn get(
     account_tanks_cache: &State<AccountTanksCache>,
     redis: &State<Redis>,
 ) -> crate::web::result::Result<Response> {
+    let period = period.map(|period| parse_duration(&period)).transpose();
     let period = match period {
-        Some(period) => match parse_duration(&period) {
-            Ok(period) => period,
-            Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
-        },
-        None => from_hours(12),
+        Ok(period) => period,
+        Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
     };
     log::info!("GET #{} within {:?}.", account_id, period);
     let _stopwatch =
@@ -56,11 +54,14 @@ pub async fn get(
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
         .await?;
-    let tanks_delta = {
-        let before = Utc::now() - Duration::from_std(period)?;
-        let old_tank_snapshots =
-            retrieve_latest_tank_snapshots(database, account_id, &before).await?;
-        subtract_tanks(tanks, old_tank_snapshots)
+    let tanks_delta = match period {
+        Some(period) => {
+            let before = Utc::now() - Duration::from_std(period)?;
+            let old_tank_snapshots =
+                retrieve_latest_tank_snapshots(database, account_id, &before).await?;
+            subtract_tanks(tanks, old_tank_snapshots)
+        }
+        None => tanks,
     };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
@@ -129,20 +130,20 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
-                    (render_period_li(period, from_hours(1), "1 час"))
-                    (render_period_li(period, from_minutes(90), "1.5 часа"))
-                    (render_period_li(period, from_hours(2), "2 часа"))
-                    (render_period_li(period, from_hours(3), "3 часа"))
-                    (render_period_li(period, from_hours(4), "4 часа"))
-                    (render_period_li(period, from_hours(8), "8 часов"))
-                    (render_period_li(period, from_hours(12), "12 часов"))
-                    (render_period_li(period, from_days(1), "24 часа"))
-                    (render_period_li(period, from_days(2), "2 дня"))
-                    (render_period_li(period, from_days(3), "3 дня"))
-                    (render_period_li(period, from_days(7), "Неделя"))
-                    (render_period_li(period, from_days(14), "2 недели"))
-                    (render_period_li(period, from_days(21), "3 недели"))
-                    (render_period_li(period, from_months(1), "Месяц"))
+                    (render_period_li(period, None, "Все время"))
+                    (render_period_li(period, Some(from_hours(1)), "1 час"))
+                    (render_period_li(period, Some(from_hours(2)), "2 часа"))
+                    (render_period_li(period, Some(from_hours(3)), "3 часа"))
+                    (render_period_li(period, Some(from_hours(4)), "4 часа"))
+                    (render_period_li(period, Some(from_hours(8)), "8 часов"))
+                    (render_period_li(period, Some(from_hours(12)), "12 часов"))
+                    (render_period_li(period, Some(from_days(1)), "24 часа"))
+                    (render_period_li(period, Some(from_days(2)), "2 дня"))
+                    (render_period_li(period, Some(from_days(3)), "3 дня"))
+                    (render_period_li(period, Some(from_days(7)), "Неделя"))
+                    (render_period_li(period, Some(from_days(14)), "2 недели"))
+                    (render_period_li(period, Some(from_days(21)), "3 недели"))
+                    (render_period_li(period, Some(from_months(1)), "Месяц"))
                 }
             }
         }

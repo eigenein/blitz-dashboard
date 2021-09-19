@@ -12,13 +12,16 @@ use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
 
 pub fn render_period_li(
-    period: StdDuration,
-    new_period: StdDuration,
+    period: Option<StdDuration>,
+    new_period: Option<StdDuration>,
     text: &'static str,
 ) -> Markup {
     html! {
         li.(if period == new_period { "is-active" } else { "" }) {
-            a href=(format!("?period={}", format_duration(new_period))) { (text) }
+            @match new_period {
+                Some(new_period) => { a href=(format!("?period={}", format_duration(new_period))) { (text) } },
+                None => { a href="?" { (text) } },
+            }
         }
     }
 }
