@@ -77,9 +77,11 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
             let database = database.clone();
             let redis = redis.clone();
             let cf_opts = opts.cf.clone();
+            let n_tasks = opts.common.n_tasks;
 
             async move {
-                let crawler = Crawler::new(api, database.clone(), redis, 1, true, cf_opts).await?;
+                let crawler =
+                    Crawler::new(api, database.clone(), redis, n_tasks, true, cf_opts).await?;
                 let metrics = crawler.metrics.clone();
                 let join_handle = tokio::spawn(async move {
                     crawler
@@ -124,7 +126,15 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, false, opts.cf).await?;
+    let crawler = Crawler::new(
+        api.clone(),
+        database,
+        redis,
+        opts.common.n_tasks,
+        false,
+        opts.cf,
+    )
+    .await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],

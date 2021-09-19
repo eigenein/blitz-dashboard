@@ -67,9 +67,32 @@ pub struct WebOpts {
     pub gtag: Option<String>,
 }
 
+#[derive(StructOpt)]
+pub struct CommonCrawlerOpts {
+    /// Number of tasks for each sub-crawler
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parse_task_count),
+    )]
+    pub n_tasks: usize,
+}
+
+fn parse_task_count(value: &str) -> crate::Result<usize> {
+    let value = usize::from_str(value)?;
+    if value != 0 {
+        Ok(value)
+    } else {
+        Err(anyhow!("expected non-zero number of tasks"))
+    }
+}
+
 /// Runs the account crawler
 #[derive(StructOpt)]
 pub struct CrawlerOpts {
+    #[structopt(flatten)]
+    pub common: CommonCrawlerOpts,
+
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
@@ -85,15 +108,6 @@ pub struct CrawlerOpts {
     pub min_offset: StdDuration,
 }
 
-fn parse_task_count(value: &str) -> crate::Result<usize> {
-    let value = usize::from_str(value)?;
-    if value != 0 {
-        Ok(value)
-    } else {
-        Err(anyhow!("expected non-zero number of tasks"))
-    }
-}
-
 /// Updates the bundled Tankopedia module
 #[derive(StructOpt)]
 pub struct ImportTankopediaOpts {
@@ -105,6 +119,9 @@ pub struct ImportTankopediaOpts {
 /// Crawls the specified account IDs
 #[derive(StructOpt)]
 pub struct CrawlAccountsOpts {
+    #[structopt(flatten)]
+    pub common: CommonCrawlerOpts,
+
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
@@ -118,14 +135,6 @@ pub struct CrawlAccountsOpts {
     /// Ending account ID (non-inclusive)
     #[structopt(long, parse(try_from_str = parse_account_id))]
     pub end_id: i32,
-
-    /// Number of tasks
-    #[structopt(
-        long,
-        default_value = "1",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_tasks: usize,
 }
 
 fn parse_account_id(value: &str) -> crate::Result<i32> {
