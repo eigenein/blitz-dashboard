@@ -91,9 +91,11 @@ pub fn render_tank_tr(
                 data-value=(true_win_rate.mean)
             {
                 span.icon-text.is-flex-wrap-nowrap {
-                    strong { (render_percentage(true_win_rate.mean)) }
-                    span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                        " ±" (render_f64(100.0 * true_win_rate.margin, 1))
+                    span {
+                        strong { span { (render_percentage(true_win_rate.mean)) } }
+                        span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
+                            " ±" (render_f64(100.0 * true_win_rate.margin, 1))
+                        }
                     }
                     (partial_cmp_icon(win_rate_ordering))
                 }
@@ -136,7 +138,7 @@ pub fn render_tank_tr(
             {
                 strong { (render_f64(expected_wins_per_hour.mean, 1)) }
                 span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                    " ±" (render_f64(expected_wins_per_hour.margin, 1))
+                    (format!(" ±{:.1}", expected_wins_per_hour.margin))
                 }
             }
 
@@ -155,7 +157,7 @@ pub fn render_tank_tr(
                     span {
                         strong { (render_f64(expected_gold.mean, 1)) }
                         span.(margin_class(expected_gold.margin, 2.0, 3.0)) {
-                            " ±" (render_f64(expected_gold.margin, 1))
+                            (format!(" ±{:.1}", expected_gold.margin))
                         }
                     }
                 }
@@ -167,7 +169,7 @@ pub fn render_tank_tr(
 
             @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
             td data-sort="damage-per-battle" data-value=(damage_per_battle) {
-                (render_f64(damage_per_battle, 0))
+                (format!("{:.0}", damage_per_battle))
             }
 
             td data-sort="survived-battles" data-value=(tank.statistics.all.survived_battles) {
