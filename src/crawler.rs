@@ -9,7 +9,6 @@ use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::ConnectionManager as Redis;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
-use tokio::task::JoinHandle;
 
 use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
@@ -51,10 +50,11 @@ pub struct Crawler {
 /// in the database.
 ///
 /// Intended to be run as a system service.
-pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
+pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
+    let request_counter = api.request_counter.clone();
     let database = crate::database::open(
         &opts.connections.database_uri,
         opts.connections.initialize_schema,
@@ -62,47 +62,39 @@ pub async fn run_crawler(mut opts: CrawlerOpts) -> crate::Result {
     .await?;
     let redis = crate::redis::open(&opts.connections.redis_uri).await?;
 
-    opts.offsets.sort_unstable();
-    let selectors = convert_offsets_to_selectors(&opts.offsets, opts.min_offset);
-    for (i, selector) in selectors.iter().enumerate() {
-        log::info!("Sub-crawler #{}: {}.", i, selector);
-    }
-
-    let (metrics, handles): (
-        Vec<Arc<Mutex<SubCrawlerMetrics>>>,
-        Vec<JoinHandle<crate::Result>>,
-    ) = stream::iter(selectors)
-        .then(|selector| {
-            let api = api.clone();
-            let database = database.clone();
-            let redis = redis.clone();
-            let cf_opts = opts.cf.clone();
-            let n_tasks = opts.common.n_tasks;
-
-            async move {
-                let crawler =
-                    Crawler::new(api, database.clone(), redis, n_tasks, true, cf_opts).await?;
-                let metrics = crawler.metrics.clone();
-                let join_handle = tokio::spawn(async move {
-                    crawler
-                        .run(get_batch_stream(database, selector))
-                        .await
-                        .with_context(|| format!("failed to run the sub-crawler: {}", selector))
-                });
-                Ok::<_, anyhow::Error>((metrics, join_handle))
-            }
-        })
-        .try_collect::<Vec<_>>()
-        .await?
-        .into_iter()
-        .unzip();
-    tokio::spawn(log_metrics(api.request_counter, metrics));
+    let slow_crawler = Crawler::new(
+        api.clone(),
+        database.clone(),
+        redis.clone(),
+        1,
+        true,
+        opts.cf,
+    )
+    .await?;
+    let fast_crawler = Crawler::new(
+        api,
+        database.clone(),
+        redis,
+        opts.n_fast_tasks,
+        true,
+        opts.cf,
+    )
+    .await?;
+    let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
 
     log::info!("Running…");
-    futures::future::try_join_all(handles)
-        .await?
-        .into_iter()
-        .collect()
+    tokio::spawn(log_metrics(request_counter, metrics));
+    let fast_run = fast_crawler.run(get_batch_stream(
+        database.clone(),
+        Selector::Between(opts.min_offset, opts.slow_offset),
+    ));
+    let slow_run = slow_crawler.run(get_batch_stream(
+        database,
+        Selector::Before(opts.slow_offset),
+    ));
+
+    futures::future::try_join(fast_run, slow_run).await?;
+    Ok(())
 }
 
 /// Performs a very slow one-time account scan.
@@ -126,43 +118,17 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(
-        api.clone(),
-        database,
-        redis,
-        opts.common.n_tasks,
-        false,
-        opts.cf,
-    )
-    .await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, false, opts.cf).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
     ));
-    tokio::spawn(async move { crawler.run(stream).await }).await??;
+    crawler.run(stream).await?;
     Ok(())
 }
 
 fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
     WargamingApi::new(application_id, StdDuration::from_millis(3000))
-}
-
-/// Converts user-defined offsets to sub-crawler selectors.
-fn convert_offsets_to_selectors(offsets: &[StdDuration], min_offset: StdDuration) -> Vec<Selector> {
-    let mut selectors = Vec::new();
-    let mut last_offset: Option<&StdDuration> = None;
-    for offset in offsets {
-        match last_offset {
-            Some(last_offset) => selectors.push(Selector::Between(*last_offset, *offset)),
-            None => selectors.push(Selector::Between(min_offset, *offset)),
-        }
-        last_offset = Some(offset);
-    }
-    match last_offset {
-        Some(offset) => selectors.push(Selector::EarlierThan(*offset)),
-        None => selectors.push(Selector::EarlierThan(min_offset)),
-    }
-    selectors
 }
 
 impl Crawler {
@@ -406,47 +372,6 @@ impl Crawler {
             error,
             self.cf_opts.vehicle_learning_rate,
             self.cf_opts.r,
-        );
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const MIN_OFFSET: StdDuration = StdDuration::from_secs(1);
-
-    #[test]
-    fn convert_no_offsets_ok() {
-        assert_eq!(
-            convert_offsets_to_selectors(&[], MIN_OFFSET),
-            vec![Selector::EarlierThan(MIN_OFFSET)],
-        );
-    }
-
-    #[test]
-    fn convert_one_offset_ok() {
-        let offset = StdDuration::from_secs(2);
-        assert_eq!(
-            convert_offsets_to_selectors(&[offset], MIN_OFFSET),
-            vec![
-                Selector::Between(MIN_OFFSET, offset),
-                Selector::EarlierThan(offset),
-            ]
-        );
-    }
-
-    #[test]
-    fn convert_two_offsets_ok() {
-        let offset_1 = StdDuration::from_secs(2);
-        let offset_2 = StdDuration::from_secs(3);
-        assert_eq!(
-            convert_offsets_to_selectors(&[offset_1, offset_2], MIN_OFFSET),
-            vec![
-                Selector::Between(MIN_OFFSET, offset_1),
-                Selector::Between(offset_1, offset_2),
-                Selector::EarlierThan(offset_2),
-            ]
         );
     }
 }

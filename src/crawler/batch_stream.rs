@@ -45,7 +45,7 @@ async fn retrieve_batch(
     selector: Selector,
 ) -> crate::Result<Batch> {
     let query = match selector {
-        Selector::EarlierThan(min_offset) => {
+        Selector::Before(min_offset) => {
             // language=SQL
             const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
             sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)

@@ -67,17 +67,6 @@ pub struct WebOpts {
     pub gtag: Option<String>,
 }
 
-#[derive(StructOpt)]
-pub struct CommonCrawlerOpts {
-    /// Number of tasks for each sub-crawler
-    #[structopt(
-        long,
-        default_value = "1",
-        parse(try_from_str = parse_task_count),
-    )]
-    pub n_tasks: usize,
-}
-
 fn parse_task_count(value: &str) -> crate::Result<usize> {
     let value = usize::from_str(value)?;
     if value != 0 {
@@ -91,21 +80,26 @@ fn parse_task_count(value: &str) -> crate::Result<usize> {
 #[derive(StructOpt)]
 pub struct CrawlerOpts {
     #[structopt(flatten)]
-    pub common: CommonCrawlerOpts,
-
-    #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
     #[structopt(flatten)]
     pub cf: CfOpts,
 
-    /// Time offsets between different sub-crawlers
-    #[structopt(short, long = "offset", parse(try_from_str = humantime::parse_duration))]
-    pub offsets: Vec<StdDuration>,
+    /// Minimum last battle time offset for the «slow» sub-crawler
+    #[structopt(long = "offset", default_value = "1w", parse(try_from_str = humantime::parse_duration))]
+    pub slow_offset: StdDuration,
 
-    /// Minimum last battle time offset for account selection
+    /// Minimum last battle time offset for the «fast» sub-crawler
     #[structopt(long = "min-offset", default_value = "5m", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
+
+    /// Number of tasks for the «fast» sub-crawler
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parse_task_count),
+    )]
+    pub n_fast_tasks: usize,
 }
 
 /// Updates the bundled Tankopedia module
@@ -120,11 +114,9 @@ pub struct ImportTankopediaOpts {
 #[derive(StructOpt)]
 pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
-    pub common: CommonCrawlerOpts,
-
-    #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
+    // TODO: shouldn't be here.
     #[structopt(flatten)]
     pub cf: CfOpts,
 
@@ -135,6 +127,14 @@ pub struct CrawlAccountsOpts {
     /// Ending account ID (non-inclusive)
     #[structopt(long, parse(try_from_str = parse_account_id))]
     pub end_id: i32,
+
+    /// Number of tasks for the crawler
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parse_task_count),
+    )]
+    pub n_tasks: usize,
 }
 
 fn parse_account_id(value: &str) -> crate::Result<i32> {
@@ -166,7 +166,7 @@ pub struct ConnectionOpts {
 }
 
 /// Collaborative filtering (machine learning) options.
-#[derive(StructOpt, Clone)]
+#[derive(StructOpt, Clone, Copy)]
 pub struct CfOpts {
     /// CF account latent factors learning rate
     #[structopt(long = "cf-account-lr", default_value = "0.01")]

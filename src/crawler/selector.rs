@@ -14,7 +14,7 @@ pub enum Selector {
 
     /// Select accounts which have last played earlier than the specified offset from now.
     /// Or, in other words, which haven't played for a long time.
-    EarlierThan(StdDuration),
+    Before(StdDuration),
 }
 
 impl Display for Selector {
@@ -28,8 +28,8 @@ impl Display for Selector {
                     format_duration(*offset_1)
                 )
             }
-            Selector::EarlierThan(offset) => {
-                write!(f, "EARLIER than [{}] ago", format_duration(*offset))
+            Selector::Before(offset) => {
+                write!(f, "BEFORE [{}] ago", format_duration(*offset))
             }
         }
     }
