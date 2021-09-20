@@ -18,8 +18,7 @@ pub struct SubCrawlerMetrics {
 
     pub n_battles: i32,
 
-    pub cf_error: f64,
-    pub cf_entropy: f64,
+    pub cf_true_n: i32,
     pub cf_n: i32,
 
     lags: Vec<u64>,
@@ -30,8 +29,7 @@ impl SubCrawlerMetrics {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
-        self.cf_error = 0.0;
-        self.cf_entropy = 0.0;
+        self.cf_true_n = 0;
         self.cf_n = 0;
         self.lags.clear();
     }
@@ -40,21 +38,13 @@ impl SubCrawlerMetrics {
         self.lags.push(secs);
     }
 
-    pub fn push_cf_loss(&mut self, prediction: f64, target: f64) {
-        const EPSILON: f64 = 0.000001;
-
-        self.cf_n += 1;
-        self.cf_error += prediction - target;
-
-        if target.abs() > EPSILON && prediction.abs() > EPSILON {
-            self.cf_entropy -= target * prediction.ln();
-        }
-
-        let inverse_target = 1.0 - target;
-        let inverse_prediction = 1.0 - prediction;
-        if inverse_target.abs() > EPSILON && inverse_prediction.abs() > EPSILON {
-            self.cf_entropy -= inverse_target * inverse_prediction.ln();
-        }
+    pub fn push_cf_error(&mut self, prediction: f64, n_battles: i32, n_wins: i32) {
+        self.cf_n += n_battles;
+        self.cf_true_n += if prediction >= 0.5 {
+            n_wins
+        } else {
+            n_battles - n_wins
+        };
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
@@ -88,8 +78,7 @@ pub async fn log_metrics(
 
         // Aggregated collaborative filtering metrics.
         let mut cf_n = 0;
-        let mut cf_error = 0.0;
-        let mut cf_entropy = 0.0;
+        let mut cf_true_n = 0;
 
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
@@ -104,17 +93,15 @@ pub async fn log_metrics(
                 metrics.last_account_id,
             );
             cf_n += metrics.cf_n;
-            cf_error += metrics.cf_error;
-            cf_entropy += metrics.cf_entropy;
+            cf_true_n += metrics.cf_true_n;
             metrics.reset();
         }
 
         let cf_n = cf_n.max(1) as f64;
         log::info!(
-            "Total RPS: {:>4.1} | CFME: {:>+.3} | CFCE: {:>.3} | CFN: {:>4.0}",
+            "Total RPS: {:>4.1} | P: {:>.3} | CFN: {:>4.0}",
             n_requests as f64 / elapsed_secs,
-            cf_error / cf_n,
-            cf_entropy / cf_n,
+            cf_true_n as f64 / cf_n as f64,
             cf_n,
         );
     }

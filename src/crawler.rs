@@ -334,6 +334,13 @@ impl Crawler {
                 crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
             initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
 
+            // See how many battle outcomes we predicted correctly.
+            let prediction = predict_win_rate(&vehicle_factors, account_factors);
+            self.metrics
+                .lock()
+                .await
+                .push_cf_error(prediction, n_battles, n_wins);
+
             for _ in 0..n_battles {
                 self.train_step(account_factors, &mut vehicle_factors, win_rate)
                     .await;
@@ -352,9 +359,7 @@ impl Crawler {
         vehicle_factors: &mut [f64],
         target: f64,
     ) {
-        // Make a prediction.
         let prediction = predict_win_rate(vehicle_factors, account_factors);
-        self.metrics.lock().await.push_cf_loss(prediction, target);
         let error = prediction - target;
 
         // Adjust the latent factors.
