@@ -99,7 +99,7 @@ pub async fn log_metrics(
 
         let cf_n = cf_n.max(1) as f64;
         log::info!(
-            "Total RPS: {:>4.1} | P: {:>.3} | CFN: {:>4.0}",
+            "RPS: {:>4.1} | precision: {:>.3} | battles: {:>4.0}",
             n_requests as f64 / elapsed_secs,
             cf_true_n as f64 / cf_n as f64,
             cf_n,
