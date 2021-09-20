@@ -86,11 +86,11 @@ pub struct CrawlerOpts {
     pub cf: CfOpts,
 
     /// Minimum last battle time offset for the «slow» sub-crawler
-    #[structopt(long = "offset", default_value = "1w", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long, default_value = "1w", parse(try_from_str = humantime::parse_duration))]
     pub slow_offset: StdDuration,
 
     /// Minimum last battle time offset for the «fast» sub-crawler
-    #[structopt(long = "min-offset", default_value = "5m", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long, default_value = "5m", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 
     /// Number of tasks for the «fast» sub-crawler
