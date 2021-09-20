@@ -102,7 +102,7 @@ pub fn render_tank_tr(
             }
 
             @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
-                predict_win_rate(vehicle_factors, &account.factors).clamp(0.0, 1.0)
+                predict_win_rate(vehicle_factors, &account.factors)
             } else {
                 0.5
             };
