@@ -170,8 +170,9 @@ impl Crawler {
         let mut tx = self.database.begin().await?;
         for account in batch.into_iter() {
             let account_id = account.base.id;
-            let new_info = new_infos.remove(&account_id.to_string()).flatten();
-            self.crawl_account(&mut tx, account, new_info).await?;
+            if let Some(new_info) = new_infos.remove(&account_id.to_string()).flatten() {
+                self.crawl_account(&mut tx, account, new_info).await?;
+            }
             self.update_metrics_for_account(account_id).await;
         }
         log::debug!("Committing…");
@@ -194,32 +195,10 @@ impl Crawler {
         &self,
         connection: &mut PgConnection,
         account: Account,
-        new_info: Option<AccountInfo>,
+        new_info: AccountInfo,
     ) -> crate::Result {
         let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.base.id));
 
-        if let Some(new_info) = new_info {
-            self.crawl_existing_account(&mut *connection, account, new_info)
-                .await?;
-        } else if self.incremental {
-            Self::delete_account(&mut *connection, account.base.id).await?;
-        }
-
-        Ok(())
-    }
-
-    async fn delete_account(connection: &mut PgConnection, account_id: i32) -> crate::Result {
-        log::warn!("Account #{} does not exist. Deleting…", account_id);
-        database::delete_account(connection, account_id).await?;
-        Ok(())
-    }
-
-    async fn crawl_existing_account(
-        &self,
-        connection: &mut PgConnection,
-        account: Account,
-        new_info: AccountInfo,
-    ) -> crate::Result {
         if new_info.base.last_battle_time == account.base.last_battle_time {
             log::trace!("#{}: last battle time is not changed.", account.base.id);
             return Ok(());

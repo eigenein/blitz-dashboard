@@ -144,17 +144,6 @@ pub async fn insert_account_if_not_exists(
     Ok(account)
 }
 
-pub async fn delete_account(connection: &mut PgConnection, account_id: i32) -> crate::Result {
-    // language=SQL
-    const QUERY: &str = "DELETE FROM accounts WHERE account_id = $1";
-    sqlx::query(QUERY)
-        .bind(account_id)
-        .execute(connection)
-        .await
-        .context("failed to delete account")?;
-    Ok(())
-}
-
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
 
