@@ -106,12 +106,12 @@ pub async fn get(
                                             (tier_td(vehicle.tier))
 
                                             @let magnitude = magnitude(&factors, factors.len());
-                                            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 3)) }
+                                            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
                                             @for i in 0..n_factors {
                                                 @let factor = factors.get(i).copied().unwrap_or(0.0);
                                                 td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
-                                                    (render_f64(factor, 3))
+                                                    (render_f64(factor, 4))
                                                 }
                                             }
                                         }
