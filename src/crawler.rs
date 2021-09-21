@@ -338,8 +338,7 @@ impl Crawler {
         vehicle_factors: &mut [f64],
         target: f64,
     ) {
-        let prediction = predict_win_rate(vehicle_factors, account_factors);
-        let error = prediction - target;
+        let error = target - predict_win_rate(vehicle_factors, account_factors);
 
         // Adjust the latent factors.
         let frozen_account_factors = account_factors.to_vec();
