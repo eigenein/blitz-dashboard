@@ -111,7 +111,7 @@ pub async fn get(
                                             @for i in 0..n_factors {
                                                 @let factor = factors.get(i).copied().unwrap_or(0.0);
                                                 td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
-                                                    (render_f64(factor, 4))
+                                                    (format!("{:+.4}", factor))
                                                 }
                                             }
                                         }
