@@ -188,7 +188,7 @@ pub async fn get(
                 }
             }
             th.is-white-space-nowrap {
-                sup title="В разработке" { strong.has-text-danger-dark { "β" } }
+                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="predicted-win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Предсказанный процент побед – в реальном времени (live predicted win rate)" { "LPWR" } }
