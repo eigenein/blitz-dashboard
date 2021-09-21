@@ -93,15 +93,17 @@ pub async fn get(
                                         thead {
                                             th { "Техника" }
                                             th.has-text-centered { "Уровень" }
+                                            th { "Тип" }
                                             th { "Сходство" }
                                         }
                                         tbody {
                                             @for (tank_id, coefficient) in table {
                                                 @let vehicle = get_vehicle(*tank_id);
-                                                tr {
+                                                tr.(sign_class(*coefficient)) {
                                                     (vehicle_th(&vehicle))
                                                     (tier_td(vehicle.tier))
-                                                    td.(sign_class(*coefficient)) {
+                                                    td { (format!("{:?}", vehicle.type_)) }
+                                                    td {
                                                         a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                             span.icon-text.is-flex-wrap-nowrap {
                                                                 (format!("{:+.3}", coefficient))
