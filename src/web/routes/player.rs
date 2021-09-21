@@ -131,7 +131,6 @@ pub async fn get(
             div.container {
                 ul {
                     (render_period_li(period, None, "Все время"))
-                    (render_period_li(period, Some(from_hours(1)), "1 час"))
                     (render_period_li(period, Some(from_hours(2)), "2 часа"))
                     (render_period_li(period, Some(from_hours(3)), "3 часа"))
                     (render_period_li(period, Some(from_hours(4)), "4 часа"))
