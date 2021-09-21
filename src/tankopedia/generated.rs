@@ -607,7 +607,7 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
     },
     15617_i32 => Vehicle {
         tank_id: 15617,
-        name: Cow::Borrowed("Об. 907"),
+        name: Cow::Borrowed("Объект 907"),
         tier: 10,
         is_premium: true,
         nation: Nation::Ussr,
@@ -980,6 +980,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Ussr,
         type_: TankType::Light,
+    },
+    18753_i32 => Vehicle {
+        tank_id: 18753,
+        name: Cow::Borrowed("AMX CDA 105"),
+        tier: 8,
+        is_premium: true,
+        nation: Nation::France,
+        type_: TankType::AT,
     },
     18769_i32 => Vehicle {
         tank_id: 18769,
@@ -1461,6 +1469,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Usa,
         type_: TankType::Heavy,
     },
+    23041_i32 => Vehicle {
+        tank_id: 23041,
+        name: Cow::Borrowed("Т-34 экр."),
+        tier: 5,
+        is_premium: true,
+        nation: Nation::Ussr,
+        type_: TankType::Medium,
+    },
     2305_i32 => Vehicle {
         tank_id: 2305,
         name: Cow::Borrowed("СУ-152"),
@@ -1815,7 +1831,7 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
     },
     3329_i32 => Vehicle {
         tank_id: 3329,
-        name: Cow::Borrowed("MS-1"),
+        name: Cow::Borrowed("MS-1 mod. 1"),
         tier: 1,
         is_premium: false,
         nation: Nation::Ussr,

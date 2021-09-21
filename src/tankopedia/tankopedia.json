@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -37864,8 +37864,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -47840,8 +47840,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          7729,
-          5169
+          5169,
+          7729
         ],
         "price_credit": 0,
         "price_xp": 5000,
