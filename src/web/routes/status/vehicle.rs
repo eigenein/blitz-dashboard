@@ -125,6 +125,6 @@ pub async fn get(
     };
 
     let response = markup.into_string();
-    redis.set_ex(&cache_key, &response, 600).await?;
+    redis.set_ex(&cache_key, &response, 60).await?;
     Ok(Response::Html(Html(response)))
 }
