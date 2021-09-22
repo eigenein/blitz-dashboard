@@ -71,6 +71,15 @@ pub fn magnitude(x: &[f64], length: usize) -> f64 {
 }
 
 #[must_use]
+pub fn make_targets(n_battles: i32, n_wins: i32) -> Vec<f64> {
+    let mut targets: Vec<f64> = (0..n_battles)
+        .map(|i| if i < n_wins { 1.0 } else { 0.0 })
+        .collect();
+    fastrand::shuffle(&mut targets);
+    targets
+}
+
+#[must_use]
 fn mean(x: &[f64], length: usize) -> f64 {
     debug_assert!(length <= x.len());
     debug_assert_ne!(length, 0);
@@ -99,4 +108,15 @@ fn std(x: &[f64], length: usize) -> f64 {
 #[must_use]
 fn min_length(x: &[f64], y: &[f64]) -> usize {
     x.len().min(y.len())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn make_targets_ok() {
+        let sum: f64 = make_targets(100, 30).iter().sum();
+        assert!(sum > 29.9 && sum < 30.1);
+    }
 }

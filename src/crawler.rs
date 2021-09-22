@@ -10,7 +10,7 @@ use redis::aio::ConnectionManager as Redis;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
+use crate::cf::{adjust_factors, initialize_factors, make_targets, predict_win_rate};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
@@ -20,6 +20,7 @@ use crate::database::retrieve_tank_ids;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
+use crate::redis::{get_vehicle_factors, set_vehicle_factors};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -305,12 +306,10 @@ impl Crawler {
                 continue;
             }
             let n_wins = tank.statistics.all.wins - n_wins;
-            let win_rate = n_wins as f64 / n_battles as f64;
 
             // Read the vehicle profile and initialize it, if needed.
             let mut redis = self.redis.lock().await;
-            let mut vehicle_factors =
-                crate::redis::get_vehicle_factors(&mut redis, tank_id).await?;
+            let mut vehicle_factors = get_vehicle_factors(&mut redis, tank_id).await?;
             initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
 
             // See how many battle outcomes we predicted correctly.
@@ -320,19 +319,19 @@ impl Crawler {
                 .await
                 .push_cf_error(prediction, n_battles, n_wins);
 
-            for _ in 0..n_battles {
-                self.train_step(account_factors, &mut vehicle_factors, win_rate)
+            for target in make_targets(n_battles, n_wins) {
+                self.make_train_step(account_factors, &mut vehicle_factors, target)
                     .await;
             }
 
             // Write the updated factors.
-            crate::redis::set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
+            set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
         }
 
         Ok(())
     }
 
-    async fn train_step(
+    async fn make_train_step(
         &self,
         account_factors: &mut [f64],
         vehicle_factors: &mut [f64],
