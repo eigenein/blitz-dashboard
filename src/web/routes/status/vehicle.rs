@@ -54,7 +54,10 @@ pub async fn get(
                         .partial_cmp(&left.abs())
                         .unwrap_or(Ordering::Equal)
                 })
-                .take(25)
+                .take(20)
+                .sorted_unstable_by(|(_, left), (_, right)| {
+                    right.partial_cmp(&left).unwrap_or(Ordering::Equal)
+                })
                 .collect()
         })
         .zip(["r-Пирсона", "Косинусное сходство"])
