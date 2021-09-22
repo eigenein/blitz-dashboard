@@ -18,8 +18,8 @@ pub struct SubCrawlerMetrics {
 
     pub n_battles: i32,
 
-    pub cf_true_n: i32,
-    pub cf_n: i32,
+    pub cf_error: f64,
+    pub cf_battles: i32,
 
     lags: Vec<u64>,
 }
@@ -29,8 +29,8 @@ impl SubCrawlerMetrics {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
-        self.cf_true_n = 0;
-        self.cf_n = 0;
+        self.cf_error = 0.0;
+        self.cf_battles = 0;
         self.lags.clear();
     }
 
@@ -39,12 +39,10 @@ impl SubCrawlerMetrics {
     }
 
     pub fn push_cf_error(&mut self, prediction: f64, n_battles: i32, n_wins: i32) {
-        self.cf_n += n_battles;
-        self.cf_true_n += if prediction >= 0.5 {
-            n_wins
-        } else {
-            n_battles - n_wins
-        };
+        debug_assert_ne!(n_battles, 0);
+        debug_assert!(n_wins <= n_battles);
+        self.cf_error += prediction * (n_battles as f64) - n_wins as f64;
+        self.cf_battles += n_battles;
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
@@ -77,8 +75,8 @@ pub async fn log_metrics(
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
 
         // Aggregated collaborative filtering metrics.
-        let mut cf_n = 0;
-        let mut cf_true_n = 0;
+        let mut cf_battles = 0;
+        let mut cf_error = 0.0;
 
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
@@ -92,17 +90,17 @@ pub async fn log_metrics(
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
             );
-            cf_n += metrics.cf_n;
-            cf_true_n += metrics.cf_true_n;
+            cf_battles += metrics.cf_battles;
+            cf_error += metrics.cf_error;
             metrics.reset();
         }
 
-        let cf_n = cf_n.max(1) as f64;
+        let cf_battles = cf_battles.max(1) as f64;
         log::info!(
-            "RPS: {:>4.1} | precision: {:>.3} | battles: {:>4.0}",
+            "RPS: {:>4.1} | error: {:>.6} | battles: {:>4.0}",
             n_requests as f64 / elapsed_secs,
-            cf_true_n as f64 / cf_n as f64,
-            cf_n,
+            cf_error / cf_battles as f64,
+            cf_battles,
         );
     }
 }
