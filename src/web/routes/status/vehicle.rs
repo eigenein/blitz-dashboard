@@ -56,7 +56,7 @@ pub async fn get(
                 })
                 .take(20)
                 .sorted_unstable_by(|(_, left), (_, right)| {
-                    right.partial_cmp(&left).unwrap_or(Ordering::Equal)
+                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
                 })
                 .collect()
         })

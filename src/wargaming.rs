@@ -19,6 +19,7 @@ use crate::wargaming::response::Response;
 
 pub mod cache;
 pub mod response;
+pub mod tank_id;
 
 #[derive(Clone)]
 pub struct WargamingApi {
