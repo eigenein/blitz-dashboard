@@ -18,6 +18,7 @@ const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 /// Remap them to improve the latent factors.
 static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
     64273_i32 => 55313, // 8,8 cm Pak 43 Jagdtiger
+    64769_i32 => 9217, // ИС-6 Бесстрашный
     64801_i32 => 2849, // T34 Independence
 };
 
