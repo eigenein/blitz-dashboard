@@ -4,6 +4,7 @@ use maud::{html, Markup};
 use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
+use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
 
@@ -211,8 +212,24 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     };
 
     html! {
-        span."mx-1" { (flag) }
-        strong."mx-1".(name_class) { (vehicle.name) }
+        span.icon-text.is-flex-wrap-nowrap {
+            span {
+                span."mx-1" { (flag) }
+                strong."mx-1".(name_class) { (vehicle.name) }
+            }
+            @if let Ok(external_id) = to_client_id(vehicle.tank_id) {
+                span.icon {
+                    a
+                        title="Открыть в Blitz Ангар"
+                        href=(format!("https://blitzhangar.com/ru/tank/{}", external_id))
+                        target="_blank"
+                        rel="noopener noreferrer" {
+                            i.fas.fa-external-link-alt.has-text-grey-light {}
+                        }
+                }
+            }
+        }
+
     }
 }
 

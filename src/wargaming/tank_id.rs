@@ -1,7 +1,6 @@
 use anyhow::anyhow;
 use phf::{phf_map, Map};
 
-#[allow(dead_code)]
 pub fn to_client_id(tank_id: i32) -> crate::Result<i32> {
     const COMPONENT_VEHICLE: i32 = 1;
     debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
@@ -13,7 +12,6 @@ pub fn to_client_id(tank_id: i32) -> crate::Result<i32> {
     }
 }
 
-#[allow(dead_code)]
 static NATION_IDS: Map<i32, i32> = phf_map! {
     0_i32 => 20000, // USSR
     1_i32 => 30000, // Germany
