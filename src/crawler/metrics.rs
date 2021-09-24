@@ -98,9 +98,9 @@ pub async fn log_metrics(
 
         let cf_battles = cf_battles.max(1) as f64;
         log::info!(
-            "RPS: {:>4.1} | error: {:>.6} | battles: {:>4.0}",
+            "RPS: {:>4.1} | error: {:>7.3} pp | battles: {:>4.0}",
             n_requests as f64 / elapsed_secs,
-            cf_error / cf_battles as f64,
+            100.0 * cf_error / cf_battles as f64,
             cf_battles,
         );
     }
