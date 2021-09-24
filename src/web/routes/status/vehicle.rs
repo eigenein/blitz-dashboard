@@ -54,7 +54,7 @@ pub async fn get(
                         .partial_cmp(&left.abs())
                         .unwrap_or(Ordering::Equal)
                 })
-                .take(20)
+                .take(40)
                 .sorted_unstable_by(|(_, left), (_, right)| {
                     right.partial_cmp(left).unwrap_or(Ordering::Equal)
                 })
@@ -87,17 +87,17 @@ pub async fn get(
                 div.container {
                     h1.title { (vehicle_title) }
 
-                    div.columns {
+                    div.columns.is-multiline {
                         @for (table, title) in &tables {
-                            div.column."is-6" {
+                            div.column."is-12"."is-6-widescreen" {
                                 div.box {
                                     h2.title."is-4" { (title) }
                                     table.table.is-hoverable.is-striped.is-fullwidth {
                                         thead {
                                             th { "Техника" }
-                                            th.has-text-centered { "Уровень" }
+                                            th.has-text-centered { "Ур." }
                                             th { "Тип" }
-                                            th { "Сходство" }
+                                            th { "Корр." }
                                         }
                                         tbody {
                                             @for (tank_id, coefficient) in table {

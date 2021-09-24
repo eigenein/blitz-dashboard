@@ -66,7 +66,7 @@ pub async fn get(
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
                                 thead {
                                     th { "Техника" }
-                                    th { "Детали" }
+                                    th { }
                                     th {
                                         a data-sort="tier" {
                                             span.icon-text.is-flex-wrap-nowrap {
