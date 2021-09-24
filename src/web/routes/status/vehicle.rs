@@ -105,7 +105,7 @@ pub async fn get(
                                                 tr.(sign_class(*coefficient)) {
                                                     (vehicle_th(&other_vehicle))
                                                     (tier_td(other_vehicle.tier))
-                                                    td.(if vehicle.type_ != other_vehicle.type_ { "ha" } else { "" }) {
+                                                    td {
                                                         (format!("{:?}", other_vehicle.type_))
                                                     }
                                                     td {
