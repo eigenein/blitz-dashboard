@@ -42,7 +42,7 @@ pub async fn get(
     let vehicle = get_vehicle(tank_id);
     let vehicle_title = vehicle_title(&vehicle);
 
-    let tables: Vec<(Vec<(i32, f64)>, &'static str)> = [pearson_coefficient, cosine_similarity]
+    let tables: Vec<(Vec<(i32, f64)>, &'static str)> = [cosine_similarity, pearson_coefficient]
         .iter()
         .map(|f| {
             vehicles_factors
@@ -60,7 +60,7 @@ pub async fn get(
                 })
                 .collect()
         })
-        .zip(["r-Пирсона", "Косинусное сходство"])
+        .zip(["Косинусное сходство", "r-Пирсона"])
         .collect();
 
     let markup = html! {
