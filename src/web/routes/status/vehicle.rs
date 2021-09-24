@@ -101,11 +101,13 @@ pub async fn get(
                                         }
                                         tbody {
                                             @for (tank_id, coefficient) in table {
-                                                @let vehicle = get_vehicle(*tank_id);
+                                                @let other_vehicle = get_vehicle(*tank_id);
                                                 tr.(sign_class(*coefficient)) {
-                                                    (vehicle_th(&vehicle))
-                                                    (tier_td(vehicle.tier))
-                                                    td { (format!("{:?}", vehicle.type_)) }
+                                                    (vehicle_th(&other_vehicle))
+                                                    (tier_td(other_vehicle.tier))
+                                                    td.(if vehicle.type_ != other_vehicle.type_ { "ha" } else { "" }) {
+                                                        (format!("{:?}", other_vehicle.type_))
+                                                    }
                                                     td {
                                                         a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                             span.icon-text.is-flex-wrap-nowrap {
