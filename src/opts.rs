@@ -100,6 +100,10 @@ pub struct CrawlerOpts {
         parse(try_from_str = parse_task_count),
     )]
     pub n_fast_tasks: usize,
+
+    /// Metrics logging interval
+    #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
+    pub log_interval: StdDuration,
 }
 
 /// Updates the bundled Tankopedia module

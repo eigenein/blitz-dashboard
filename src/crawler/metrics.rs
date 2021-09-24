@@ -65,11 +65,12 @@ impl SubCrawlerMetrics {
 pub async fn log_metrics(
     request_counter: Arc<AtomicU32>,
     metrics: Vec<Arc<Mutex<SubCrawlerMetrics>>>,
+    interval: StdDuration,
 ) -> crate::Result {
     loop {
         let start_instant = Instant::now();
         let n_requests_start = request_counter.load(Ordering::Relaxed);
-        tokio::time::sleep(StdDuration::from_secs(60)).await;
+        tokio::time::sleep(interval).await;
 
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
