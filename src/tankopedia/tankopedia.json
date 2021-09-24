@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          25124,
-          24868
+          24868,
+          25124
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -33937,9 +33937,9 @@
       24101
     ],
     "guns": [
-      264484,
+      264996,
       263204,
-      264996
+      264484
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34018,8 +34018,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264484,
-          264996
+          264996,
+          264484
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -37864,8 +37864,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -47840,8 +47840,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          5169,
-          7729
+          7729,
+          5169
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -76643,8 +76643,8 @@
         "name": "QF Mk. VI Bofors",
         "next_modules": null,
         "next_tanks": [
-          9041,
-          849
+          849,
+          9041
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -79272,8 +79272,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -80996,8 +80996,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2324,
-          2068
+          2068,
+          2324
         ],
         "next_tanks": [
           10257
