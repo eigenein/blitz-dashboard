@@ -34,16 +34,16 @@ pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
 pub fn adjust_factors(
     left: &mut [f64],
     right: &[f64],
-    error: f64,
+    residual_error: f64,
     learning_rate: f64,
     regularization: f64,
 ) {
     debug_assert!(learning_rate >= 0.0);
     debug_assert!(regularization >= 0.0);
-    debug_assert!(!error.is_nan());
+    debug_assert!(!residual_error.is_nan());
 
     for i in 0..min_length(left, right) {
-        left[i] += learning_rate * (error * right[i] - regularization * left[i]);
+        left[i] += learning_rate * (residual_error * right[i] - regularization * left[i]);
     }
 }
 
@@ -68,15 +68,6 @@ pub fn magnitude(x: &[f64], length: usize) -> f64 {
         .map(|value| value * value)
         .sum::<f64>()
         .sqrt()
-}
-
-#[must_use]
-pub fn make_targets(n_battles: i32, n_wins: i32) -> Vec<f64> {
-    let mut targets: Vec<f64> = (0..n_battles)
-        .map(|i| if i < n_wins { 1.0 } else { 0.0 })
-        .collect();
-    fastrand::shuffle(&mut targets);
-    targets
 }
 
 #[must_use]
@@ -113,15 +104,4 @@ fn min_length(x: &[f64], y: &[f64]) -> usize {
 #[must_use]
 fn logistic(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn make_targets_ok() {
-        let sum: f64 = make_targets(100, 30).iter().sum();
-        assert!(sum > 29.9 && sum < 30.1);
-    }
 }

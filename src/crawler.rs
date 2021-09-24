@@ -10,13 +10,13 @@ use redis::aio::ConnectionManager as Redis;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::cf::{adjust_factors, initialize_factors, make_targets, predict_win_rate};
+use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
 use crate::database;
 use crate::database::models::Account;
-use crate::database::retrieve_tank_ids;
+use crate::database::{retrieve_tank_battle_count, retrieve_tank_ids};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
@@ -45,6 +45,11 @@ pub struct Crawler {
 
     /// Collaborative filtering options.
     cf_opts: CfOpts,
+}
+
+struct TrainStep {
+    pub tank_id: i32,
+    pub target: f64,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -293,66 +298,70 @@ impl Crawler {
         account_factors: &mut Vec<f64>,
         tanks: &[Tank],
     ) -> crate::Result {
-        initialize_factors(account_factors, self.cf_opts.n_factors);
+        let mut steps = Vec::new();
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
-
-            // Let's see how much battles and losses the account has made.
             let (n_battles, n_wins) =
-                database::retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
+                retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
             let n_battles = tank.statistics.all.battles - n_battles;
-            if n_battles <= 0 {
-                log::debug!("Tank #{}/#{} is a weirdo.", account_id, tank_id);
-                continue;
-            }
             let n_wins = tank.statistics.all.wins - n_wins;
+            if n_battles > 0 && n_wins >= 0 {
+                for i in 0..n_battles {
+                    steps.push(TrainStep {
+                        tank_id,
+                        target: if i < n_wins { 1.0 } else { 0.0 },
+                    });
+                }
+            }
+        }
 
-            // Read the vehicle profile and initialize it, if needed.
+        fastrand::shuffle(&mut steps); // make it even more stochastic
+        initialize_factors(account_factors, self.cf_opts.n_factors);
+
+        for step in steps {
             let mut redis = self.redis.lock().await;
-            let mut vehicle_factors = get_vehicle_factors(&mut redis, tank_id).await?;
+            let mut vehicle_factors = get_vehicle_factors(&mut redis, step.tank_id).await?;
             initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
-
-            // See how many battle outcomes we predicted correctly.
             let prediction = predict_win_rate(&vehicle_factors, account_factors);
             self.metrics
                 .lock()
                 .await
-                .push_cf_error(prediction, n_battles, n_wins);
-
-            for target in make_targets(n_battles, n_wins) {
-                self.make_train_step(account_factors, &mut vehicle_factors, target)
-                    .await;
-            }
-
-            // Write the updated factors.
-            set_vehicle_factors(&mut redis, tank_id, &vehicle_factors).await?;
+                .push_error(prediction, step.target);
+            self.make_train_step(
+                account_factors,
+                &mut vehicle_factors,
+                prediction,
+                step.target,
+            );
+            set_vehicle_factors(&mut redis, step.tank_id, &vehicle_factors).await?;
         }
 
         Ok(())
     }
 
-    async fn make_train_step(
+    fn make_train_step(
         &self,
         account_factors: &mut [f64],
         vehicle_factors: &mut [f64],
+        prediction: f64,
         target: f64,
     ) {
-        let error = target - predict_win_rate(vehicle_factors, account_factors);
+        let residual_error = target - prediction;
 
         // Adjust the latent factors.
         let frozen_account_factors = account_factors.to_vec();
         adjust_factors(
             account_factors,
             vehicle_factors,
-            error,
+            residual_error,
             self.cf_opts.account_learning_rate,
             self.cf_opts.r,
         );
         adjust_factors(
             vehicle_factors,
             &frozen_account_factors,
-            error,
+            residual_error,
             self.cf_opts.vehicle_learning_rate,
             self.cf_opts.r,
         );

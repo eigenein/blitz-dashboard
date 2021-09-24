@@ -38,11 +38,9 @@ impl SubCrawlerMetrics {
         self.lags.push(secs);
     }
 
-    pub fn push_cf_error(&mut self, prediction: f64, n_battles: i32, n_wins: i32) {
-        debug_assert_ne!(n_battles, 0);
-        debug_assert!(n_wins <= n_battles);
-        self.cf_error += prediction * (n_battles as f64) - n_wins as f64;
-        self.cf_battles += n_battles;
+    pub fn push_error(&mut self, prediction: f64, target: f64) {
+        self.cf_error += prediction - target;
+        self.cf_battles += 1;
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
