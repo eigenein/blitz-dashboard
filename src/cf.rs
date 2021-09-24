@@ -13,7 +13,7 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
     let length = min_length(vehicle_factors, account_factors);
     let prediction = dot(vehicle_factors, account_factors, length);
     assert!(!prediction.is_nan());
-    prediction
+    logistic(prediction)
 }
 
 /// Vector dot product.
@@ -108,6 +108,11 @@ fn std(x: &[f64], length: usize) -> f64 {
 #[must_use]
 fn min_length(x: &[f64], y: &[f64]) -> usize {
     x.len().min(y.len())
+}
+
+#[must_use]
+fn logistic(x: f64) -> f64 {
+    1.0 / (1.0 + (-x).exp())
 }
 
 #[cfg(test)]
