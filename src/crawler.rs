@@ -50,6 +50,7 @@ pub struct Crawler {
 
 #[derive(Serialize, Deserialize)]
 struct TrainStep {
+    pub account_id: i32,
     pub tank_id: i32,
     pub is_win: bool,
 }
@@ -311,6 +312,7 @@ impl Crawler {
             if n_battles > 0 && n_wins >= 0 {
                 for i in 0..n_battles {
                     steps.push(TrainStep {
+                        account_id,
                         tank_id,
                         is_win: i < n_wins,
                     });
