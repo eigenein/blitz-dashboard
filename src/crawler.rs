@@ -7,6 +7,7 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::ConnectionManager as Redis;
+use serde::{Deserialize, Serialize};
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
@@ -47,9 +48,10 @@ pub struct Crawler {
     cf_opts: CfOpts,
 }
 
+#[derive(Serialize, Deserialize)]
 struct TrainStep {
     pub tank_id: i32,
-    pub target: f64,
+    pub is_win: bool,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -310,7 +312,7 @@ impl Crawler {
                 for i in 0..n_battles {
                     steps.push(TrainStep {
                         tank_id,
-                        target: if i < n_wins { 1.0 } else { 0.0 },
+                        is_win: i < n_wins,
                     });
                 }
             }
@@ -324,16 +326,9 @@ impl Crawler {
             let mut vehicle_factors = get_vehicle_factors(&mut redis, step.tank_id).await?;
             initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
             let prediction = predict_win_rate(&vehicle_factors, account_factors);
-            self.metrics
-                .lock()
-                .await
-                .push_error(prediction, step.target);
-            self.make_train_step(
-                account_factors,
-                &mut vehicle_factors,
-                prediction,
-                step.target,
-            );
+            let target = if step.is_win { 1.0 } else { 0.0 };
+            self.metrics.lock().await.push_error(prediction, target);
+            self.make_train_step(account_factors, &mut vehicle_factors, prediction, target);
             set_vehicle_factors(&mut redis, step.tank_id, &vehicle_factors).await?;
         }
 

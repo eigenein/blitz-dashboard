@@ -42,6 +42,7 @@ pub enum Subcommand {
     Crawler(CrawlerOpts),
     ImportTankopedia(ImportTankopediaOpts),
     CrawlAccounts(CrawlAccountsOpts),
+    Trainer(TrainerOpts),
 }
 
 /// Runs the web application
@@ -149,6 +150,10 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
         Err(anyhow!("{} is an invalid account ID", account_id))
     }
 }
+
+/// Trains the collaborative filtering model
+#[derive(StructOpt)]
+pub struct TrainerOpts {}
 
 #[derive(StructOpt)]
 pub struct ConnectionOpts {
