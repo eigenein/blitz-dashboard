@@ -9,7 +9,10 @@ use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
-#[structopt(rename_all = "kebab-case", global_settings(&[AppSettings::ColoredHelp]))]
+#[structopt(
+    rename_all = "kebab-case",
+    global_settings(&[AppSettings::ColoredHelp, AppSettings::InferSubcommands]),
+)]
 pub struct Opts {
     /// Sentry DSN
     #[structopt(short, long)]
@@ -39,10 +42,15 @@ fn parse_verbosity(n_occurences: u64) -> LevelFilter {
 #[derive(StructOpt)]
 pub enum Subcommand {
     Web(WebOpts),
-    Crawler(CrawlerOpts),
+
+    #[structopt(alias = "crawler")]
+    Crawl(CrawlerOpts),
+
     ImportTankopedia(ImportTankopediaOpts),
     CrawlAccounts(CrawlAccountsOpts),
-    Trainer(TrainerOpts),
+
+    #[structopt(alias = "trainer")]
+    Train(TrainerOpts),
 }
 
 /// Runs the web application
@@ -162,7 +170,6 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
     }
 }
 
-/// Trains the collaborative filtering model
 #[derive(StructOpt, Copy, Clone)]
 pub struct TrainerOpts {
     /// CF account latent factors learning rate
