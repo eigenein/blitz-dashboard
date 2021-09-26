@@ -1,8 +1,12 @@
-use redis::aio::ConnectionManager;
-use redis::AsyncCommands;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::result::Result as StdResult;
 
+use anyhow::Context;
+use redis::aio::ConnectionManager;
+use redis::{pipe, AsyncCommands};
+use serde::{Deserialize, Serialize};
+
+const TRAINER_QUEUE_KEY: &str = "trainer::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
 /// Some vehicles are just copies of some other vehicles.
@@ -48,11 +52,28 @@ pub async fn set_vehicle_factors(
     factors: &[f64],
 ) -> crate::Result {
     let bytes = rmp_serde::to_vec(factors)?;
-    let mut pipeline = ::redis::pipe();
+    let mut pipeline = pipe();
     pipeline.hset(VEHICLE_FACTORS_KEY, tank_id, &bytes);
     if let Some(tank_id) = REMAP_TANK_ID.get(&tank_id) {
         pipeline.hset(VEHICLE_FACTORS_KEY, *tank_id, bytes);
     }
     pipeline.query_async(redis).await?;
+    Ok(())
+}
+
+pub async fn push_train_steps(
+    redis: &mut ConnectionManager,
+    steps: &[TrainStep],
+    limit: isize,
+) -> crate::Result {
+    let serialized_steps: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
+        steps.iter().map(rmp_serde::to_vec).collect();
+    let serialized_steps = serialized_steps.context("failed to serialize the steps")?;
+    pipe()
+        .lpush(TRAINER_QUEUE_KEY, serialized_steps)
+        .ltrim(TRAINER_QUEUE_KEY, -limit, -1)
+        .query_async(redis)
+        .await
+        .context("failed to push the steps")?;
     Ok(())
 }

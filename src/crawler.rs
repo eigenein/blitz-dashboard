@@ -20,8 +20,9 @@ use crate::database::{retrieve_tank_battle_count, retrieve_tank_ids};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::{get_vehicle_factors, set_vehicle_factors, TrainStep};
+use crate::trainer::{get_vehicle_factors, push_train_steps, set_vehicle_factors, TrainStep};
 use crate::wargaming::WargamingApi;
+use std::borrow::BorrowMut;
 
 mod batch_stream;
 mod metrics;
@@ -48,8 +49,7 @@ pub struct Crawler {
 }
 
 pub struct IncrementalOpts {
-    #[allow(dead_code)]
-    trainer_queue_limit: i32,
+    trainer_queue_limit: isize,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -224,8 +224,14 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
-            if self.incremental.is_some() {
-                self.train(base.id, &mut account_factors, &tanks).await?;
+            if let Some(opts) = &self.incremental {
+                self.train(
+                    base.id,
+                    &mut account_factors,
+                    &tanks,
+                    opts.trainer_queue_limit,
+                )
+                .await?;
             }
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
@@ -301,6 +307,7 @@ impl Crawler {
         account_id: i32,
         account_factors: &mut Vec<f64>,
         tanks: &[Tank],
+        queue_limit: isize,
     ) -> crate::Result {
         let mut steps = Vec::new();
 
@@ -321,6 +328,7 @@ impl Crawler {
             }
         }
 
+        push_train_steps(self.redis.lock().await.borrow_mut(), &steps, queue_limit).await?;
         fastrand::shuffle(&mut steps); // make it even more stochastic
         initialize_factors(account_factors, self.cf_opts.n_factors);
 

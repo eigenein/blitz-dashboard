@@ -69,11 +69,9 @@ pub struct WebOpts {
 }
 
 fn parse_task_count(value: &str) -> crate::Result<usize> {
-    let value = usize::from_str(value)?;
-    if value != 0 {
-        Ok(value)
-    } else {
-        Err(anyhow!("expected non-zero number of tasks"))
+    match usize::from_str(value)? {
+        count if count >= 1 => Ok(count),
+        _ => Err(anyhow!("expected non-zero number of tasks")),
     }
 }
 
@@ -106,8 +104,20 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 
-    #[structopt(default_value = "100000")]
-    pub trainer_queue_limit: i32,
+    /// Maximum number of train steps in the trainer queue (overflow prevention)
+    #[structopt(
+        long,
+        default_value = "1000000",
+        parse(try_from_str = parse_trainer_queue_limit),
+    )]
+    pub trainer_queue_limit: isize,
+}
+
+fn parse_trainer_queue_limit(value: &str) -> crate::Result<isize> {
+    match isize::from_str(value)? {
+        limit if limit >= 1 => Ok(limit),
+        _ => Err(anyhow!("expected a positive limit")),
+    }
 }
 
 /// Updates the bundled Tankopedia module
@@ -146,11 +156,9 @@ pub struct CrawlAccountsOpts {
 }
 
 fn parse_account_id(value: &str) -> crate::Result<i32> {
-    let account_id = i32::from_str(value)?;
-    if account_id >= 1 {
-        Ok(account_id)
-    } else {
-        Err(anyhow!("{} is an invalid account ID", account_id))
+    match i32::from_str(value)? {
+        account_id if account_id >= 1 => Ok(account_id),
+        account_id => Err(anyhow!("{} is an invalid account ID", account_id)),
     }
 }
 
