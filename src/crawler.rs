@@ -45,6 +45,9 @@ pub struct Crawler {
 
     /// Collaborative filtering options.
     cf_opts: CfOpts,
+
+    #[allow(dead_code)]
+    trainer_queue_limit: i32,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -70,6 +73,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         1,
         true,
         opts.cf,
+        opts.trainer_queue_limit,
     )
     .await?;
     let fast_crawler = Crawler::new(
@@ -79,6 +83,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.n_fast_tasks,
         true,
         opts.cf,
+        opts.trainer_queue_limit,
     )
     .await?;
     let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
@@ -119,7 +124,16 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, false, opts.cf).await?;
+    let crawler = Crawler::new(
+        api.clone(),
+        database,
+        redis,
+        opts.n_tasks,
+        false,
+        opts.cf,
+        0,
+    )
+    .await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -141,6 +155,7 @@ impl Crawler {
         n_tasks: usize,
         incremental: bool,
         cf_opts: CfOpts,
+        trainer_queue_limit: i32,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -150,6 +165,7 @@ impl Crawler {
             n_tasks,
             incremental,
             cf_opts,
+            trainer_queue_limit,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };

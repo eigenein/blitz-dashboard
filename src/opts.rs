@@ -105,6 +105,9 @@ pub struct CrawlerOpts {
     /// Metrics logging interval
     #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
+
+    #[structopt(default_value = "100000")]
+    pub trainer_queue_limit: i32,
 }
 
 /// Updates the bundled Tankopedia module
