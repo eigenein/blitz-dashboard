@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use bytes::Bytes;
-use redis::aio::ConnectionManager as RedisConnection;
+use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 
 use crate::models::AccountInfo;
@@ -8,13 +8,13 @@ use crate::wargaming::WargamingApi;
 
 pub struct AccountInfoCache {
     api: WargamingApi,
-    redis: RedisConnection,
+    redis: MultiplexedConnection,
 }
 
 impl AccountInfoCache {
     const TTL_SECS: usize = 60;
 
-    pub fn new(api: WargamingApi, redis: RedisConnection) -> Self {
+    pub fn new(api: WargamingApi, redis: MultiplexedConnection) -> Self {
         Self { api, redis }
     }
 

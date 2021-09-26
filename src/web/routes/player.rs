@@ -3,7 +3,7 @@ use chrono_humanize::Tense;
 use humantime::parse_duration;
 use log::Level;
 use maud::{html, PreEscaped, DOCTYPE};
-use redis::aio::ConnectionManager as Redis;
+use redis::aio::MultiplexedConnection;
 use rocket::response::content::Html;
 use rocket::response::status::BadRequest;
 use rocket::{uri, State};
@@ -36,7 +36,7 @@ pub async fn get(
     account_info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     account_tanks_cache: &State<AccountTanksCache>,
-    redis: &State<Redis>,
+    redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<Response> {
     let period = period.map(|period| parse_duration(&period)).transpose();
     let period = match period {
@@ -75,7 +75,7 @@ pub async fn get(
     let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
     let is_account_birthday = current_info.created_at.date() == Utc::today();
 
-    let mut redis = Redis::clone(redis);
+    let mut redis = MultiplexedConnection::clone(redis);
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
     let navbar = html! {

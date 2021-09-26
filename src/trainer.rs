@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 
 use anyhow::Context;
-use redis::aio::ConnectionManager;
+use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +25,7 @@ pub struct TrainStep {
 }
 
 pub async fn get_vehicle_factors(
-    redis: &mut ConnectionManager,
+    redis: &mut MultiplexedConnection,
     tank_id: i32,
 ) -> crate::Result<Vec<f64>> {
     let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
@@ -37,7 +37,7 @@ pub async fn get_vehicle_factors(
 }
 
 pub async fn get_all_vehicle_factors(
-    redis: &mut ConnectionManager,
+    redis: &mut MultiplexedConnection,
 ) -> crate::Result<HashMap<i32, Vec<f64>>> {
     let hash_map: HashMap<i32, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
@@ -47,7 +47,7 @@ pub async fn get_all_vehicle_factors(
 }
 
 pub async fn set_vehicle_factors(
-    redis: &mut ConnectionManager,
+    redis: &mut MultiplexedConnection,
     tank_id: i32,
     factors: &[f64],
 ) -> crate::Result {
@@ -62,7 +62,7 @@ pub async fn set_vehicle_factors(
 }
 
 pub async fn push_train_steps(
-    redis: &mut ConnectionManager,
+    redis: &mut MultiplexedConnection,
     steps: &[TrainStep],
     limit: isize,
 ) -> crate::Result {

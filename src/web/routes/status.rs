@@ -1,5 +1,5 @@
 use maud::{html, PreEscaped, DOCTYPE};
-use redis::aio::ConnectionManager as Redis;
+use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::response::content::Html;
 use rocket::{uri, State};
@@ -19,11 +19,11 @@ pub mod vehicle;
 #[rocket::get("/status")]
 pub async fn get(
     tracking_code: &State<TrackingCode>,
-    redis: &State<Redis>,
+    redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<Html<String>> {
     clear_user();
 
-    let mut redis = Redis::clone(redis);
+    let mut redis = MultiplexedConnection::clone(redis);
     const CACHE_KEY: &str = "html::status";
     if let Some(cached_response) = redis.get(CACHE_KEY).await? {
         return Ok(Html(cached_response));

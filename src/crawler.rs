@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use std::collections::HashSet;
 use std::convert::TryInto;
 use std::sync::Arc;
@@ -6,7 +7,7 @@ use std::time::Duration as StdDuration;
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
-use redis::aio::ConnectionManager as Redis;
+use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
@@ -22,7 +23,6 @@ use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::{get_vehicle_factors, push_train_steps, set_vehicle_factors, TrainStep};
 use crate::wargaming::WargamingApi;
-use std::borrow::BorrowMut;
 
 mod batch_stream;
 mod metrics;
@@ -31,7 +31,7 @@ mod selector;
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
-    redis: Mutex<Redis>,
+    redis: Mutex<MultiplexedConnection>,
 
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
@@ -66,12 +66,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.connections.initialize_schema,
     )
     .await?;
-    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
+    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?;
 
     let slow_crawler = Crawler::new(
         api.clone(),
         database.clone(),
-        redis.clone(),
+        redis.get_multiplexed_async_connection().await?,
         1,
         Some(IncrementalOpts {
             trainer_queue_limit: opts.trainer_queue_limit,
@@ -82,7 +82,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let fast_crawler = Crawler::new(
         api,
         database.clone(),
-        redis,
+        redis.get_multiplexed_async_connection().await?,
         opts.n_fast_tasks,
         Some(IncrementalOpts {
             trainer_queue_limit: opts.trainer_queue_limit,
@@ -122,7 +122,9 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         opts.connections.initialize_schema,
     )
     .await?;
-    let redis = crate::redis::open(&opts.connections.redis_uri).await?;
+    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?
+        .get_multiplexed_async_connection()
+        .await?;
 
     let stream = stream::iter(opts.start_id..opts.end_id)
         .map(Account::empty)
@@ -146,7 +148,7 @@ impl Crawler {
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
-        redis: Redis,
+        redis: MultiplexedConnection,
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
         cf_opts: CfOpts,

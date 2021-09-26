@@ -17,7 +17,6 @@ mod logging;
 mod metrics;
 mod models;
 mod opts;
-mod redis;
 mod statistics;
 mod tankopedia;
 mod thirdparty;

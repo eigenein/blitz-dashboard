@@ -9,7 +9,6 @@ use rocket::{routes, Request};
 use routes::r#static;
 
 use crate::opts::WebOpts;
-use crate::redis;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::WargamingApi;
@@ -35,7 +34,9 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         opts.connections.initialize_schema,
     )
     .await?;
-    let redis = redis::open(&opts.connections.redis_uri).await?;
+    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?
+        .get_multiplexed_async_connection()
+        .await?;
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))

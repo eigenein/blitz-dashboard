@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use redis::aio::ConnectionManager as RedisConnection;
+use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ use crate::wargaming::WargamingApi;
 
 pub struct AccountTanksCache {
     api: WargamingApi,
-    redis: RedisConnection,
+    redis: MultiplexedConnection,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,7 +24,7 @@ struct Entry {
 impl AccountTanksCache {
     const TTL_SECS: usize = 15 * 60;
 
-    pub fn new(api: WargamingApi, redis: RedisConnection) -> Self {
+    pub fn new(api: WargamingApi, redis: MultiplexedConnection) -> Self {
         Self { api, redis }
     }
 

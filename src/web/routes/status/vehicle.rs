@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use itertools::Itertools;
 use maud::{html, DOCTYPE};
-use redis::aio::ConnectionManager as Redis;
+use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::response::content::Html;
 use rocket::response::status::NotFound;
@@ -23,11 +23,11 @@ use crate::web::TrackingCode;
 pub async fn get(
     tank_id: i32,
     tracking_code: &State<TrackingCode>,
-    redis: &State<Redis>,
+    redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
 
-    let mut redis = Redis::clone(redis);
+    let mut redis = MultiplexedConnection::clone(redis);
     let cache_key = format!("html::status::vehicle::{}", tank_id);
     if let Some(cached_response) = redis.get(&cache_key).await? {
         return Ok(Response::Html(Html(cached_response)));
