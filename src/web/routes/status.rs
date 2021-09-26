@@ -6,8 +6,8 @@ use rocket::{uri, State};
 
 use crate::cf::magnitude;
 use crate::logging::clear_user;
-use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
+use crate::trainer::get_all_vehicle_factors;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };

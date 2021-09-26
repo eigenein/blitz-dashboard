@@ -15,9 +15,9 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
-use crate::redis::get_all_vehicle_factors;
 use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_months};
+use crate::trainer::get_all_vehicle_factors;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{

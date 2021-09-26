@@ -10,8 +10,8 @@ use rocket::{uri, State};
 
 use crate::cf::{cosine_similarity, pearson_coefficient};
 use crate::logging::clear_user;
-use crate::redis::get_all_vehicle_factors;
 use crate::tankopedia::get_vehicle;
+use crate::trainer::get_all_vehicle_factors;
 use crate::web::partials::{
     footer, headers, home_button, sign_class, tier_td, vehicle_th, vehicle_title,
 };

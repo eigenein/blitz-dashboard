@@ -7,7 +7,6 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::ConnectionManager as Redis;
-use serde::{Deserialize, Serialize};
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
@@ -21,7 +20,7 @@ use crate::database::{retrieve_tank_battle_count, retrieve_tank_ids};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
 use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
-use crate::redis::{get_vehicle_factors, set_vehicle_factors};
+use crate::trainer::{get_vehicle_factors, set_vehicle_factors, TrainStep};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -46,13 +45,6 @@ pub struct Crawler {
 
     /// Collaborative filtering options.
     cf_opts: CfOpts,
-}
-
-#[derive(Serialize, Deserialize)]
-struct TrainStep {
-    pub account_id: i32,
-    pub tank_id: i32,
-    pub is_win: bool,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
