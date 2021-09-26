@@ -37,7 +37,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
         let tank_ids: Vec<i32> = batch.iter().map(|step| step.tank_id).unique().collect();
+
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
+        for factors in accounts_factors.values_mut() {
+            initialize_factors(factors, opts.n_factors);
+        }
 
         for i in 0..opts.n_batch_iterations {
             fastrand::shuffle(&mut batch);
@@ -156,8 +160,11 @@ fn borrow_vehicle_factors(
     n_factors: usize,
 ) -> crate::Result<&mut Vec<f64>> {
     let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
-    let factors = cache.entry(tank_id).or_insert_with(Vec::new);
-    initialize_factors(factors, n_factors);
+    let factors = cache.entry(tank_id).or_insert_with(|| {
+        let mut factors = Vec::new();
+        initialize_factors(&mut factors, n_factors);
+        factors
+    });
     Ok(factors)
 }
 
