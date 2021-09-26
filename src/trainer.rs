@@ -9,16 +9,20 @@ use std::result::Result as StdResult;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
+use log::Level;
 use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
-use crate::database::{open as open_database, retrieve_account_factors};
+use crate::database::{open as open_database, retrieve_account_factors, update_account_factors};
+use crate::metrics::Stopwatch;
 use crate::opts::TrainerOpts;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
+    sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
+
     let connections = opts.connections;
     let database = open_database(&connections.database_uri, connections.initialize_schema).await?;
     let mut redis = redis::Client::open(connections.redis_uri.as_str())?
@@ -26,13 +30,17 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .await?;
 
     let mut vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
-
+    log::info!("Running in batches of {} steps…", opts.batch_size);
     loop {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
+        log::debug!("Batch: {} steps.", batch.len());
+
         let mut accounts_factors = HashMap::new();
 
-        for _ in 0..opts.n_batch_iterations {
+        for i in 0..opts.n_batch_iterations {
             fastrand::shuffle(&mut batch);
+
+            let mut error = 0.0;
             for step in &batch {
                 let account_factors = borrow_account_factors(
                     &database,
@@ -47,7 +55,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 let target = if step.is_win { 1.0 } else { 0.0 };
 
                 let residual_error = target - prediction;
-                // TODO: update metrics: prediction - target.
+                error -= residual_error;
 
                 let frozen_account_factors = account_factors.to_vec();
                 adjust_factors(
@@ -65,11 +73,28 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     opts.r,
                 );
             }
+
+            let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
+            log::info!(
+                "Iteration #{} | error: {:>7.3} pp | accounts: {:>4} | queue: {:>6}",
+                i + 1,
+                100.0 * error / opts.batch_size as f64 / opts.n_batch_iterations as f64,
+                accounts_factors.len(),
+                queue_len,
+            );
         }
 
+        log::debug!("Updating all vehicles factors…");
         set_all_vehicle_factors(&mut redis, &vehicles_factors).await?;
-        // TODO: commit accounts factors.
-        // TODO: logging.
+
+        log::debug!("Updating factors for {} accounts…", accounts_factors.len());
+        let mut transaction = database.begin().await?;
+        for (account_id, factors) in accounts_factors.into_iter() {
+            update_account_factors(&mut *transaction, account_id, &factors).await?;
+        }
+        transaction.commit().await?;
+
+        log::debug!("Batch processed.");
     }
 }
 
@@ -103,15 +128,20 @@ async fn get_batch(
     redis: &mut MultiplexedConnection,
     size: usize,
 ) -> crate::Result<Vec<TrainStep>> {
+    log::debug!("Waiting for a batch of {} training steps…", size);
+    let _stopwatch = Stopwatch::new("Retrieved a batch").level(Level::Debug);
+
     let mut steps = Vec::new();
     while steps.len() < size {
-        let step: Option<Bytes> = redis.blpop(TRAINER_QUEUE_KEY, 60).await?;
-        if let Some(step) = step {
+        let element: Option<(String, Bytes)> = redis.blpop(TRAINER_QUEUE_KEY, 60).await?;
+        if let Some((_, step)) = element {
             steps.push(rmp_serde::from_read_ref(&step)?);
         } else {
             log::warn!("No train steps are being pushed to the queue.");
         }
     }
+
+    debug_assert_eq!(steps.len(), size);
     Ok(steps)
 }
 
@@ -129,7 +159,7 @@ async fn borrow_account_factors<'c>(
     }
     cache
         .get_mut(&account_id)
-        .ok_or_else(|| anyhow!("failed to borrow the vector"))
+        .ok_or_else(|| anyhow!("failed to borrow the pre-existing vector"))
 }
 
 fn borrow_vehicle_factors(

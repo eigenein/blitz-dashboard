@@ -121,6 +121,22 @@ pub async fn replace_account(
     Ok(())
 }
 
+pub async fn update_account_factors(
+    connection: &mut PgConnection,
+    account_id: i32,
+    factors: &[f64],
+) -> crate::Result {
+    // language=SQL
+    const QUERY: &str = "UPDATE accounts SET factors = $2 WHERE account_id = $1";
+    sqlx::query(QUERY)
+        .bind(account_id)
+        .bind(factors)
+        .execute(connection)
+        .await
+        .with_context(|| format!("failed to update account #{} factors", account_id))?;
+    Ok(())
+}
+
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     account_id: i32,

@@ -189,8 +189,8 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
 
-    /// Number of SGD iterations on a same batch
-    #[structopt(long, default_value = "1")]
+    /// Number of SGD iterations on per batch
+    #[structopt(long = "batch-iterations", default_value = "1")]
     pub n_batch_iterations: usize,
 }
 
