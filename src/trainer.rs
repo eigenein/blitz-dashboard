@@ -3,22 +3,22 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::result::Result as StdResult;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
+use itertools::Itertools;
 use log::Level;
 use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 
 use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
-use crate::database::{open as open_database, retrieve_account_factors, update_account_factors};
+use crate::database::{open as open_database, retrieve_accounts_factors, update_account_factors};
 use crate::metrics::Stopwatch;
 use crate::opts::TrainerOpts;
+use std::time::Instant;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
@@ -32,23 +32,20 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     log::info!("Running in batches of {} steps…", opts.batch_size);
     loop {
-        let mut batch = get_batch(&mut redis, opts.batch_size).await?;
-        log::debug!("Batch: {} steps.", batch.len());
+        let start_instant = Instant::now();
 
-        let mut accounts_factors = HashMap::new();
+        let mut batch = get_batch(&mut redis, opts.batch_size).await?;
+        let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
+        let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
 
         for i in 0..opts.n_batch_iterations {
             fastrand::shuffle(&mut batch);
 
             let mut error = 0.0;
             for step in &batch {
-                let account_factors = borrow_account_factors(
-                    &database,
-                    &mut accounts_factors,
-                    step.account_id,
-                    opts.n_factors,
-                )
-                .await?;
+                let account_factors = accounts_factors
+                    .get_mut(&step.account_id)
+                    .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
                 let vehicle_factors =
                     borrow_vehicle_factors(&mut vehicles_factors, step.tank_id, opts.n_factors)?;
                 let prediction = predict_win_rate(vehicle_factors, account_factors);
@@ -74,13 +71,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 );
             }
 
-            let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
             log::info!(
-                "Iteration #{} | error: {:>7.3} pp | accounts: {:>4} | queue: {:>6}",
+                "Iteration #{} | error: {:>7.3} pp | accounts: {:>4}",
                 i + 1,
-                100.0 * error / opts.batch_size as f64 / opts.n_batch_iterations as f64,
+                100.0 * error / opts.batch_size as f64,
                 accounts_factors.len(),
-                queue_len,
             );
         }
 
@@ -94,7 +89,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         }
         transaction.commit().await?;
 
-        log::debug!("Batch processed.");
+        let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
+        log::info!(
+            "Queue: {:>6} | elapsed: {}",
+            queue_len,
+            humantime::format_duration(start_instant.elapsed()),
+        );
     }
 }
 
@@ -143,23 +143,6 @@ async fn get_batch(
 
     debug_assert_eq!(steps.len(), size);
     Ok(steps)
-}
-
-#[allow(clippy::needless_lifetimes)]
-async fn borrow_account_factors<'c>(
-    database: &PgPool,
-    cache: &'c mut HashMap<i32, Vec<f64>>,
-    account_id: i32,
-    n_factors: usize,
-) -> crate::Result<&'c mut Vec<f64>> {
-    if let Entry::Vacant(entry) = cache.entry(account_id) {
-        let mut factors = retrieve_account_factors(database, account_id).await?;
-        initialize_factors(&mut factors, n_factors);
-        entry.insert(factors);
-    }
-    cache
-        .get_mut(&account_id)
-        .ok_or_else(|| anyhow!("failed to borrow the pre-existing vector"))
 }
 
 fn borrow_vehicle_factors(
