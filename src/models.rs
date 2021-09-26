@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::iter::Sum;
 use std::ops::Sub;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +26,15 @@ pub struct BaseAccountInfo {
 
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime<Utc>,
+}
+
+impl BaseAccountInfo {
+    pub fn empty(account_id: i32) -> Self {
+        Self {
+            id: account_id,
+            last_battle_time: Utc.timestamp(0, 0),
+        }
+    }
 }
 
 /// Wargaming.net account information.

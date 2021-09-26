@@ -6,9 +6,9 @@ use sqlx::PgPool;
 use tokio::time::{sleep, Instant};
 
 use crate::crawler::selector::Selector;
-use crate::database::models::Account;
+use crate::models::BaseAccountInfo;
 
-pub type Batch = Vec<Account>;
+pub type Batch = Vec<BaseAccountInfo>;
 
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub fn get_batch_stream(
@@ -22,7 +22,7 @@ pub fn get_batch_stream(
                 let batch = retrieve_batch(&connection, pointer, selector).await?;
                 match batch.last() {
                     Some(last_item) => {
-                        let pointer = last_item.base.id;
+                        let pointer = last_item.id;
                         break Ok(Some((batch, (pointer, start_time))));
                     }
                     None => {
@@ -47,14 +47,18 @@ async fn retrieve_batch(
     let query = match selector {
         Selector::Before(min_offset) => {
             // language=SQL
-            const QUERY: &str = "SELECT * FROM accounts WHERE account_id > $1 AND last_battle_time < now() - $2 ORDER BY account_id LIMIT 100";
+            const QUERY: &str = "
+                SELECT account_id, last_battle_time FROM accounts
+                WHERE account_id > $1 AND last_battle_time < now() - $2
+                ORDER BY account_id LIMIT 100
+            ";
             sqlx::query_as(QUERY).bind(starting_at).bind(min_offset)
         }
         Selector::Between(min_offset, max_offset) => {
             assert!(min_offset < max_offset);
             // language=SQL
             const QUERY: &str = "
-                SELECT * FROM accounts
+                SELECT account_id, last_battle_time FROM accounts
                 WHERE account_id > $1 AND last_battle_time BETWEEN SYMMETRIC now() - $2 AND now() - $3
                 ORDER BY account_id
                 LIMIT 100

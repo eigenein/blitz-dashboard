@@ -100,20 +100,21 @@ pub async fn retrieve_tank_battle_count(
         .unwrap_or((0, 0)))
 }
 
-pub async fn replace_account(connection: &mut PgConnection, account: Account) -> crate::Result {
+pub async fn replace_account(
+    connection: &mut PgConnection,
+    account: BaseAccountInfo,
+) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time, factors)
-        VALUES ($1, $2, $3)
+        INSERT INTO accounts (account_id, last_battle_time)
+        VALUES ($1, $2)
         ON CONFLICT (account_id) DO UPDATE SET
-            last_battle_time = excluded.last_battle_time,
-            factors = excluded.factors
+            last_battle_time = excluded.last_battle_time
     ";
-    let account_id = account.base.id;
+    let account_id = account.id;
     sqlx::query(QUERY)
-        .bind(account.base.id)
-        .bind(account.base.last_battle_time)
-        .bind(account.factors)
+        .bind(account.id)
+        .bind(account.last_battle_time)
         .execute(connection)
         .await
         .with_context(|| format!("failed to replace the account #{}", account_id))?;
@@ -234,6 +235,20 @@ pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
         .fetch_all(connection)
         .await
         .context("failed to retrieve all tank IDs")?)
+}
+
+pub async fn retrieve_account_factors(
+    connection: &PgPool,
+    account_id: i32,
+) -> crate::Result<Vec<f64>> {
+    // language=SQL
+    const QUERY: &str = "SELECT factors FROM accounts WHERE account_id = $1";
+
+    Ok(sqlx::query_scalar(QUERY)
+        .bind(account_id)
+        .fetch_one(connection)
+        .await
+        .with_context(|| format!("failed to retrieve the account #{} factors", account_id))?)
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

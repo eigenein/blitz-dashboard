@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::collections::HashSet;
 use std::convert::TryInto;
 use std::sync::Arc;
@@ -11,17 +10,17 @@ use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::cf::{adjust_factors, initialize_factors, predict_win_rate};
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
 use crate::crawler::selector::Selector;
-use crate::database;
-use crate::database::models::Account;
-use crate::database::{retrieve_tank_battle_count, retrieve_tank_ids};
+use crate::database::{
+    insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
+    retrieve_tank_battle_count, retrieve_tank_ids,
+};
 use crate::metrics::Stopwatch;
-use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
-use crate::opts::{CrawlAccountsOpts, CrawlerOpts, TrainerOpts};
-use crate::trainer::{get_vehicle_factors, push_train_steps, set_vehicle_factors, TrainStep};
+use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
+use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
+use crate::trainer::{push_train_steps, TrainStep};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -31,7 +30,7 @@ mod selector;
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
-    redis: Mutex<MultiplexedConnection>,
+    redis: MultiplexedConnection,
 
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
@@ -43,9 +42,6 @@ pub struct Crawler {
     /// Used to maintain the vehicle table in the database.
     /// The cache contains tank IDs which are for sure existing at the moment in the database.
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
-
-    /// Collaborative filtering options.
-    cf_opts: TrainerOpts,
 }
 
 pub struct IncrementalOpts {
@@ -61,12 +57,9 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let request_counter = api.request_counter.clone();
-    let database = crate::database::open(
-        &opts.connections.internal.database_uri,
-        opts.connections.internal.initialize_schema,
-    )
-    .await?;
-    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?;
+    let internal = opts.connections.internal;
+    let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
+    let redis = redis::Client::open(internal.redis_uri.as_str())?;
 
     let slow_crawler = Crawler::new(
         api.clone(),
@@ -76,7 +69,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         Some(IncrementalOpts {
             trainer_queue_limit: opts.trainer_queue_limit,
         }),
-        opts.cf,
     )
     .await?;
     let fast_crawler = Crawler::new(
@@ -87,7 +79,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         Some(IncrementalOpts {
             trainer_queue_limit: opts.trainer_queue_limit,
         }),
-        opts.cf,
     )
     .await?;
     let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
@@ -117,20 +108,17 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
-    let database = crate::database::open(
-        &opts.connections.internal.database_uri,
-        opts.connections.internal.initialize_schema,
-    )
-    .await?;
-    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
+    let internal = opts.connections.internal;
+    let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
+    let redis = redis::Client::open(internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
 
     let stream = stream::iter(opts.start_id..opts.end_id)
-        .map(Account::empty)
+        .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None, opts.cf).await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -151,16 +139,14 @@ impl Crawler {
         redis: MultiplexedConnection,
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
-        cf_opts: TrainerOpts,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             api,
             database,
-            redis: Mutex::new(redis),
+            redis,
             n_tasks,
             incremental,
-            cf_opts,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -177,16 +163,16 @@ impl Crawler {
     }
 
     async fn crawl_batch(&self, batch: Batch) -> crate::Result {
-        let account_ids: Vec<i32> = batch.iter().map(|account| account.base.id).collect();
+        let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
         let mut tx = self.database.begin().await?;
         for account in batch.into_iter() {
-            let account_id = account.base.id;
-            if let Some(new_info) = new_infos.remove(&account_id.to_string()).flatten() {
+            let account_id = account.id;
+            if let Some(new_info) = new_infos.remove(&account.id.to_string()).flatten() {
                 self.crawl_account(&mut tx, account, new_info).await?;
             }
-            self.update_metrics_for_account(account_id).await;
+            self.update_account_metrics(account_id).await;
         }
         log::debug!("Committing…");
         tx.commit().await.with_context(|| {
@@ -198,7 +184,7 @@ impl Crawler {
         Ok(())
     }
 
-    async fn update_metrics_for_account(&self, account_id: i32) {
+    async fn update_account_metrics(&self, account_id: i32) {
         let mut metrics = self.metrics.lock().await;
         metrics.last_account_id = account_id;
         metrics.n_accounts += 1;
@@ -207,53 +193,40 @@ impl Crawler {
     async fn crawl_account(
         &self,
         connection: &mut PgConnection,
-        account: Account,
+        account: BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result {
-        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.base.id));
+        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.id));
 
-        if new_info.base.last_battle_time == account.base.last_battle_time {
-            log::trace!("#{}: last battle time is not changed.", account.base.id);
+        if new_info.base.last_battle_time == account.last_battle_time {
+            log::trace!("#{}: last battle time is not changed.", account.id);
             return Ok(());
         }
 
-        let base = account.base;
-        let mut account_factors = account.factors;
-        log::debug!("Crawling account #{}…", base.id);
+        log::debug!("Crawling account #{}…", account.id);
         let statistics = self
-            .get_updated_tanks_statistics(base.id, base.last_battle_time)
+            .get_updated_tanks_statistics(account.id, account.last_battle_time)
             .await?;
         if !statistics.is_empty() {
-            let achievements = self.api.get_tanks_achievements(base.id).await?;
-            let tanks = merge_tanks(base.id, statistics, achievements);
-            if let Some(opts) = &self.incremental {
-                self.train(
-                    base.id,
-                    &mut account_factors,
-                    &tanks,
-                    opts.trainer_queue_limit,
-                )
-                .await?;
-            }
-            database::insert_tank_snapshots(&mut *connection, &tanks).await?;
+            let achievements = self.api.get_tanks_achievements(account.id).await?;
+            let tanks = merge_tanks(account.id, statistics, achievements);
+            insert_tank_snapshots(&mut *connection, &tanks).await?;
             self.insert_missing_vehicles(&mut *connection, &tanks)
                 .await?;
 
-            log::debug!("Inserted {} tanks for #{}.", tanks.len(), base.id);
-            self.update_metrics_for_tanks(new_info.base.last_battle_time, tanks.len())
+            log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
+            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
                 .await?;
+
+            if let Some(opts) = &self.incremental {
+                self.push_train_steps(account.id, &tanks, opts.trainer_queue_limit)
+                    .await?;
+            }
         } else {
-            log::trace!("#{}: tanks are not updated.", base.id);
+            log::trace!("#{}: tanks are not updated.", account.id);
         }
 
-        database::replace_account(
-            &mut *connection,
-            Account {
-                base: new_info.base,
-                factors: account_factors,
-            },
-        )
-        .await?;
+        replace_account(&mut *connection, new_info.base).await?;
 
         Ok(())
     }
@@ -273,7 +246,7 @@ impl Crawler {
             .collect())
     }
 
-    async fn update_metrics_for_tanks(
+    async fn update_tank_metrics(
         &self,
         last_battle_time: DateTime<Utc>,
         n_tanks: usize,
@@ -294,20 +267,15 @@ impl Crawler {
             let tank_id = tank.statistics.base.tank_id;
             if !self.vehicle_cache.read().await.contains(&tank_id) {
                 self.vehicle_cache.write().await.insert(tank_id);
-                database::insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
+                insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
             }
         }
         Ok(())
     }
 
-    /// Trains the account and vehicle factors on the new data.
-    /// Implements a stochastic gradient descent for matrix factorization.
-    ///
-    /// https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
-    async fn train(
+    async fn push_train_steps(
         &self,
         account_id: i32,
-        account_factors: &mut Vec<f64>,
         tanks: &[Tank],
         queue_limit: isize,
     ) -> crate::Result {
@@ -320,6 +288,7 @@ impl Crawler {
             let n_battles = tank.statistics.all.battles - n_battles;
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
+                self.metrics.lock().await.n_battles += n_battles;
                 for i in 0..n_battles {
                     steps.push(TrainStep {
                         account_id,
@@ -330,48 +299,11 @@ impl Crawler {
             }
         }
 
-        push_train_steps(self.redis.lock().await.borrow_mut(), &steps, queue_limit).await?;
-        fastrand::shuffle(&mut steps); // make it even more stochastic
-        initialize_factors(account_factors, self.cf_opts.n_factors);
-
-        for step in steps {
-            let mut redis = self.redis.lock().await;
-            let mut vehicle_factors = get_vehicle_factors(&mut redis, step.tank_id).await?;
-            initialize_factors(&mut vehicle_factors, self.cf_opts.n_factors);
-            let prediction = predict_win_rate(&vehicle_factors, account_factors);
-            let target = if step.is_win { 1.0 } else { 0.0 };
-            self.metrics.lock().await.push_error(prediction, target);
-            self.make_train_step(account_factors, &mut vehicle_factors, prediction, target);
-            set_vehicle_factors(&mut redis, step.tank_id, &vehicle_factors).await?;
+        if !steps.is_empty() {
+            let mut redis = MultiplexedConnection::clone(&self.redis);
+            push_train_steps(&mut redis, &steps, queue_limit).await?;
         }
 
         Ok(())
-    }
-
-    fn make_train_step(
-        &self,
-        account_factors: &mut [f64],
-        vehicle_factors: &mut [f64],
-        prediction: f64,
-        target: f64,
-    ) {
-        let residual_error = target - prediction;
-
-        // Adjust the latent factors.
-        let frozen_account_factors = account_factors.to_vec();
-        adjust_factors(
-            account_factors,
-            vehicle_factors,
-            residual_error,
-            self.cf_opts.account_learning_rate,
-            self.cf_opts.r,
-        );
-        adjust_factors(
-            vehicle_factors,
-            &frozen_account_factors,
-            residual_error,
-            self.cf_opts.vehicle_learning_rate,
-            self.cf_opts.r,
-        );
     }
 }

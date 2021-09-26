@@ -89,9 +89,6 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
-    #[structopt(flatten)]
-    pub cf: TrainerOpts,
-
     /// Minimum last battle time offset for the «slow» sub-crawler
     #[structopt(long, default_value = "1w", parse(try_from_str = humantime::parse_duration))]
     pub slow_offset: StdDuration,
@@ -142,10 +139,6 @@ pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
-    // TODO: shouldn't be here.
-    #[structopt(flatten)]
-    pub cf: TrainerOpts,
-
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parse_account_id))]
     pub start_id: i32,
@@ -170,23 +163,35 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
     }
 }
 
-#[derive(StructOpt, Copy, Clone)]
+/// Trains the collaborative filtering model
+#[derive(StructOpt)]
 pub struct TrainerOpts {
-    /// CF account latent factors learning rate
-    #[structopt(long = "cf-account-lr", default_value = "0.001")]
+    #[structopt(flatten)]
+    pub connections: InternalConnectionOpts,
+
+    /// Account latent vector learning rate
+    #[structopt(long = "account-lr", default_value = "0.001")]
     pub account_learning_rate: f64,
 
-    /// CF vehicle latent factors learning rate
-    #[structopt(long = "cf-vehicle-lr", default_value = "0.001")]
+    /// Vehicle latent vector learning rate
+    #[structopt(long = "vehicle-lr", default_value = "0.001")]
     pub vehicle_learning_rate: f64,
 
-    /// CF regularization parameter
-    #[structopt(long = "cf-r", default_value = "0")]
+    /// Regularization
+    #[structopt(short = "r", long = "regularization", default_value = "0")]
     pub r: f64,
 
-    /// CF latent factor count
-    #[structopt(long = "cf-factors", default_value = "8")]
+    /// Number of latent factors
+    #[structopt(short = "f", long = "factors", default_value = "16")]
     pub n_factors: usize,
+
+    /// Training batch size
+    #[structopt(long, default_value = "10000")]
+    pub batch_size: usize,
+
+    /// Number of SGD iterations on a same batch
+    #[structopt(long, default_value = "1")]
+    pub n_batch_iterations: usize,
 }
 
 #[derive(StructOpt)]
@@ -210,6 +215,6 @@ pub struct InternalConnectionOpts {
     pub initialize_schema: bool,
 
     /// Redis URI
-    #[structopt(short, long, default_value = "redis://127.0.0.1/0")]
+    #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
 }

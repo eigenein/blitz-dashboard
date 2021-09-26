@@ -18,9 +18,6 @@ pub struct SubCrawlerMetrics {
 
     pub n_battles: i32,
 
-    pub cf_error: f64,
-    pub cf_battles: i32,
-
     lags: Vec<u64>,
 }
 
@@ -29,18 +26,11 @@ impl SubCrawlerMetrics {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
-        self.cf_error = 0.0;
-        self.cf_battles = 0;
         self.lags.clear();
     }
 
     pub fn push_lag(&mut self, secs: u64) {
         self.lags.push(secs);
-    }
-
-    pub fn push_error(&mut self, prediction: f64, target: f64) {
-        self.cf_error += prediction - target;
-        self.cf_battles += 1;
     }
 
     pub fn lags(&mut self) -> (StdDuration, StdDuration) {
@@ -72,10 +62,7 @@ pub async fn log_metrics(
 
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
-
-        // Aggregated collaborative filtering metrics.
-        let mut cf_battles = 0;
-        let mut cf_error = 0.0;
+        let mut n_battles = 0;
 
         for (i, metrics) in metrics.iter().enumerate() {
             let mut metrics = metrics.lock().await;
@@ -89,17 +76,14 @@ pub async fn log_metrics(
                 metrics.n_tanks as f64 / elapsed_secs,
                 metrics.last_account_id,
             );
-            cf_battles += metrics.cf_battles;
-            cf_error += metrics.cf_error;
+            n_battles += metrics.n_battles;
             metrics.reset();
         }
 
-        let cf_battles = cf_battles.max(1) as f64;
         log::info!(
-            "RPS: {:>4.1} | error: {:>7.3} pp | battles: {:>4.0}",
+            "RPS: {:>4.1} | battles: {:>4.0}",
             n_requests as f64 / elapsed_secs,
-            100.0 * cf_error / cf_battles as f64,
-            cf_battles,
+            n_battles,
         );
     }
 }
