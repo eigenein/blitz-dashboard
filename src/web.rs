@@ -30,11 +30,11 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         StdDuration::from_millis(1500),
     )?;
     let database = crate::database::open(
-        &opts.connections.database_uri,
-        opts.connections.initialize_schema,
+        &opts.connections.internal.database_uri,
+        opts.connections.internal.initialize_schema,
     )
     .await?;
-    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?
+    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
     rocket::custom(to_config(&opts)?)

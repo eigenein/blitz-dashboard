@@ -20,7 +20,7 @@ use crate::database::models::Account;
 use crate::database::{retrieve_tank_battle_count, retrieve_tank_ids};
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, Tank, TankStatistics};
-use crate::opts::{CfOpts, CrawlAccountsOpts, CrawlerOpts};
+use crate::opts::{CrawlAccountsOpts, CrawlerOpts, TrainerOpts};
 use crate::trainer::{get_vehicle_factors, push_train_steps, set_vehicle_factors, TrainStep};
 use crate::wargaming::WargamingApi;
 
@@ -45,7 +45,7 @@ pub struct Crawler {
     vehicle_cache: Arc<RwLock<HashSet<i32>>>,
 
     /// Collaborative filtering options.
-    cf_opts: CfOpts,
+    cf_opts: TrainerOpts,
 }
 
 pub struct IncrementalOpts {
@@ -62,11 +62,11 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let request_counter = api.request_counter.clone();
     let database = crate::database::open(
-        &opts.connections.database_uri,
-        opts.connections.initialize_schema,
+        &opts.connections.internal.database_uri,
+        opts.connections.internal.initialize_schema,
     )
     .await?;
-    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?;
+    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?;
 
     let slow_crawler = Crawler::new(
         api.clone(),
@@ -118,11 +118,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 
     let api = new_wargaming_api(&opts.connections.application_id)?;
     let database = crate::database::open(
-        &opts.connections.database_uri,
-        opts.connections.initialize_schema,
+        &opts.connections.internal.database_uri,
+        opts.connections.internal.initialize_schema,
     )
     .await?;
-    let redis = redis::Client::open(opts.connections.redis_uri.as_str())?
+    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
 
@@ -151,7 +151,7 @@ impl Crawler {
         redis: MultiplexedConnection,
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
-        cf_opts: CfOpts,
+        cf_opts: TrainerOpts,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {

@@ -6,6 +6,12 @@ use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use serde::{Deserialize, Serialize};
 
+use crate::opts::TrainerOpts;
+
+pub async fn run(_opts: TrainerOpts) -> crate::Result {
+    Ok(())
+}
+
 const TRAINER_QUEUE_KEY: &str = "trainer::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 

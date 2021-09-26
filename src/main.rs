@@ -50,7 +50,7 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::Crawler(opts) => crawler::run_crawler(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
-        Subcommand::Trainer(_opts) => Ok(()),
+        Subcommand::Trainer(opts) => trainer::run(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
     }
 }

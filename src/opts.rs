@@ -82,7 +82,7 @@ pub struct CrawlerOpts {
     pub connections: ConnectionOpts,
 
     #[structopt(flatten)]
-    pub cf: CfOpts,
+    pub cf: TrainerOpts,
 
     /// Minimum last battle time offset for the «slow» sub-crawler
     #[structopt(long, default_value = "1w", parse(try_from_str = humantime::parse_duration))]
@@ -136,7 +136,7 @@ pub struct CrawlAccountsOpts {
 
     // TODO: shouldn't be here.
     #[structopt(flatten)]
-    pub cf: CfOpts,
+    pub cf: TrainerOpts,
 
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parse_account_id))]
@@ -163,31 +163,8 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
 }
 
 /// Trains the collaborative filtering model
-#[derive(StructOpt)]
-pub struct TrainerOpts {}
-
-#[derive(StructOpt)]
-pub struct ConnectionOpts {
-    /// PostgreSQL database URI
-    #[structopt(short, long = "database")]
-    pub database_uri: String,
-
-    /// Initialize the database schema
-    #[structopt(long)]
-    pub initialize_schema: bool,
-
-    /// Wargaming.net API application ID
-    #[structopt(short, long)]
-    pub application_id: String,
-
-    /// Redis URI
-    #[structopt(short, long, default_value = "redis://127.0.0.1/0")]
-    pub redis_uri: String,
-}
-
-/// Collaborative filtering (machine learning) options.
-#[derive(StructOpt, Clone, Copy)]
-pub struct CfOpts {
+#[derive(StructOpt, Copy, Clone)]
+pub struct TrainerOpts {
     /// CF account latent factors learning rate
     #[structopt(long = "cf-account-lr", default_value = "0.001")]
     pub account_learning_rate: f64,
@@ -203,4 +180,29 @@ pub struct CfOpts {
     /// CF latent factor count
     #[structopt(long = "cf-factors", default_value = "8")]
     pub n_factors: usize,
+}
+
+#[derive(StructOpt)]
+pub struct ConnectionOpts {
+    #[structopt(flatten)]
+    pub internal: InternalConnectionOpts,
+
+    /// Wargaming.net API application ID
+    #[structopt(short, long)]
+    pub application_id: String,
+}
+
+#[derive(StructOpt)]
+pub struct InternalConnectionOpts {
+    /// PostgreSQL database URI
+    #[structopt(short, long = "database")]
+    pub database_uri: String,
+
+    /// Initialize the database schema at startup
+    #[structopt(long)]
+    pub initialize_schema: bool,
+
+    /// Redis URI
+    #[structopt(short, long, default_value = "redis://127.0.0.1/0")]
+    pub redis_uri: String,
 }
