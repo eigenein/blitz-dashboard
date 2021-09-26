@@ -36,6 +36,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
+        let tank_ids: Vec<i32> = batch.iter().map(|step| step.tank_id).unique().collect();
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
 
         for i in 0..opts.n_batch_iterations {
@@ -72,17 +73,17 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             }
 
             log::info!(
-                "Iteration #{} | error: {:>7.3} pp | accounts: {:>4}",
+                "Iteration #{} | error: {:>6.3} pp",
                 i + 1,
                 100.0 * error / opts.batch_size as f64,
-                accounts_factors.len(),
             );
         }
 
-        log::debug!("Updating all vehicles factors…");
-        set_all_vehicle_factors(&mut redis, &vehicles_factors).await?;
+        log::debug!("Updating the vehicles factors…");
+        set_vehicle_factors(&mut redis, &vehicles_factors, &tank_ids).await?;
 
-        log::debug!("Updating factors for {} accounts…", accounts_factors.len());
+        let n_accounts = accounts_factors.len();
+        log::debug!("Updating factors for {} accounts…", n_accounts);
         let mut transaction = database.begin().await?;
         for (account_id, factors) in accounts_factors.into_iter() {
             update_account_factors(&mut *transaction, account_id, &factors).await?;
@@ -90,10 +91,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         transaction.commit().await?;
 
         let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
+        let elapsed = start_instant.elapsed().as_secs_f64();
         log::info!(
-            "Queue: {:>6} | elapsed: {}",
+            "Queue: {:>7} | steps/sec: {:>5.1} | accounts: {:>4} | vehicles: {:>3} | elapsed: {:>5.1}s",
             queue_len,
-            humantime::format_duration(start_instant.elapsed()),
+            opts.batch_size as f64 / elapsed,
+            n_accounts,
+            tank_ids.len(),
+            elapsed,
         );
     }
 }
@@ -176,13 +181,14 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
     64801_i32 => 2849, // T34 Independence
 };
 
-async fn set_all_vehicle_factors(
+async fn set_vehicle_factors(
     redis: &mut MultiplexedConnection,
     vehicles_factors: &HashMap<i32, Vec<f64>>,
+    tank_ids: &[i32],
 ) -> crate::Result {
     let mut pipeline = pipe();
-    for (tank_id, factors) in vehicles_factors.iter() {
-        let bytes = rmp_serde::to_vec(factors)?;
+    for tank_id in tank_ids.iter() {
+        let bytes = rmp_serde::to_vec(&vehicles_factors[tank_id])?;
         pipeline.hset(VEHICLE_FACTORS_KEY, tank_id, &bytes);
         if let Some(tank_copy_id) = REMAP_TANK_ID.get(tank_id) {
             pipeline.hset(VEHICLE_FACTORS_KEY, *tank_copy_id, bytes);

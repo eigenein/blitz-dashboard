@@ -170,11 +170,11 @@ pub struct TrainerOpts {
     pub connections: InternalConnectionOpts,
 
     /// Account latent vector learning rate
-    #[structopt(long = "account-lr", default_value = "0.001")]
+    #[structopt(long = "account-lr", default_value = "0.0001")]
     pub account_learning_rate: f64,
 
     /// Vehicle latent vector learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.001")]
+    #[structopt(long = "vehicle-lr", default_value = "0.0001")]
     pub vehicle_learning_rate: f64,
 
     /// Regularization
