@@ -35,9 +35,9 @@ pub struct Crawler {
     n_tasks: usize,
     metrics: Arc<Mutex<SubCrawlerMetrics>>,
 
-    /// Indicates that only tanks with updated last battle time must be crawled.
-    /// Also enables the collaborative filtering.
-    incremental: bool,
+    /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
+    /// This also sends out updated tanks to the trainer.
+    incremental: Option<IncrementalOpts>,
 
     /// Used to maintain the vehicle table in the database.
     /// The cache contains tank IDs which are for sure existing at the moment in the database.
@@ -45,7 +45,9 @@ pub struct Crawler {
 
     /// Collaborative filtering options.
     cf_opts: CfOpts,
+}
 
+pub struct IncrementalOpts {
     #[allow(dead_code)]
     trainer_queue_limit: i32,
 }
@@ -71,9 +73,10 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         database.clone(),
         redis.clone(),
         1,
-        true,
+        Some(IncrementalOpts {
+            trainer_queue_limit: opts.trainer_queue_limit,
+        }),
         opts.cf,
-        opts.trainer_queue_limit,
     )
     .await?;
     let fast_crawler = Crawler::new(
@@ -81,9 +84,10 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         database.clone(),
         redis,
         opts.n_fast_tasks,
-        true,
+        Some(IncrementalOpts {
+            trainer_queue_limit: opts.trainer_queue_limit,
+        }),
         opts.cf,
-        opts.trainer_queue_limit,
     )
     .await?;
     let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
@@ -124,16 +128,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(Account::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(
-        api.clone(),
-        database,
-        redis,
-        opts.n_tasks,
-        false,
-        opts.cf,
-        0,
-    )
-    .await?;
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None, opts.cf).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         vec![crawler.metrics.clone()],
@@ -153,9 +148,8 @@ impl Crawler {
         database: PgPool,
         redis: Redis,
         n_tasks: usize,
-        incremental: bool,
+        incremental: Option<IncrementalOpts>,
         cf_opts: CfOpts,
-        trainer_queue_limit: i32,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -165,7 +159,6 @@ impl Crawler {
             n_tasks,
             incremental,
             cf_opts,
-            trainer_queue_limit,
             metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
@@ -231,7 +224,7 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(base.id).await?;
             let tanks = merge_tanks(base.id, statistics, achievements);
-            if self.incremental {
+            if self.incremental.is_some() {
                 self.train(base.id, &mut account_factors, &tanks).await?;
             }
             database::insert_tank_snapshots(&mut *connection, &tanks).await?;
