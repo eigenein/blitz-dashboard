@@ -109,9 +109,10 @@ pub async fn get(
                                             td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
                                             @for i in 0..n_factors {
-                                                @let factor = factors.get(i).copied().unwrap_or(0.0);
-                                                td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
-                                                    (format!("{:+.4}", factor))
+                                                @if let Some(factor) = factors.get(i).copied() {
+                                                    td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
+                                                        (format!("{:+.4}", factor))
+                                                    }
                                                 }
                                             }
                                         }
