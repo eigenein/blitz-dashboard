@@ -160,11 +160,8 @@ fn borrow_vehicle_factors(
     n_factors: usize,
 ) -> crate::Result<&mut Vec<f64>> {
     let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
-    let factors = cache.entry(tank_id).or_insert_with(|| {
-        let mut factors = Vec::new();
-        initialize_factors(&mut factors, n_factors);
-        factors
-    });
+    let mut factors = cache.entry(tank_id).or_insert_with(Vec::new);
+    initialize_factors(&mut factors, n_factors);
     Ok(factors)
 }
 
