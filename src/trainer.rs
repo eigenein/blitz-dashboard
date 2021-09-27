@@ -95,14 +95,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         transaction.commit().await?;
 
         let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
-        let elapsed = start_instant.elapsed().as_secs_f64();
         log::info!(
-            "Queue: {:>7} | steps/sec: {:>5.1} | accounts: {:>4} | vehicles: {:>3} | elapsed: {:>5.1}s",
+            "Queue: {:>7} | accounts: {:>4} | vehicles: {:>3} | elapsed: {:>5.1}s",
             queue_len,
-            opts.batch_size as f64 / elapsed,
             n_accounts,
             tank_ids.len(),
-            elapsed,
+            start_instant.elapsed().as_secs_f64(),
         );
     }
 }
