@@ -1,5 +1,8 @@
-use std::ops::Deref;
+use std::ops::{AddAssign, Deref, DerefMut, Mul, Sub};
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Vector(Vec<f64>);
 
 impl Deref for Vector {
@@ -7,6 +10,51 @@ impl Deref for Vector {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for Vector {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Self;
+
+    #[must_use]
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self(self.0.into_iter().map(|xi| xi * rhs).collect())
+    }
+}
+
+impl Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, rhs: Vector) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl Sub<Self> for Vector {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(
+            self.0
+                .into_iter()
+                .zip(rhs.0)
+                .map(|(left, right)| left - right)
+                .collect(),
+        )
+    }
+}
+
+impl AddAssign<Self> for Vector {
+    fn add_assign(&mut self, rhs: Self) {
+        for (left, right) in self.0.iter_mut().zip(rhs.0) {
+            *left += right;
+        }
     }
 }
 
