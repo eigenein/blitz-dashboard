@@ -77,7 +77,7 @@ pub async fn get(
                                     th {
                                         a data-sort="magnitude" {
                                             span.icon-text.is-flex-wrap-nowrap {
-                                                span { "Длина вектора"  }
+                                                span { "Модуль"  }
                                             }
                                         }
                                     }
