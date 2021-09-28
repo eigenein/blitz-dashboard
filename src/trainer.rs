@@ -89,7 +89,7 @@ pub async fn run(mut opts: TrainerOpts) -> crate::Result {
 
         log::info!(
             "Error: {:>6.3} pp | accounts: {:>4} | vehicles: {:>3}",
-            100.0 * error / opts.batch_size as f64,
+            100.0 * error / batch.len() as f64,
             n_accounts,
             tank_ids.len(),
         );
@@ -126,11 +126,17 @@ async fn reload_configuration(
     redis: &mut MultiplexedConnection,
     opts: &mut TrainerOpts,
 ) -> crate::Result {
+    const BATCH_SIZE_KEY: &str = "trainer::batch_size";
     const N_FACTORS_KEY: &str = "trainer::n_factors";
     const VEHICLE_LR_KEY: &str = "trainer::vehicle_lr";
     const ACCOUNT_LR_KEY: &str = "trainer::account_lr";
     const REGULARIZATION_KEY: &str = "trainer::r";
 
+    if let Ok(Some(size)) = redis.get::<_, Option<usize>>(BATCH_SIZE_KEY).await {
+        redis.del(BATCH_SIZE_KEY).await?;
+        log::warn!("Setting batch size to {}.", size);
+        opts.batch_size = size;
+    }
     if let Ok(Some(n_factors)) = redis.get::<_, Option<usize>>(N_FACTORS_KEY).await {
         redis.del(N_FACTORS_KEY).await?;
         log::warn!("Setting factor count to {}.", n_factors);
