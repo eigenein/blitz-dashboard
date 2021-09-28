@@ -5,7 +5,7 @@
 pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
     x.truncate(length);
     while x.len() < length {
-        x.push(-1.0 + 2.0 * fastrand::f64());
+        x.push(if fastrand::bool() { -0.1 } else { 0.1 });
     }
 }
 
