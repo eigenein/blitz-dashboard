@@ -10,7 +10,7 @@ use rocket::{uri, State};
 
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::cf::{cosine_similarity, magnitude, pearson_coefficient};
+use crate::trainer::cf::{cosine_similarity, pearson_coefficient};
 use crate::trainer::get_all_vehicle_factors;
 use crate::web::partials::{
     footer, headers, home_button, sign_class, tier_td, vehicle_th, vehicle_title,
@@ -42,28 +42,20 @@ pub async fn get(
     let vehicle = get_vehicle(tank_id);
     let vehicle_title = vehicle_title(&vehicle);
 
-    #[allow(clippy::type_complexity)]
-    let tables: Vec<(Vec<(i32, f64, f64)>, &'static str)> =
-        [cosine_similarity, pearson_coefficient]
-            .iter()
-            .map(|f| {
-                vehicles_factors
-                    .iter()
-                    .map(|(tank_id, other_factors)| {
-                        (
-                            *tank_id,
-                            f(vehicle_factors, other_factors),
-                            magnitude(other_factors, other_factors.len()),
-                        )
-                    })
-                    .sorted_unstable_by(|(_, left, _), (_, right, _)| {
-                        right.partial_cmp(left).unwrap_or(Ordering::Equal)
-                    })
-                    .take(50)
-                    .collect()
-            })
-            .zip(["Косинусное сходство", "r-Пирсона"])
-            .collect();
+    let tables: Vec<(Vec<(i32, f64)>, &'static str)> = [cosine_similarity, pearson_coefficient]
+        .iter()
+        .map(|f| {
+            vehicles_factors
+                .iter()
+                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, other_factors)))
+                .sorted_unstable_by(|(_, left), (_, right)| {
+                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
+                })
+                .take(50)
+                .collect()
+        })
+        .zip(["Косинусное сходство", "r-Пирсона"])
+        .collect();
 
     let markup = html! {
         (DOCTYPE)
@@ -100,17 +92,15 @@ pub async fn get(
                                                 th { "Техника" }
                                                 th.has-text-centered { "Ур." }
                                                 th { "Тип" }
-                                                th { "Модуль" }
                                                 th { "Корр." }
                                             }
                                             tbody {
-                                                @for (tank_id, coefficient, magnitude) in table {
+                                                @for (tank_id, coefficient) in table {
                                                     @let other_vehicle = get_vehicle(*tank_id);
                                                     tr.(sign_class(*coefficient)) {
                                                         (vehicle_th(&other_vehicle))
                                                         (tier_td(other_vehicle.tier))
                                                         td { (format!("{:?}", other_vehicle.type_)) }
-                                                        td { (format!("{:.2}", magnitude)) }
                                                         td {
                                                             a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                                 span.icon-text.is-flex-wrap-nowrap {
