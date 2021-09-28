@@ -88,11 +88,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let n_accounts = accounts_factors.len();
         log::debug!("Updating factors for {} accounts…", n_accounts);
-        let mut transaction = database.begin().await?;
         for (account_id, factors) in accounts_factors.into_iter() {
-            update_account_factors(&mut *transaction, account_id, &factors).await?;
+            update_account_factors(&database, account_id, &factors).await?;
         }
-        transaction.commit().await?;
 
         let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
         log::info!(
