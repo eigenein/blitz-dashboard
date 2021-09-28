@@ -170,28 +170,24 @@ pub struct TrainerOpts {
     pub connections: InternalConnectionOpts,
 
     /// Account latent vector learning rate
-    #[structopt(long = "account-lr", default_value = "0.0001")]
+    #[structopt(long = "account-lr", default_value = "0.001")]
     pub account_learning_rate: f64,
 
     /// Vehicle latent vector learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.0001")]
+    #[structopt(long = "vehicle-lr", default_value = "0.001")]
     pub vehicle_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
     pub r: f64,
 
     /// Number of latent factors
-    #[structopt(short = "f", long = "factors", default_value = "16")]
+    #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
 
     /// Training batch size
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
-
-    /// Number of SGD iterations on per batch
-    #[structopt(long = "batch-iterations", default_value = "1")]
-    pub n_batch_iterations: usize,
 }
 
 #[derive(StructOpt)]

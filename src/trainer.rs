@@ -5,7 +5,6 @@
 
 use std::collections::HashMap;
 use std::result::Result as StdResult;
-use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
@@ -22,6 +21,7 @@ use crate::metrics::Stopwatch;
 use crate::opts::TrainerOpts;
 
 pub mod cf;
+pub mod vector;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
@@ -35,8 +35,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     log::info!("Running in batches of {} steps…", opts.batch_size);
     loop {
-        let start_instant = Instant::now();
-
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
         let tank_ids: Vec<i32> = batch.iter().map(|step| step.tank_id).unique().collect();
@@ -46,43 +44,35 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             initialize_factors(factors, opts.n_factors);
         }
 
-        for i in 0..opts.n_batch_iterations {
-            fastrand::shuffle(&mut batch);
+        fastrand::shuffle(&mut batch);
 
-            let mut error = 0.0;
-            for step in &batch {
-                let account_factors = accounts_factors
-                    .get_mut(&step.account_id)
-                    .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
-                let vehicle_factors =
-                    borrow_vehicle_factors(&mut vehicles_factors, step.tank_id, opts.n_factors)?;
-                let prediction = predict_win_rate(vehicle_factors, account_factors);
-                let target = if step.is_win { 1.0 } else { 0.0 };
+        let mut error = 0.0;
+        for step in &batch {
+            let account_factors = accounts_factors
+                .get_mut(&step.account_id)
+                .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
+            let vehicle_factors =
+                borrow_vehicle_factors(&mut vehicles_factors, step.tank_id, opts.n_factors)?;
+            let prediction = predict_win_rate(vehicle_factors, account_factors);
+            let target = if step.is_win { 1.0 } else { 0.0 };
 
-                let residual_error = target - prediction;
-                error -= residual_error;
+            let residual_error = target - prediction;
+            error -= residual_error;
 
-                let frozen_account_factors = account_factors.to_vec();
-                adjust_factors(
-                    account_factors,
-                    vehicle_factors,
-                    residual_error,
-                    opts.account_learning_rate,
-                    opts.r,
-                );
-                adjust_factors(
-                    vehicle_factors,
-                    &frozen_account_factors,
-                    residual_error,
-                    opts.vehicle_learning_rate,
-                    opts.r,
-                );
-            }
-
-            log::info!(
-                "Iteration #{} | error: {:>6.3} pp",
-                i + 1,
-                100.0 * error / opts.batch_size as f64,
+            let frozen_account_factors = account_factors.to_vec();
+            adjust_factors(
+                account_factors,
+                vehicle_factors,
+                residual_error,
+                opts.account_learning_rate,
+                opts.r,
+            );
+            adjust_factors(
+                vehicle_factors,
+                &frozen_account_factors,
+                residual_error,
+                opts.vehicle_learning_rate,
+                opts.r,
             );
         }
 
@@ -95,13 +85,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             update_account_factors(&database, account_id, &factors).await?;
         }
 
-        let queue_len: usize = redis.llen(TRAINER_QUEUE_KEY).await?;
         log::info!(
-            "Queue: {:>7} | accounts: {:>4} | vehicles: {:>3} | elapsed: {:>5.1}s",
-            queue_len,
+            "Error: {:>6.3} pp | accounts: {:>4} | vehicles: {:>3}",
+            100.0 * error / opts.batch_size as f64,
             n_accounts,
             tank_ids.len(),
-            start_instant.elapsed().as_secs_f64(),
         );
     }
 }
