@@ -14,13 +14,13 @@ use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use serde::{Deserialize, Serialize};
 
-use cf::{adjust_factors, initialize_factors, predict_win_rate};
+use math::{adjust_factors, initialize_factors, predict_win_rate};
 
 use crate::database::{open as open_database, retrieve_accounts_factors, update_account_factors};
 use crate::metrics::Stopwatch;
 use crate::opts::TrainerOpts;
 
-pub mod cf;
+pub mod math;
 pub mod vector;
 
 pub async fn run(mut opts: TrainerOpts) -> crate::Result {

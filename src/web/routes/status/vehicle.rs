@@ -10,8 +10,8 @@ use rocket::{uri, State};
 
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::cf::cosine_similarity;
 use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::math::cosine_similarity;
 use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;

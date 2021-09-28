@@ -8,7 +8,7 @@ use crate::database::models::Account;
 use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::cf::predict_win_rate;
+use crate::trainer::math::predict_win_rate;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
 
 pub fn render_period_li(
