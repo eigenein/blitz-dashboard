@@ -10,11 +10,9 @@ use rocket::{uri, State};
 
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::cf::{cosine_similarity, pearson_coefficient};
+use crate::trainer::cf::cosine_similarity;
 use crate::trainer::get_all_vehicle_factors;
-use crate::web::partials::{
-    footer, headers, home_button, sign_class, tier_td, vehicle_th, vehicle_title,
-};
+use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::TrackingCode;
@@ -41,20 +39,15 @@ pub async fn get(
 
     let vehicle = get_vehicle(tank_id);
     let vehicle_title = vehicle_title(&vehicle);
-
-    let tables: Vec<(Vec<(i32, f64)>, &'static str)> = [cosine_similarity, pearson_coefficient]
+    let table: Vec<(i32, f64)> = vehicles_factors
         .iter()
-        .map(|f| {
-            vehicles_factors
-                .iter()
-                .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, other_factors)))
-                .sorted_unstable_by(|(_, left), (_, right)| {
-                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
-                })
-                .take(50)
-                .collect()
+        .map(|(tank_id, other_factors)| {
+            (*tank_id, cosine_similarity(vehicle_factors, other_factors))
         })
-        .zip(["Косинусное сходство", "r-Пирсона"])
+        .sorted_unstable_by(|(_, left), (_, right)| {
+            right.partial_cmp(left).unwrap_or(Ordering::Equal)
+        })
+        .take(50)
         .collect();
 
     let markup = html! {
@@ -79,36 +72,30 @@ pub async fn get(
 
             section.section {
                 div.container {
-                    h1.title { (vehicle_title) }
+                    h1.title."is-3" { (vehicle_title) }
 
-                    div.columns.is-multiline {
-                        @for (table, title) in &tables {
-                            div.column."is-12"."is-6-widescreen" {
-                                div.box {
-                                    h2.title."is-4" { (title) }
-                                    div.table-container {
-                                        table.table.is-hoverable.is-striped.is-fullwidth {
-                                            thead {
-                                                th { "Техника" }
-                                                th.has-text-centered { "Ур." }
-                                                th { "Тип" }
-                                                th { "Корр." }
-                                            }
-                                            tbody {
-                                                @for (tank_id, coefficient) in table {
-                                                    @let other_vehicle = get_vehicle(*tank_id);
-                                                    tr.(sign_class(*coefficient)) {
-                                                        (vehicle_th(&other_vehicle))
-                                                        (tier_td(other_vehicle.tier))
-                                                        td { (format!("{:?}", other_vehicle.type_)) }
-                                                        td {
-                                                            a href=(uri!(get_vehicle(tank_id = tank_id))) {
-                                                                span.icon-text.is-flex-wrap-nowrap {
-                                                                    (format!("{:+.3}", coefficient))
-                                                                    span.icon { { i.fas.fa-link {} } }
-                                                                }
-                                                            }
-                                                        }
+                    div.box {
+                        h2.title."is-4" { "Похожая техника" }
+                        div.table-container {
+                            table.table.is-hoverable.is-striped.is-fullwidth {
+                                thead {
+                                    th { "Техника" }
+                                    th.has-text-centered { "Уровень" }
+                                    th { "Тип" }
+                                    th { "Схожесть" }
+                                }
+                                tbody {
+                                    @for (tank_id, coefficient) in table {
+                                        @let other_vehicle = get_vehicle(tank_id);
+                                        tr.(if coefficient > 0.9 { "has-background-success-light" } else { "" }) {
+                                            (vehicle_th(&other_vehicle))
+                                            (tier_td(other_vehicle.tier))
+                                            td { (format!("{:?}", other_vehicle.type_)) }
+                                            td {
+                                                a href=(uri!(get_vehicle(tank_id = tank_id))) {
+                                                    span.icon-text.is-flex-wrap-nowrap {
+                                                        (format!("{:+.3}", coefficient))
+                                                        span.icon { { i.fas.fa-link {} } }
                                                     }
                                                 }
                                             }
