@@ -49,15 +49,9 @@ pub async fn get(
                 .iter()
                 .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, &other_factors[1..])))
                 .sorted_unstable_by(|(_, left), (_, right)| {
-                    right
-                        .abs()
-                        .partial_cmp(&left.abs())
-                        .unwrap_or(Ordering::Equal)
+                    right.partial_cmp(&left).unwrap_or(Ordering::Equal)
                 })
-                .take(40)
-                .sorted_unstable_by(|(_, left), (_, right)| {
-                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
-                })
+                .take(50)
                 .collect()
         })
         .zip(["Косинусное сходство", "r-Пирсона"])
@@ -92,27 +86,29 @@ pub async fn get(
                             div.column."is-12"."is-6-widescreen" {
                                 div.box {
                                     h2.title."is-4" { (title) }
-                                    table.table.is-hoverable.is-striped.is-fullwidth {
-                                        thead {
-                                            th { "Техника" }
-                                            th.has-text-centered { "Ур." }
-                                            th { "Тип" }
-                                            th { "Корр." }
-                                        }
-                                        tbody {
-                                            @for (tank_id, coefficient) in table {
-                                                @let other_vehicle = get_vehicle(*tank_id);
-                                                tr.(sign_class(*coefficient)) {
-                                                    (vehicle_th(&other_vehicle))
-                                                    (tier_td(other_vehicle.tier))
-                                                    td {
-                                                        (format!("{:?}", other_vehicle.type_))
-                                                    }
-                                                    td {
-                                                        a href=(uri!(get_vehicle(tank_id = tank_id))) {
-                                                            span.icon-text.is-flex-wrap-nowrap {
-                                                                (format!("{:+.3}", coefficient))
-                                                                span.icon { { i.fas.fa-link {} } }
+                                    div.table-container {
+                                        table.table.is-hoverable.is-striped.is-fullwidth {
+                                            thead {
+                                                th { "Техника" }
+                                                th.has-text-centered { "Ур." }
+                                                th { "Тип" }
+                                                th { "Корр." }
+                                            }
+                                            tbody {
+                                                @for (tank_id, coefficient) in table {
+                                                    @let other_vehicle = get_vehicle(*tank_id);
+                                                    tr.(sign_class(*coefficient)) {
+                                                        (vehicle_th(&other_vehicle))
+                                                        (tier_td(other_vehicle.tier))
+                                                        td {
+                                                            (format!("{:?}", other_vehicle.type_))
+                                                        }
+                                                        td {
+                                                            a href=(uri!(get_vehicle(tank_id = tank_id))) {
+                                                                span.icon-text.is-flex-wrap-nowrap {
+                                                                    (format!("{:+.3}", coefficient))
+                                                                    span.icon { { i.fas.fa-link {} } }
+                                                                }
                                                             }
                                                         }
                                                     }
