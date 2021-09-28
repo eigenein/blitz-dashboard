@@ -4,11 +4,11 @@ use std::time::Duration as StdDuration;
 use humantime::format_duration;
 use maud::{html, Markup};
 
-use crate::cf::predict_win_rate;
 use crate::database::models::Account;
 use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
+use crate::trainer::cf::predict_win_rate;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
 
 pub fn render_period_li(

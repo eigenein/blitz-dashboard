@@ -8,9 +8,9 @@ use rocket::response::content::Html;
 use rocket::response::status::NotFound;
 use rocket::{uri, State};
 
-use crate::cf::{cosine_similarity, pearson_coefficient};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
+use crate::trainer::cf::{cosine_similarity, pearson_coefficient};
 use crate::trainer::get_all_vehicle_factors;
 use crate::web::partials::{
     footer, headers, home_button, sign_class, tier_td, vehicle_th, vehicle_title,
@@ -49,7 +49,7 @@ pub async fn get(
                 .iter()
                 .map(|(tank_id, other_factors)| (*tank_id, f(vehicle_factors, &other_factors[1..])))
                 .sorted_unstable_by(|(_, left), (_, right)| {
-                    right.partial_cmp(&left).unwrap_or(Ordering::Equal)
+                    right.partial_cmp(left).unwrap_or(Ordering::Equal)
                 })
                 .take(50)
                 .collect()

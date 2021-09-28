@@ -10,7 +10,6 @@ use crate::metrics::Stopwatch;
 use crate::opts::{Opts, Subcommand};
 
 mod backoff;
-mod cf;
 mod crawler;
 mod database;
 mod logging;
