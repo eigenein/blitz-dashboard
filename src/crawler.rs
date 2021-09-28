@@ -166,20 +166,13 @@ impl Crawler {
         let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
         let mut new_infos = self.api.get_account_info(&account_ids).await?;
 
-        let mut tx = self.database.begin().await?;
         for account in batch.into_iter() {
             let account_id = account.id;
             if let Some(new_info) = new_infos.remove(&account.id.to_string()).flatten() {
-                self.crawl_account(&mut tx, account, new_info).await?;
+                self.crawl_account(account, new_info).await?;
             }
             self.update_account_metrics(account_id).await;
         }
-        log::debug!("Committing…");
-        tx.commit().await.with_context(|| {
-            let first_id = account_ids.first();
-            let last_id = account_ids.last();
-            format!("failed to commit the batch {:?}..{:?}", first_id, last_id)
-        })?;
 
         Ok(())
     }
@@ -192,7 +185,6 @@ impl Crawler {
 
     async fn crawl_account(
         &self,
-        connection: &mut PgConnection,
         account: BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result {
@@ -207,11 +199,12 @@ impl Crawler {
         let statistics = self
             .get_updated_tanks_statistics(account.id, account.last_battle_time)
             .await?;
+        let mut transaction = self.database.begin().await?;
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(account.id).await?;
             let tanks = merge_tanks(account.id, statistics, achievements);
-            insert_tank_snapshots(&mut *connection, &tanks).await?;
-            self.insert_missing_vehicles(&mut *connection, &tanks)
+            insert_tank_snapshots(&mut transaction, &tanks).await?;
+            self.insert_missing_vehicles(&mut transaction, &tanks)
                 .await?;
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
@@ -226,8 +219,11 @@ impl Crawler {
             log::trace!("#{}: tanks are not updated.", account.id);
         }
 
-        replace_account(&mut *connection, new_info.base).await?;
-
+        replace_account(&mut transaction, new_info.base).await?;
+        transaction
+            .commit()
+            .await
+            .with_context(|| format!("failed to commit account #{}", account.id))?;
         Ok(())
     }
 
