@@ -179,7 +179,7 @@ pub struct TrainerOpts {
 
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0.001")]
-    pub r: f64,
+    pub regularization: f64,
 
     /// Number of latent factors
     #[structopt(short = "f", long = "factors", default_value = "8")]
