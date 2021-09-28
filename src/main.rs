@@ -1,5 +1,6 @@
 #![warn(clippy::all)]
 
+use itertools::Itertools;
 pub use std::time::Duration as StdDuration;
 
 use log::{Level, LevelFilter};
@@ -34,6 +35,7 @@ async fn main() -> crate::Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity)?;
     log::info!("{} {}", CRATE_NAME, CRATE_VERSION);
+    log::info!("Started with: {}", std::env::args().skip(1).join(" "));
     let _sentry_guard = init_sentry(&opts);
 
     let result = run_subcommand(opts).await;
