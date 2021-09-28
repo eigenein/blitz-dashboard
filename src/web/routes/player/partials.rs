@@ -9,6 +9,7 @@ use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::math::predict_win_rate;
+use crate::trainer::vector::Vector;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
 
 pub fn render_period_li(
@@ -58,7 +59,7 @@ pub fn render_tank_tr(
     account: &Account,
     tank: &Tank,
     total_win_rate: &ConfidenceInterval,
-    vehicle_factors: Option<&Vec<f64>>,
+    vehicle_factors: Option<&Vector>,
 ) -> Markup {
     html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);

@@ -1,71 +1,43 @@
 //! Collaborative filtering.
 
+use crate::trainer::vector::Vector;
+
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
-pub fn initialize_factors(x: &mut Vec<f64>, length: usize) {
-    x.truncate(length);
-    while x.len() < length {
-        x.push(if fastrand::bool() { -0.1 } else { 0.1 });
+pub fn initialize_factors(x: &mut Vector, length: usize) {
+    x.0.truncate(length);
+    while x.0.len() < length {
+        x.0.push(if fastrand::bool() { -0.1 } else { 0.1 });
     }
 }
 
-pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
-    let length = min_length(vehicle_factors, account_factors);
-    let prediction = dot(vehicle_factors, account_factors, length);
+pub fn predict_win_rate(vehicle_factors: &Vector, account_factors: &Vector) -> f64 {
+    let prediction = vehicle_factors.dot(account_factors);
     assert!(!prediction.is_nan());
     logistic(prediction)
 }
 
-/// Vector dot product.
-#[must_use]
-pub fn dot(x: &[f64], y: &[f64], length: usize) -> f64 {
-    debug_assert!(length <= x.len());
-    debug_assert!(length <= y.len());
-    (0..length).map(|i| x[i] * y[i]).sum()
-}
-
 /// Adjusts the latent factors.
 /// See: https://sifter.org/~simon/journal/20061211.html.
-///
-/// ```java
-/// userValue[user] += lrate * (err * movieValue[movie] - K * userValue[user]);
-/// movieValue[movie] += lrate * (err * userValue[user] - K * movieValue[movie]);
-/// ```
 pub fn adjust_factors(
-    left: &mut [f64],
-    right: &[f64],
+    left: &mut Vector,
+    right: &Vector,
     residual_error: f64,
     learning_rate: f64,
     regularization: f64,
 ) {
     debug_assert!(learning_rate >= 0.0);
     debug_assert!(regularization >= 0.0);
-    debug_assert!(!residual_error.is_nan());
+    assert!(!residual_error.is_nan());
 
-    for i in 0..min_length(left, right) {
-        left[i] += learning_rate * (residual_error * right[i] - regularization * left[i]);
-    }
-}
-
-#[must_use]
-pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
-    let length = min_length(x, y);
-    dot(x, y, length) / magnitude(x, length) / magnitude(y, length)
-}
-
-#[must_use]
-pub fn magnitude(x: &[f64], length: usize) -> f64 {
-    debug_assert!(length <= x.len());
-    x[..length]
-        .iter()
-        .map(|value| value * value)
-        .sum::<f64>()
-        .sqrt()
-}
-
-#[must_use]
-fn min_length(x: &[f64], y: &[f64]) -> usize {
-    x.len().min(y.len())
+    // userValue[user] += lrate * (err * movieValue[movie] - K * userValue[user]);
+    // movieValue[movie] += lrate * (err * userValue[user] - K * movieValue[movie]);
+    left.add_assign(
+        right
+            .mul(residual_error)
+            .sub(&left.mul(regularization))
+            .mul(learning_rate),
+    );
 }
 
 #[must_use]

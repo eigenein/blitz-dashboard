@@ -14,6 +14,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
+use crate::trainer::vector::Vector;
 
 pub mod models;
 
@@ -124,13 +125,13 @@ pub async fn replace_account(
 pub async fn update_account_factors(
     connection: &PgPool,
     account_id: i32,
-    factors: &[f64],
+    factors: &Vector,
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "UPDATE accounts SET factors = $2 WHERE account_id = $1";
     sqlx::query(QUERY)
         .bind(account_id)
-        .bind(factors)
+        .bind(&factors.0)
         .execute(connection)
         .await
         .with_context(|| format!("failed to update account #{} factors", account_id))?;
@@ -256,7 +257,7 @@ pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
 pub async fn retrieve_accounts_factors(
     connection: &PgPool,
     account_ids: &[i32],
-) -> crate::Result<HashMap<i32, Vec<f64>>> {
+) -> crate::Result<HashMap<i32, Vector>> {
     // language=SQL
     const QUERY: &str = "
         SELECT account_id, factors FROM accounts
@@ -269,7 +270,10 @@ pub async fn retrieve_accounts_factors(
         .await
         .context("failed to retrieve the accounts factors")?;
 
-    Ok(rows.into_iter().collect())
+    Ok(rows
+        .into_iter()
+        .map(|(account_id, factors)| (account_id, Vector(factors)))
+        .collect())
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

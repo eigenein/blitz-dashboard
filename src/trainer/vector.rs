@@ -1,64 +1,41 @@
-use std::ops::{AddAssign, Deref, DerefMut, Mul, Sub};
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Vector(Vec<f64>);
+pub struct Vector(pub Vec<f64>);
 
-impl Deref for Vector {
-    type Target = Vec<f64>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl Vector {
+    #[must_use]
+    pub fn new() -> Self {
+        Self(Vec::new())
     }
-}
-
-impl DerefMut for Vector {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl Mul<f64> for Vector {
-    type Output = Self;
 
     #[must_use]
-    fn mul(self, rhs: f64) -> Self::Output {
-        Self(self.0.into_iter().map(|xi| xi * rhs).collect())
+    pub fn norm(&self) -> f64 {
+        self.0.iter().map(|xi| xi * xi).sum::<f64>().sqrt()
     }
-}
 
-impl Mul<Vector> for f64 {
-    type Output = Vector;
-
-    fn mul(self, rhs: Vector) -> Self::Output {
-        rhs * self
-    }
-}
-
-impl Sub<Self> for Vector {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
+    #[must_use]
+    pub fn sub(self, rhs: &Self) -> Self {
         Self(
             self.0
-                .into_iter()
-                .zip(rhs.0)
+                .iter()
+                .zip(&rhs.0)
                 .map(|(left, right)| left - right)
                 .collect(),
         )
     }
-}
 
-impl AddAssign<Self> for Vector {
-    fn add_assign(&mut self, rhs: Self) {
+    #[must_use]
+    pub fn mul(&self, rhs: f64) -> Self {
+        Self(self.0.iter().map(|xi| xi * rhs).collect())
+    }
+
+    pub fn add_assign(&mut self, rhs: Self) {
         for (left, right) in self.0.iter_mut().zip(rhs.0) {
             *left += right;
         }
     }
-}
 
-impl Vector {
     #[must_use]
     pub fn dot(&self, other: &Self) -> f64 {
         self.0.iter().zip(&other.0).map(|(xi, yi)| xi * yi).sum()

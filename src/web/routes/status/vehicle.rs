@@ -11,7 +11,6 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::trainer::math::cosine_similarity;
 use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
@@ -42,7 +41,7 @@ pub async fn get(
     let table: Vec<(i32, f64)> = vehicles_factors
         .iter()
         .map(|(tank_id, other_factors)| {
-            (*tank_id, cosine_similarity(vehicle_factors, other_factors))
+            (*tank_id, vehicle_factors.cosine_similarity(other_factors))
         })
         .sorted_unstable_by(|(_, left), (_, right)| {
             right.partial_cmp(left).unwrap_or(Ordering::Equal)

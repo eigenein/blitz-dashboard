@@ -19,6 +19,7 @@ use math::{adjust_factors, initialize_factors, predict_win_rate};
 use crate::database::{open as open_database, retrieve_accounts_factors, update_account_factors};
 use crate::metrics::Stopwatch;
 use crate::opts::TrainerOpts;
+use crate::trainer::vector::Vector;
 
 pub mod math;
 pub mod vector;
@@ -61,7 +62,7 @@ pub async fn run(mut opts: TrainerOpts) -> crate::Result {
             let residual_error = target - prediction;
             error -= residual_error;
 
-            let frozen_account_factors = account_factors.to_vec();
+            let frozen_account_factors = account_factors.clone();
             adjust_factors(
                 account_factors,
                 vehicle_factors,
@@ -183,12 +184,12 @@ async fn get_batch(
 }
 
 fn borrow_vehicle_factors(
-    cache: &mut HashMap<i32, Vec<f64>>,
+    cache: &mut HashMap<i32, Vector>,
     tank_id: i32,
     n_factors: usize,
-) -> crate::Result<&mut Vec<f64>> {
+) -> crate::Result<&mut Vector> {
     let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
-    let mut factors = cache.entry(tank_id).or_insert_with(Vec::new);
+    let mut factors = cache.entry(tank_id).or_insert_with(Vector::new);
     initialize_factors(&mut factors, n_factors);
     Ok(factors)
 }
@@ -197,7 +198,7 @@ const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
-) -> crate::Result<HashMap<i32, Vec<f64>>> {
+) -> crate::Result<HashMap<i32, Vector>> {
     let hash_map: HashMap<i32, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
@@ -215,7 +216,7 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
 
 async fn set_vehicle_factors(
     redis: &mut MultiplexedConnection,
-    vehicles_factors: &HashMap<i32, Vec<f64>>,
+    vehicles_factors: &HashMap<i32, Vector>,
     tank_ids: &[i32],
 ) -> crate::Result {
     let mut pipeline = pipe();

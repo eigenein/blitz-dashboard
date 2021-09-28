@@ -2,17 +2,18 @@ use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
 
 use crate::models::BaseAccountInfo;
+use crate::trainer::vector::Vector;
 
 pub struct Account {
     pub base: BaseAccountInfo,
-    pub factors: Vec<f64>,
+    pub factors: Vector,
 }
 
 impl<'r> FromRow<'r, PgRow> for Account {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             base: FromRow::from_row(row)?,
-            factors: row.try_get("factors")?,
+            factors: Vector(row.try_get("factors")?),
         })
     }
 }

@@ -7,7 +7,6 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::trainer::math::magnitude;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
@@ -32,7 +31,7 @@ pub async fn get(
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
     let n_factors = vehicle_factors
         .values()
-        .map(|factors| factors.len())
+        .map(|factors| factors.0.len())
         .max()
         .unwrap_or(0);
 
@@ -105,11 +104,11 @@ pub async fn get(
                                             }
                                             (tier_td(vehicle.tier))
 
-                                            @let magnitude = magnitude(&factors, factors.len());
+                                            @let magnitude = factors.norm();
                                             td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
                                             @for i in 0..n_factors {
-                                                @if let Some(factor) = factors.get(i).copied() {
+                                                @if let Some(factor) = factors.0.get(i).copied() {
                                                     td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
                                                         (format!("{:+.4}", factor))
                                                     }
