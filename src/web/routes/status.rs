@@ -1,4 +1,4 @@
-use maud::{html, PreEscaped, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::response::content::Html;
@@ -7,6 +7,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::vector::Vector;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
@@ -63,58 +64,10 @@ pub async fn get(
                         h2.title."is-4" { "Признаки техники" }
                         div.table-container {
                             table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
-                                thead {
-                                    th { "Техника" }
-                                    th { }
-                                    th {
-                                        a data-sort="tier" {
-                                            span.icon-text.is-flex-wrap-nowrap {
-                                                span { "Уровень" }
-                                            }
-                                        }
-                                    }
-                                    th {
-                                        a data-sort="magnitude" {
-                                            span.icon-text.is-flex-wrap-nowrap {
-                                                span { "Модуль"  }
-                                            }
-                                        }
-                                    }
-                                    @for i in 0..n_factors {
-                                        th {
-                                            a data-sort=(format!("factor-{}", i)) {
-                                                span.icon-text.is-flex-wrap-nowrap {
-                                                    span { "#" (i) }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                (thead(n_factors))
                                 tbody {
                                     @for (tank_id, factors) in vehicle_factors.into_iter() {
-                                        tr {
-                                            @let vehicle = get_vehicle(tank_id);
-                                            (vehicle_th(&vehicle))
-                                            td.has-text-centered {
-                                                a href=(uri!(get_vehicle_status(tank_id = tank_id))) {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span.icon { { i.fas.fa-link {} } }
-                                                    }
-                                                }
-                                            }
-                                            (tier_td(vehicle.tier))
-
-                                            @let magnitude = factors.norm();
-                                            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
-
-                                            @for i in 0..n_factors {
-                                                @if let Some(factor) = factors.0.get(i).copied() {
-                                                    td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
-                                                        (format!("{:+.4}", factor))
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        (tr(tank_id, &factors, n_factors))
                                     }
                                 }
                             }
@@ -142,4 +95,64 @@ pub async fn get(
     let response = markup.into_string();
     redis.set_ex(CACHE_KEY, &response, 60).await?;
     Ok(Html(response))
+}
+
+pub fn thead(n_factors: usize) -> Markup {
+    html! {
+        thead {
+            th { "Техника" }
+            th { }
+            th {
+                a data-sort="tier" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Уровень" }
+                    }
+                }
+            }
+            th {
+                a data-sort="magnitude" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Модуль"  }
+                    }
+                }
+            }
+            @for i in 0..n_factors {
+                th {
+                    a data-sort=(format!("factor-{}", i)) {
+                        span.icon-text.is-flex-wrap-nowrap {
+                            span { "#" (i) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn tr(tank_id: i32, factors: &Vector, n_factors: usize) -> Markup {
+    html! {
+        tr {
+            @let vehicle = get_vehicle(tank_id);
+            (vehicle_th(&vehicle))
+            td.has-text-centered {
+                a href=(uri!(get_vehicle_status(tank_id = tank_id))) {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span.icon { { i.fas.fa-link {} } }
+                    }
+                }
+            }
+            (tier_td(vehicle.tier))
+
+            @let magnitude = factors.norm();
+            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
+
+            @for i in 0..n_factors {
+                @if let Some(factor) = factors.0.get(i).copied() {
+                    td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
+                        (format!("{:+.4}", factor))
+                    }
+                }
+            }
+        }
+    }
 }

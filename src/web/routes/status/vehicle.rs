@@ -11,9 +11,10 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
+use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
+use crate::web::routes::status::{thead as status_thead, tr as status_tr};
 use crate::web::TrackingCode;
 
 #[rocket::get("/status/vehicle/<tank_id>")]
@@ -37,7 +38,6 @@ pub async fn get(
     };
 
     let vehicle = get_vehicle(tank_id);
-    let vehicle_title = vehicle_title(&vehicle);
     let table: Vec<(i32, f64)> = vehicles_factors
         .iter()
         .map(|(tank_id, other_factors)| {
@@ -71,7 +71,17 @@ pub async fn get(
 
             section.section {
                 div.container {
-                    h1.title."is-3" { (vehicle_title) }
+                    div.box {
+                        h2.title."is-4" { "Признаки" }
+                        div.table-container {
+                            table.table.is-hoverable.is-striped.is-fullwidth {
+                                (status_thead(vehicle_factors.0.len()))
+                                tbody {
+                                    (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
+                                }
+                            }
+                        }
+                    }
 
                     div.box {
                         h2.title."is-4" { "Похожая техника" }
@@ -86,10 +96,12 @@ pub async fn get(
                                 tbody {
                                     @for (tank_id, coefficient) in table {
                                         @let other_vehicle = get_vehicle(tank_id);
-                                        tr.(if coefficient > 0.9 { "has-background-success-light" } else { "" }) {
+                                        tr {
                                             (vehicle_th(&other_vehicle))
                                             (tier_td(other_vehicle.tier))
-                                            td { (format!("{:?}", other_vehicle.type_)) }
+                                            td.(if vehicle.type_ == other_vehicle.type_ { "has-background-success-light" } else { "" }) {
+                                                (format!("{:?}", other_vehicle.type_))
+                                            }
                                             td {
                                                 a href=(uri!(get_vehicle(tank_id = tank_id))) {
                                                     span.icon-text.is-flex-wrap-nowrap {
