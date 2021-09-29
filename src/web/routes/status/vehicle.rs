@@ -59,6 +59,7 @@ pub async fn get(
         }
         body {
             (tracking_code.0)
+
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
                 div.container {
                     div.navbar-brand {
@@ -69,44 +70,56 @@ pub async fn get(
                 }
             }
 
-            section.section {
+            section.section."p-0"."m-5" {
                 div.container {
-                    div.box {
-                        h2.title."is-4" { "Признаки" }
-                        div.table-container {
-                            table.table.is-hoverable.is-striped.is-fullwidth {
-                                (status_thead(vehicle_factors.0.len()))
-                                tbody {
-                                    (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
+                    div.card {
+                        header.card-header {
+                            p.card-header-title { "Скрытые признаки" }
+                        }
+                        div.card-content {
+                            div.table-container {
+                                table.table.is-hoverable.is-striped.is-fullwidth {
+                                    (status_thead(vehicle_factors.0.len()))
+                                    tbody {
+                                        (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
+                                    }
                                 }
                             }
                         }
                     }
+                }
+            }
 
-                    div.box {
-                        h2.title."is-4" { "Похожая техника" }
-                        div.table-container {
-                            table.table.is-hoverable.is-striped.is-fullwidth {
-                                thead {
-                                    th { "Техника" }
-                                    th.has-text-centered { "Уровень" }
-                                    th { "Тип" }
-                                    th { "Схожесть" }
-                                }
-                                tbody {
-                                    @for (tank_id, coefficient) in table {
-                                        @let other_vehicle = get_vehicle(tank_id);
-                                        tr {
-                                            (vehicle_th(&other_vehicle))
-                                            (tier_td(other_vehicle.tier))
-                                            td.(if vehicle.type_ == other_vehicle.type_ { "has-background-success-light" } else { "" }) {
-                                                (format!("{:?}", other_vehicle.type_))
-                                            }
-                                            td {
-                                                a href=(uri!(get_vehicle(tank_id = tank_id))) {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        (format!("{:+.4}", coefficient))
-                                                        span.icon { { i.fas.fa-link {} } }
+            section.section."p-0"."m-5" {
+                div.container {
+                    div.card {
+                        header.card-header {
+                            p.card-header-title { "Похожая техника" }
+                        }
+                        div.card-content {
+                            div.table-container {
+                                table.table.is-hoverable.is-striped.is-fullwidth {
+                                    thead {
+                                        th { "Техника" }
+                                        th.has-text-centered { "Уровень" }
+                                        th { "Тип" }
+                                        th { "Схожесть" }
+                                    }
+                                    tbody {
+                                        @for (tank_id, coefficient) in table {
+                                            @let other_vehicle = get_vehicle(tank_id);
+                                            tr {
+                                                (vehicle_th(&other_vehicle))
+                                                (tier_td(other_vehicle.tier))
+                                                td.(if vehicle.type_ == other_vehicle.type_ { "has-background-success-light" } else { "" }) {
+                                                    (format!("{:?}", other_vehicle.type_))
+                                                }
+                                                td {
+                                                    a href=(uri!(get_vehicle(tank_id = tank_id))) {
+                                                        span.icon-text.is-flex-wrap-nowrap {
+                                                            (format!("{:+.4}", coefficient))
+                                                            span.icon { { i.fas.fa-link {} } }
+                                                        }
                                                     }
                                                 }
                                             }
