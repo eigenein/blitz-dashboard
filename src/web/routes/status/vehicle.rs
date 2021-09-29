@@ -46,7 +46,7 @@ pub async fn get(
         .sorted_unstable_by(|(_, left), (_, right)| {
             right.partial_cmp(left).unwrap_or(Ordering::Equal)
         })
-        .take(50)
+        .take(40)
         .collect();
 
     let markup = html! {
@@ -65,26 +65,6 @@ pub async fn get(
                     div.navbar-brand {
                         div.navbar-item {
                             div.buttons { (home_button()) }
-                        }
-                    }
-                }
-            }
-
-            section.section."p-0"."m-5" {
-                div.container {
-                    div.card {
-                        header.card-header {
-                            p.card-header-title { "Скрытые признаки" }
-                        }
-                        div.card-content {
-                            div.table-container {
-                                table.table.is-hoverable.is-striped.is-fullwidth {
-                                    (status_thead(vehicle_factors.0.len()))
-                                    tbody {
-                                        (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -124,6 +104,26 @@ pub async fn get(
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            section.section."p-0"."m-5" {
+                div.container {
+                    div.card {
+                        header.card-header {
+                            p.card-header-title { "Скрытые признаки" }
+                        }
+                        div.card-content {
+                            div.table-container {
+                                table.table.is-hoverable.is-striped.is-fullwidth {
+                                    (status_thead(vehicle_factors.0.len()))
+                                    tbody {
+                                        (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
                                     }
                                 }
                             }
