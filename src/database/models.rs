@@ -13,7 +13,7 @@ impl<'r> FromRow<'r, PgRow> for Account {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             base: FromRow::from_row(row)?,
-            factors: Vector(row.try_get("factors")?),
+            factors: From::<Vec<f64>>::from(row.try_get("factors")?),
         })
     }
 }

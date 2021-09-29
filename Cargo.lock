@@ -189,7 +189,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.81.1"
+version = "0.81.2"
 dependencies = [
  "anyhow",
  "bytes",
@@ -211,6 +211,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
+ "smallvec",
  "sqlx",
  "structopt",
  "tokio",
@@ -1943,6 +1944,9 @@ name = "smallvec"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ecab6c735a6bb4139c0caafd0cc3635748bbb3acf4550e8138122099251f309"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "socket2"

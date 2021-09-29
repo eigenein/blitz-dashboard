@@ -1,12 +1,19 @@
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Vector(pub Vec<f64>);
+pub struct Vector(pub SmallVec<[f64; 32]>);
+
+impl From<Vec<f64>> for Vector {
+    fn from(vec: Vec<f64>) -> Self {
+        Self(vec.into())
+    }
+}
 
 impl Vector {
     #[must_use]
     pub fn new() -> Self {
-        Self(Vec::new())
+        Self(SmallVec::new_const())
     }
 
     #[must_use]
@@ -59,12 +66,14 @@ impl Vector {
 
 #[cfg(test)]
 mod tests {
+    use smallvec::smallvec;
+
     use super::*;
 
     #[test]
     fn cosine_similarity_ok() {
-        let vector_1 = Vector(vec![1.0, 2.0, 3.0]);
-        let vector_2 = Vector(vec![3.0, 5.0, 7.0]);
+        let vector_1 = Vector(smallvec![1.0, 2.0, 3.0]);
+        let vector_2 = Vector(smallvec![3.0, 5.0, 7.0]);
         assert!((vector_1.cosine_similarity(&vector_2) - 0.9974149030430578).abs() < f64::EPSILON);
     }
 }

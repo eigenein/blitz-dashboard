@@ -131,7 +131,7 @@ pub async fn update_account_factors(
     const QUERY: &str = "UPDATE accounts SET factors = $2 WHERE account_id = $1";
     sqlx::query(QUERY)
         .bind(account_id)
-        .bind(&factors.0)
+        .bind(factors.0.as_ref())
         .execute(connection)
         .await
         .with_context(|| format!("failed to update account #{} factors", account_id))?;
@@ -272,7 +272,7 @@ pub async fn retrieve_accounts_factors(
 
     Ok(rows
         .into_iter()
-        .map(|(account_id, factors)| (account_id, Vector(factors)))
+        .map(|(account_id, factors)| (account_id, Vector::from(factors)))
         .collect())
 }
 
