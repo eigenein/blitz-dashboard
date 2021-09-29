@@ -40,7 +40,11 @@ pub async fn run(mut opts: TrainerOpts) -> crate::Result {
         reload_configuration(&mut redis, &mut opts).await?;
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
-        let tank_ids: Vec<i32> = batch.iter().map(|step| step.tank_id).unique().collect();
+        let tank_ids: Vec<i32> = batch
+            .iter()
+            .map(|step| remap_tank_id(step.tank_id))
+            .unique()
+            .collect();
         fastrand::shuffle(&mut batch);
 
         reload_configuration(&mut redis, &mut opts).await?;
@@ -188,7 +192,7 @@ fn borrow_vehicle_factors(
     tank_id: i32,
     n_factors: usize,
 ) -> crate::Result<&mut Vector> {
-    let tank_id = REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id);
+    let tank_id = remap_tank_id(tank_id);
     let mut factors = cache.entry(tank_id).or_insert_with(Vector::new);
     initialize_factors(&mut factors, n_factors);
     Ok(factors)
@@ -213,6 +217,10 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
     64769_i32 => 9217, // ИС-6 Бесстрашный
     64801_i32 => 2849, // T34 Independence
 };
+
+fn remap_tank_id(tank_id: i32) -> i32 {
+    REMAP_TANK_ID.get(&tank_id).copied().unwrap_or(tank_id)
+}
 
 async fn set_vehicle_factors(
     redis: &mut MultiplexedConnection,
