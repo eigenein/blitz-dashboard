@@ -24,7 +24,7 @@ use crate::trainer::vector::Vector;
 pub mod math;
 pub mod vector;
 
-pub async fn run(mut opts: TrainerOpts) -> crate::Result {
+pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
     let connections = &opts.connections;
@@ -37,7 +37,6 @@ pub async fn run(mut opts: TrainerOpts) -> crate::Result {
     log::info!("Running in batches of {} steps…", opts.batch_size);
 
     loop {
-        reload_configuration(&mut redis, &mut opts).await?;
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
         let tank_ids: Vec<i32> = batch
@@ -47,7 +46,6 @@ pub async fn run(mut opts: TrainerOpts) -> crate::Result {
             .collect();
         fastrand::shuffle(&mut batch);
 
-        reload_configuration(&mut redis, &mut opts).await?;
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
         for factors in accounts_factors.values_mut() {
             initialize_factors(factors, opts.n_factors);
@@ -126,45 +124,6 @@ pub async fn push_train_steps(
 }
 
 const TRAINER_QUEUE_KEY: &str = "trainer::steps";
-
-async fn reload_configuration(
-    redis: &mut MultiplexedConnection,
-    opts: &mut TrainerOpts,
-) -> crate::Result {
-    const BATCH_SIZE_KEY: &str = "trainer::batch_size";
-    const N_FACTORS_KEY: &str = "trainer::n_factors";
-    const VEHICLE_LR_KEY: &str = "trainer::vehicle_lr";
-    const ACCOUNT_LR_KEY: &str = "trainer::account_lr";
-    const REGULARIZATION_KEY: &str = "trainer::r";
-
-    if let Ok(Some(size)) = redis.get::<_, Option<usize>>(BATCH_SIZE_KEY).await {
-        redis.del(BATCH_SIZE_KEY).await?;
-        log::warn!("Setting batch size to {}.", size);
-        opts.batch_size = size;
-    }
-    if let Ok(Some(n_factors)) = redis.get::<_, Option<usize>>(N_FACTORS_KEY).await {
-        redis.del(N_FACTORS_KEY).await?;
-        log::warn!("Setting factor count to {}.", n_factors);
-        opts.n_factors = n_factors;
-    }
-    if let Ok(Some(rate)) = redis.get::<_, Option<f64>>(VEHICLE_LR_KEY).await {
-        redis.del(VEHICLE_LR_KEY).await?;
-        log::warn!("Setting vehicle learning rate to {}.", rate);
-        opts.vehicle_learning_rate = rate;
-    }
-    if let Ok(Some(rate)) = redis.get::<_, Option<f64>>(ACCOUNT_LR_KEY).await {
-        redis.del(ACCOUNT_LR_KEY).await?;
-        log::warn!("Setting account learning rate to {}.", rate);
-        opts.account_learning_rate = rate;
-    }
-    if let Ok(Some(regularization)) = redis.get::<_, Option<f64>>(REGULARIZATION_KEY).await {
-        redis.del(REGULARIZATION_KEY).await?;
-        log::warn!("Setting regularization to {}.", regularization);
-        opts.regularization = regularization;
-    }
-
-    Ok(())
-}
 
 async fn get_batch(
     redis: &mut MultiplexedConnection,
