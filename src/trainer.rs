@@ -40,21 +40,21 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     loop {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
-        let tank_ids: Vec<i32> = collect_tank_ids(&batch);
-        fastrand::shuffle(&mut batch);
-
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
-        for factors in accounts_factors.values_mut() {
-            initialize_factors(factors, opts.n_factors);
-        }
-
         let mut error = 0.0;
+
+        fastrand::shuffle(&mut batch);
         for step in &batch {
             let account_factors = accounts_factors
                 .get_mut(&step.account_id)
                 .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
-            let vehicle_factors =
-                borrow_vehicle_factors(&mut vehicles_factors, step.tank_id, opts.n_factors)?;
+            initialize_factors(account_factors, opts.n_factors, opts.hard);
+
+            let vehicle_factors = vehicles_factors
+                .entry(remap_tank_id(step.tank_id))
+                .or_insert_with(Vector::new);
+            initialize_factors(vehicle_factors, opts.n_factors, opts.hard);
+
             let prediction = predict_win_rate(vehicle_factors, account_factors);
             let target = if step.is_win { 1.0 } else { 0.0 };
 
@@ -79,6 +79,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         }
 
         log::debug!("Updating the vehicles factors…");
+        let tank_ids: Vec<i32> = collect_tank_ids(&batch);
         set_vehicle_factors(&mut redis, &vehicles_factors, &tank_ids).await?;
 
         log::debug!("Updating the accounts factors…");
@@ -167,17 +168,6 @@ fn collect_tank_ids(batch: &[TrainStep]) -> Vec<i32> {
         .map(|step| remap_tank_id(step.tank_id))
         .unique()
         .collect()
-}
-
-fn borrow_vehicle_factors(
-    cache: &mut HashMap<i32, Vector>,
-    tank_id: i32,
-    n_factors: usize,
-) -> crate::Result<&mut Vector> {
-    let tank_id = remap_tank_id(tank_id);
-    let mut factors = cache.entry(tank_id).or_insert_with(Vector::new);
-    initialize_factors(&mut factors, n_factors);
-    Ok(factors)
 }
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
