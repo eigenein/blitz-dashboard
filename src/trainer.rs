@@ -3,7 +3,7 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::result::Result as StdResult;
 
 use anyhow::{anyhow, Context};
@@ -34,8 +34,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .await?;
 
     let mut vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
-    log::info!("Running in batches of {} steps…", opts.batch_size);
 
+    log::info!("Running in batches of {} steps…", opts.batch_size);
+    let mut errors = VecDeque::new();
     loop {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
@@ -80,19 +81,35 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         log::debug!("Updating the vehicles factors…");
         set_vehicle_factors(&mut redis, &vehicles_factors, &tank_ids).await?;
 
-        let n_accounts = accounts_factors.len();
-        log::debug!("Updating factors for {} accounts…", n_accounts);
-        for (account_id, factors) in accounts_factors.into_iter() {
-            update_account_factors(&database, account_id, &factors).await?;
+        log::debug!("Updating the accounts factors…");
+        for (account_id, factors) in accounts_factors.iter() {
+            update_account_factors(&database, *account_id, factors).await?;
         }
 
-        log::info!(
-            "Error: {:>6.3} pp | accounts: {:>4} | vehicles: {:>3}",
-            100.0 * error / batch.len() as f64,
-            n_accounts,
+        log_status(
+            error / batch.len() as f64,
+            &mut errors,
+            accounts_factors.len(),
             tank_ids.len(),
         );
     }
+}
+
+fn log_status(error: f64, errors: &mut VecDeque<f64>, n_accounts: usize, n_vehicles: usize) {
+    let error = 100.0 * error;
+    errors.push_front(error);
+    errors.truncate(15);
+    let error_5 = errors.iter().take(5).sum::<f64>() / errors.len().min(5) as f64;
+    let error_15 = errors.iter().take(15).sum::<f64>() / errors.len().min(15) as f64;
+
+    log::info!(
+        "E1: {:>7.3} pp | E5: {:>7.3} pp | E15: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
+        error,
+        error_5,
+        error_15,
+        n_accounts,
+        n_vehicles,
+    );
 }
 
 #[derive(Serialize, Deserialize)]
