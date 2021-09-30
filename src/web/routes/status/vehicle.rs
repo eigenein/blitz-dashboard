@@ -104,12 +104,7 @@ pub async fn get(
                                                     (format!("{:?}", other_vehicle.type_))
                                                 }
                                                 td {
-                                                    a href=(uri!(get_vehicle(tank_id = tank_id))) {
-                                                        span.icon-text.is-flex-wrap-nowrap {
-                                                            (format!("{:+.4}", coefficient))
-                                                            span.icon { { i.fas.fa-link {} } }
-                                                        }
-                                                    }
+                                                    a href=(uri!(get_vehicle(tank_id = tank_id))) { (format!("{:+.4}", coefficient)) }
                                                 }
                                             }
                                         }
