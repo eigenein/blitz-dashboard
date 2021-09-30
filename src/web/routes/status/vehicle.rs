@@ -11,7 +11,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
+use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::routes::status::{thead as status_thead, tr as status_tr};
@@ -40,6 +40,7 @@ pub async fn get(
     let vehicle = get_vehicle(tank_id);
     let table: Vec<(i32, f64)> = vehicles_factors
         .iter()
+        .filter(|(other_tank_id, _)| **other_tank_id != tank_id)
         .map(|(tank_id, other_factors)| {
             (*tank_id, vehicle_factors.cosine_similarity(other_factors))
         })
@@ -65,6 +66,9 @@ pub async fn get(
                     div.navbar-brand {
                         div.navbar-item {
                             div.buttons { (home_button()) }
+                        }
+                        div.navbar-item {
+                            (vehicle_title(&vehicle))
                         }
                     }
                 }
