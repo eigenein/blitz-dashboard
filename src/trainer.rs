@@ -101,10 +101,10 @@ fn log_status(error: f64, errors: &mut VecDeque<f64>, n_accounts: usize, n_vehic
     errors.truncate(30);
 
     log::info!(
-        "E1: {:>7.3} pp | E15: {:>7.3} pp | E30: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
+        "E1: {:>7.3} pp | E30: {:>7.3} pp | E60: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
         error,
-        average_error(errors, 15),
         average_error(errors, 30),
+        average_error(errors, 60),
         n_accounts,
         n_vehicles,
     );
