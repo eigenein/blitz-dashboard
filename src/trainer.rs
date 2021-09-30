@@ -39,11 +39,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     loop {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
-        let tank_ids: Vec<i32> = batch
-            .iter()
-            .map(|step| remap_tank_id(step.tank_id))
-            .unique()
-            .collect();
+        let tank_ids: Vec<i32> = collect_tank_ids(&batch);
         fastrand::shuffle(&mut batch);
 
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
@@ -144,6 +140,14 @@ async fn get_batch(
 
     debug_assert_eq!(steps.len(), size);
     Ok(steps)
+}
+
+fn collect_tank_ids(batch: &[TrainStep]) -> Vec<i32> {
+    batch
+        .iter()
+        .map(|step| remap_tank_id(step.tank_id))
+        .unique()
+        .collect()
 }
 
 fn borrow_vehicle_factors(
