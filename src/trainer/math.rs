@@ -7,7 +7,9 @@ use crate::trainer::vector::Vector;
 pub fn initialize_factors(x: &mut Vector, length: usize) {
     x.0.truncate(length);
     while x.0.len() < length {
-        x.0.push(if fastrand::bool() { -0.1 } else { 0.1 });
+        // Generate a factor as a random value from [-0.10, -0.05] ∪ [+0.05, +0.10].
+        let factor = 0.05 + 0.05 * fastrand::f64();
+        x.0.push(if fastrand::bool() { factor } else { -factor });
     }
 }
 
