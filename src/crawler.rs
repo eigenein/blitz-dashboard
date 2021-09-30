@@ -156,7 +156,14 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
         stream
-            .map(|batch| async move { self.crawl_batch(batch?).await })
+            .map(|batch| async move {
+                // Debugging: https://github.com/eigenein/blitz-dashboard/issues/134.
+                let result = self.crawl_batch(batch?).await;
+                if let Err(error) = &result {
+                    log::error!("Failed to crawl the batch: {:#}", error);
+                }
+                result
+            })
             .buffer_unordered(self.n_tasks)
             .try_collect()
             .await
