@@ -149,7 +149,12 @@ pub async fn get(
     };
     let vehicles_thead = html! {
         tr {
-            th { "Техника" }
+            th {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon { i.fas.fa-truck-monster {} }
+                    span { "Техника" }
+                }
+            }
             th {
                 a data-sort="tier" {
                     span.icon-text.is-flex-wrap-nowrap {

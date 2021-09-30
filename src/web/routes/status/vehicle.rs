@@ -74,7 +74,12 @@ pub async fn get(
                 div.container {
                     div.card {
                         header.card-header {
-                            p.card-header-title { "Похожая техника" }
+                            p.card-header-title {
+                                span.icon-text.is-flex-wrap-nowrap {
+                                    span.icon { i.fas.fa-truck-monster {} }
+                                    span { "Похожая техника" }
+                                }
+                            }
                         }
                         div.card-content {
                             div.table-container {
@@ -116,7 +121,12 @@ pub async fn get(
                 div.container {
                     div.card {
                         header.card-header {
-                            p.card-header-title { "Скрытые признаки" }
+                            p.card-header-title {
+                                span.icon-text.is-flex-wrap-nowrap {
+                                    span.icon { i.fas.fa-superscript {} }
+                                    span { "Скрытые признаки" }
+                                }
+                            }
                         }
                         div.card-content {
                             div.table-container {
