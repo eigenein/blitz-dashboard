@@ -98,18 +98,20 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 fn log_status(error: f64, errors: &mut VecDeque<f64>, n_accounts: usize, n_vehicles: usize) {
     let error = 100.0 * error;
     errors.push_front(error);
-    errors.truncate(15);
-    let error_5 = errors.iter().take(5).sum::<f64>() / errors.len().min(5) as f64;
-    let error_15 = errors.iter().take(15).sum::<f64>() / errors.len().min(15) as f64;
+    errors.truncate(30);
 
     log::info!(
-        "E1: {:>7.3} pp | E5: {:>7.3} pp | E15: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
+        "E1: {:>7.3} pp | E15: {:>7.3} pp | E30: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
         error,
-        error_5,
-        error_15,
+        average_error(errors, 15),
+        average_error(errors, 30),
         n_accounts,
         n_vehicles,
     );
+}
+
+fn average_error(errors: &VecDeque<f64>, n: usize) -> f64 {
+    errors.iter().take(n).sum::<f64>() / errors.len().min(n) as f64
 }
 
 #[derive(Serialize, Deserialize)]
