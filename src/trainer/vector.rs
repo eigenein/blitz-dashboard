@@ -50,17 +50,7 @@ impl Vector {
 
     #[must_use]
     pub fn cosine_similarity(&self, other: &Self) -> f64 {
-        let (dot, x_len_squared, y_len_squared) = self.0.iter().zip(&other.0).fold(
-            (0.0, 0.0, 0.0),
-            |(dot, x_len_squared, y_len_squared), (xi, yi)| {
-                (
-                    dot + xi * yi,
-                    x_len_squared + xi * xi,
-                    y_len_squared + yi * yi,
-                )
-            },
-        );
-        dot / x_len_squared.sqrt() / y_len_squared.sqrt()
+        self.dot(other) / self.norm() / other.norm()
     }
 }
 
