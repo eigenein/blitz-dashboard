@@ -4,6 +4,7 @@ use maud::{html, Markup};
 use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
+use crate::trainer::vector::Vector;
 use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
@@ -277,6 +278,34 @@ pub fn tier_td(tier: i32) -> Markup {
         td.has-text-centered data-sort="tier" data-value=(tier) {
             @if let Some(markup) = TIER_MARKUP.get(&tier) {
                 strong { (markup) }
+            }
+        }
+    }
+}
+
+pub fn factors_table(factors: &Vector) -> Markup {
+    html! {
+        div.table-container {
+            table.table.is-hoverable.is-striped.is-fullwidth {
+                thead {
+                    th {
+                        a data-sort="magnitude" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span { "Модуль"  }
+                            }
+                        }
+                    }
+                    @for i in 0..factors.0.len() {
+                        th { "#" (i) }
+                    }
+                }
+                tbody {
+                    td { (render_f64(factors.norm(), 4)) }
+
+                    @for factor in &factors.0 {
+                        td.(sign_class(*factor)) { (format!("{:+.4}", factor)) }
+                    }
+                }
             }
         }
     }

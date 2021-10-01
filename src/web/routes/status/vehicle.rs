@@ -11,10 +11,11 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th, vehicle_title};
+use crate::web::partials::{
+    factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
+};
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
-use crate::web::routes::status::{thead as status_thead, tr as status_tr};
 use crate::web::TrackingCode;
 
 #[rocket::get("/status/vehicle/<tank_id>")]
@@ -128,14 +129,7 @@ pub async fn get(
                             }
                         }
                         div.card-content {
-                            div.table-container {
-                                table.table.is-hoverable.is-striped.is-fullwidth {
-                                    (status_thead(vehicle_factors.0.len()))
-                                    tbody {
-                                        (status_tr(tank_id, vehicle_factors, vehicle_factors.0.len()))
-                                    }
-                                }
-                            }
+                            (factors_table(vehicle_factors))
                         }
                     }
                 }
