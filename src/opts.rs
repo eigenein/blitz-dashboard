@@ -188,10 +188,6 @@ pub struct TrainerOpts {
     /// Training batch size
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
-
-    /// Increases magnitude of newly generated random factors
-    #[structopt(long)]
-    pub hard: bool,
 }
 
 #[derive(StructOpt)]

@@ -48,12 +48,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             let account_factors = accounts_factors
                 .get_mut(&step.account_id)
                 .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
-            initialize_factors(account_factors, opts.n_factors, opts.hard);
+            initialize_factors(account_factors, opts.n_factors);
 
             let vehicle_factors = vehicles_factors
                 .entry(remap_tank_id(step.tank_id))
                 .or_insert_with(Vector::new);
-            initialize_factors(vehicle_factors, opts.n_factors, opts.hard);
+            initialize_factors(vehicle_factors, opts.n_factors);
 
             let prediction = predict_win_rate(vehicle_factors, account_factors);
             let target = if step.is_win { 1.0 } else { 0.0 };
