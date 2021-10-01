@@ -81868,6 +81868,167 @@
     "turrets": [],
     "type": "AT-SPG"
   },
+  "8561": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 40,
+          "rear": 30,
+          "sides": 30
+        },
+        "turret": {
+          "front": 50,
+          "rear": 30,
+          "sides": 40
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Wright Continental R-975C2B",
+        "power": 400,
+        "tier": 6,
+        "weight": 569
+      },
+      "engine_id": 21621,
+      "firepower": 31,
+      "gun": {
+        "aim_time": 4.13,
+        "caliber": 75,
+        "clip_capacity": 3,
+        "clip_reload_time": 2.5,
+        "dispersion": 0.38,
+        "fire_rate": 8.18,
+        "move_down_arc": 6,
+        "move_up_arc": 10,
+        "name": "75 mm SA50B2",
+        "reload_time": 17.0,
+        "tier": 6,
+        "traverse_speed": 35.0,
+        "weight": 1740
+      },
+      "gun_id": 21876,
+      "hp": 900,
+      "hull_hp": 700,
+      "hull_weight": 10100,
+      "is_default": true,
+      "maneuverability": 64,
+      "max_ammo": 48,
+      "max_weight": 21000,
+      "profile_id": "21621-21876-33650-33907",
+      "protection": 23,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 144,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 135,
+          "penetration": 202,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 175,
+          "penetration": 38,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 55,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 55,
+      "suspension": {
+        "load_limit": 21000,
+        "name": "Titan T24 57",
+        "tier": 6,
+        "traverse_speed": 42,
+        "weight": 4200
+      },
+      "suspension_id": 33650,
+      "turret": {
+        "hp": 200,
+        "name": "Titan T24 57",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 44,
+        "view_range": 250,
+        "weight": 2181
+      },
+      "turret_id": 33907,
+      "weight": 19065
+    },
+    "description": "Новейшая разработка учёных из секретной лаборатории. Из сплава титана и Фортиума — материала, добытого из упавшего метеорита, — им удалось создать уникальную броню. За основу новой машины взяли M24 Chaffee, сохранив лучшие качества этого танка: достойный обзор и солидный урон в минуту. ",
+    "engines": [
+      21621
+    ],
+    "guns": [
+      21876
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Oth27_M24_AMX.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Oth27_M24_AMX.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "21621": {
+        "is_default": true,
+        "module_id": 21621,
+        "name": "Wright Continental R-975C2B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "21876": {
+        "is_default": true,
+        "module_id": 21876,
+        "name": "75 mm SA50B2",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "33650": {
+        "is_default": true,
+        "module_id": 33650,
+        "name": "Titan T24 57",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "33907": {
+        "is_default": true,
+        "module_id": 33907,
+        "name": "Titan T24 57",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      }
+    },
+    "name": "Titan T24 57",
+    "nation": "other",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      33650
+    ],
+    "tank_id": 8561,
+    "tier": 6,
+    "turrets": [
+      33907
+    ],
+    "type": "lightTank"
+  },
   "865": {
     "cost": {
       "price_credit": 0,
