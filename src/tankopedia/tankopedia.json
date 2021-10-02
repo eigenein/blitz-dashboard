@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -24955,8 +24955,8 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          1409,
-          3713
+          3713,
+          1409
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -45884,8 +45884,8 @@
         "module_id": 7427,
         "name": "Т-44-100",
         "next_modules": [
-          10500,
-          3332
+          3332,
+          10500
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -76643,8 +76643,8 @@
         "name": "QF Mk. VI Bofors",
         "next_modules": null,
         "next_tanks": [
-          849,
-          9041
+          9041,
+          849
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -78414,8 +78414,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -79272,8 +79272,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -80996,8 +80996,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -83476,8 +83476,8 @@
         "module_id": 14372,
         "name": "90 mm Gun M36",
         "next_modules": [
-          10276,
-          7972
+          7972,
+          10276
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -86089,8 +86089,8 @@
         "module_id": 21252,
         "name": "100 мм Д-10С обр. 1944 г.",
         "next_modules": [
-          21508,
-          8708
+          8708,
+          21508
         ],
         "next_tanks": null,
         "price_credit": 0,

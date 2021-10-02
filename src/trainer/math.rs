@@ -7,14 +7,14 @@ use crate::trainer::vector::Vector;
 pub fn initialize_factors(x: &mut Vector, length: usize) {
     x.0.truncate(length);
     while x.0.len() < length {
-        x.0.push(0.05 + 0.05 * fastrand::f64());
+        x.0.push(-1.0 + 2.0 * fastrand::f64());
     }
 }
 
 pub fn predict_win_rate(vehicle_factors: &Vector, account_factors: &Vector) -> f64 {
     let prediction = vehicle_factors.dot(account_factors);
     assert!(!prediction.is_nan());
-    prediction.clamp(0.0, 1.0)
+    (0.495 + prediction).clamp(0.0, 1.0)
 }
 
 /// Adjusts the latent factors.
