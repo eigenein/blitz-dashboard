@@ -7,8 +7,7 @@ use crate::trainer::vector::Vector;
 pub fn initialize_factors(x: &mut Vector, length: usize) {
     x.0.truncate(length);
     while x.0.len() < length {
-        let factor = 0.05 + 0.05 * fastrand::f64();
-        x.0.push(if fastrand::bool() { factor } else { -factor });
+        x.0.push(0.05 + 0.05 * fastrand::f64());
     }
 }
 
