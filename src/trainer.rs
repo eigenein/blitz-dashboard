@@ -43,39 +43,42 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
         let mut error = 0.0;
 
-        fastrand::shuffle(&mut batch);
-        for step in &batch {
-            let account_factors = accounts_factors
-                .get_mut(&step.account_id)
-                .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
-            initialize_factors(account_factors, opts.n_factors);
+        for _ in 0..opts.batch_iterations {
+            fastrand::shuffle(&mut batch);
 
-            let vehicle_factors = vehicles_factors
-                .entry(remap_tank_id(step.tank_id))
-                .or_insert_with(Vector::new);
-            initialize_factors(vehicle_factors, opts.n_factors);
+            for step in &batch {
+                let account_factors = accounts_factors
+                    .get_mut(&step.account_id)
+                    .ok_or_else(|| anyhow!("no factors found for account #{}", step.account_id))?;
+                initialize_factors(account_factors, opts.n_factors);
 
-            let prediction = predict_win_rate(vehicle_factors, account_factors);
-            let target = if step.is_win { 1.0 } else { 0.0 };
+                let vehicle_factors = vehicles_factors
+                    .entry(remap_tank_id(step.tank_id))
+                    .or_insert_with(Vector::new);
+                initialize_factors(vehicle_factors, opts.n_factors);
 
-            let residual_error = target - prediction;
-            error -= residual_error;
+                let prediction = predict_win_rate(vehicle_factors, account_factors);
+                let target = if step.is_win { 1.0 } else { 0.0 };
 
-            let frozen_account_factors = account_factors.clone();
-            adjust_factors(
-                account_factors,
-                vehicle_factors,
-                residual_error,
-                opts.account_learning_rate,
-                opts.regularization,
-            );
-            adjust_factors(
-                vehicle_factors,
-                &frozen_account_factors,
-                residual_error,
-                opts.vehicle_learning_rate,
-                opts.regularization,
-            );
+                let residual_error = target - prediction;
+                error -= residual_error;
+
+                let frozen_account_factors = account_factors.clone();
+                adjust_factors(
+                    account_factors,
+                    vehicle_factors,
+                    residual_error,
+                    opts.account_learning_rate,
+                    opts.regularization,
+                );
+                adjust_factors(
+                    vehicle_factors,
+                    &frozen_account_factors,
+                    residual_error,
+                    opts.vehicle_learning_rate,
+                    opts.regularization,
+                );
+            }
         }
 
         log::debug!("Updating the vehicles factors…");
@@ -99,7 +102,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 fn log_status(error: f64, errors: &mut VecDeque<f64>, n_accounts: usize, n_vehicles: usize) {
     let error = 100.0 * error;
     errors.push_front(error);
-    errors.truncate(30);
+    errors.truncate(60);
 
     log::info!(
         "E1: {:>7.3} pp | E30: {:>7.3} pp | E60: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",

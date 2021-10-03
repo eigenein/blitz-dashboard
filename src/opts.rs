@@ -188,6 +188,10 @@ pub struct TrainerOpts {
     /// Training batch size
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
+
+    /// Training iterations per batch
+    #[structopt(long, default_value = "1")]
+    pub batch_iterations: usize,
 }
 
 #[derive(StructOpt)]
