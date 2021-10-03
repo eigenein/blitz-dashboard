@@ -3,7 +3,7 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::result::Result as StdResult;
 
 use anyhow::{anyhow, Context};
@@ -36,14 +36,16 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
     log::info!("Running in batches of {} steps…", opts.batch_size);
-    let mut errors = VecDeque::new();
     loop {
         let mut batch = get_batch(&mut redis, opts.batch_size).await?;
         let account_ids: Vec<i32> = batch.iter().map(|step| step.account_id).unique().collect();
         let mut accounts_factors = retrieve_accounts_factors(&database, &account_ids).await?;
-        let mut error = 0.0;
 
-        for _ in 0..opts.batch_iterations {
+        let mut first_error = None;
+        let mut last_error = None;
+
+        for i in 0..opts.batch_iterations {
+            let mut error = 0.0;
             fastrand::shuffle(&mut batch);
 
             for step in &batch {
@@ -79,6 +81,13 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     opts.regularization,
                 );
             }
+
+            error /= batch.len() as f64;
+            if i == 0 {
+                first_error = Some(error);
+            } else {
+                last_error = Some(error);
+            }
         }
 
         log::debug!("Updating the vehicles factors…");
@@ -90,32 +99,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             update_account_factors(&database, *account_id, factors).await?;
         }
 
-        log_status(
-            error / batch.len() as f64,
-            &mut errors,
+        log::info!(
+            "Error: {:>7.3} → {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
+            first_error.unwrap() * 100.0,
+            last_error.unwrap() * 100.0,
             accounts_factors.len(),
             tank_ids.len(),
         );
     }
-}
-
-fn log_status(error: f64, errors: &mut VecDeque<f64>, n_accounts: usize, n_vehicles: usize) {
-    let error = 100.0 * error;
-    errors.push_front(error);
-    errors.truncate(60);
-
-    log::info!(
-        "E1: {:>7.3} pp | E30: {:>7.3} pp | E60: {:>7.3} pp | accounts: {:>4} | vehicles: {:>3}",
-        error,
-        average_error(errors, 30),
-        average_error(errors, 60),
-        n_accounts,
-        n_vehicles,
-    );
-}
-
-fn average_error(errors: &VecDeque<f64>, n: usize) -> f64 {
-    errors.iter().take(n).sum::<f64>() / errors.len().min(n) as f64
 }
 
 #[derive(Serialize, Deserialize)]
