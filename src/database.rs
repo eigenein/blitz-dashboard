@@ -254,26 +254,19 @@ pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
         .context("failed to retrieve all tank IDs")?)
 }
 
-pub async fn retrieve_accounts_factors(
+pub async fn retrieve_account_factors(
     connection: &PgPool,
-    account_ids: &[i32],
-) -> crate::Result<HashMap<i32, Vector>> {
+    account_id: i32,
+) -> crate::Result<Option<Vector>> {
     // language=SQL
-    const QUERY: &str = "
-        SELECT account_id, factors FROM accounts
-        WHERE account_id IN (SELECT * FROM unnest($1))
-    ";
+    const QUERY: &str = "SELECT factors FROM accounts WHERE account_id = $1";
 
-    let rows: Vec<(i32, Vec<f64>)> = sqlx::query_as(QUERY)
-        .bind(account_ids)
-        .fetch_all(connection)
+    let factors: Option<Vec<f64>> = sqlx::query_scalar(QUERY)
+        .bind(account_id)
+        .fetch_optional(connection)
         .await
-        .context("failed to retrieve the accounts factors")?;
-
-    Ok(rows
-        .into_iter()
-        .map(|(account_id, factors)| (account_id, Vector::from(factors)))
-        .collect())
+        .context("failed to retrieve the account factors")?;
+    Ok(factors.map(Vector::from))
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

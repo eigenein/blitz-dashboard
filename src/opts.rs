@@ -112,7 +112,7 @@ pub struct CrawlerOpts {
     /// Maximum number of train steps in the trainer queue (overflow prevention)
     #[structopt(
         long,
-        default_value = "1000000",
+        default_value = "5000000",
         parse(try_from_str = parse_trainer_queue_limit),
     )]
     pub trainer_queue_limit: isize,
@@ -185,13 +185,13 @@ pub struct TrainerOpts {
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
 
-    /// Training batch size
+    /// Account factor vectors cache size
+    #[structopt(long, default_value = "50000")]
+    pub account_cache_size: usize,
+
+    /// Batch size to commit vehicles factors and log the metrics
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
-
-    /// Training iterations per batch
-    #[structopt(long, default_value = "1")]
-    pub batch_iterations: usize,
 }
 
 #[derive(StructOpt)]
