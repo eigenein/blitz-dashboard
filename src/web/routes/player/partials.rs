@@ -108,12 +108,7 @@ pub fn render_tank_tr(
                 0.5
             };
             td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span { strong { (render_percentage(predicted_win_rate)) } }
-                    @if tank.statistics.base.last_battle_time > account.base.last_battle_time {
-                        span.icon title="Робот еще не обработал последние бои на этом танке" { i.fas.fa-hourglass-half.has-text-grey-light {} }
-                    }
-                }
+                strong { (render_percentage(predicted_win_rate)) }
             }
 
             @let frags_per_battle = tank.statistics.all.frags_per_battle();
