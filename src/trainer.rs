@@ -37,6 +37,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let account_factors_cache = CacheBuilder::new(opts.account_cache_size).build();
     let mut vehicle_factors_cache = HashMap::new();
 
+    log::info!("Running…");
     loop {
         let start_instant = Instant::now();
 
