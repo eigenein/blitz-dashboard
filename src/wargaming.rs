@@ -223,7 +223,7 @@ impl WargamingApi {
             if error.is_timeout() {
                 log::warn!("#{} has timed out.", request_id);
             } else {
-                log::warn!("#{} has failed.", request_id);
+                log::warn!("#{} has failed: {:#}.", request_id, error);
             }
         }
         result?.error_for_status()?.json::<Response<T>>().await
