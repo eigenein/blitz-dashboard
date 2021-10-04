@@ -1,6 +1,5 @@
 use std::net::IpAddr;
 use std::str::FromStr;
-use std::time::Duration as StdDuration;
 
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
@@ -25,10 +24,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
     log::info!("Listening on {}:{}.", opts.host, opts.port);
-    let api = WargamingApi::new(
-        &opts.connections.application_id,
-        StdDuration::from_millis(1500),
-    )?;
+    let api = WargamingApi::new(&opts.connections.application_id)?;
     let database = crate::database::open(
         &opts.connections.internal.database_uri,
         opts.connections.internal.initialize_schema,

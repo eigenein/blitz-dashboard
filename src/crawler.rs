@@ -55,7 +55,7 @@ pub struct IncrementalOpts {
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let api = new_wargaming_api(&opts.connections.application_id)?;
+    let api = WargamingApi::new(&opts.connections.application_id)?;
     let request_counter = api.request_counter.clone();
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
@@ -107,7 +107,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = new_wargaming_api(&opts.connections.application_id)?;
+    let api = WargamingApi::new(&opts.connections.application_id)?;
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
     let redis = redis::Client::open(internal.redis_uri.as_str())?
@@ -126,10 +126,6 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     ));
     crawler.run(stream).await?;
     Ok(())
-}
-
-fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
-    WargamingApi::new(application_id, StdDuration::from_millis(5000))
 }
 
 impl Crawler {

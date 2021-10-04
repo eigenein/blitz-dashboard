@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use itertools::Itertools;
@@ -16,6 +16,7 @@ use serde::de::DeserializeOwned;
 use crate::backoff::Backoff;
 use crate::models;
 use crate::wargaming::response::Response;
+use crate::StdDuration;
 
 pub mod cache;
 pub mod response;
@@ -34,7 +35,7 @@ pub struct WargamingApi {
 pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
-    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
+    pub fn new(application_id: &str) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -57,7 +58,7 @@ impl WargamingApi {
             client: reqwest::ClientBuilder::new()
                 .default_headers(headers)
                 .https_only(true)
-                .timeout(timeout)
+                .timeout(StdDuration::from_secs(5))
                 .brotli(true)
                 .gzip(true)
                 .deflate(true)
