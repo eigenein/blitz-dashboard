@@ -129,7 +129,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 }
 
 fn new_wargaming_api(application_id: &str) -> crate::Result<WargamingApi> {
-    WargamingApi::new(application_id, StdDuration::from_millis(3000))
+    WargamingApi::new(application_id, StdDuration::from_millis(5000))
 }
 
 impl Crawler {
