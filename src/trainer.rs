@@ -53,7 +53,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     let mut factors = retrieve_account_factors(&database, step.account_id)
                         .await?
                         .unwrap_or_else(Vector::new);
-                    initialize_factors(&mut factors, opts.n_factors);
+                    initialize_factors(&mut factors, opts.n_factors, opts.factor_magnitude);
                     factors
                 }
             };
@@ -62,7 +62,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 let mut factors = get_vehicle_factors(&mut redis, step.tank_id)
                     .await?
                     .unwrap_or_else(Vector::new);
-                initialize_factors(&mut factors, opts.n_factors);
+                initialize_factors(&mut factors, opts.n_factors, opts.factor_magnitude);
                 entry.insert(factors);
             }
             let vehicle_factors = vehicle_factors_cache.get_mut(&step.tank_id).unwrap();

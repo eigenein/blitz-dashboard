@@ -4,10 +4,14 @@ use crate::trainer::vector::Vector;
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
-pub fn initialize_factors(x: &mut Vector, length: usize) {
+pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) {
     x.0.truncate(length);
     while x.0.len() < length {
-        x.0.push(if fastrand::bool() { 0.01 } else { -0.01 });
+        x.0.push(if fastrand::bool() {
+            magnitude
+        } else {
+            -magnitude
+        });
     }
 }
 

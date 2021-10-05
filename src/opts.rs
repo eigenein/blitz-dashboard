@@ -192,6 +192,10 @@ pub struct TrainerOpts {
     /// Batch size to commit vehicles factors and log the metrics
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
+
+    /// Newly initialized factor magnitude
+    #[structopt(short = "m", long = "factor-magnitude", default_value = "0.01")]
+    pub factor_magnitude: f64,
 }
 
 #[derive(StructOpt)]
