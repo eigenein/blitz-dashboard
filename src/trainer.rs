@@ -105,7 +105,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             None => Some(error),
         };
         log::info!(
-            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>5.0} steps/s | vehicles: {:>3}",
+            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s | vehicles: {:>3}",
             error,
             ewma.unwrap(),
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
