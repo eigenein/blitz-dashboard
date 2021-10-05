@@ -170,15 +170,15 @@ pub struct TrainerOpts {
     pub connections: InternalConnectionOpts,
 
     /// Account latent vector learning rate
-    #[structopt(long = "account-lr", default_value = "0.001")]
+    #[structopt(long = "account-lr", default_value = "0.005")]
     pub account_learning_rate: f64,
 
     /// Vehicle latent vector learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.001")]
+    #[structopt(long = "vehicle-lr", default_value = "0.005")]
     pub vehicle_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.02")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -194,7 +194,7 @@ pub struct TrainerOpts {
     pub batch_size: usize,
 
     /// Newly initialized factor magnitude
-    #[structopt(short = "m", long = "factor-magnitude", default_value = "0.01")]
+    #[structopt(short = "m", long = "factor-magnitude", default_value = "0.1")]
     pub factor_magnitude: f64,
 }
 

@@ -1,24 +1,28 @@
 //! Collaborative filtering.
 
+use rand::distributions::Distribution;
+use rand::thread_rng;
+use rand_distr::Normal;
+
 use crate::trainer::vector::Vector;
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
 pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) {
     x.0.truncate(length);
-    while x.0.len() < length {
-        x.0.push(if fastrand::bool() {
-            magnitude
-        } else {
-            -magnitude
-        });
+    if x.0.len() < length {
+        let mut rng = thread_rng();
+        let distribution = Normal::new(0.0, magnitude).unwrap();
+        while x.0.len() < length {
+            x.0.push(distribution.sample(&mut rng));
+        }
     }
 }
 
 pub fn predict_win_rate(vehicle_factors: &Vector, account_factors: &Vector) -> f64 {
     let prediction = vehicle_factors.dot(account_factors);
     assert!(!prediction.is_nan());
-    (0.495 + prediction).clamp(0.0, 1.0)
+    prediction.clamp(0.0, 1.0)
 }
 
 /// Adjusts the latent factors.
