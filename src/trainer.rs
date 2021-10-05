@@ -36,12 +36,13 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_factors_cache = CacheBuilder::new(opts.account_cache_size).build();
     let mut vehicle_factors_cache = HashMap::new();
+    let mut ewma = None;
 
     log::info!("Running…");
     loop {
         let start_instant = Instant::now();
 
-        let mut error = 0.0;
+        let mut total_error = 0.0;
         let mut modified_tank_ids = HashSet::new();
 
         for _ in 0..opts.batch_size {
@@ -53,7 +54,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     let mut factors = retrieve_account_factors(&database, step.account_id)
                         .await?
                         .unwrap_or_else(Vector::new);
-                    initialize_factors(&mut factors, opts.n_factors, opts.factor_magnitude);
+                    initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
                     factors
                 }
             };
@@ -62,7 +63,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 let mut factors = get_vehicle_factors(&mut redis, step.tank_id)
                     .await?
                     .unwrap_or_else(Vector::new);
-                initialize_factors(&mut factors, opts.n_factors, opts.factor_magnitude);
+                initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
                 entry.insert(factors);
             }
             let vehicle_factors = vehicle_factors_cache.get_mut(&step.tank_id).unwrap();
@@ -87,7 +88,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 opts.regularization,
             );
 
-            error -= residual_error;
+            total_error -= residual_error;
             modified_tank_ids.insert(step.tank_id);
             update_account_factors(&database, step.account_id, &account_factors).await?;
             account_factors_cache
@@ -95,12 +96,20 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 .await;
         }
 
+        let n_vehicles = modified_tank_ids.len();
         set_vehicles_factors(&mut redis, &vehicle_factors_cache, modified_tank_ids).await?;
 
+        let error = 100.0 * total_error / opts.batch_size as f64;
+        ewma = match ewma {
+            Some(ewma) => Some(error * opts.ewma_factor + ewma * (1.0 - opts.ewma_factor)),
+            None => Some(error),
+        };
         log::info!(
-            "Error: {:>7.3} pp | {:5.0} steps/s",
-            100.0 * error / opts.batch_size as f64,
+            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>5.0} steps/s | vehicles: {:>3}",
+            error,
+            ewma.unwrap(),
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
+            n_vehicles,
         );
     }
 }

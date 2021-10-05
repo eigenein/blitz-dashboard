@@ -193,9 +193,13 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "10000")]
     pub batch_size: usize,
 
-    /// Newly initialized factor magnitude
-    #[structopt(short = "m", long = "factor-magnitude", default_value = "0.1")]
-    pub factor_magnitude: f64,
+    /// Standard deviation of the latent factor normal distribution
+    #[structopt(long, default_value = "0.1")]
+    pub factor_std: f64,
+
+    /// Exponential moving average smoothing factor for the logged prediction error
+    #[structopt(long, default_value = "0.04")]
+    pub ewma_factor: f64,
 }
 
 #[derive(StructOpt)]
