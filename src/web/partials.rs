@@ -288,13 +288,7 @@ pub fn factors_table(factors: &Vector) -> Markup {
         div.table-container {
             table.table.is-hoverable.is-striped.is-fullwidth {
                 thead {
-                    th {
-                        a data-sort="magnitude" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span { "Модуль"  }
-                            }
-                        }
-                    }
+                    th { "Модуль" }
                     @for i in 0..factors.0.len() {
                         th { "#" (i) }
                     }
