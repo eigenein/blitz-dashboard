@@ -5,7 +5,7 @@ use log::Level;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use rocket::response::content::Html;
-use rocket::response::status::BadRequest;
+use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
 
@@ -47,7 +47,10 @@ pub async fn get(
     let _stopwatch =
         Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 
-    let current_info = account_info_cache.get(account_id).await?;
+    let current_info = match account_info_cache.get(account_id).await? {
+        Some(info) => info,
+        None => return Ok(Response::NotFound(NotFound(()))),
+    };
     set_user(&current_info.nickname);
     let account = insert_account_if_not_exists(database, account_id).await?;
 

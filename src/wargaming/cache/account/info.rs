@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use bytes::Bytes;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -18,7 +17,7 @@ impl AccountInfoCache {
         Self { api, redis }
     }
 
-    pub async fn get(&self, account_id: i32) -> crate::Result<AccountInfo> {
+    pub async fn get(&self, account_id: i32) -> crate::Result<Option<AccountInfo>> {
         let mut redis = self.redis.clone();
 
         if let Some(blob) = redis
@@ -34,9 +33,10 @@ impl AccountInfoCache {
             .get_account_info(&[account_id])
             .await?
             .remove(&account_id.to_string())
-            .flatten()
-            .ok_or_else(|| anyhow!("account #{} not found", account_id))?;
-        self.put(&account_info).await?;
+            .flatten();
+        if let Some(account_info) = &account_info {
+            self.put(account_info).await?;
+        }
         Ok(account_info)
     }
 
