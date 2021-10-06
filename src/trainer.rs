@@ -4,7 +4,7 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::result::Result as StdResult;
 use std::time::Instant;
 
@@ -43,7 +43,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let start_instant = Instant::now();
 
         let mut total_error = 0.0;
-        let mut modified_tank_ids = HashSet::new();
 
         for _ in 0..opts.batch_size {
             let step = get_random_step(&mut redis).await?;
@@ -72,7 +71,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             let target = if step.is_win { 1.0 } else { 0.0 };
             let residual_error = target - prediction;
 
-            let cloned_account_factors = account_factors.clone();
+            let old_account_factors = account_factors.clone();
             adjust_factors(
                 &mut account_factors,
                 vehicle_factors,
@@ -82,22 +81,26 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             );
             adjust_factors(
                 vehicle_factors,
-                &cloned_account_factors,
+                &old_account_factors,
                 residual_error,
                 opts.vehicle_learning_rate,
                 opts.regularization,
             );
 
-            total_error -= residual_error;
-            modified_tank_ids.insert(step.tank_id);
+            if let Some(duplicate_id) = REMAP_TANK_ID.get(&step.tank_id) {
+                let vehicle_factors = vehicle_factors.clone();
+                vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
+            }
+
             update_account_factors(&database, step.account_id, &account_factors).await?;
             account_factors_cache
                 .insert(step.account_id, account_factors)
                 .await;
+
+            total_error -= residual_error;
         }
 
-        let n_vehicles = modified_tank_ids.len();
-        set_vehicles_factors(&mut redis, &vehicle_factors_cache, modified_tank_ids).await?;
+        set_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
         ewma = match ewma {
@@ -105,11 +108,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             None => Some(error),
         };
         log::info!(
-            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s | vehicles: {:>3}",
+            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s",
             error,
             ewma.unwrap(),
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
-            n_vehicles,
         );
     }
 }
@@ -186,16 +188,11 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
 async fn set_vehicles_factors(
     redis: &mut MultiplexedConnection,
     vehicles_factors: &HashMap<i32, Vector>,
-    tank_ids: HashSet<i32>,
 ) -> crate::Result {
-    let mut pipeline = pipe();
-    for tank_id in tank_ids.into_iter() {
-        let bytes = rmp_serde::to_vec(&vehicles_factors[&tank_id])?;
-        pipeline.hset(VEHICLE_FACTORS_KEY, tank_id, &bytes);
-        if let Some(tank_copy_id) = REMAP_TANK_ID.get(&tank_id) {
-            pipeline.hset(VEHICLE_FACTORS_KEY, *tank_copy_id, bytes);
-        }
-    }
-    pipeline.query_async(redis).await?;
+    let items: crate::Result<Vec<(i32, Vec<u8>)>> = vehicles_factors
+        .iter()
+        .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
+        .collect();
+    redis.hset_multiple(VEHICLE_FACTORS_KEY, &items?).await?;
     Ok(())
 }
