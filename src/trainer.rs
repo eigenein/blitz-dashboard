@@ -36,7 +36,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_factors_cache = CacheBuilder::new(opts.account_cache_size).build();
     let mut vehicle_factors_cache = HashMap::new();
-    let mut ewma = None;
+    let mut ewma = 0.0;
 
     log::info!("Running…");
     loop {
@@ -103,14 +103,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
-        ewma = match ewma {
-            Some(ewma) => Some(error * opts.ewma_factor + ewma * (1.0 - opts.ewma_factor)),
-            None => Some(error),
-        };
+        ewma = error * opts.ewma_factor + ewma * (1.0 - opts.ewma_factor);
         log::info!(
             "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s",
             error,
-            ewma.unwrap(),
+            ewma,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
         );
     }
