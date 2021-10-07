@@ -36,7 +36,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_factors_cache = CacheBuilder::new(opts.account_cache_size).build();
     let mut vehicle_factors_cache = HashMap::new();
-    let mut ewma = 0.0;
 
     log::info!("Running…");
     loop {
@@ -103,7 +102,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
-        ewma = error * opts.ewma_factor + ewma * (1.0 - opts.ewma_factor);
+        let ewma = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
         log::info!(
             "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s",
             error,
@@ -139,7 +138,7 @@ pub async fn push_train_steps(
 
 const TRAINER_QUEUE_KEY: &str = "trainer::steps";
 
-pub async fn get_random_step(redis: &mut MultiplexedConnection) -> crate::Result<TrainStep> {
+async fn get_random_step(redis: &mut MultiplexedConnection) -> crate::Result<TrainStep> {
     loop {
         let queue_length = redis.llen(TRAINER_QUEUE_KEY).await?;
         if queue_length != 0 {
@@ -192,4 +191,16 @@ async fn set_vehicles_factors(
         .collect();
     redis.hset_multiple(VEHICLE_FACTORS_KEY, &items?).await?;
     Ok(())
+}
+
+async fn update_error_ewma(
+    redis: &mut MultiplexedConnection,
+    error: f64,
+    smoothing: f64,
+) -> crate::Result<f64> {
+    const KEY: &str = "trainer::error_ewma";
+    let ewma: Option<f64> = redis.get(KEY).await?;
+    let ewma = error * smoothing + ewma.unwrap_or(0.0) * (1.0 - smoothing);
+    redis.set(KEY, ewma).await?;
+    Ok(ewma)
 }
