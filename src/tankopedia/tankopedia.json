@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -23028,6 +23028,167 @@
       38163
     ],
     "type": "lightTank"
+  },
+  "18497": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 40,
+          "rear": 25,
+          "sides": 30
+        },
+        "turret": {
+          "front": 55,
+          "rear": 20,
+          "sides": 30
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 234 P45",
+        "power": 850,
+        "tier": 9,
+        "weight": 750
+      },
+      "engine_id": 20549,
+      "firepower": 48,
+      "gun": {
+        "aim_time": 4.98,
+        "caliber": 90,
+        "clip_capacity": 4,
+        "clip_reload_time": 2.31,
+        "dispersion": 0.35,
+        "fire_rate": 8.3,
+        "move_down_arc": 8,
+        "move_up_arc": 9,
+        "name": "90 mm DCA 45A",
+        "reload_time": 22.0,
+        "tier": 8,
+        "traverse_speed": 35.0,
+        "weight": 2750
+      },
+      "gun_id": 21316,
+      "hp": 1500,
+      "hull_hp": 1200,
+      "hull_weight": 20675,
+      "is_default": true,
+      "maneuverability": 66,
+      "max_ammo": 48,
+      "max_weight": 43000,
+      "profile_id": "20549-21316-25667-31554",
+      "protection": 29,
+      "shells": [
+        {
+          "damage": 225,
+          "penetration": 212,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 259,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 45,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 76,
+      "signal_range": null,
+      "speed_backward": 23,
+      "speed_forward": 60,
+      "suspension": {
+        "load_limit": 43000,
+        "name": "Lorraine 40 t B",
+        "tier": 8,
+        "traverse_speed": 42,
+        "weight": 7700
+      },
+      "suspension_id": 31554,
+      "turret": {
+        "hp": 300,
+        "name": "Lorraine 40 t",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 40,
+        "view_range": 260,
+        "weight": 7500
+      },
+      "turret_id": 25667,
+      "weight": 39650
+    },
+    "description": "Lorraine Бесстрашный — версия Lorraine 40 t с ускоренной перезарядкой внутри барабана и увеличенным обзором. То, что нужно, чтобы всегда быть на шаг впереди противника! И выпускать в него четыре снаряда быстрее, чем тот сообразит, откуда прилетело.",
+    "engines": [
+      20549
+    ],
+    "guns": [
+      21316
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/F19_Lorraine40t_Com.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/F19_Lorraine40t_Com.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "20549": {
+        "is_default": true,
+        "module_id": 20549,
+        "name": "Maybach HL 234 P45",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "21316": {
+        "is_default": true,
+        "module_id": 21316,
+        "name": "90 mm DCA 45A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "25667": {
+        "is_default": true,
+        "module_id": 25667,
+        "name": "Lorraine 40 t",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "31554": {
+        "is_default": true,
+        "module_id": 31554,
+        "name": "Lorraine 40 t B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "Lorraine 40 t Бесстрашный",
+    "nation": "france",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      31554
+    ],
+    "tank_id": 18497,
+    "tier": 8,
+    "turrets": [
+      25667
+    ],
+    "type": "mediumTank"
   },
   "18513": {
     "cost": null,
@@ -45884,8 +46045,8 @@
         "module_id": 7427,
         "name": "Т-44-100",
         "next_modules": [
-          3332,
-          10500
+          10500,
+          3332
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -47840,8 +48001,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          7729,
-          5169
+          5169,
+          7729
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -78414,8 +78575,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -86089,8 +86250,8 @@
         "module_id": 21252,
         "name": "100 мм Д-10С обр. 1944 г.",
         "next_modules": [
-          8708,
-          21508
+          21508,
+          8708
         ],
         "next_tanks": null,
         "price_credit": 0,
