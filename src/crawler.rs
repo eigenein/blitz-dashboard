@@ -204,12 +204,7 @@ impl Crawler {
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(account.id).await?;
             let tanks = merge_tanks(account.id, statistics, achievements);
-            insert_tank_snapshots(&self.database, &tanks).await?;
             self.insert_missing_vehicles(&self.database, &tanks).await?;
-
-            log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
-            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
-                .await?;
 
             if let Some(opts) = &self.incremental {
                 // Zero timestamp means that the account has never played or been crawled before.
@@ -219,6 +214,11 @@ impl Crawler {
                         .await?;
                 }
             }
+
+            insert_tank_snapshots(&self.database, &tanks).await?;
+            log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
+            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
+                .await?;
         } else {
             log::trace!("#{}: tanks are not updated.", account.id);
         }
