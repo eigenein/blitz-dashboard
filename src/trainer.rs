@@ -34,14 +34,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
-    let account_factors_cache = CacheBuilder::new(opts.account_cache_size).build();
+    let account_factors_cache =
+        CacheBuilder::new(opts.account_cache_size.max(opts.batch_size)).build();
     let mut vehicle_factors_cache = HashMap::new();
 
     log::info!("Running…");
     loop {
         let start_instant = Instant::now();
-
         let mut total_error = 0.0;
+        let mut transaction = database.begin().await?;
 
         for _ in 0..opts.batch_size {
             let step = get_random_step(&mut redis).await?;
@@ -91,7 +92,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
             }
 
-            update_account_factors(&database, step.account_id, &account_factors).await?;
+            update_account_factors(&mut *transaction, step.account_id, &account_factors).await?;
             account_factors_cache
                 .insert(step.account_id, account_factors)
                 .await;
@@ -99,6 +100,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             total_error -= residual_error;
         }
 
+        transaction.commit().await?;
         set_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;

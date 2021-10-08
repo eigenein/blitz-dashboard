@@ -123,7 +123,7 @@ pub async fn replace_account(
 }
 
 pub async fn update_account_factors(
-    connection: &PgPool,
+    connection: &mut PgConnection,
     account_id: i32,
     factors: &Vector,
 ) -> crate::Result {
