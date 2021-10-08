@@ -7,7 +7,7 @@ use chrono::{DateTime, Duration, Utc};
 use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
+use sqlx::{ConnectOptions, Error, Executor, FromRow, PgPool, Row};
 
 use crate::database::models::Account;
 use crate::metrics::Stopwatch;
@@ -101,10 +101,7 @@ pub async fn retrieve_tank_battle_count(
         .unwrap_or((0, 0)))
 }
 
-pub async fn replace_account(
-    connection: &mut PgConnection,
-    account: BaseAccountInfo,
-) -> crate::Result {
+pub async fn replace_account(connection: &PgPool, account: BaseAccountInfo) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time)
@@ -162,7 +159,7 @@ pub async fn insert_account_if_not_exists(
     Ok(account)
 }
 
-pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
+pub async fn insert_tank_snapshots(connection: &PgPool, tanks: &[Tank]) -> crate::Result {
     let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
 
     // language=SQL
@@ -206,7 +203,7 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
             .bind(snapshot.statistics.all.hits)
             .bind(snapshot.statistics.all.frags)
             .bind(snapshot.statistics.all.xp)
-            .execute(&mut *connection)
+            .execute(connection)
             .await
             .context("failed to insert tank snapshots")?;
     }
@@ -227,10 +224,7 @@ pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Op
     Ok(account_id)
 }
 
-pub async fn insert_vehicle_or_ignore(
-    connection: &mut PgConnection,
-    tank_id: i32,
-) -> crate::Result {
+pub async fn insert_vehicle_or_ignore(connection: &PgPool, tank_id: i32) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO vehicles (tank_id)

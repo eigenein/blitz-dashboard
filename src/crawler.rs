@@ -3,11 +3,10 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use anyhow::Context;
 use chrono::{DateTime, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
-use sqlx::{PgConnection, PgPool};
+use sqlx::PgPool;
 use tokio::sync::{Mutex, RwLock};
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
@@ -202,13 +201,11 @@ impl Crawler {
         let statistics = self
             .get_updated_tanks_statistics(account.id, account.last_battle_time)
             .await?;
-        let mut transaction = self.database.begin().await?;
         if !statistics.is_empty() {
             let achievements = self.api.get_tanks_achievements(account.id).await?;
             let tanks = merge_tanks(account.id, statistics, achievements);
-            insert_tank_snapshots(&mut transaction, &tanks).await?;
-            self.insert_missing_vehicles(&mut transaction, &tanks)
-                .await?;
+            insert_tank_snapshots(&self.database, &tanks).await?;
+            self.insert_missing_vehicles(&self.database, &tanks).await?;
 
             log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
             self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
@@ -226,11 +223,8 @@ impl Crawler {
             log::trace!("#{}: tanks are not updated.", account.id);
         }
 
-        replace_account(&mut transaction, new_info.base).await?;
-        transaction
-            .commit()
-            .await
-            .with_context(|| format!("failed to commit account #{}", account.id))?;
+        replace_account(&self.database, new_info.base).await?;
+
         Ok(())
     }
 
@@ -261,16 +255,12 @@ impl Crawler {
     }
 
     /// Inserts missing tank IDs into the database.
-    async fn insert_missing_vehicles(
-        &self,
-        connection: &mut PgConnection,
-        tanks: &[Tank],
-    ) -> crate::Result {
+    async fn insert_missing_vehicles(&self, connection: &PgPool, tanks: &[Tank]) -> crate::Result {
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
             if !self.vehicle_cache.read().await.contains(&tank_id) {
                 self.vehicle_cache.write().await.insert(tank_id);
-                insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
+                insert_vehicle_or_ignore(connection, tank_id).await?;
             }
         }
         Ok(())
