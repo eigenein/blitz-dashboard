@@ -324,6 +324,17 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             type_: TankType::Medium,
         },
     )?;
+    insert_missing_vehicle(
+        vehicles,
+        Vehicle {
+            tank_id: 22529,
+            name: Cow::Borrowed("ЛТ-432"),
+            tier: 8,
+            is_premium: true,
+            nation: Nation::Ussr,
+            type_: TankType::Light,
+        },
+    )?;
     Ok(())
 }
 
