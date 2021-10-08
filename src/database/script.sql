@@ -48,3 +48,7 @@ ALTER TABLE accounts DROP COLUMN IF EXISTS bias;
 -- 0.84.8
 
 ALTER TABLE accounts SET (FILLFACTOR = 90);
+
+-- 0.84.9
+
+ALTER TABLE tank_snapshots DROP CONSTRAINT IF EXISTS tank_snapshots_account_id_fkey;
