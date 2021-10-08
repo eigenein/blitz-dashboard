@@ -42,6 +42,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     loop {
         let start_instant = Instant::now();
         let mut total_error = 0.0;
+        let mut n_initialized_accounts = 0;
         let mut transaction = database.begin().await?;
 
         for _ in 0..opts.batch_size {
@@ -53,7 +54,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     let mut factors = retrieve_account_factors(&database, step.account_id)
                         .await?
                         .unwrap_or_else(Vector::new);
-                    initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
+                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
+                        n_initialized_accounts += 1;
+                    };
                     factors
                 }
             };
@@ -106,10 +109,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let error = 100.0 * total_error / opts.batch_size as f64;
         let ewma = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} steps/s",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} steps/s | init: {:>4}",
             error,
             ewma,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
+            n_initialized_accounts,
         );
     }
 }

@@ -8,14 +8,19 @@ use crate::trainer::vector::Vector;
 
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
-pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) {
-    x.0.truncate(length);
-    if x.0.len() < length {
+pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool {
+    if x.0.len() == length {
+        false
+    } else if x.0.len() < length {
         let mut rng = thread_rng();
         let distribution = Normal::new(0.0, magnitude).unwrap();
         while x.0.len() < length {
             x.0.push(distribution.sample(&mut rng));
         }
+        true
+    } else {
+        x.0.truncate(length);
+        true
     }
 }
 
