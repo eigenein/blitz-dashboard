@@ -106,7 +106,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let error = 100.0 * total_error / opts.batch_size as f64;
         let ewma = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
         log::info!(
-            "AE: {:>7.3} pp | EWMA: {:>7.3} pp | {:>3.0} steps/s",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>3.0} steps/s",
             error,
             ewma,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
