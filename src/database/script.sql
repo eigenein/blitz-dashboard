@@ -44,3 +44,7 @@ ALTER TABLE tank_snapshots
 -- 0.71.0
 
 ALTER TABLE accounts DROP COLUMN IF EXISTS bias;
+
+-- 0.84.8
+
+ALTER TABLE accounts SET (FILLFACTOR = 90);
