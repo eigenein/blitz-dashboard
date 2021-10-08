@@ -215,8 +215,12 @@ impl Crawler {
                 .await?;
 
             if let Some(opts) = &self.incremental {
-                self.push_train_steps(account.id, &tanks, opts.trainer_queue_limit)
-                    .await?;
+                // Zero timestamp means that the account has never played or been crawled before.
+                // FIXME: make the `last_battle_time` nullable instead.
+                if account.last_battle_time.timestamp() != 0 {
+                    self.push_train_steps(account.id, &tanks, opts.trainer_queue_limit)
+                        .await?;
+                }
             }
         } else {
             log::trace!("#{}: tanks are not updated.", account.id);
