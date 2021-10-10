@@ -12,7 +12,7 @@ impl From<Vec<f64>> for Vector {
 
 impl Vector {
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(SmallVec::new_const())
     }
 
