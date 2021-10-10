@@ -1,5 +1,7 @@
 //! Collaborative filtering.
 
+use std::cmp::Ordering;
+
 use rand::distributions::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
@@ -9,18 +11,20 @@ use crate::trainer::vector::Vector;
 /// Truncates the vector, if needed.
 /// Pushes random values to it until the target length is reached.
 pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool {
-    if x.0.len() == length {
-        false
-    } else if x.0.len() < length {
-        let mut rng = thread_rng();
-        let distribution = Normal::new(0.0, magnitude).unwrap();
-        while x.0.len() < length {
-            x.0.push(distribution.sample(&mut rng));
+    match x.0.len().cmp(&length) {
+        Ordering::Equal => false,
+        Ordering::Less => {
+            let mut rng = thread_rng();
+            let distribution = Normal::new(0.0, magnitude).unwrap();
+            while x.0.len() < length {
+                x.0.push(distribution.sample(&mut rng));
+            }
+            true
         }
-        true
-    } else {
-        x.0.truncate(length);
-        true
+        Ordering::Greater => {
+            x.0.truncate(length);
+            true
+        }
     }
 }
 

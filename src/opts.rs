@@ -166,8 +166,9 @@ fn parse_account_id(value: &str) -> crate::Result<i32> {
 /// Trains the collaborative filtering model
 #[derive(StructOpt)]
 pub struct TrainerOpts {
-    #[structopt(flatten)]
-    pub connections: InternalConnectionOpts,
+    /// Redis URI
+    #[structopt(long, default_value = "redis://127.0.0.1/0")]
+    pub redis_uri: String,
 
     /// Account latent vector learning rate
     #[structopt(long = "account-lr", default_value = "0.005")]
@@ -184,10 +185,6 @@ pub struct TrainerOpts {
     /// Number of latent factors
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
-
-    /// Account factor vectors cache size
-    #[structopt(long, default_value = "50000")]
-    pub account_cache_size: usize,
 
     /// Batch size to commit vehicles factors and log the metrics
     #[structopt(long, default_value = "10000")]

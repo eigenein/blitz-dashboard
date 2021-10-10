@@ -11,14 +11,12 @@ use std::time::Instant;
 
 use anyhow::Context;
 use bytes::Bytes;
-use moka::future::CacheBuilder;
 use redis::aio::MultiplexedConnection;
-use redis::{pipe, AsyncCommands};
+use redis::{pipe, AsyncCommands, Pipeline};
 use serde::{Deserialize, Serialize};
 
 use math::{adjust_factors, initialize_factors, predict_win_rate};
 
-use crate::database::{open as open_database, retrieve_account_factors, update_account_factors};
 use crate::opts::TrainerOpts;
 use crate::trainer::vector::Vector;
 use crate::StdDuration;
@@ -29,56 +27,66 @@ pub mod vector;
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
-    let connections = &opts.connections;
-    let database = open_database(&connections.database_uri, connections.initialize_schema).await?;
-    let mut redis = redis::Client::open(connections.redis_uri.as_str())?
+    let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
-    let account_factors_cache =
-        CacheBuilder::new(opts.account_cache_size.max(opts.batch_size)).build();
     let mut vehicle_factors_cache = HashMap::new();
 
     log::info!("Running…");
     loop {
         let start_instant = Instant::now();
+
         let mut total_error = 0.0;
+
+        let mut account_factors_cache = HashMap::new();
+        let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
-        let mut transaction = database.begin().await?;
 
         for _ in 0..opts.batch_size {
-            let step = get_random_step(&mut redis).await?;
+            let TrainStep {
+                account_id,
+                tank_id,
+                is_win,
+            } = get_random_step(&mut redis).await?;
 
-            let mut account_factors = match account_factors_cache.get(&step.account_id) {
-                Some(factors) => factors,
-                None => {
-                    let mut factors = retrieve_account_factors(&database, step.account_id)
+            let account_factors = match account_factors_cache.entry(account_id) {
+                Entry::Occupied(entry) => entry.into_mut(),
+
+                Entry::Vacant(entry) => {
+                    let mut factors = get_account_factors(&mut redis, account_id)
                         .await?
-                        .unwrap_or_else(Vector::new);
+                        .unwrap_or_else(|| {
+                            n_new_accounts += 1;
+                            Vector::new()
+                        });
                     if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                         n_initialized_accounts += 1;
-                    };
-                    factors
+                    }
+                    entry.insert(factors)
                 }
             };
 
-            if let Entry::Vacant(entry) = vehicle_factors_cache.entry(step.tank_id) {
-                let mut factors = get_vehicle_factors(&mut redis, step.tank_id)
-                    .await?
-                    .unwrap_or_else(Vector::new);
-                initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
-                entry.insert(factors);
-            }
-            let vehicle_factors = vehicle_factors_cache.get_mut(&step.tank_id).unwrap();
+            let vehicle_factors = match vehicle_factors_cache.entry(tank_id) {
+                Entry::Occupied(entry) => entry.into_mut(),
 
-            let prediction = predict_win_rate(vehicle_factors, &account_factors);
-            let target = if step.is_win { 1.0 } else { 0.0 };
+                Entry::Vacant(entry) => {
+                    let mut factors = get_vehicle_factors(&mut redis, tank_id)
+                        .await?
+                        .unwrap_or_else(Vector::new);
+                    initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
+                    entry.insert(factors)
+                }
+            };
+
+            let prediction = predict_win_rate(vehicle_factors, account_factors);
+            let target = if is_win { 1.0 } else { 0.0 };
             let residual_error = target - prediction;
 
             let old_account_factors = account_factors.clone();
             adjust_factors(
-                &mut account_factors,
+                account_factors,
                 vehicle_factors,
                 residual_error,
                 opts.account_learning_rate,
@@ -92,37 +100,26 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 opts.regularization,
             );
 
-            if let Some(duplicate_id) = REMAP_TANK_ID.get(&step.tank_id) {
+            if let Some(duplicate_id) = REMAP_TANK_ID.get(&tank_id) {
                 let vehicle_factors = vehicle_factors.clone();
                 vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
             }
 
-            set_account_factors(
-                &mut redis,
-                step.account_id,
-                &account_factors,
-                account_ttl_secs,
-            )
-            .await?;
-            update_account_factors(&mut *transaction, step.account_id, &account_factors).await?;
-            account_factors_cache
-                .insert(step.account_id, account_factors)
-                .await;
-
             total_error -= residual_error;
         }
 
-        transaction.commit().await?;
-        set_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
+        set_all_accounts_factors(&mut redis, account_factors_cache, account_ttl_secs).await?;
+        set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
         let ewma = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} steps/s | init: {:>4}",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} steps/s | init: {:>5} | new: {:>5}",
             error,
             ewma,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
             n_initialized_accounts,
+            n_new_accounts,
         );
     }
 }
@@ -144,7 +141,9 @@ pub async fn push_train_steps(
     let serialized_steps = serialized_steps.context("failed to serialize the steps")?;
     pipe()
         .rpush(TRAINER_QUEUE_KEY, serialized_steps)
+        .ignore()
         .ltrim(TRAINER_QUEUE_KEY, -limit, -1)
+        .ignore()
         .query_async(redis)
         .await
         .context("failed to push the steps")?;
@@ -196,7 +195,7 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
     64801_i32 => 2849, // T34 Independence
 };
 
-async fn set_vehicles_factors(
+async fn set_all_vehicles_factors(
     redis: &mut MultiplexedConnection,
     vehicles_factors: &HashMap<i32, Vector>,
 ) -> crate::Result {
@@ -208,20 +207,43 @@ async fn set_vehicles_factors(
     Ok(())
 }
 
-async fn set_account_factors(
+async fn get_account_factors(
     redis: &mut MultiplexedConnection,
+    account_id: i32,
+) -> crate::Result<Option<Vector>> {
+    let bytes: Option<Vec<u8>> = redis.get(format!("f::ru::{}", account_id)).await?;
+    match bytes {
+        Some(bytes) => Ok(rmp_serde::from_read_ref(&bytes)?),
+        None => Ok(None),
+    }
+}
+
+fn set_account_factors(
+    pipeline: &mut Pipeline,
     account_id: i32,
     factors: &Vector,
     ttl_secs: usize,
 ) -> crate::Result {
-    redis
-        .set_ex(
-            format!("f::ru::{}", account_id),
-            rmp_serde::to_vec(factors)?,
-            ttl_secs,
-        )
+    let bytes = rmp_serde::to_vec(factors)?;
+    pipeline
+        .set_ex(format!("f::ru::{}", account_id), bytes, ttl_secs)
+        .ignore();
+    Ok(())
+}
+
+async fn set_all_accounts_factors(
+    redis: &mut MultiplexedConnection,
+    accounts: HashMap<i32, Vector>,
+    ttl_secs: usize,
+) -> crate::Result {
+    let mut pipeline = pipe();
+    for (account_id, factors) in accounts.into_iter() {
+        set_account_factors(&mut pipeline, account_id, &factors, ttl_secs)?;
+    }
+    pipeline
+        .query_async(redis)
         .await
-        .with_context(|| format!("failed to set factors for account #{}", account_id))
+        .context("failed to update the accounts factors")
 }
 
 async fn update_error_ewma(

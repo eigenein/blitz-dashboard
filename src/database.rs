@@ -14,7 +14,6 @@ use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
-use crate::trainer::vector::Vector;
 
 pub mod models;
 
@@ -119,22 +118,6 @@ pub async fn replace_account(
         .execute(connection)
         .await
         .with_context(|| format!("failed to replace the account #{}", account_id))?;
-    Ok(())
-}
-
-pub async fn update_account_factors(
-    connection: &mut PgConnection,
-    account_id: i32,
-    factors: &Vector,
-) -> crate::Result {
-    // language=SQL
-    const QUERY: &str = "UPDATE accounts SET factors = $2 WHERE account_id = $1";
-    sqlx::query(QUERY)
-        .bind(account_id)
-        .bind(factors.0.as_ref())
-        .execute(connection)
-        .await
-        .with_context(|| format!("failed to update account #{} factors", account_id))?;
     Ok(())
 }
 
@@ -252,21 +235,6 @@ pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
         .fetch_all(connection)
         .await
         .context("failed to retrieve all tank IDs")?)
-}
-
-pub async fn retrieve_account_factors(
-    connection: &PgPool,
-    account_id: i32,
-) -> crate::Result<Option<Vector>> {
-    // language=SQL
-    const QUERY: &str = "SELECT factors FROM accounts WHERE account_id = $1";
-
-    let factors: Option<Vec<f64>> = sqlx::query_scalar(QUERY)
-        .bind(account_id)
-        .fetch_optional(connection)
-        .await
-        .context("failed to retrieve the account factors")?;
-    Ok(factors.map(Vector::from))
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {
