@@ -109,17 +109,17 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 
-    /// Maximum number of train steps in the trainer queue (overflow prevention)
+    /// Training stream size, in steps
     #[structopt(
         long,
-        default_value = "5000000",
-        parse(try_from_str = parse_trainer_queue_limit),
+        default_value = "15000000",
+        parse(try_from_str = parse_training_stream_size),
     )]
-    pub trainer_queue_limit: isize,
+    pub training_stream_size: usize,
 }
 
-fn parse_trainer_queue_limit(value: &str) -> crate::Result<isize> {
-    match isize::from_str(value)? {
+fn parse_training_stream_size(value: &str) -> crate::Result<usize> {
+    match FromStr::from_str(value)? {
         limit if limit >= 1 => Ok(limit),
         _ => Err(anyhow!("expected a positive limit")),
     }

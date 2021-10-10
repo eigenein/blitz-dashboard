@@ -29,22 +29,6 @@ CREATE TABLE IF NOT EXISTS vehicles (
     tank_id INTEGER PRIMARY KEY
 );
 
--- 0.54.0
-
-ALTER TABLE accounts
-    ADD COLUMN IF NOT EXISTS bias double precision NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS factors double precision ARRAY NOT NULL DEFAULT '{}';
-
--- 0.59.1
-
-ALTER TABLE tank_snapshots
-    ALTER CONSTRAINT tank_snapshots_account_id_fkey
-    DEFERRABLE INITIALLY DEFERRED;
-
--- 0.71.0
-
-ALTER TABLE accounts DROP COLUMN IF EXISTS bias;
-
 -- 0.84.8
 
 ALTER TABLE accounts SET (FILLFACTOR = 90);
@@ -52,3 +36,7 @@ ALTER TABLE accounts SET (FILLFACTOR = 90);
 -- 0.84.9
 
 ALTER TABLE tank_snapshots DROP CONSTRAINT IF EXISTS tank_snapshots_account_id_fkey;
+
+-- 0.85.3
+
+ALTER TABLE accounts DROP COLUMN IF EXISTS factors;

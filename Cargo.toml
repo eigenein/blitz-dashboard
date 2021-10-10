@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.85.2"
+version = "0.85.3"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
 resolver = "2"
@@ -72,7 +72,7 @@ features = ["runtime-tokio-rustls", "postgres", "chrono"]
 [dependencies.redis]
 version = "0.21.0"
 default-features = false
-features = ["aio", "tokio-comp"]
+features = ["aio", "tokio-comp", "streams"]
 
 [dev-dependencies]
 serde_json = "1.0.59"

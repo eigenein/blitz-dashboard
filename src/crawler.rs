@@ -45,7 +45,7 @@ pub struct Crawler {
 }
 
 pub struct IncrementalOpts {
-    trainer_queue_limit: isize,
+    training_stream_size: usize,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -67,7 +67,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         redis.get_multiplexed_async_connection().await?,
         1,
         Some(IncrementalOpts {
-            trainer_queue_limit: opts.trainer_queue_limit,
+            training_stream_size: opts.training_stream_size,
         }),
     )
     .await?;
@@ -77,7 +77,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         redis.get_multiplexed_async_connection().await?,
         opts.n_fast_tasks,
         Some(IncrementalOpts {
-            trainer_queue_limit: opts.trainer_queue_limit,
+            training_stream_size: opts.training_stream_size,
         }),
     )
     .await?;
@@ -218,7 +218,7 @@ impl Crawler {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_train_steps(account.id, &tanks, opts.trainer_queue_limit)
+                    self.push_train_steps(account.id, &tanks, opts.training_stream_size)
                         .await?;
                 }
             }
@@ -280,7 +280,7 @@ impl Crawler {
         &self,
         account_id: i32,
         tanks: &[Tank],
-        queue_limit: isize,
+        stream_size: usize,
     ) -> crate::Result {
         let mut steps = Vec::new();
 
@@ -304,7 +304,7 @@ impl Crawler {
 
         if !steps.is_empty() {
             let mut redis = MultiplexedConnection::clone(&self.redis);
-            push_train_steps(&mut redis, &steps, queue_limit).await?;
+            push_train_steps(&mut redis, &steps, stream_size).await?;
         }
 
         Ok(())

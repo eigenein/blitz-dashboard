@@ -12,6 +12,7 @@ use std::time::Instant;
 use anyhow::Context;
 use bytes::Bytes;
 use redis::aio::MultiplexedConnection;
+use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline};
 use serde::{Deserialize, Serialize};
 
@@ -132,16 +133,29 @@ pub struct TrainStep {
 pub async fn push_train_steps(
     redis: &mut MultiplexedConnection,
     steps: &[TrainStep],
-    limit: isize,
+    stream_size: usize,
 ) -> crate::Result {
     let serialized_steps: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
         steps.iter().map(rmp_serde::to_vec).collect();
     let serialized_steps = serialized_steps.context("failed to serialize the steps")?;
-    pipe()
+    let mut pipeline = pipe();
+    for step in &serialized_steps {
+        let items = [("b", step.clone())];
+        pipeline
+            .xadd_maxlen(
+                TRAINER_STREAM_KEY,
+                StreamMaxlen::Approx(stream_size),
+                "*",
+                &items,
+            )
+            .ignore();
+    }
+    pipeline
         .rpush(TRAINER_QUEUE_KEY, serialized_steps)
         .ignore()
-        .ltrim(TRAINER_QUEUE_KEY, -limit, -1)
-        .ignore()
+        .ltrim(TRAINER_QUEUE_KEY, -stream_size.try_into()?, -1)
+        .ignore();
+    pipeline
         .query_async(redis)
         .await
         .context("failed to push the steps")?;
@@ -149,6 +163,7 @@ pub async fn push_train_steps(
 }
 
 const TRAINER_QUEUE_KEY: &str = "trainer::steps";
+const TRAINER_STREAM_KEY: &str = "streams::steps";
 
 async fn get_random_step(redis: &mut MultiplexedConnection) -> crate::Result<TrainStep> {
     loop {
