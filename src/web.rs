@@ -40,6 +40,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .manage(database)
         .manage(TrackingCode::new(&opts))
         .manage(redis)
+        .manage(DisableCaches(opts.disable_caches))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
         .mount("/", routes![r#static::get_favicon_16x16])
@@ -107,3 +108,5 @@ impl TrackingCode {
         Self(PreEscaped(extra_html_headers.join("")))
     }
 }
+
+pub struct DisableCaches(bool);

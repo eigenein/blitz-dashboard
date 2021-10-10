@@ -17,7 +17,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_months};
-use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
@@ -52,7 +52,7 @@ pub async fn get(
         None => return Ok(Response::NotFound(NotFound(()))),
     };
     set_user(&current_info.nickname);
-    let account = insert_account_if_not_exists(database, account_id).await?;
+    insert_account_if_not_exists(database, account_id).await?;
 
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
@@ -79,6 +79,7 @@ pub async fn get(
     let is_account_birthday = current_info.created_at.date() == Utc::today();
 
     let mut redis = MultiplexedConnection::clone(redis);
+    let account_factors = get_account_factors(&mut redis, account_id).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
     let navbar = html! {
@@ -491,7 +492,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                (render_tank_tr(&account, tank, &total_win_rate, vehicles_factors.get(&tank.statistics.base.tank_id)))
+                                                (render_tank_tr(tank, &total_win_rate, &account_factors, vehicles_factors.get(&tank.statistics.base.tank_id)))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {

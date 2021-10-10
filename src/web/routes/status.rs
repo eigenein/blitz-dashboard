@@ -12,7 +12,7 @@ use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
-use crate::web::TrackingCode;
+use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
 
@@ -20,13 +20,16 @@ pub mod vehicle;
 pub async fn get(
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
+    disable_caches: &State<DisableCaches>,
 ) -> crate::web::result::Result<Html<String>> {
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
     const CACHE_KEY: &str = "html::status";
-    if let Some(cached_response) = redis.get(CACHE_KEY).await? {
-        return Ok(Html(cached_response));
+    if !disable_caches.0 {
+        if let Some(cached_response) = redis.get(CACHE_KEY).await? {
+            return Ok(Html(cached_response));
+        }
     }
 
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;

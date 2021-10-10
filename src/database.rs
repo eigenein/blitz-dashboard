@@ -9,13 +9,10 @@ use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 
-use crate::database::models::Account;
 use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
-
-pub mod models;
 
 /// Open and initialize the database.
 pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
@@ -121,28 +118,19 @@ pub async fn replace_account(
     Ok(())
 }
 
-pub async fn insert_account_if_not_exists(
-    connection: &PgPool,
-    account_id: i32,
-) -> crate::Result<Account> {
+pub async fn insert_account_if_not_exists(connection: &PgPool, account_id: i32) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
-        -- noinspection SqlInsertValues
-        WITH existing AS (
-            INSERT INTO accounts (account_id, last_battle_time)
-            VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
-            ON CONFLICT (account_id) DO NOTHING
-            RETURNING *
-        )
-        SELECT * FROM existing
-        UNION SELECT * FROM accounts WHERE account_id = $1;
+        INSERT INTO accounts (account_id, last_battle_time)
+        VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
+        ON CONFLICT (account_id) DO NOTHING
     ";
-    let account = sqlx::query_as(QUERY)
+    sqlx::query(QUERY)
         .bind(account_id)
-        .fetch_one(connection)
+        .execute(connection)
         .await
         .context("failed to insert the account if not exists")?;
-    Ok(account)
+    Ok(())
 }
 
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {

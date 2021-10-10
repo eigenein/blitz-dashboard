@@ -4,7 +4,6 @@ use std::time::Duration as StdDuration;
 use humantime::format_duration;
 use maud::{html, Markup};
 
-use crate::database::models::Account;
 use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
@@ -56,9 +55,9 @@ pub fn render_percentage(value: f64) -> String {
 }
 
 pub fn render_tank_tr(
-    account: &Account,
     tank: &Tank,
     total_win_rate: &ConfidenceInterval,
+    account_factors: &Option<Vector>,
     vehicle_factors: Option<&Vector>,
 ) -> Markup {
     html! {
@@ -102,8 +101,8 @@ pub fn render_tank_tr(
                 }
             }
 
-            @let predicted_win_rate = if let Some(vehicle_factors) = vehicle_factors {
-                predict_win_rate(vehicle_factors, &account.factors)
+            @let predicted_win_rate = if let (Some(account_factors), Some(vehicle_factors)) = (account_factors, vehicle_factors) {
+                predict_win_rate(vehicle_factors, account_factors)
             } else {
                 0.5
             };

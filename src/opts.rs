@@ -74,6 +74,10 @@ pub struct WebOpts {
     /// Google Analytics measurement ID
     #[structopt(long)]
     pub gtag: Option<String>,
+
+    /// Disable the caches, do not use on production
+    #[structopt(long)]
+    pub disable_caches: bool,
 }
 
 fn parse_task_count(value: &str) -> crate::Result<usize> {
@@ -109,19 +113,19 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 
-    /// Training stream size, in steps
+    /// Training steps stream size
     #[structopt(
         long,
         default_value = "15000000",
-        parse(try_from_str = parse_training_stream_size),
+        parse(try_from_str = parse_non_zero_usize),
     )]
     pub training_stream_size: usize,
 }
 
-fn parse_training_stream_size(value: &str) -> crate::Result<usize> {
+fn parse_non_zero_usize(value: &str) -> crate::Result<usize> {
     match FromStr::from_str(value)? {
         limit if limit >= 1 => Ok(limit),
-        _ => Err(anyhow!("expected a positive limit")),
+        _ => Err(anyhow!("expected a positive size")),
     }
 }
 
@@ -195,12 +199,20 @@ pub struct TrainerOpts {
     pub factor_std: f64,
 
     /// Exponential moving average smoothing factor for the logged prediction error
-    #[structopt(long, default_value = "0.04")]
+    #[structopt(long, default_value = "0.01")]
     pub ewma_factor: f64,
 
     /// Maximum account idle time after which the account factors expire
     #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
+
+    /// Maximum number of the newest training steps used to train the model
+    #[structopt(
+        long,
+        default_value = "7500000",
+        parse(try_from_str = parse_non_zero_usize),
+    )]
+    pub queue_size: usize,
 }
 
 #[derive(StructOpt)]

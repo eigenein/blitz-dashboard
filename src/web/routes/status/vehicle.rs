@@ -16,20 +16,23 @@ use crate::web::partials::{
 };
 use crate::web::response::Response;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
-use crate::web::TrackingCode;
+use crate::web::{DisableCaches, TrackingCode};
 
 #[rocket::get("/status/vehicle/<tank_id>")]
 pub async fn get(
     tank_id: i32,
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
+    disable_caches: &State<DisableCaches>,
 ) -> crate::web::result::Result<Response> {
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
     let cache_key = format!("html::status::vehicle::{}", tank_id);
-    if let Some(cached_response) = redis.get(&cache_key).await? {
-        return Ok(Response::Html(Html(cached_response)));
+    if !disable_caches.0 {
+        if let Some(cached_response) = redis.get(&cache_key).await? {
+            return Ok(Response::Html(Html(cached_response)));
+        }
     }
 
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;

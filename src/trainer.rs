@@ -4,23 +4,22 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::time::Instant;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use bytes::Bytes;
 use redis::aio::MultiplexedConnection;
-use redis::streams::StreamMaxlen;
-use redis::{pipe, AsyncCommands, Pipeline};
+use redis::streams::{StreamMaxlen, StreamRangeReply, StreamReadReply};
+use redis::{pipe, AsyncCommands, Pipeline, Value};
 use serde::{Deserialize, Serialize};
 
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
 use crate::trainer::vector::Vector;
-use crate::StdDuration;
 
 pub mod math;
 pub mod vector;
@@ -31,6 +30,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
+    let (mut pointer, mut steps) = fetch_training_steps(&mut redis, opts.queue_size).await?;
+    log::info!("Fetched {} steps, last ID: {}.", steps.len(), pointer);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_factors_cache = HashMap::new();
@@ -46,11 +47,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut n_initialized_accounts = 0;
 
         for _ in 0..opts.batch_size {
+            let index = fastrand::usize(0..steps.len());
             let TrainStep {
                 account_id,
                 tank_id,
                 is_win,
-            } = get_random_step(&mut redis).await?;
+            } = steps[index];
 
             let account_factors = match account_factors_cache.entry(account_id) {
                 Entry::Occupied(entry) => entry.into_mut(),
@@ -111,12 +113,16 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
-        let ewma = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
+        let moving_error = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
+        let (n_pushed_steps, new_pointer) =
+            refresh_training_steps(&mut redis, pointer, &mut steps, opts.queue_size).await?;
+        pointer = new_pointer;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} steps/s | init: {:>5} | new: {:>5}",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} SPS | PS: {:>4} | IA: {:>5} | NA: {:>5}",
             error,
-            ewma,
+            moving_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
+            n_pushed_steps,
             n_initialized_accounts,
             n_new_accounts,
         );
@@ -138,42 +144,78 @@ pub async fn push_train_steps(
     let serialized_steps: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
         steps.iter().map(rmp_serde::to_vec).collect();
     let serialized_steps = serialized_steps.context("failed to serialize the steps")?;
+    let maxlen = StreamMaxlen::Approx(stream_size);
     let mut pipeline = pipe();
-    for step in &serialized_steps {
-        let items = [("b", step.clone())];
+    for step in serialized_steps {
         pipeline
-            .xadd_maxlen(
-                TRAINER_STREAM_KEY,
-                StreamMaxlen::Approx(stream_size),
-                "*",
-                &items,
-            )
+            .xadd_maxlen(TRAINER_STREAM_KEY, maxlen, "*", &[("b", step)])
             .ignore();
     }
     pipeline
-        .rpush(TRAINER_QUEUE_KEY, serialized_steps)
-        .ignore()
-        .ltrim(TRAINER_QUEUE_KEY, -stream_size.try_into()?, -1)
-        .ignore();
-    pipeline
         .query_async(redis)
         .await
-        .context("failed to push the steps")?;
+        .context("failed to add the steps to the stream")?;
     Ok(())
 }
 
-const TRAINER_QUEUE_KEY: &str = "trainer::steps";
 const TRAINER_STREAM_KEY: &str = "streams::steps";
 
-async fn get_random_step(redis: &mut MultiplexedConnection) -> crate::Result<TrainStep> {
-    loop {
-        let queue_length = redis.llen(TRAINER_QUEUE_KEY).await?;
-        if queue_length != 0 {
-            let index = fastrand::isize(0..queue_length);
-            let bytes: Bytes = redis.lindex(TRAINER_QUEUE_KEY, index).await?;
-            break Ok(rmp_serde::from_read_ref(&bytes)?);
-        }
-        tokio::time::sleep(StdDuration::from_secs(1)).await;
+/// Fetches initial training steps.
+async fn fetch_training_steps(
+    redis: &mut MultiplexedConnection,
+    queue_size: usize,
+) -> crate::Result<(String, VecDeque<TrainStep>)> {
+    let mut queue = VecDeque::with_capacity(queue_size);
+    let reply: StreamRangeReply = redis
+        .xrevrange_count(TRAINER_STREAM_KEY, "+", "-", queue_size)
+        .await?;
+    let last_id = reply
+        .ids
+        .first()
+        .map(|entry| entry.id.clone())
+        .unwrap_or_else(|| "0".to_string());
+    for entry in reply.ids {
+        debug_assert!(entry.id <= last_id, "{} > {}", entry.id, last_id);
+        // `XREVRANGE` returns the entries in the reverse order (newest first).
+        // I want to have the oldest entry in the front of the queue.
+        queue.push_front(map_entry_to_step(entry.map)?);
+    }
+    assert!(queue.len() <= queue_size);
+    Ok((last_id, queue))
+}
+
+/// Fetches the recent training steps and throws away the oldest ones.
+async fn refresh_training_steps(
+    redis: &mut MultiplexedConnection,
+    last_id: String,
+    queue: &mut VecDeque<TrainStep>,
+    queue_size: usize,
+) -> crate::Result<(usize, String)> {
+    let mut reply: StreamReadReply = redis.xread(&[TRAINER_STREAM_KEY], &[&last_id]).await?;
+    let entries = match reply.keys.pop() {
+        Some(key) => key.ids,
+        None => return Ok((0, last_id)),
+    };
+    let (n_steps, last_id) = match entries.last() {
+        Some(entry) => (entries.len(), entry.id.clone()),
+        None => (0, last_id),
+    };
+    // Pop the oldest steps to make space for the newly coming steps.
+    while queue.len() + n_steps > queue_size {
+        queue.pop_front();
+    }
+    // And now push the new steps back.
+    for entry in entries {
+        queue.push_back(map_entry_to_step(entry.map)?);
+    }
+    assert!(queue.len() <= queue_size);
+    Ok((n_steps, last_id))
+}
+
+fn map_entry_to_step(map: HashMap<String, Value>) -> crate::Result<TrainStep> {
+    match map.get("b") {
+        Some(Value::Data(bytes)) => Ok(rmp_serde::from_read_ref(&bytes)?),
+        entry => Err(anyhow!("invalid entry value: {:?}", entry)),
     }
 }
 
@@ -220,7 +262,7 @@ async fn set_all_vehicles_factors(
     Ok(())
 }
 
-async fn get_account_factors(
+pub async fn get_account_factors(
     redis: &mut MultiplexedConnection,
     account_id: i32,
 ) -> crate::Result<Option<Vector>> {
