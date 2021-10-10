@@ -42,7 +42,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let mut total_error = 0.0;
 
-        let mut account_factors_cache = HashMap::new();
+        let mut account_factors_cache = HashMap::with_capacity(opts.batch_size);
         let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
 
@@ -175,7 +175,6 @@ async fn fetch_training_steps(
         .map(|entry| entry.id.clone())
         .unwrap_or_else(|| "0".to_string());
     for entry in reply.ids {
-        debug_assert!(entry.id <= last_id, "{} > {}", entry.id, last_id);
         // `XREVRANGE` returns the entries in the reverse order (newest first).
         // I want to have the oldest entry in the front of the queue.
         queue.push_front(map_entry_to_step(entry.map)?);
