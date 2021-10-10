@@ -15,7 +15,7 @@ use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands, Pipeline};
 use serde::{Deserialize, Serialize};
 
-use math::{adjust_factors, initialize_factors, predict_win_rate};
+use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
 use crate::trainer::vector::Vector;
@@ -85,15 +85,13 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             let residual_error = target - prediction;
 
             let old_account_factors = account_factors.clone();
-            adjust_factors(
-                account_factors,
+            account_factors.sgd_assign(
                 vehicle_factors,
                 residual_error,
                 opts.account_learning_rate,
                 opts.regularization,
             );
-            adjust_factors(
-                vehicle_factors,
+            vehicle_factors.sgd_assign(
                 &old_account_factors,
                 residual_error,
                 opts.vehicle_learning_rate,

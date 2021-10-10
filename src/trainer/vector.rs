@@ -22,28 +22,6 @@ impl Vector {
     }
 
     #[must_use]
-    pub fn sub(self, rhs: &Self) -> Self {
-        Self(
-            self.0
-                .iter()
-                .zip(&rhs.0)
-                .map(|(left, right)| left - right)
-                .collect(),
-        )
-    }
-
-    #[must_use]
-    pub fn mul(&self, rhs: f64) -> Self {
-        Self(self.0.iter().map(|xi| xi * rhs).collect())
-    }
-
-    pub fn add_assign(&mut self, rhs: Self) {
-        for (left, right) in self.0.iter_mut().zip(rhs.0) {
-            *left += right;
-        }
-    }
-
-    #[must_use]
     pub fn dot(&self, other: &Self) -> f64 {
         self.0.iter().zip(&other.0).map(|(xi, yi)| xi * yi).sum()
     }
@@ -51,6 +29,24 @@ impl Vector {
     #[must_use]
     pub fn cosine_similarity(&self, other: &Self) -> f64 {
         self.dot(other) / self.norm() / other.norm()
+    }
+
+    /// Adjusts the latent factors.
+    /// See: https://sifter.org/~simon/journal/20061211.html.
+    pub fn sgd_assign(
+        &mut self,
+        rhs: &Self,
+        residual_error: f64,
+        learning_rate: f64,
+        regularization: f64,
+    ) {
+        debug_assert!(learning_rate >= 0.0);
+        debug_assert!(regularization >= 0.0);
+        assert!(!residual_error.is_nan());
+
+        for (left, right) in self.0.iter_mut().zip(&rhs.0) {
+            *left += learning_rate * (residual_error * right - regularization * *left);
+        }
     }
 }
 
