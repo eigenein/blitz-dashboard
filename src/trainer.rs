@@ -5,6 +5,7 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::time::Instant;
 
@@ -34,6 +35,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
+    let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let account_factors_cache =
         CacheBuilder::new(opts.account_cache_size.max(opts.batch_size)).build();
     let mut vehicle_factors_cache = HashMap::new();
@@ -95,6 +97,13 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
             }
 
+            set_account_factors(
+                &mut redis,
+                step.account_id,
+                &account_factors,
+                account_ttl_secs,
+            )
+            .await?;
             update_account_factors(&mut *transaction, step.account_id, &account_factors).await?;
             account_factors_cache
                 .insert(step.account_id, account_factors)
@@ -197,6 +206,22 @@ async fn set_vehicles_factors(
         .collect();
     redis.hset_multiple(VEHICLE_FACTORS_KEY, &items?).await?;
     Ok(())
+}
+
+async fn set_account_factors(
+    redis: &mut MultiplexedConnection,
+    account_id: i32,
+    factors: &Vector,
+    ttl_secs: usize,
+) -> crate::Result {
+    redis
+        .set_ex(
+            format!("f::ru::{}", account_id),
+            rmp_serde::to_vec(factors)?,
+            ttl_secs,
+        )
+        .await
+        .with_context(|| format!("failed to set factors for account #{}", account_id))
 }
 
 async fn update_error_ewma(

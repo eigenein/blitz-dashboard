@@ -200,6 +200,10 @@ pub struct TrainerOpts {
     /// Exponential moving average smoothing factor for the logged prediction error
     #[structopt(long, default_value = "0.04")]
     pub ewma_factor: f64,
+
+    /// Maximum account idle time after which the account factors expire
+    #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
+    pub account_ttl: StdDuration,
 }
 
 #[derive(StructOpt)]
