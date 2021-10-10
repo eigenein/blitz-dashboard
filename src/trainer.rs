@@ -118,7 +118,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             refresh_training_steps(&mut redis, pointer, &mut steps, opts.queue_size).await?;
         pointer = new_pointer;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>4.0} SPS | PS: {:>4} | IA: {:>5} | NA: {:>5}",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | IA: {:>5} | NA: {:>5}",
             error,
             moving_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
