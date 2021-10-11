@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.86.5"
+version = "0.86.6"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2018"
 resolver = "2"
@@ -25,10 +25,10 @@ chrono-humanize = "0.2.1"
 fastrand = "1.5.0"
 humantime = "2.1.0"
 itertools = "0.10.0"
+jemallocator = "0.3.2"
 log = "0.4.14"
 lru = "0.7.0"
 maud = "0.22.2"
-mimalloc = { version = "0.1.26", default_features = false }
 miniz_oxide = "0.4.4"
 phf = { version = "0.10.0", features = ["macros"] }
 rand = "0.8.4"

@@ -26,7 +26,7 @@ mod wargaming;
 mod web;
 
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
