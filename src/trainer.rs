@@ -31,6 +31,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
+    log::info!("Fetching initial training steps…");
     let (mut pointer, mut steps) = fetch_training_steps(&mut redis, opts.queue_size).await?;
     log::info!("Fetched {} steps, last ID: {}.", steps.len(), pointer);
 
