@@ -107,7 +107,7 @@ pub fn render_tank_tr(
                 0.5
             };
             td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
-                strong { (render_percentage(predicted_win_rate)) }
+                strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
             }
 
             @let frags_per_battle = tank.statistics.all.frags_per_battle();
