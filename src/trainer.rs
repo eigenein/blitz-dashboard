@@ -123,11 +123,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let error = 100.0 * total_error / opts.batch_size as f64;
         let moving_error = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
+        let max_factors_norm = vehicle_factors_cache
+            .iter()
+            .map(|(_, factors)| factors.norm())
+            .fold(0.0, f64::max);
         let (n_pushed_steps, new_pointer) =
             refresh_training_steps(&mut redis, pointer, &mut steps, opts.queue_size).await?;
         pointer = new_pointer;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | MA: {:>6} | IA: {:>5} | NA: {:>5}",
+            "AE: {:>+7.3} pp | moving: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | modify: {:>6} | init: {:>5} | new: {:>5} | max norm: {:>7.4}",
             error,
             moving_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
@@ -135,6 +139,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             n_modified_accounts,
             n_initialized_accounts,
             n_new_accounts,
+            max_factors_norm,
         );
     }
 }
