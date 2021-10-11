@@ -175,15 +175,15 @@ pub struct TrainerOpts {
     pub redis_uri: String,
 
     /// Account latent vector learning rate
-    #[structopt(long = "account-lr", default_value = "0.005")]
+    #[structopt(long = "account-lr", default_value = "0.001")]
     pub account_learning_rate: f64,
 
     /// Vehicle latent vector learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.005")]
+    #[structopt(long = "vehicle-lr", default_value = "0.001")]
     pub vehicle_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.02")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -191,28 +191,36 @@ pub struct TrainerOpts {
     pub n_factors: usize,
 
     /// Batch size to commit vehicles factors and log the metrics
-    #[structopt(long, default_value = "10000")]
+    #[structopt(long, default_value = "100000")]
     pub batch_size: usize,
 
-    /// Standard deviation of the latent factor normal distribution
+    /// Standard deviation of newly initialised latent factors
     #[structopt(long, default_value = "0.1")]
     pub factor_std: f64,
 
-    /// Exponential moving average smoothing factor for the logged prediction error
-    #[structopt(long, default_value = "0.01")]
+    /// Exponential moving average smoothing of the prediction error, only for the logging
+    #[structopt(long, default_value = "0.005")]
     pub ewma_factor: f64,
 
     /// Maximum account idle time after which the account factors expire
     #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
 
-    /// Maximum number of the newest training steps used to train the model
+    /// Number of the newest training steps used to train the model
     #[structopt(
         long,
         default_value = "7500000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub queue_size: usize,
+
+    /// Minimal account factors cache size, in accounts. Actual cache size is at least the batch size
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parse_non_zero_usize),
+    )]
+    pub account_cache_size: usize,
 }
 
 #[derive(StructOpt)]

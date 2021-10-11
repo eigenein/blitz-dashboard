@@ -4,13 +4,14 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
+use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamRangeReply, StreamReadReply};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
@@ -35,6 +36,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_factors_cache = HashMap::new();
+    let mut account_factors_cache = LruCache::new(opts.account_cache_size.max(opts.batch_size));
 
     log::info!("Running…");
     loop {
@@ -42,7 +44,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let mut total_error = 0.0;
 
-        let mut account_factors_cache = HashMap::with_capacity(opts.batch_size);
+        let mut modified_account_ids = HashSet::with_capacity(opts.batch_size);
         let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
 
@@ -53,27 +55,26 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 tank_id,
                 is_win,
             } = steps[index];
+            modified_account_ids.insert(account_id);
 
-            let account_factors = match account_factors_cache.entry(account_id) {
-                Entry::Occupied(entry) => entry.into_mut(),
-
-                Entry::Vacant(entry) => {
-                    let mut factors = get_account_factors(&mut redis, account_id)
-                        .await?
-                        .unwrap_or_else(|| {
-                            n_new_accounts += 1;
-                            Vector::new()
-                        });
-                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
-                        n_initialized_accounts += 1;
-                    }
-                    entry.insert(factors)
+            if !account_factors_cache.contains(&account_id) {
+                let mut factors = get_account_factors(&mut redis, account_id)
+                    .await?
+                    .unwrap_or_else(|| {
+                        n_new_accounts += 1;
+                        Vector::new()
+                    });
+                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
+                    n_initialized_accounts += 1;
                 }
-            };
+                account_factors_cache.put(account_id, factors);
+            }
+            let account_factors = account_factors_cache
+                .get_mut(&account_id)
+                .ok_or_else(|| anyhow!("#{} is missing in the cache", account_id))?;
 
             let vehicle_factors = match vehicle_factors_cache.entry(tank_id) {
                 Entry::Occupied(entry) => entry.into_mut(),
-
                 Entry::Vacant(entry) => {
                     let mut factors = get_vehicle_factors(&mut redis, tank_id)
                         .await?
@@ -109,7 +110,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             total_error -= residual_error;
         }
 
-        set_all_accounts_factors(&mut redis, account_factors_cache, account_ttl_secs).await?;
+        let n_modified_accounts = modified_account_ids.len();
+        set_all_accounts_factors(
+            &mut redis,
+            modified_account_ids,
+            &account_factors_cache,
+            account_ttl_secs,
+        )
+        .await?;
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
@@ -118,11 +126,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             refresh_training_steps(&mut redis, pointer, &mut steps, opts.queue_size).await?;
         pointer = new_pointer;
         log::info!(
-            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | IA: {:>5} | NA: {:>5}",
+            "AE: {:>+7.3} pp | EWMA: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | MA: {:>6} | IA: {:>5} | NA: {:>5}",
             error,
             moving_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
             n_pushed_steps,
+            n_modified_accounts,
             n_initialized_accounts,
             n_new_accounts,
         );
@@ -287,12 +296,20 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    accounts: HashMap<i32, Vector>,
+    account_ids: HashSet<i32>,
+    cache: &LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
-    for (account_id, factors) in accounts.into_iter() {
-        set_account_factors(&mut pipeline, account_id, &factors, ttl_secs)?;
+    for account_id in account_ids {
+        set_account_factors(
+            &mut pipeline,
+            account_id,
+            cache
+                .peek(&account_id)
+                .ok_or_else(|| anyhow!("#{} is missing in the cache", account_id))?,
+            ttl_secs,
+        )?;
     }
     pipeline
         .query_async(redis)
