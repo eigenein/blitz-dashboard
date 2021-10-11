@@ -66,16 +66,3 @@ jobs:
           asset_path: target/armv7-unknown-linux-gnueabihf/release/blitz-dashboard
           asset_name: blitz-dashboard.armv7-unknown-linux-gnueabihf
           asset_content_type: application/octet-stream
-
-      - name: Build blitz-dashboard.arm-unknown-linux-gnueabihf (Raspberry Pi 0/1)
-        run: cross build --target arm-unknown-linux-gnueabihf --release
-
-      - name: Upload blitz-dashboard.arm-unknown-linux-gnueabihf
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_path: target/arm-unknown-linux-gnueabihf/release/blitz-dashboard
-          asset_name: blitz-dashboard.arm-unknown-linux-gnueabihf
-          asset_content_type: application/octet-stream
