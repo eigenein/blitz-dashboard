@@ -143,7 +143,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
         log::info!(
-            "Train: {:>+7.3} pp ({:>+7.3}) | test: {:>+7.3} pp ({:>+7.3})  | BPS: {:>6.0} | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
+            "Train: {:>+7.3} ({:>+7.3}) | test: {:>+7.3} ({:>+7.3})  | BPS: {:>6.0} | new: {:>4} | accounts: {:>4} | init: {:>4} | new: {:>6} | norm: {:>7.4}",
             smoothed_train_error * 100.0,
             average_train_error * 100.0,
             smoothed_test_error * 100.0,

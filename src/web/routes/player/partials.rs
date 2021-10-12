@@ -102,12 +102,14 @@ pub fn render_tank_tr(
             }
 
             @let predicted_win_rate = if let (Some(account_factors), Some(vehicle_factors)) = (account_factors, vehicle_factors) {
-                predict_win_rate(vehicle_factors, account_factors)
+                Some(predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0))
             } else {
-                0.5
+                None
             };
-            td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
-                strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
+            td data-sort="predicted-win-rate" data-value=(predicted_win_rate.unwrap_or_default()) {
+                @if let Some(predicted_win_rate) = predicted_win_rate {
+                    strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
+                }
             }
 
             @let frags_per_battle = tank.statistics.all.frags_per_battle();
