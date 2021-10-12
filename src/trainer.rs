@@ -143,7 +143,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
         log::info!(
-            "Train: {:>+7.3} ({:>+7.3}) | test: {:>+7.3} ({:>+7.3})  | BPS: {:>6.0} | new: {:>4} | accounts: {:>4} | init: {:>4} | new: {:>6} | norm: {:>7.4}",
+            "Train: {:>+7.3} ({:>+5.1}) | test: {:>+7.3} ({:>+5.1})  | BPS: {:>6.0} | new: {:>4} | acc: {:>6} | i: {:>2} | n: {:>2} | mag: {:>6.3}",
             smoothed_train_error * 100.0,
             average_train_error * 100.0,
             smoothed_test_error * 100.0,
@@ -206,6 +206,7 @@ async fn load_battles(
     let reply: Value = redis
         .xrevrange_count(TRAIN_STREAM_KEY, "+", "-", count)
         .await?;
+    log::info!("Almost done…");
     let entries = parse_stream(reply)?;
     let last_id = entries
         .first()
