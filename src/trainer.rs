@@ -13,7 +13,7 @@ use anyhow::{anyhow, Context};
 use bytes::Bytes;
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
-use redis::streams::{StreamMaxlen, StreamRangeReply, StreamReadReply};
+use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
 use serde::{Deserialize, Serialize};
 
@@ -144,7 +144,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TrainStep {
     pub account_id: i32,
     pub tank_id: i32,
@@ -181,18 +181,17 @@ async fn fetch_training_steps(
     queue_size: usize,
 ) -> crate::Result<(String, VecDeque<TrainStep>)> {
     let mut queue = VecDeque::with_capacity(queue_size);
-    let reply: StreamRangeReply = redis
+    let reply: Value = redis
         .xrevrange_count(TRAINER_STREAM_KEY, "+", "-", queue_size)
         .await?;
-    let last_id = reply
-        .ids
+    let entries = parse_stream(reply)?;
+    let last_id = entries
         .first()
-        .map(|entry| entry.id.clone())
-        .unwrap_or_else(|| "0".to_string());
-    for entry in reply.ids {
+        .map_or_else(|| "0".to_string(), |entry| entry.0.clone());
+    for (_, step) in entries {
         // `XREVRANGE` returns the entries in the reverse order (newest first).
         // I want to have the oldest entry in the front of the queue.
-        queue.push_front(map_entry_to_step(entry.map)?);
+        queue.push_front(step);
     }
     assert!(queue.len() <= queue_size);
     Ok((last_id, queue))
@@ -205,13 +204,10 @@ async fn refresh_training_steps(
     queue: &mut VecDeque<TrainStep>,
     queue_size: usize,
 ) -> crate::Result<(usize, String)> {
-    let mut reply: StreamReadReply = redis.xread(&[TRAINER_STREAM_KEY], &[&last_id]).await?;
-    let entries = match reply.keys.pop() {
-        Some(key) => key.ids,
-        None => return Ok((0, last_id)),
-    };
+    let reply: Value = redis.xread(&[TRAINER_STREAM_KEY], &[&last_id]).await?;
+    let entries = parse_multiple_streams(reply)?;
     let (n_steps, last_id) = match entries.last() {
-        Some(entry) => (entries.len(), entry.id.clone()),
+        Some((id, _)) => (entries.len(), id.clone()),
         None => (0, last_id),
     };
     // Pop the oldest steps to make space for the newly coming steps.
@@ -219,17 +215,54 @@ async fn refresh_training_steps(
         queue.pop_front();
     }
     // And now push the new steps back.
-    for entry in entries {
-        queue.push_back(map_entry_to_step(entry.map)?);
+    for (_, step) in entries {
+        queue.push_back(step);
     }
     assert!(queue.len() <= queue_size);
     Ok((n_steps, last_id))
 }
 
-fn map_entry_to_step(map: HashMap<String, Value>) -> crate::Result<TrainStep> {
-    match map.get("b") {
-        Some(Value::Data(bytes)) => Ok(rmp_serde::from_read_ref(&bytes)?),
-        entry => Err(anyhow!("invalid entry value: {:?}", entry)),
+fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, TrainStep)>> {
+    match reply {
+        Value::Nil => Ok(Vec::new()),
+        Value::Bulk(mut streams) => match streams.pop() {
+            Some(Value::Bulk(mut stream)) => match stream.pop() {
+                Some(value) => parse_stream(value),
+                other => Err(anyhow!("expected entries, got: {:?}", other)),
+            },
+            other => Err(anyhow!("expected (name, entries), got: {:?}", other)),
+        },
+        other => Err(anyhow!("expected a bulk of streams, got: {:?}", other)),
+    }
+}
+
+fn parse_stream(reply: Value) -> crate::Result<Vec<(String, TrainStep)>> {
+    match reply {
+        Value::Nil => Ok(Vec::new()),
+        Value::Bulk(entries) => entries.into_iter().map(parse_stream_entry).collect(),
+        other => Err(anyhow!("expected a bulk of entries, got: {:?}", other)),
+    }
+}
+
+fn parse_stream_entry(reply: Value) -> crate::Result<(String, TrainStep)> {
+    match reply {
+        Value::Bulk(mut entry) => {
+            let fields = entry.pop();
+            let id = entry.pop();
+            match (id, fields) {
+                (Some(Value::Data(id)), Some(Value::Bulk(mut fields))) => {
+                    let value = fields.pop();
+                    match value {
+                        Some(Value::Data(data)) => {
+                            Ok((String::from_utf8(id)?, rmp_serde::from_read_ref(&data)?))
+                        }
+                        other => Err(anyhow!("expected a binary data, got: {:?}", other)),
+                    }
+                }
+                other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
+            }
+        }
+        other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
     }
 }
 
