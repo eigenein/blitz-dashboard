@@ -32,7 +32,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
     log::info!("Loading battles…");
-    let (mut pointer, mut battles) = load_battles(&mut redis, opts.queue_size).await?;
+    let (mut pointer, mut battles) = load_battles(&mut redis, opts.train_size).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
@@ -43,7 +43,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     loop {
         let start_instant = Instant::now();
 
-        let mut total_error = 0.0;
+        let mut train_error = 0.0;
 
         let mut modified_account_ids = HashSet::with_capacity(opts.batch_size);
         let mut n_new_accounts = 0;
@@ -108,7 +108,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
             }
 
-            total_error -= residual_error;
+            train_error -= residual_error;
         }
 
         let n_modified_accounts = modified_account_ids.len();
@@ -121,19 +121,19 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .await?;
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
-        let error = 100.0 * total_error / opts.batch_size as f64;
-        let smoothed_error = update_smoothed_error(&mut redis, error, opts.ewma_factor).await?;
+        let train_error = 100.0 * train_error / opts.batch_size as f64;
+        let train_error = smooth_error(&mut redis, train_error, opts.error_smoothing).await?;
         let max_factors_norm = vehicle_factors_cache
             .iter()
             .map(|(_, factors)| factors.norm())
             .fold(0.0, f64::max);
         let (n_new_battles, new_pointer) =
-            refresh_battles(&mut redis, pointer, &mut battles, opts.queue_size).await?;
+            refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
         log::info!(
-            "Train: {:>+7.3} pp | batch: {:>+7.3} pp | {:>6.0} BPS | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
-            smoothed_error,
-            error,
+            "Train: {:>+7.3} pp | batch: {:>+7.3} pp | BPS: {:>6.0} | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
+            train_error,
+            train_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
             n_new_battles,
             n_modified_accounts,
@@ -177,11 +177,11 @@ const TRAIN_STREAM_KEY: &str = "streams::steps";
 
 async fn load_battles(
     redis: &mut MultiplexedConnection,
-    queue_size: usize,
+    count: usize,
 ) -> crate::Result<(String, VecDeque<Battle>)> {
-    let mut queue = VecDeque::with_capacity(queue_size);
+    let mut queue = VecDeque::with_capacity(count);
     let reply: Value = redis
-        .xrevrange_count(TRAIN_STREAM_KEY, "+", "-", queue_size)
+        .xrevrange_count(TRAIN_STREAM_KEY, "+", "-", count)
         .await?;
     let entries = parse_stream(reply)?;
     let last_id = entries
@@ -192,7 +192,7 @@ async fn load_battles(
         // I want to have the oldest entry in the front of the queue.
         queue.push_front(step);
     }
-    assert!(queue.len() <= queue_size);
+    assert!(queue.len() <= count);
     Ok((last_id, queue))
 }
 
@@ -355,7 +355,7 @@ async fn set_all_accounts_factors(
         .context("failed to update the accounts factors")
 }
 
-async fn update_smoothed_error(
+async fn smooth_error(
     redis: &mut MultiplexedConnection,
     error: f64,
     smoothing: f64,

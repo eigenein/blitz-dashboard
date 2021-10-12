@@ -183,7 +183,7 @@ pub struct TrainerOpts {
     pub vehicle_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.0005")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -191,28 +191,28 @@ pub struct TrainerOpts {
     pub n_factors: usize,
 
     /// Batch size to commit vehicles factors and log the metrics
-    #[structopt(long, default_value = "100000")]
+    #[structopt(long, default_value = "500000")]
     pub batch_size: usize,
 
     /// Standard deviation of newly initialised latent factors
     #[structopt(long, default_value = "0.1")]
     pub factor_std: f64,
 
-    /// Exponential moving average smoothing of the prediction error, only for the logging
+    /// Exponential moving average smoothing of the train error, only for the logging
     #[structopt(long, default_value = "0.005")]
-    pub ewma_factor: f64,
+    pub error_smoothing: f64,
 
     /// Maximum account idle time after which the account factors expire
     #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
 
-    /// Number of the newest training steps used to train the model
+    /// Number of battles used to train the model
     #[structopt(
         long,
         default_value = "7500000",
         parse(try_from_str = parse_non_zero_usize),
     )]
-    pub queue_size: usize,
+    pub train_size: usize,
 
     /// Minimal account factors cache size, in accounts. Actual cache size is at least the batch size
     #[structopt(
