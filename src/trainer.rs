@@ -162,16 +162,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 pub struct Battle {
     pub account_id: i32,
     pub tank_id: i32,
-
-    #[serde(default, skip_serializing_if = "skip_if_false")]
     pub is_win: bool,
-
-    #[serde(default, skip_serializing_if = "skip_if_false")]
     pub is_test: bool,
-}
-
-fn skip_if_false(value: &bool) -> bool {
-    !*value
 }
 
 pub async fn push_battles(
