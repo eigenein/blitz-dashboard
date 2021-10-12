@@ -31,9 +31,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    log::info!("Fetching initial training steps…");
-    let (mut pointer, mut steps) = fetch_training_steps(&mut redis, opts.queue_size).await?;
-    log::info!("Fetched {} steps, last ID: {}.", steps.len(), pointer);
+    log::info!("Loading battles…");
+    let (mut pointer, mut battles) = load_battles(&mut redis, opts.queue_size).await?;
+    log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_factors_cache = HashMap::new();
@@ -50,12 +50,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut n_initialized_accounts = 0;
 
         for _ in 0..opts.batch_size {
-            let index = fastrand::usize(0..steps.len());
-            let TrainStep {
+            let index = fastrand::usize(0..battles.len());
+            let Battle {
                 account_id,
                 tank_id,
                 is_win,
-            } = steps[index];
+            } = battles[index];
             modified_account_ids.insert(account_id);
 
             if !account_factors_cache.contains(&account_id) {
@@ -122,20 +122,20 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let error = 100.0 * total_error / opts.batch_size as f64;
-        let moving_error = update_error_ewma(&mut redis, error, opts.ewma_factor).await?;
+        let smoothed_error = update_smoothed_error(&mut redis, error, opts.ewma_factor).await?;
         let max_factors_norm = vehicle_factors_cache
             .iter()
             .map(|(_, factors)| factors.norm())
             .fold(0.0, f64::max);
-        let (n_pushed_steps, new_pointer) =
-            refresh_training_steps(&mut redis, pointer, &mut steps, opts.queue_size).await?;
+        let (n_new_battles, new_pointer) =
+            refresh_battles(&mut redis, pointer, &mut battles, opts.queue_size).await?;
         pointer = new_pointer;
         log::info!(
-            "AE: {:>+7.3} pp | moving: {:>+7.3} pp | {:>6.0} SPS | PS: {:>5} | modify: {:>6} | init: {:>5} | new: {:>5} | max norm: {:>7.4}",
+            "Train: {:>+7.3} pp | batch: {:>+7.3} pp | {:>6.0} BPS | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
+            smoothed_error,
             error,
-            moving_error,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
-            n_pushed_steps,
+            n_new_battles,
             n_modified_accounts,
             n_initialized_accounts,
             n_new_accounts,
@@ -145,44 +145,43 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TrainStep {
+pub struct Battle {
     pub account_id: i32,
     pub tank_id: i32,
     pub is_win: bool,
 }
 
-pub async fn push_train_steps(
+pub async fn push_battles(
     redis: &mut MultiplexedConnection,
-    steps: &[TrainStep],
+    battles: &[Battle],
     stream_size: usize,
 ) -> crate::Result {
-    let serialized_steps: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
-        steps.iter().map(rmp_serde::to_vec).collect();
-    let serialized_steps = serialized_steps.context("failed to serialize the steps")?;
+    let battles: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
+        battles.iter().map(rmp_serde::to_vec).collect();
+    let battles = battles.context("failed to serialize the battles")?;
     let maxlen = StreamMaxlen::Approx(stream_size);
     let mut pipeline = pipe();
-    for step in serialized_steps {
+    for battle in battles {
         pipeline
-            .xadd_maxlen(TRAINER_STREAM_KEY, maxlen, "*", &[("b", step)])
+            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", battle)])
             .ignore();
     }
     pipeline
         .query_async(redis)
         .await
-        .context("failed to add the steps to the stream")?;
+        .context("failed to add the battles to the stream")?;
     Ok(())
 }
 
-const TRAINER_STREAM_KEY: &str = "streams::steps";
+const TRAIN_STREAM_KEY: &str = "streams::steps";
 
-/// Fetches initial training steps.
-async fn fetch_training_steps(
+async fn load_battles(
     redis: &mut MultiplexedConnection,
     queue_size: usize,
-) -> crate::Result<(String, VecDeque<TrainStep>)> {
+) -> crate::Result<(String, VecDeque<Battle>)> {
     let mut queue = VecDeque::with_capacity(queue_size);
     let reply: Value = redis
-        .xrevrange_count(TRAINER_STREAM_KEY, "+", "-", queue_size)
+        .xrevrange_count(TRAIN_STREAM_KEY, "+", "-", queue_size)
         .await?;
     let entries = parse_stream(reply)?;
     let last_id = entries
@@ -197,32 +196,32 @@ async fn fetch_training_steps(
     Ok((last_id, queue))
 }
 
-/// Fetches the recent training steps and throws away the oldest ones.
-async fn refresh_training_steps(
+/// Fetches the recent battles and throws away the oldest ones.
+async fn refresh_battles(
     redis: &mut MultiplexedConnection,
     last_id: String,
-    queue: &mut VecDeque<TrainStep>,
+    queue: &mut VecDeque<Battle>,
     queue_size: usize,
 ) -> crate::Result<(usize, String)> {
-    let reply: Value = redis.xread(&[TRAINER_STREAM_KEY], &[&last_id]).await?;
+    let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
     let entries = parse_multiple_streams(reply)?;
-    let (n_steps, last_id) = match entries.last() {
+    let (n_battles, last_id) = match entries.last() {
         Some((id, _)) => (entries.len(), id.clone()),
         None => (0, last_id),
     };
-    // Pop the oldest steps to make space for the newly coming steps.
-    while queue.len() + n_steps > queue_size {
+    // Pop the oldest battles to make space for the newly coming steps.
+    while queue.len() + n_battles > queue_size {
         queue.pop_front();
     }
-    // And now push the new steps back.
+    // And now push the new battles back.
     for (_, step) in entries {
         queue.push_back(step);
     }
     assert!(queue.len() <= queue_size);
-    Ok((n_steps, last_id))
+    Ok((n_battles, last_id))
 }
 
-fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, TrainStep)>> {
+fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, Battle)>> {
     match reply {
         Value::Nil => Ok(Vec::new()),
         Value::Bulk(mut streams) => match streams.pop() {
@@ -236,7 +235,7 @@ fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, TrainStep)
     }
 }
 
-fn parse_stream(reply: Value) -> crate::Result<Vec<(String, TrainStep)>> {
+fn parse_stream(reply: Value) -> crate::Result<Vec<(String, Battle)>> {
     match reply {
         Value::Nil => Ok(Vec::new()),
         Value::Bulk(entries) => entries.into_iter().map(parse_stream_entry).collect(),
@@ -244,7 +243,7 @@ fn parse_stream(reply: Value) -> crate::Result<Vec<(String, TrainStep)>> {
     }
 }
 
-fn parse_stream_entry(reply: Value) -> crate::Result<(String, TrainStep)> {
+fn parse_stream_entry(reply: Value) -> crate::Result<(String, Battle)> {
     match reply {
         Value::Bulk(mut entry) => {
             let fields = entry.pop();
@@ -356,7 +355,7 @@ async fn set_all_accounts_factors(
         .context("failed to update the accounts factors")
 }
 
-async fn update_error_ewma(
+async fn update_smoothed_error(
     redis: &mut MultiplexedConnection,
     error: f64,
     smoothing: f64,

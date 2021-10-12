@@ -20,7 +20,7 @@ use crate::database::{
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::{push_train_steps, TrainStep};
+use crate::trainer::{push_battles, Battle};
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -293,7 +293,7 @@ impl Crawler {
             if n_battles > 0 && n_wins >= 0 {
                 self.metrics.lock().await.n_battles += n_battles;
                 for i in 0..n_battles {
-                    steps.push(TrainStep {
+                    steps.push(Battle {
                         account_id,
                         tank_id,
                         is_win: i < n_wins,
@@ -304,7 +304,7 @@ impl Crawler {
 
         if !steps.is_empty() {
             let mut redis = MultiplexedConnection::clone(&self.redis);
-            push_train_steps(&mut redis, &steps, stream_size).await?;
+            push_battles(&mut redis, &steps, stream_size).await?;
         }
 
         Ok(())
