@@ -297,6 +297,7 @@ impl Crawler {
                         account_id,
                         tank_id,
                         is_win: i < n_wins,
+                        is_test: fastrand::usize(0..50) == 0,
                     });
                 }
             }

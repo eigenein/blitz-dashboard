@@ -22,6 +22,7 @@ use math::{initialize_factors, predict_win_rate};
 use crate::opts::TrainerOpts;
 use crate::trainer::vector::Vector;
 
+mod error;
 pub mod math;
 pub mod vector;
 
@@ -43,7 +44,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     loop {
         let start_instant = Instant::now();
 
-        let mut train_error = 0.0;
+        let mut train_error = error::Error::default();
+        let mut test_error = error::Error::default();
 
         let mut modified_account_ids = HashSet::with_capacity(opts.batch_size);
         let mut n_new_accounts = 0;
@@ -55,8 +57,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 account_id,
                 tank_id,
                 is_win,
+                is_test,
             } = battles[index];
-            modified_account_ids.insert(account_id);
 
             if !account_factors_cache.contains(&account_id) {
                 let mut factors = get_account_factors(&mut redis, account_id)
@@ -89,26 +91,32 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             let target = if is_win { 1.0 } else { 0.0 };
             let residual_error = target - prediction;
 
-            let old_account_factors = account_factors.clone();
-            account_factors.sgd_assign(
-                vehicle_factors,
-                residual_error,
-                opts.account_learning_rate,
-                opts.regularization,
-            );
-            vehicle_factors.sgd_assign(
-                &old_account_factors,
-                residual_error,
-                opts.vehicle_learning_rate,
-                opts.regularization,
-            );
+            if !is_test {
+                modified_account_ids.insert(account_id);
+                let old_account_factors = account_factors.clone();
 
-            if let Some(duplicate_id) = REMAP_TANK_ID.get(&tank_id) {
-                let vehicle_factors = vehicle_factors.clone();
-                vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
+                account_factors.sgd_assign(
+                    vehicle_factors,
+                    residual_error,
+                    opts.account_learning_rate,
+                    opts.regularization,
+                );
+                vehicle_factors.sgd_assign(
+                    &old_account_factors,
+                    residual_error,
+                    opts.vehicle_learning_rate,
+                    opts.regularization,
+                );
+
+                train_error.push(-residual_error);
+
+                if let Some(duplicate_id) = REMAP_TANK_ID.get(&tank_id) {
+                    let vehicle_factors = vehicle_factors.clone();
+                    vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
+                }
+            } else {
+                test_error.push(-residual_error);
             }
-
-            train_error -= residual_error;
         }
 
         let n_modified_accounts = modified_account_ids.len();
@@ -121,8 +129,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .await?;
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
-        let train_error = 100.0 * train_error / opts.batch_size as f64;
-        let train_error = smooth_error(&mut redis, train_error, opts.error_smoothing).await?;
+        let (smoothed_train_error, average_train_error) = train_error
+            .smooth(&mut redis, "trainer::errors::train", opts.error_smoothing)
+            .await?;
+        let (smoothed_test_error, average_test_error) = test_error
+            .smooth(&mut redis, "trainer::errors::test", opts.error_smoothing)
+            .await?;
         let max_factors_norm = vehicle_factors_cache
             .iter()
             .map(|(_, factors)| factors.norm())
@@ -131,9 +143,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
         log::info!(
-            "Train: {:>+7.3} pp | batch: {:>+7.3} pp | BPS: {:>6.0} | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
-            train_error,
-            train_error,
+            "Train: {:>+7.3} pp ({:>+7.3}) | test: {:>+7.3} pp ({:>+7.3})  | BPS: {:>6.0} | new: {:>5} | accounts: {:>5} | init: {:>5} | new: {:>6} | norm: {:>7.4}",
+            smoothed_train_error * 100.0,
+            average_train_error * 100.0,
+            smoothed_test_error * 100.0,
+            average_test_error * 100.0,
             opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
             n_new_battles,
             n_modified_accounts,
@@ -148,7 +162,16 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 pub struct Battle {
     pub account_id: i32,
     pub tank_id: i32,
+
+    #[serde(default, skip_serializing_if = "skip_if_false")]
     pub is_win: bool,
+
+    #[serde(default, skip_serializing_if = "skip_if_false")]
+    pub is_test: bool,
+}
+
+fn skip_if_false(value: &bool) -> bool {
+    !*value
 }
 
 pub async fn push_battles(
@@ -353,16 +376,4 @@ async fn set_all_accounts_factors(
         .query_async(redis)
         .await
         .context("failed to update the accounts factors")
-}
-
-async fn smooth_error(
-    redis: &mut MultiplexedConnection,
-    error: f64,
-    smoothing: f64,
-) -> crate::Result<f64> {
-    const KEY: &str = "trainer::error_ewma";
-    let ewma: Option<f64> = redis.get(KEY).await?;
-    let ewma = error * smoothing + ewma.unwrap_or(0.0) * (1.0 - smoothing);
-    redis.set(KEY, ewma).await?;
-    Ok(ewma)
 }
