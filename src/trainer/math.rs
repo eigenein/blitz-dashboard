@@ -8,21 +8,16 @@ use rand_distr::Normal;
 
 use crate::trainer::vector::Vector;
 
-/// Truncates the vector, if needed.
-/// Pushes random values to it until the target length is reached.
 pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool {
     match x.0.len().cmp(&length) {
         Ordering::Equal => false,
-        Ordering::Less => {
+        _ => {
             let mut rng = thread_rng();
             let distribution = Normal::new(0.0, magnitude).unwrap();
+            x.0.clear();
             while x.0.len() < length {
                 x.0.push(distribution.sample(&mut rng));
             }
-            true
-        }
-        Ordering::Greater => {
-            x.0.truncate(length);
             true
         }
     }
