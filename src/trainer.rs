@@ -135,15 +135,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let (smoothed_test_error, average_test_error) = test_error
             .smooth(&mut redis, "trainer::errors::test", opts.error_smoothing)
             .await?;
-        let max_factors_norm = vehicle_factors_cache
+        let max_factor = vehicle_factors_cache
             .iter()
-            .map(|(_, factors)| factors.norm())
+            .flat_map(|(_, factors)| factors.0.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
         let (n_new_battles, new_pointer) =
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
         log::info!(
-            "Train: {:>+10.6} ({:>+6.2}) pp | test: {:>+7.3} ({:>+5.1}) pp | BPS: {:>6.0} | new: {:>4} | acc: {:>6} | i: {:>2} | n: {:>2} | mag: {:>6.3}",
+            "Train: {:>+10.6} ({:>+6.2}) pp | test: {:>+7.3} ({:>+5.1}) pp | BPS: {:>6.0} | new: {:>3} | acc: {:>6} | i: {:>2} | n: {:>2} | max.f: {:>6.3}",
             smoothed_train_error * 100.0,
             average_train_error * 100.0,
             smoothed_test_error * 100.0,
@@ -153,7 +153,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             n_modified_accounts,
             n_initialized_accounts,
             n_new_accounts,
-            max_factors_norm,
+            max_factor,
         );
     }
 }
