@@ -64,10 +64,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 let mut factors = get_account_factors(&mut redis, account_id)
                     .await?
                     .unwrap_or_else(|| {
-                        n_new_accounts += 1;
+                        if !is_test {
+                            n_new_accounts += 1;
+                        }
                         Vector::new()
                     });
-                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
+                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) && !is_test {
                     n_initialized_accounts += 1;
                 }
                 account_factors_cache.put(account_id, factors);
