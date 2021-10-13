@@ -116,7 +116,7 @@ pub struct CrawlerOpts {
     /// Training steps stream size
     #[structopt(
         long,
-        default_value = "15000000",
+        default_value = "10000000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub training_stream_size: usize,
@@ -199,7 +199,7 @@ pub struct TrainerOpts {
     pub factor_std: f64,
 
     /// Exponential moving average smoothing of the train error, only for the logging
-    #[structopt(long, default_value = "0.005")]
+    #[structopt(long, default_value = "0.001")]
     pub error_smoothing: f64,
 
     /// Maximum account idle time after which the account factors expire
@@ -209,7 +209,7 @@ pub struct TrainerOpts {
     /// Number of battles used to train the model
     #[structopt(
         long,
-        default_value = "7500000",
+        default_value = "3000000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub train_size: usize,
