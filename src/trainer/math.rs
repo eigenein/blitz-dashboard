@@ -31,5 +31,5 @@ pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool
 pub fn predict_win_rate(vehicle_factors: &Vector, account_factors: &Vector) -> f64 {
     let prediction = vehicle_factors.dot(account_factors);
     assert!(!prediction.is_nan());
-    prediction
+    prediction.clamp(0.0, 1.0)
 }

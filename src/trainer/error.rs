@@ -18,7 +18,6 @@ impl Error {
         self.total_error / self.count.max(1) as f64
     }
 
-    #[must_use]
     pub async fn smooth(
         self,
         redis: &mut MultiplexedConnection,
