@@ -7,8 +7,6 @@ use maud::{html, Markup};
 use crate::models::Tank;
 use crate::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::math::predict_win_rate;
-use crate::trainer::vector::Vector;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
 
 pub fn render_period_li(
@@ -56,14 +54,13 @@ pub fn render_percentage(value: f64) -> String {
 
 pub fn render_tank_tr(
     tank: &Tank,
-    total_win_rate: &ConfidenceInterval,
-    account_factors: &Option<Vector>,
-    vehicle_factors: Option<&Vector>,
+    account_win_rate: &ConfidenceInterval,
+    predicted_win_rate: Option<f64>,
 ) -> Markup {
     html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();
-        @let win_rate_ordering = true_win_rate.partial_cmp(total_win_rate);
+        @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
@@ -101,11 +98,6 @@ pub fn render_tank_tr(
                 }
             }
 
-            @let predicted_win_rate = if let (Some(account_factors), Some(vehicle_factors)) = (account_factors, vehicle_factors) {
-                Some(predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0))
-            } else {
-                None
-            };
             td data-sort="predicted-win-rate" data-value=(predicted_win_rate.unwrap_or_default()) {
                 @if let Some(predicted_win_rate) = predicted_win_rate {
                     sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }

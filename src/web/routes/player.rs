@@ -17,6 +17,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_months};
+use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
@@ -71,7 +72,7 @@ pub async fn get(
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
         .sum();
-    let total_win_rate = ConfidenceInterval::default_wilson_score_interval(
+    let current_win_rate = ConfidenceInterval::default_wilson_score_interval(
         current_info.statistics.all.battles,
         current_info.statistics.all.wins,
     );
@@ -387,7 +388,7 @@ pub async fn get(
                             @if stats_delta.battles != 0 {
                                 div.tile."is-4".is-parent {
                                     @let period_win_rate = stats_delta.true_win_rate();
-                                    div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&total_win_rate))) {
+                                    div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
                                         }
@@ -492,7 +493,12 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                (render_tank_tr(tank, &total_win_rate, &account_factors, vehicles_factors.get(&tank.statistics.base.tank_id)))
+                                                @let predicted_win_rate = account_factors.as_ref().and_then(|account_factors| {
+                                                    vehicles_factors.get(&tank.statistics.base.tank_id).map(|vehicle_factors| {
+                                                        predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0)
+                                                    })
+                                                });
+                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate))
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
