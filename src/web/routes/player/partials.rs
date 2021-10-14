@@ -102,7 +102,7 @@ pub fn render_tank_tr(
                 @if let Some(predicted_win_rate) = predicted_win_rate {
                     sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                     strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
-                } else {
+                } @else {
                     span.icon-text.is-flex-wrap-nowrap.has-text-grey-light {
                         span.icon { i.fas.fa-hourglass-half {} }
                         span { "Обучение" }
