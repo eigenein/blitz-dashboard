@@ -199,7 +199,7 @@ pub async fn get(
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="predicted-win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Предсказанный процент побед – в реальном времени (live predicted win rate)" { "LPWR" } }
+                        span { abbr title="Предсказываемая вероятность победы этого игрока на этом танке прямо сейчас" { "PWP" } }
                     }
                 }
             }
