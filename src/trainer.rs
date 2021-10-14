@@ -135,7 +135,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             .smooth(&mut redis, "trainer::errors::train", opts.error_smoothing)
             .await?;
         let (smoothed_test_error, average_test_error) = test_error
-            .smooth(&mut redis, "trainer::errors::test", opts.error_smoothing)
+            .smooth(&mut redis, TRAINER_TEST_ERROR_KEY, opts.error_smoothing)
             .await?;
         let max_factor = vehicle_factors_cache
             .iter()
@@ -158,6 +158,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             max_factor,
         );
     }
+}
+
+const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
+
+pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
+    Ok(redis
+        .get::<_, Option<f64>>(TRAINER_TEST_ERROR_KEY)
+        .await?
+        .unwrap_or_default())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
