@@ -190,17 +190,9 @@ pub struct TrainerOpts {
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
 
-    /// Batch size to commit vehicles factors and log the metrics
-    #[structopt(long, default_value = "500000")]
-    pub batch_size: usize,
-
     /// Standard deviation of newly initialised latent factors
     #[structopt(long, default_value = "0.1")]
     pub factor_std: f64,
-
-    /// Exponential moving average smoothing of the train error, only for the logging
-    #[structopt(long, default_value = "0.001")]
-    pub error_smoothing: f64,
 
     /// Maximum account idle time after which the account factors expire
     #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
@@ -213,14 +205,6 @@ pub struct TrainerOpts {
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub train_size: usize,
-
-    /// Minimal account factors cache size, in accounts. Actual cache size is at least the batch size
-    #[structopt(
-        long,
-        default_value = "1",
-        parse(try_from_str = parse_non_zero_usize),
-    )]
-    pub account_cache_size: usize,
 }
 
 #[derive(StructOpt)]

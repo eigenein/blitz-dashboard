@@ -43,8 +43,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
-    let mut vehicle_factors_cache = HashMap::new();
-    let mut account_factors_cache = LruCache::new(opts.account_cache_size.max(opts.batch_size));
+    let mut vehicle_cache = HashMap::new();
+    let mut account_cache = LruCache::new(opts.train_size);
 
     log::info!("Running…");
     loop {
@@ -53,41 +53,37 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut train_error = error::Error::default();
         let mut test_error = error::Error::default();
 
-        let mut modified_account_ids = HashSet::with_capacity(opts.batch_size);
+        let mut modified_account_ids = HashSet::with_capacity(opts.train_size);
         let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
 
-        for _ in 0..opts.batch_size {
-            let index = fastrand::usize(0..battles.len());
-            let Battle {
-                account_id,
-                tank_id,
-                is_win,
-                is_test,
-            } = battles[index];
+        fastrand::shuffle(battles.make_contiguous());
 
-            if !account_factors_cache.contains(&account_id) {
-                let mut factors = get_account_factors(&mut redis, account_id)
+        for battle in battles.iter() {
+            if !account_cache.contains(&battle.account_id) {
+                let mut factors = get_account_factors(&mut redis, battle.account_id)
                     .await?
                     .unwrap_or_else(|| {
-                        if !is_test {
+                        if !battle.is_test {
                             n_new_accounts += 1;
                         }
                         Vector::new()
                     });
-                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) && !is_test {
+                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std)
+                    && !battle.is_test
+                {
                     n_initialized_accounts += 1;
                 }
-                account_factors_cache.put(account_id, factors);
+                account_cache.put(battle.account_id, factors);
             }
-            let account_factors = account_factors_cache
-                .get_mut(&account_id)
-                .ok_or_else(|| anyhow!("#{} is missing in the cache", account_id))?;
+            let account_factors = account_cache
+                .get_mut(&battle.account_id)
+                .ok_or_else(|| anyhow!("#{} is missing in the cache", battle.account_id))?;
 
-            let vehicle_factors = match vehicle_factors_cache.entry(tank_id) {
+            let vehicle_factors = match vehicle_cache.entry(battle.tank_id) {
                 Entry::Occupied(entry) => entry.into_mut(),
                 Entry::Vacant(entry) => {
-                    let mut factors = get_vehicle_factors(&mut redis, tank_id)
+                    let mut factors = get_vehicle_factors(&mut redis, battle.tank_id)
                         .await?
                         .unwrap_or_else(Vector::new);
                     initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
@@ -96,11 +92,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             };
 
             let prediction = predict_win_rate(vehicle_factors, account_factors);
-            let target = if is_win { 1.0 } else { 0.0 };
+            let target = if battle.is_win { 1.0 } else { 0.0 };
             let residual_error = target - prediction;
 
-            if !is_test {
-                modified_account_ids.insert(account_id);
+            if !battle.is_test {
+                modified_account_ids.insert(battle.account_id);
                 let old_account_factors = account_factors.clone();
 
                 account_factors.sgd_assign(
@@ -118,50 +114,47 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
                 train_error.push(-residual_error);
 
-                if let Some(duplicate_id) = REMAP_TANK_ID.get(&tank_id) {
+                if let Some(duplicate_id) = REMAP_TANK_ID.get(&battle.tank_id) {
                     let vehicle_factors = vehicle_factors.clone();
-                    vehicle_factors_cache.insert(*duplicate_id, vehicle_factors);
+                    vehicle_cache.insert(*duplicate_id, vehicle_factors);
                 }
             } else {
                 test_error.push(-residual_error);
             }
         }
 
-        let n_modified_accounts = modified_account_ids.len();
         set_all_accounts_factors(
             &mut redis,
-            modified_account_ids,
-            &account_factors_cache,
+            &modified_account_ids,
+            &account_cache,
             account_ttl_secs,
         )
         .await?;
-        set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
+        set_all_vehicles_factors(&mut redis, &vehicle_cache).await?;
 
-        let (smoothed_train_error, average_train_error) = train_error
-            .smooth(&mut redis, TRAINER_TRAIN_ERROR_KEY, opts.error_smoothing)
-            .await?;
-        let (smoothed_test_error, average_test_error) = test_error
-            .smooth(&mut redis, TRAINER_TEST_ERROR_KEY, opts.error_smoothing)
-            .await?;
-        let max_factor = vehicle_factors_cache
+        let train_error = train_error.average();
+        let test_error = test_error.average();
+        set_errors(&mut redis, train_error, test_error).await?;
+
+        let max_factor = vehicle_cache
             .iter()
             .flat_map(|(_, factors)| factors.0.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
         let (n_new_battles, new_pointer) =
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
         pointer = new_pointer;
+
         log::info!(
-            "Train: {:>+10.6} ({:>+.2}) pp | test: {:>+7.3} ({:>+.1}) pp | BPS: {:>6.0} | new: {:>3} | acc: {:>6} | i: {:>2} | n: {:>2} | MF: {:>6.3}",
-            smoothed_train_error * 100.0,
-            average_train_error * 100.0,
-            smoothed_test_error * 100.0,
-            average_test_error * 100.0,
-            opts.batch_size as f64 / start_instant.elapsed().as_secs_f64(),
+            "Err: {:>+9.6} pp | test: {:>+6.3} pp | BPS: {:>6.0} ({:>+4}) | A: {:>6} | I: {:>2} | N: {:>2} | MF: {:>6.3} | at: {}",
+            train_error * 100.0,
+            test_error * 100.0,
+            battles.len() as f64 / start_instant.elapsed().as_secs_f64(),
             n_new_battles,
-            n_modified_accounts,
+            modified_account_ids.len(),
             n_initialized_accounts,
             n_new_accounts,
             max_factor,
+            pointer,
         );
     }
 }
@@ -171,6 +164,21 @@ pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<
         .get::<_, Option<f64>>(TRAINER_TEST_ERROR_KEY)
         .await?
         .unwrap_or_default())
+}
+
+async fn set_errors(
+    redis: &mut MultiplexedConnection,
+    train_error: f64,
+    test_error: f64,
+) -> crate::Result {
+    pipe()
+        .set(TRAINER_TRAIN_ERROR_KEY, train_error)
+        .ignore()
+        .set(TRAINER_TEST_ERROR_KEY, test_error)
+        .ignore()
+        .query_async(redis)
+        .await
+        .context("failed to set the errors")
 }
 
 pub async fn push_battles(
@@ -353,12 +361,12 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: HashSet<i32>,
+    account_ids: &HashSet<i32>,
     cache: &LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
-    for account_id in account_ids {
+    for account_id in account_ids.iter().copied() {
         set_account_factors(
             &mut pipeline,
             account_id,
