@@ -27,6 +27,11 @@ mod error;
 pub mod math;
 pub mod vector;
 
+const TRAINER_TRAIN_ERROR_KEY: &str = "trainer::errors::train";
+const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
+const TRAIN_STREAM_KEY: &str = "streams::steps";
+const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
+
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
@@ -133,7 +138,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_all_vehicles_factors(&mut redis, &vehicle_factors_cache).await?;
 
         let (smoothed_train_error, average_train_error) = train_error
-            .smooth(&mut redis, "trainer::errors::train", opts.error_smoothing)
+            .smooth(&mut redis, TRAINER_TRAIN_ERROR_KEY, opts.error_smoothing)
             .await?;
         let (smoothed_test_error, average_test_error) = test_error
             .smooth(&mut redis, TRAINER_TEST_ERROR_KEY, opts.error_smoothing)
@@ -160,8 +165,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         );
     }
 }
-
-const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
 
 pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
     Ok(redis
@@ -191,8 +194,6 @@ pub async fn push_battles(
         .context("failed to add the battles to the stream")?;
     Ok(())
 }
-
-const TRAIN_STREAM_KEY: &str = "streams::steps";
 
 async fn load_battles(
     redis: &mut MultiplexedConnection,
@@ -284,8 +285,6 @@ fn parse_stream_entry(reply: Value) -> crate::Result<(String, Battle)> {
         other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
     }
 }
-
-const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
 pub async fn get_vehicle_factors(
     redis: &mut MultiplexedConnection,
