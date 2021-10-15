@@ -20,7 +20,8 @@ use crate::database::{
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::{push_battles, Battle};
+use crate::trainer::battle::Battle;
+use crate::trainer::push_battles;
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;

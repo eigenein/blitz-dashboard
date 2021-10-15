@@ -15,13 +15,14 @@ use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
-use serde::{Deserialize, Serialize};
 
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
-use crate::trainer::vector::Vector;
+use battle::Battle;
+use vector::Vector;
 
+pub mod battle;
 mod error;
 pub mod math;
 pub mod vector;
@@ -167,14 +168,6 @@ pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<
         .get::<_, Option<f64>>(TRAINER_TEST_ERROR_KEY)
         .await?
         .unwrap_or_default())
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Battle {
-    pub account_id: i32,
-    pub tank_id: i32,
-    pub is_win: bool,
-    pub is_test: bool,
 }
 
 pub async fn push_battles(
