@@ -144,7 +144,7 @@ pub fn tr(tank_id: i32, factors: &Vector, n_factors: usize) -> Markup {
                     }
                 }
             }
-            (tier_td(vehicle.tier))
+            (tier_td(vehicle.tier, None))
 
             @let magnitude = factors.norm();
             td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }

@@ -103,7 +103,7 @@ pub async fn get(
                                             @let other_vehicle = get_vehicle(tank_id);
                                             tr {
                                                 (vehicle_th(&other_vehicle))
-                                                (tier_td(other_vehicle.tier))
+                                                (tier_td(other_vehicle.tier, (vehicle.tier == other_vehicle.tier).then(|| "has-background-success-light")))
                                                 td.(if vehicle.type_ == other_vehicle.type_ { "has-background-success-light" } else { "" }) {
                                                     (format!("{:?}", other_vehicle.type_))
                                                 }

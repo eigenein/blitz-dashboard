@@ -64,7 +64,7 @@ pub fn render_tank_tr(
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
-            (tier_td(vehicle.tier))
+            (tier_td(vehicle.tier, None))
             td {
                 (format!("{:?}", vehicle.type_))
             }

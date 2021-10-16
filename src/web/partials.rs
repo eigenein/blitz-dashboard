@@ -273,9 +273,9 @@ pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     10_i32 => "Ⅹ",
 };
 
-pub fn tier_td(tier: i32) -> Markup {
+pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
     html! {
-        td.has-text-centered data-sort="tier" data-value=(tier) {
+        td.has-text-centered.(class.unwrap_or("")) data-sort="tier" data-value=(tier) {
             @if let Some(markup) = TIER_MARKUP.get(&tier) {
                 strong { (markup) }
             }
