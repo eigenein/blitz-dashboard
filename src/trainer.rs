@@ -123,9 +123,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             }
         }
 
+        let n_accounts = modified_account_ids.len();
         set_all_accounts_factors(
             &mut redis,
-            &modified_account_ids,
+            &mut modified_account_ids,
             &mut account_cache,
             account_ttl_secs,
         )
@@ -150,7 +151,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             test_error * 100.0,
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             n_new_battles,
-            modified_account_ids.len() as f64 / 1000.0,
+            n_accounts as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
             max_factor,
@@ -360,18 +361,18 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: &HashSet<i32>,
+    account_ids: &mut HashSet<i32>,
     cache: &mut TimedSizedCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
-    for account_id in account_ids.iter().copied() {
+    for account_id in account_ids.drain() {
         set_account_factors(
             &mut pipeline,
             account_id,
-            cache
-                .cache_get(&account_id)
-                .ok_or_else(|| anyhow!("#{} is missing in the cache", account_id))?,
+            cache.cache_get(&account_id).ok_or_else(|| {
+                anyhow!("#{} is dropped, the cache size is too small", account_id)
+            })?,
             ttl_secs,
         )?;
     }
