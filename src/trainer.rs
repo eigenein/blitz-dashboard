@@ -45,7 +45,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_cache = HashMap::new();
     let mut account_cache =
-        TimedSizedCache::with_size_and_lifespan_and_refresh(opts.train_size, 3600, true);
+        TimedSizedCache::with_size_and_lifespan_and_refresh(opts.account_cache_size, 3600, true);
     let mut modified_account_ids = HashSet::new();
 
     log::info!("Running…");
@@ -68,14 +68,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     let mut factors = get_account_factors(&mut redis, battle.account_id)
                         .await?
                         .unwrap_or_else(|| {
-                            if !battle.is_test {
-                                n_new_accounts += 1;
-                            }
+                            n_new_accounts += 1;
                             Vector::new()
                         });
-                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std)
-                        && !battle.is_test
-                    {
+                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                         n_initialized_accounts += 1;
                     }
                     // Surprisingly, this is faster than `try_get_or_set_with`.

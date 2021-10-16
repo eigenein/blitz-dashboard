@@ -205,6 +205,14 @@ pub struct TrainerOpts {
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub train_size: usize,
+
+    /// Number of cached account latent vectors
+    #[structopt(
+        long,
+        default_value = "500000",
+        parse(try_from_str = parse_non_zero_usize),
+    )]
+    pub account_cache_size: usize,
 }
 
 #[derive(StructOpt)]
