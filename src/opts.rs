@@ -206,7 +206,7 @@ pub struct TrainerOpts {
     )]
     pub train_size: usize,
 
-    /// Number of cached account latent vectors
+    /// Number of cached account latent vectors. MUST be at least the number of unique accounts per iteration
     #[structopt(
         long,
         default_value = "500000",
