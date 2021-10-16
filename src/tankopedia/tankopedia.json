@@ -9782,8 +9782,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          2068,
-          11796
+          11796,
+          2068
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17118,8 +17118,8 @@
     ],
     "guns": [
       6500,
-      3684,
-      3428
+      3428,
+      3684
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Chi_He.png",
@@ -17176,8 +17176,8 @@
         "module_id": 3171,
         "name": "Type 2 Ho-I",
         "next_modules": [
-          3428,
-          3684
+          3684,
+          3428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -25116,8 +25116,8 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          1409,
-          3713
+          3713,
+          1409
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -40665,8 +40665,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -48001,8 +48001,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          7729,
-          5169
+          5169,
+          7729
         ],
         "price_credit": 0,
         "price_xp": 5000,

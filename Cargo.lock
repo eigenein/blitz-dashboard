@@ -198,10 +198,11 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.89.0"
+version = "0.89.1"
 dependencies = [
  "anyhow",
  "bytes",
+ "cached",
  "chrono",
  "chrono-humanize",
  "fastrand",
@@ -210,7 +211,6 @@ dependencies = [
  "itertools",
  "jemallocator",
  "log",
- "lru",
  "maud",
  "miniz_oxide",
  "phf",
@@ -277,6 +277,16 @@ name = "bytes"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
+
+[[package]]
+name = "cached"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14d3b04f85a6ef9fe543b2564ec8630bdf3363aa9bf664a1bfc85033e7350aaf"
+dependencies = [
+ "hashbrown",
+ "once_cell",
+]
 
 [[package]]
 name = "cc"
@@ -986,9 +996,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.103"
+version = "0.2.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8f7255a17a627354f321ef0055d63b898c6fb27eff628af4d1b66b7331edf6"
+checksum = "7b2f96d100e1cf1929e7719b7edb3b90ab5298072638fccd77be9ce942ecdfce"
 
 [[package]]
 name = "libm"
@@ -1027,15 +1037,6 @@ dependencies = [
  "serde_json",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "lru"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c748cfe47cb8da225c37595b3108bea1c198c84aaae8ea0ba76d01dda9fc803"
-dependencies = [
- "hashbrown",
 ]
 
 [[package]]

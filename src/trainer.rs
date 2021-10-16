@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
-use lru::LruCache;
+use cached::{Cached, TimedSizedCache};
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
@@ -44,7 +44,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_cache = HashMap::new();
-    let mut account_cache = LruCache::new(opts.train_size);
+    let mut account_cache =
+        TimedSizedCache::with_size_and_lifespan_and_refresh(opts.train_size, 3600, true);
     let mut modified_account_ids = HashSet::new();
 
     log::info!("Running…");
@@ -58,27 +59,30 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut n_initialized_accounts = 0;
 
         fastrand::shuffle(battles.make_contiguous());
+        modified_account_ids.clear();
 
         for battle in battles.iter() {
-            if !account_cache.contains(&battle.account_id) {
-                let mut factors = get_account_factors(&mut redis, battle.account_id)
-                    .await?
-                    .unwrap_or_else(|| {
-                        if !battle.is_test {
-                            n_new_accounts += 1;
-                        }
-                        Vector::new()
-                    });
-                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std)
-                    && !battle.is_test
-                {
-                    n_initialized_accounts += 1;
+            let account_factors = match account_cache.cache_get_mut(&battle.account_id) {
+                Some(factors) => factors,
+                None => {
+                    let mut factors = get_account_factors(&mut redis, battle.account_id)
+                        .await?
+                        .unwrap_or_else(|| {
+                            if !battle.is_test {
+                                n_new_accounts += 1;
+                            }
+                            Vector::new()
+                        });
+                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std)
+                        && !battle.is_test
+                    {
+                        n_initialized_accounts += 1;
+                    }
+                    // Surprisingly, this is faster than `try_get_or_set_with`.
+                    account_cache.cache_set(battle.account_id, factors);
+                    account_cache.cache_get_mut(&battle.account_id).unwrap()
                 }
-                account_cache.put(battle.account_id, factors);
-            }
-            let account_factors = account_cache
-                .get_mut(&battle.account_id)
-                .ok_or_else(|| anyhow!("#{} is missing in the cache", battle.account_id))?;
+            };
 
             let vehicle_factors = match vehicle_cache.entry(battle.tank_id) {
                 Entry::Occupied(entry) => entry.into_mut(),
@@ -125,8 +129,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         set_all_accounts_factors(
             &mut redis,
-            &mut modified_account_ids,
-            &account_cache,
+            &modified_account_ids,
+            &mut account_cache,
             account_ttl_secs,
         )
         .await?;
@@ -145,7 +149,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>+9.6} pp | test: {:>+6.3} pp | BPS: {:>6.0} ({:>+4}) | A: {:>6} | I: {:>2} | N: {:>2} | MF: {:>6.3} | at: {}",
+            "Err: {:>+9.6} pp | test: {:>+6.3} pp | BPS: {:>6.0} ({:>+4}) | A: {:>6} | I: {:>2} | N: {:>2} | MF: {:>6.3} | {}",
             train_error * 100.0,
             test_error * 100.0,
             battles.len() as f64 / start_instant.elapsed().as_secs_f64(),
@@ -361,8 +365,8 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: &mut HashSet<i32>,
-    cache: &LruCache<i32, Vector>,
+    account_ids: &HashSet<i32>,
+    cache: &mut TimedSizedCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
@@ -371,7 +375,7 @@ async fn set_all_accounts_factors(
             &mut pipeline,
             account_id,
             cache
-                .peek(&account_id)
+                .cache_get(&account_id)
                 .ok_or_else(|| anyhow!("#{} is missing in the cache", account_id))?,
             ttl_secs,
         )?;
@@ -379,7 +383,5 @@ async fn set_all_accounts_factors(
     pipeline
         .query_async(redis)
         .await
-        .context("failed to update the accounts factors")?;
-    account_ids.clear();
-    Ok(())
+        .context("failed to update the accounts factors")
 }
