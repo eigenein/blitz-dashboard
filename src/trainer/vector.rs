@@ -44,8 +44,10 @@ impl Vector {
         debug_assert!(regularization >= 0.0);
         assert!(!residual_error.is_nan());
 
+        let residual_multiplier = learning_rate * residual_error;
+        let regularization_multiplier = learning_rate * regularization;
         for (left, right) in self.0.iter_mut().zip(&rhs.0) {
-            *left += learning_rate * (residual_error * right - regularization * *left);
+            *left += residual_multiplier * right - regularization_multiplier * *left;
         }
     }
 }
