@@ -1,0 +1,24 @@
+[Unit]
+Description = Blitz Dashboard Trainer
+BindsTo = network-online.target redis.service
+After = network-online.target redis.service
+
+[Service]
+ExecStart = /home/pi/bin/blitz-dashboard \
+    -v \
+    train \
+    --account-lr=0.001 \
+    --vehicle-lr=0.001 \
+    -r=0.000001 \
+    --factors=9 \
+    --train-size=7500000 \
+    --redis-uri=redis+unix:///var/run/redis/redis-server.sock
+WorkingDirectory = /home/pi
+StandardOutput = journal
+StandardError = journal
+Restart = always
+RestartSec = 5
+User = pi
+
+[Install]
+WantedBy = multi-user.target
