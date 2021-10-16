@@ -183,7 +183,7 @@ pub struct TrainerOpts {
     pub vehicle_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.0005")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.000001")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -195,13 +195,13 @@ pub struct TrainerOpts {
     pub factor_std: f64,
 
     /// Maximum account idle time after which the account factors expire
-    #[structopt(long, default_value = "3months", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long, default_value = "2months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
 
     /// Number of battles used to train the model
     #[structopt(
         long,
-        default_value = "3000000",
+        default_value = "5000000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub train_size: usize,
