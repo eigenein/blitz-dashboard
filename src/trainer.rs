@@ -45,6 +45,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let mut vehicle_cache = HashMap::new();
     let mut account_cache = LruCache::new(opts.train_size);
+    let mut modified_account_ids = HashSet::new();
 
     log::info!("Running…");
     loop {
@@ -53,7 +54,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut train_error = error::Error::default();
         let mut test_error = error::Error::default();
 
-        let mut modified_account_ids = HashSet::with_capacity(opts.train_size);
         let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
 
@@ -125,7 +125,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         set_all_accounts_factors(
             &mut redis,
-            &modified_account_ids,
+            &mut modified_account_ids,
             &account_cache,
             account_ttl_secs,
         )
@@ -361,7 +361,7 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: &HashSet<i32>,
+    account_ids: &mut HashSet<i32>,
     cache: &LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
@@ -379,5 +379,7 @@ async fn set_all_accounts_factors(
     pipeline
         .query_async(redis)
         .await
-        .context("failed to update the accounts factors")
+        .context("failed to update the accounts factors")?;
+    account_ids.clear();
+    Ok(())
 }
