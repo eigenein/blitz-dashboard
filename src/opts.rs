@@ -198,7 +198,7 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "2months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
 
-    /// Approximate time span of the training set (most recent battles)
+    /// Time span of the training set (most recent battles)
     #[structopt(long, default_value = "2days", parse(try_from_str = humantime::parse_duration))]
     pub time_span: StdDuration,
 

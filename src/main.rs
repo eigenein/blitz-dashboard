@@ -33,6 +33,7 @@ const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 type Result<T = ()> = anyhow::Result<T>;
 type Vector = smallvec::SmallVec<[f64; 16]>;
+type DateTime = chrono::DateTime<chrono::Utc>;
 
 #[tokio::main]
 async fn main() -> crate::Result {
