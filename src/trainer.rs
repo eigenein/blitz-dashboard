@@ -231,13 +231,8 @@ async fn refresh_battles(
     time_span: Duration,
 ) -> crate::Result<String> {
     let expire_time = Utc::now() - time_span;
-    while let Some((timestamp, _)) = queue.front() {
-        if timestamp > &expire_time {
-            break;
-        }
-        log::debug!("Evicted battle at: {}.", timestamp);
-        queue.pop_front();
-    }
+    // FIXME: hotfix, since this is too late already:
+    queue.retain(|(timestamp, _)| timestamp > &expire_time);
 
     let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
     let entries = parse_multiple_streams(reply)?;
