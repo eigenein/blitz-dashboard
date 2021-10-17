@@ -16,17 +16,16 @@ use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
 
+use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
 use crate::trainer::math::sgd;
-use battle::Battle;
-use vector::Vector;
+use crate::Vector;
 
 pub mod battle;
 mod error;
 pub mod math;
-pub mod vector;
 
 const TRAINER_TRAIN_ERROR_KEY: &str = "trainer::errors::train";
 const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
@@ -69,7 +68,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                         .await?
                         .unwrap_or_else(|| {
                             n_new_accounts += 1;
-                            Vector::new()
+                            Vector::new_const()
                         });
                     if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                         n_initialized_accounts += 1;
@@ -132,7 +131,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let max_factor = vehicle_cache
             .iter()
-            .flat_map(|(_, factors)| factors.0.iter().map(|factor| factor.abs()))
+            .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
         let (n_new_battles, new_pointer) =
             refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;

@@ -7,7 +7,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::trainer::vector::Vector;
+use crate::trainer::math;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
@@ -35,7 +35,7 @@ pub async fn get(
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
     let n_factors = vehicle_factors
         .values()
-        .map(|factors| factors.0.len())
+        .map(|factors| factors.len())
         .max()
         .unwrap_or(0);
 
@@ -132,7 +132,7 @@ pub fn thead(n_factors: usize) -> Markup {
     }
 }
 
-pub fn tr(tank_id: i32, factors: &Vector, n_factors: usize) -> Markup {
+pub fn tr(tank_id: i32, factors: &[f64], n_factors: usize) -> Markup {
     html! {
         tr {
             @let vehicle = get_vehicle(tank_id);
@@ -146,11 +146,11 @@ pub fn tr(tank_id: i32, factors: &Vector, n_factors: usize) -> Markup {
             }
             (tier_td(vehicle.tier, None))
 
-            @let magnitude = factors.norm();
+            @let magnitude = math::norm(factors);
             td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
             @for i in 0..n_factors {
-                @if let Some(factor) = factors.0.get(i).copied() {
+                @if let Some(factor) = factors.get(i).copied() {
                     td.(sign_class(factor)) data-sort=(format!("factor-{}", i)) data-value=(factor) {
                         (format!("{:+.4}", factor))
                     }

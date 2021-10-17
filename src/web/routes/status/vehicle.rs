@@ -11,6 +11,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::math::cosine_similarity;
 use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
@@ -46,7 +47,7 @@ pub async fn get(
         .iter()
         .filter(|(other_tank_id, _)| **other_tank_id != tank_id)
         .map(|(tank_id, other_factors)| {
-            (*tank_id, vehicle_factors.cosine_similarity(other_factors))
+            (*tank_id, cosine_similarity(vehicle_factors, other_factors))
         })
         .sorted_unstable_by(|(_, left), (_, right)| {
             right.partial_cmp(left).unwrap_or(Ordering::Equal)

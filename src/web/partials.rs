@@ -4,7 +4,7 @@ use maud::{html, Markup};
 use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
-use crate::trainer::vector::Vector;
+use crate::trainer::math;
 use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
@@ -283,20 +283,20 @@ pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
     }
 }
 
-pub fn factors_table(factors: &Vector) -> Markup {
+pub fn factors_table(factors: &[f64]) -> Markup {
     html! {
         div.table-container {
             table.table.is-hoverable.is-striped.is-fullwidth {
                 thead {
                     th { "Модуль" }
-                    @for i in 0..factors.0.len() {
+                    @for i in 0..factors.len() {
                         th { "#" (i) }
                     }
                 }
                 tbody {
-                    td { (render_f64(factors.norm(), 4)) }
+                    td { (render_f64(math::norm(factors), 4)) }
 
-                    @for factor in &factors.0 {
+                    @for factor in factors {
                         td.(sign_class(*factor)) { (format!("{:+.4}", factor)) }
                     }
                 }

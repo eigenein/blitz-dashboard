@@ -1,8 +1,8 @@
 #![warn(clippy::all)]
 
-use itertools::Itertools;
 pub use std::time::Duration as StdDuration;
 
+use itertools::Itertools;
 use log::{Level, LevelFilter};
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
@@ -32,6 +32,7 @@ const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 type Result<T = ()> = anyhow::Result<T>;
+type Vector = smallvec::SmallVec<[f64; 16]>;
 
 #[tokio::main]
 async fn main() -> crate::Result {
