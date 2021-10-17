@@ -68,14 +68,13 @@ pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use smallvec::smallvec;
-
     use super::*;
 
     #[test]
     fn cosine_similarity_ok() {
         let vector_1 = [1.0, 2.0, 3.0];
         let vector_2 = [3.0, 5.0, 7.0];
-        assert!((vector_1.cosine_similarity(&vector_2) - 0.9974149030430578).abs() < f64::EPSILON);
+        let similarity = cosine_similarity(&vector_1, &vector_2);
+        assert!((similarity - 0.9974149030430578).abs() < f64::EPSILON);
     }
 }
