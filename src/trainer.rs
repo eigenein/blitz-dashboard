@@ -46,6 +46,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     log::info!("Loading battles…");
     let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
+    if let Some((timestamp, _)) = battles.front() {
+        log::info!("The oldest battle in the queue: {}.", timestamp);
+    }
 
     let mut vehicle_cache = HashMap::new();
     let mut account_cache = LruCache::new(opts.account_cache_size);
@@ -228,13 +231,11 @@ async fn refresh_battles(
     time_span: Duration,
 ) -> crate::Result<String> {
     let expire_time = Utc::now() - time_span;
-    loop {
-        match queue.front() {
-            Some((timestamp, _)) if timestamp < &expire_time => {
-                queue.pop_front();
-            }
-            _ => break,
+    while let Some((timestamp, _)) = queue.front() {
+        if timestamp > &expire_time {
+            break;
         }
+        queue.pop_front();
     }
 
     let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
