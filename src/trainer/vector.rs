@@ -30,26 +30,6 @@ impl Vector {
     pub fn cosine_similarity(&self, other: &Self) -> f64 {
         self.dot(other) / self.norm() / other.norm()
     }
-
-    /// Adjusts the latent factors.
-    /// See: https://sifter.org/~simon/journal/20061211.html.
-    pub fn sgd_assign(
-        &mut self,
-        rhs: &Self,
-        residual_error: f64,
-        learning_rate: f64,
-        regularization: f64,
-    ) {
-        debug_assert!(learning_rate >= 0.0);
-        debug_assert!(regularization >= 0.0);
-        assert!(!residual_error.is_nan());
-
-        let residual_multiplier = learning_rate * residual_error;
-        let regularization_multiplier = learning_rate * regularization;
-        for (left, right) in self.0.iter_mut().zip(&rhs.0) {
-            *left += residual_multiplier * right - regularization_multiplier * *left;
-        }
-    }
 }
 
 #[cfg(test)]

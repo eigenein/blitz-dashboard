@@ -19,6 +19,7 @@ use redis::{pipe, AsyncCommands, Pipeline, Value};
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
+use crate::trainer::math::sgd;
 use battle::Battle;
 use vector::Vector;
 
@@ -92,24 +93,18 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             let prediction = predict_win_rate(vehicle_factors, account_factors);
             let target = if battle.is_win { 1.0 } else { 0.0 };
             let residual_error = target - prediction;
+            assert!(!residual_error.is_nan());
 
             if !battle.is_test {
-                modified_account_ids.insert(battle.account_id);
-                let old_account_factors = account_factors.clone();
-
-                account_factors.sgd_assign(
+                sgd(
+                    account_factors,
                     vehicle_factors,
                     residual_error,
                     opts.account_learning_rate,
                     opts.regularization,
                 );
-                vehicle_factors.sgd_assign(
-                    &old_account_factors,
-                    residual_error,
-                    opts.vehicle_learning_rate,
-                    opts.regularization,
-                );
 
+                modified_account_ids.insert(battle.account_id);
                 train_error.push(-residual_error);
 
                 if let Some(duplicate_id) = REMAP_TANK_ID.get(&battle.tank_id) {
