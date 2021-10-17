@@ -4,7 +4,7 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::str::FromStr;
@@ -46,9 +46,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     log::info!("Loading battles…");
     let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
-    if let Some((timestamp, _)) = battles.front() {
-        log::info!("The oldest battle in the queue: {}.", timestamp);
-    }
 
     let mut vehicle_cache = HashMap::new();
     let mut account_cache = LruCache::new(opts.account_cache_size);
@@ -64,7 +61,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let mut n_new_accounts = 0;
         let mut n_initialized_accounts = 0;
 
-        fastrand::shuffle(battles.make_contiguous());
+        fastrand::shuffle(&mut battles);
         modified_account_ids.clear();
 
         for (_, battle) in battles.iter() {
@@ -204,8 +201,8 @@ pub async fn push_battles(
 async fn load_battles(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
-) -> crate::Result<(String, VecDeque<(DateTime, Battle)>)> {
-    let mut queue = VecDeque::new();
+) -> crate::Result<(String, Vec<(DateTime, Battle)>)> {
+    let mut queue = Vec::new();
     let start = (Utc::now() - time_span).timestamp_millis().to_string();
     let reply: Value = redis.xrevrange(TRAIN_STREAM_KEY, "+", start).await?;
     log::info!("Almost done…");
@@ -216,9 +213,7 @@ async fn load_battles(
         .0
         .clone();
     for (id, battle) in entries {
-        // `XREVRANGE` returns the entries in the reverse order (newest first).
-        // I want to have the oldest entry in the front of the queue.
-        queue.push_front((parse_entry_id(&id)?, battle));
+        queue.push((parse_entry_id(&id)?, battle));
     }
     Ok((last_id, queue))
 }
@@ -227,13 +222,14 @@ async fn load_battles(
 async fn refresh_battles(
     redis: &mut MultiplexedConnection,
     last_id: String,
-    queue: &mut VecDeque<(DateTime, Battle)>,
+    queue: &mut Vec<(DateTime, Battle)>,
     time_span: Duration,
 ) -> crate::Result<String> {
+    // Remove the expired battles.
     let expire_time = Utc::now() - time_span;
-    // FIXME: hotfix, since this is too late already:
     queue.retain(|(timestamp, _)| timestamp > &expire_time);
 
+    // Fetch new battles.
     let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
     let entries = parse_multiple_streams(reply)?;
     let last_id = match entries.last() {
@@ -241,7 +237,7 @@ async fn refresh_battles(
         None => last_id,
     };
     for (id, battle) in entries {
-        queue.push_back((parse_entry_id(&id)?, battle));
+        queue.push((parse_entry_id(&id)?, battle));
     }
     Ok(last_id)
 }
