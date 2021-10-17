@@ -137,17 +137,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             .iter()
             .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
-        let (n_new_battles, n_removed_battles, new_pointer) =
-            refresh_battles(&mut redis, pointer, &mut battles, time_span).await?;
+        let new_pointer = refresh_battles(&mut redis, pointer, &mut battles, time_span).await?;
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>+9.6} pp | test: {:>+6.3} pp | BPS: {:>3.0}k {:>+5} {:>5} | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "Err: {:>+9.6} pp | test: {:>+6.3} pp | BPS: {:>3.0}k | B: {:>7} | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error * 100.0,
             test_error * 100.0,
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            n_new_battles,
-            n_removed_battles,
+            battles.len(),
             n_accounts as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
@@ -229,14 +227,12 @@ async fn refresh_battles(
     last_id: String,
     queue: &mut VecDeque<(DateTime, Battle)>,
     time_span: Duration,
-) -> crate::Result<(usize, i32, String)> {
+) -> crate::Result<String> {
     let expire_time = Utc::now() - time_span;
-    let mut n_removed_battles = 0;
     loop {
         match queue.front() {
             Some((timestamp, _)) if timestamp < &expire_time => {
                 queue.pop_front();
-                n_removed_battles -= 1;
             }
             _ => break,
         }
@@ -244,14 +240,14 @@ async fn refresh_battles(
 
     let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
     let entries = parse_multiple_streams(reply)?;
-    let (n_battles, last_id) = match entries.last() {
-        Some((id, _)) => (entries.len(), id.clone()),
-        None => (0, last_id),
+    let last_id = match entries.last() {
+        Some((id, _)) => id.clone(),
+        None => last_id,
     };
     for (id, battle) in entries {
         queue.push_back((parse_entry_id(&id)?, battle));
     }
-    Ok((n_battles, n_removed_battles, last_id))
+    Ok(last_id)
 }
 
 fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
