@@ -235,6 +235,7 @@ async fn refresh_battles(
         if timestamp > &expire_time {
             break;
         }
+        log::debug!("Evicted battle at: {}.", timestamp);
         queue.pop_front();
     }
 
