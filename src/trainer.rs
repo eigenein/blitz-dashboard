@@ -11,6 +11,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
+use chrono::{Duration, Utc};
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
@@ -21,7 +22,7 @@ use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
 use crate::trainer::math::sgd;
-use crate::Vector;
+use crate::{StdDuration, Vector};
 
 pub mod battle;
 mod error;
@@ -39,7 +40,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
     log::info!("Loading battles…");
-    let (mut pointer, mut battles) = load_battles(&mut redis, opts.train_size).await?;
+    let (mut pointer, mut battles) = load_battles(&mut redis, opts.time_span).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
@@ -134,7 +135,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
         let (n_new_battles, new_pointer) =
-            refresh_battles(&mut redis, pointer, &mut battles, opts.train_size).await?;
+            refresh_battles(&mut redis, pointer, &mut battles).await?;
         pointer = new_pointer;
 
         log::info!(
@@ -197,12 +198,13 @@ pub async fn push_battles(
 
 async fn load_battles(
     redis: &mut MultiplexedConnection,
-    count: usize,
+    time_span: StdDuration,
 ) -> crate::Result<(String, VecDeque<Battle>)> {
-    let mut queue = VecDeque::with_capacity(count);
-    let reply: Value = redis
-        .xrevrange_count(TRAIN_STREAM_KEY, "+", "-", count)
-        .await?;
+    let mut queue = VecDeque::new();
+    let start = (Utc::now() - Duration::from_std(time_span)?)
+        .timestamp_millis()
+        .to_string();
+    let reply: Value = redis.xrevrange(TRAIN_STREAM_KEY, "+", start).await?;
     log::info!("Almost done…");
     let entries = parse_stream(reply)?;
     let last_id = entries
@@ -213,7 +215,9 @@ async fn load_battles(
         // I want to have the oldest entry in the front of the queue.
         queue.push_front(step);
     }
-    assert!(queue.len() <= count);
+    if queue.is_empty() {
+        return Err(anyhow!("the training set is empty, try a longer time span"));
+    }
     Ok((last_id, queue))
 }
 
@@ -222,7 +226,6 @@ async fn refresh_battles(
     redis: &mut MultiplexedConnection,
     last_id: String,
     queue: &mut VecDeque<Battle>,
-    queue_size: usize,
 ) -> crate::Result<(usize, String)> {
     let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
     let entries = parse_multiple_streams(reply)?;
@@ -230,15 +233,10 @@ async fn refresh_battles(
         Some((id, _)) => (entries.len(), id.clone()),
         None => (0, last_id),
     };
-    // Pop the oldest battles to make space for the newly coming steps.
-    while queue.len() + n_battles > queue_size {
+    for (_, battle) in entries {
         queue.pop_front();
+        queue.push_back(battle);
     }
-    // And now push the new battles back.
-    for (_, step) in entries {
-        queue.push_back(step);
-    }
-    assert!(queue.len() <= queue_size);
     Ok((n_battles, last_id))
 }
 

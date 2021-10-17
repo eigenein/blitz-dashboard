@@ -113,10 +113,10 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 
-    /// Training steps stream size
+    /// Maximum training stream size
     #[structopt(
         long,
-        default_value = "10000000",
+        default_value = "7500000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub training_stream_size: usize,
@@ -198,18 +198,14 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "2months", parse(try_from_str = humantime::parse_duration))]
     pub account_ttl: StdDuration,
 
-    /// Number of battles used to train the model
-    #[structopt(
-        long,
-        default_value = "5000000",
-        parse(try_from_str = parse_non_zero_usize),
-    )]
-    pub train_size: usize,
+    /// Approximate time span of the training set (most recent battles)
+    #[structopt(long, default_value = "2days", parse(try_from_str = humantime::parse_duration))]
+    pub time_span: StdDuration,
 
-    /// Number of cached account latent vectors. MUST be at least the number of unique accounts per iteration
+    /// Number of cached account latent vectors – must be at least the number of unique accounts in the training set
     #[structopt(
         long,
-        default_value = "500000",
+        default_value = "1000000",
         parse(try_from_str = parse_non_zero_usize),
     )]
     pub account_cache_size: usize,
