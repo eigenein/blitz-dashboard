@@ -209,14 +209,13 @@ async fn load_battles(
     let entries = parse_stream(reply)?;
     let last_id = entries
         .first()
-        .map_or_else(|| "0".to_string(), |entry| entry.0.clone());
+        .ok_or_else(|| anyhow!("the training set is empty, try a longer time span"))?
+        .0
+        .clone();
     for (id, battle) in entries {
         // `XREVRANGE` returns the entries in the reverse order (newest first).
         // I want to have the oldest entry in the front of the queue.
         queue.push_front((parse_entry_id(&id)?, battle));
-    }
-    if queue.is_empty() {
-        return Err(anyhow!("the training set is empty, try a longer time span"));
     }
     Ok((last_id, queue))
 }
