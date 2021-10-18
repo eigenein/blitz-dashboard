@@ -27,7 +27,7 @@ pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool
 pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
     let prediction = dot(vehicle_factors, account_factors);
     assert!(!prediction.is_nan());
-    prediction + 0.5
+    prediction
 }
 
 /// Adjusts the latent factors.
