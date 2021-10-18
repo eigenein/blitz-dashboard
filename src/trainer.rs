@@ -141,12 +141,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>+9.6} pp | test: {:>+6.3} pp ({:>3.1}x) | BPS: {:>3.0}k | B: {:>7} | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "Err: {:>+9.6} pp | test: {:>+9.6} pp ({:>4.2}x) | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error * 100.0,
             test_error * 100.0,
             (test_error / train_error).abs(),
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            battles.len(),
+            battles.len() as f64 / 1000.0,
             n_accounts as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
