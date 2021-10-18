@@ -6,6 +6,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::hash::BuildHasherDefault;
 use std::result::Result as StdResult;
 use std::str::FromStr;
 use std::time::Instant;
@@ -17,7 +18,7 @@ use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
@@ -35,6 +36,8 @@ const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
+type FxLruCache<K, V> = LruCache<K, V, BuildHasherDefault<FxHasher>>;
+
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
@@ -49,7 +52,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
     let mut vehicle_cache = FxHashMap::default();
-    let mut account_cache = LruCache::new(opts.account_cache_size);
+    let mut account_cache = LruCache::with_hasher(
+        opts.account_cache_size,
+        BuildHasherDefault::<FxHasher>::default(),
+    );
     let mut modified_account_ids = FxHashSet::default();
 
     log::info!("Running…");
@@ -364,7 +370,7 @@ fn set_account_factors(
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
     account_ids: &mut FxHashSet<i32>,
-    cache: &mut LruCache<i32, Vector>,
+    cache: &mut FxLruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
