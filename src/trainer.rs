@@ -4,7 +4,7 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::str::FromStr;
@@ -17,6 +17,7 @@ use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
@@ -47,9 +48,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
-    let mut vehicle_cache = HashMap::new();
+    let mut vehicle_cache = FxHashMap::default();
     let mut account_cache = LruCache::new(opts.account_cache_size);
-    let mut modified_account_ids = HashSet::new();
+    let mut modified_account_ids = FxHashSet::default();
 
     log::info!("Running…");
     loop {
@@ -308,7 +309,7 @@ pub async fn get_vehicle_factors(
 
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
-) -> crate::Result<HashMap<i32, Vector>> {
+) -> crate::Result<FxHashMap<i32, Vector>> {
     let hash_map: HashMap<i32, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
@@ -326,7 +327,7 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
 
 async fn set_all_vehicles_factors(
     redis: &mut MultiplexedConnection,
-    vehicles_factors: &HashMap<i32, Vector>,
+    vehicles_factors: &FxHashMap<i32, Vector>,
 ) -> crate::Result {
     let items: crate::Result<Vec<(i32, Vec<u8>)>> = vehicles_factors
         .iter()
@@ -362,7 +363,7 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: &mut HashSet<i32>,
+    account_ids: &mut FxHashSet<i32>,
     cache: &mut LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
