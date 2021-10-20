@@ -13755,11 +13755,11 @@
       "armor": {
         "hull": {
           "front": 203,
-          "rear": 38,
-          "sides": 51
+          "rear": 40,
+          "sides": 58
         },
         "turret": {
-          "front": 145,
+          "front": 152,
           "rear": 51,
           "sides": 145
         }
@@ -13799,7 +13799,7 @@
       "max_ammo": 36,
       "max_weight": 58000,
       "profile_id": "17189-20516-24867-28962",
-      "protection": 63,
+      "protection": 69,
       "shells": [
         {
           "damage": 400,
@@ -25116,8 +25116,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          1409,
           3713,
-          1409
+          8065
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -25197,7 +25198,8 @@
     "next_tanks": {
       "1409": 24500,
       "3713": 24350,
-      "6529": 24500
+      "6529": 24500,
+      "8065": 26480
     },
     "prices_xp": {
       "1665": 8000
@@ -48001,8 +48003,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          5169,
-          7729
+          7729,
+          5169
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -60118,7 +60120,7 @@
       "battle_level_range_min": 7,
       "engine": {
         "fire_chance": 0.15,
-        "name": "В-44",
+        "name": "В-44А",
         "power": 500,
         "tier": 6,
         "weight": 750
@@ -60208,7 +60210,7 @@
       "21509": {
         "is_default": true,
         "module_id": 21509,
-        "name": "В-44",
+        "name": "В-44А",
         "next_modules": null,
         "next_tanks": null,
         "price_credit": 0,
@@ -81157,8 +81159,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2324,
-          2068
+          2068,
+          2324
         ],
         "next_tanks": [
           10257
