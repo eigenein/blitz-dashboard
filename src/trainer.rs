@@ -148,7 +148,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>8.6} | test: {:>8.6} ({:>4.2}x) | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "Err: {:>8.6} | test: {:>8.6} ({:>5.3}x) | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error,
             test_error,
             (test_error / train_error).abs(),
