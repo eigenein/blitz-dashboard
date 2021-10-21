@@ -115,14 +115,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 );
 
                 modified_account_ids.insert(battle.account_id);
-                train_error.push(-residual_error);
+                train_error.push(residual_error);
 
                 if let Some(duplicate_id) = REMAP_TANK_ID.get(&battle.tank_id) {
                     let vehicle_factors = vehicle_factors.clone();
                     vehicle_cache.insert(*duplicate_id, vehicle_factors);
                 }
             } else {
-                test_error.push(-residual_error);
+                test_error.push(residual_error);
             }
         }
 
@@ -148,9 +148,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>+9.6} pp | test: {:>+9.6} pp ({:>4.2}x) | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
-            train_error * 100.0,
-            test_error * 100.0,
+            "Err: {:>8.6} | test: {:>8.6} ({:>4.2}x) | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            train_error,
+            test_error,
             (test_error / train_error).abs(),
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             battles.len() as f64 / 1000.0,
