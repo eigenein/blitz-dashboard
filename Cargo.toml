@@ -1,9 +1,8 @@
 [package]
 name = "blitz-dashboard"
-version = "0.90.12"
+version = "0.90.13"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
-edition = "2018"
-resolver = "2"
+edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
 license-file = "LICENSE"
 documentation = "https://github.com/eigenein/blitz-dashboard"

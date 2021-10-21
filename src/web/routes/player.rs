@@ -490,7 +490,7 @@ pub async fn get(
                         @if !tanks_delta.is_empty() {
                             div.box {
                                 div.table-container {
-                                    table#vehicles.table.is-hoverable.is-striped.is-fullwidth {
+                                    table.table.is-hoverable.is-striped.is-fullwidth id="vehicles" {
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {

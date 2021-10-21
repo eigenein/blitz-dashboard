@@ -66,7 +66,7 @@ pub async fn get(
                     div.box {
                         h2.title."is-4" { "Признаки техники" }
                         div.table-container {
-                            table#vehicle-factors.table.is-hoverable.is-striped.is-fullwidth {
+                            table.table.is-hoverable.is-striped.is-fullwidth id="vehicle-factors" {
                                 (thead(n_factors))
                                 tbody {
                                     @for (tank_id, factors) in vehicle_factors.into_iter() {
