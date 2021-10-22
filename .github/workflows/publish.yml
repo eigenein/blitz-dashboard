@@ -23,7 +23,7 @@ jobs:
       - uses: Swatinem/rust-cache@v1
 
       - name: Install Cross
-        run: cargo install cross
+        run: cargo install --git 'https://github.com/rust-embedded/cross.git'
         env:
           CARGO_TARGET_DIR: ./target
 
