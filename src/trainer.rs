@@ -54,7 +54,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut vehicle_cache = HashMap::default();
     let mut account_cache = LruCache::with_hasher(opts.account_cache_size, BuildHasher::default());
     let mut modified_account_ids = HashSet::default();
-    let mut best_test_error: f64 = 0.5;
+    let mut best_test_error: f64 = f64::INFINITY;
 
     log::info!("Running…");
     loop {
@@ -113,14 +113,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 );
 
                 modified_account_ids.insert(battle.account_id);
-                train_error.push(residual_error);
+                train_error.push(prediction, battle.is_win);
 
                 if let Some(duplicate_id) = REMAP_TANK_ID.get(&battle.tank_id) {
                     let vehicle_factors = vehicle_factors.clone();
                     vehicle_cache.insert(*duplicate_id, vehicle_factors);
                 }
             } else {
-                test_error.push(residual_error);
+                test_error.push(prediction, battle.is_win);
             }
         }
 

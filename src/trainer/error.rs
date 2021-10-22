@@ -5,8 +5,12 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn push(&mut self, residual_error: f64) {
-        self.error += residual_error * residual_error;
+    pub fn push(&mut self, prediction: f64, is_win: bool) {
+        self.error -= if is_win {
+            prediction.ln()
+        } else {
+            (1.0 - prediction).ln()
+        };
         self.count += 1;
     }
 
