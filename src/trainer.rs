@@ -33,7 +33,7 @@ const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
-type BuildHasher = BuildHasherDefault<rustc_hash::FxHasher>;
+type BuildHasher = BuildHasherDefault<ahash::AHasher>;
 type LruCache<K, V> = lru::LruCache<K, V, BuildHasher>;
 type HashMap<K, V> = std::collections::HashMap<K, V, BuildHasher>;
 type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
