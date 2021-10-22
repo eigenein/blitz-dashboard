@@ -81020,6 +81020,167 @@
     "turrets": [],
     "type": "AT-SPG"
   },
+  "8305": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 130,
+          "rear": 60,
+          "sides": 80
+        },
+        "turret": {
+          "front": 180,
+          "rear": 60,
+          "sides": 80
+        }
+      },
+      "battle_level_range_max": 8,
+      "battle_level_range_min": 7,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 234 P30 Ausf. H",
+        "power": 600,
+        "tier": 7,
+        "weight": 750
+      },
+      "engine_id": 21365,
+      "firepower": 45,
+      "gun": {
+        "aim_time": 4.94,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.44,
+        "fire_rate": 5.71,
+        "move_down_arc": 7,
+        "move_up_arc": 20,
+        "name": "10,5 cm Kw.K. L/52 H",
+        "reload_time": 10.5,
+        "tier": 8,
+        "traverse_speed": 21.88,
+        "weight": 3000
+      },
+      "gun_id": 21620,
+      "hp": 1500,
+      "hull_hp": 1200,
+      "hull_weight": 29800,
+      "is_default": true,
+      "maneuverability": 24,
+      "max_ammo": 40,
+      "max_weight": 69700,
+      "profile_id": "21365-21620-33394-33651",
+      "protection": 53,
+      "shells": [
+        {
+          "damage": 310,
+          "penetration": 180,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 260,
+          "penetration": 250,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 380,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 55,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 35,
+      "suspension": {
+        "load_limit": 69700,
+        "name": "Titan H-N",
+        "tier": 7,
+        "traverse_speed": 26,
+        "weight": 21350
+      },
+      "suspension_id": 33394,
+      "turret": {
+        "hp": 300,
+        "name": "Titan H-N",
+        "tier": 7,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 22,
+        "view_range": 250,
+        "weight": 9538
+      },
+      "turret_id": 33651,
+      "weight": 64738
+    },
+    "description": "Экспериментальная разработка лаборатории «Титан». Как только запас прочности опускается до 50%, танк активирует защитные экраны.",
+    "engines": [
+      21365
+    ],
+    "guns": [
+      21620
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Oth28_Sturmfeur_HW.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Oth28_Sturmfeur_HW.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "21365": {
+        "is_default": true,
+        "module_id": 21365,
+        "name": "Maybach HL 234 P30 Ausf. H",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "21620": {
+        "is_default": true,
+        "module_id": 21620,
+        "name": "10,5 cm Kw.K. L/52 H",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "33394": {
+        "is_default": true,
+        "module_id": 33394,
+        "name": "Titan H-N",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "33651": {
+        "is_default": true,
+        "module_id": 33651,
+        "name": "Titan H-N",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      }
+    },
+    "name": "Titan H-N",
+    "nation": "other",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      33394
+    ],
+    "tank_id": 8305,
+    "tier": 7,
+    "turrets": [
+      33651
+    ],
+    "type": "heavyTank"
+  },
   "8465": {
     "cost": {
       "price_credit": 2390000,
@@ -83109,6 +83270,167 @@
       627
     ],
     "type": "mediumTank"
+  },
+  "8817": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 50,
+          "rear": 35,
+          "sides": 35
+        },
+        "turret": {
+          "front": 65,
+          "rear": 30,
+          "sides": 30
+        }
+      },
+      "battle_level_range_max": 6,
+      "battle_level_range_min": 5,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Nuffield Liberty Mk. VH",
+        "power": 400,
+        "tier": 5,
+        "weight": 383
+      },
+      "engine_id": 21877,
+      "firepower": 30,
+      "gun": {
+        "aim_time": 3.72,
+        "caliber": 57,
+        "clip_capacity": 2,
+        "clip_reload_time": 1.0,
+        "dispersion": 0.34,
+        "fire_rate": 14.12,
+        "move_down_arc": 12,
+        "move_up_arc": 20,
+        "name": "QF 6-pdr AT Mk. VH",
+        "reload_time": 7.5,
+        "tier": 5,
+        "traverse_speed": 43.75,
+        "weight": 450
+      },
+      "gun_id": 22132,
+      "hp": 620,
+      "hull_hp": 540,
+      "hull_weight": 11907,
+      "is_default": true,
+      "maneuverability": 59,
+      "max_ammo": 180,
+      "max_weight": 27000,
+      "profile_id": "21877-22132-33906-34163",
+      "protection": 22,
+      "shells": [
+        {
+          "damage": 90,
+          "penetration": 130,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 80,
+          "penetration": 180,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 100,
+          "penetration": 15,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 58,
+      "signal_range": null,
+      "speed_backward": 22,
+      "speed_forward": 50,
+      "suspension": {
+        "load_limit": 27000,
+        "name": "Titan Mk. I",
+        "tier": 5,
+        "traverse_speed": 44,
+        "weight": 6200
+      },
+      "suspension_id": 33906,
+      "turret": {
+        "hp": 80,
+        "name": "Titan Mk. I",
+        "tier": 5,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 48,
+        "view_range": 240,
+        "weight": 2953
+      },
+      "turret_id": 34163,
+      "weight": 22143
+    },
+    "description": "Манёвренный, скорострельный, рикошетный танк. Эта разработка лаборатории «Титан» — идеальная машина для полевых испытаний.",
+    "engines": [
+      21877
+    ],
+    "guns": [
+      22132
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Oth29_A15HW.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Oth29_A15HW.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "21877": {
+        "is_default": true,
+        "module_id": 21877,
+        "name": "Nuffield Liberty Mk. VH",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "22132": {
+        "is_default": true,
+        "module_id": 22132,
+        "name": "QF 6-pdr AT Mk. VH",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "33906": {
+        "is_default": true,
+        "module_id": 33906,
+        "name": "Titan Mk. I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "34163": {
+        "is_default": true,
+        "module_id": 34163,
+        "name": "Titan Mk. I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      }
+    },
+    "name": "Titan Mk. I",
+    "nation": "other",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      33906
+    ],
+    "tank_id": 8817,
+    "tier": 5,
+    "turrets": [
+      34163
+    ],
+    "type": "lightTank"
   },
   "8961": {
     "cost": {
