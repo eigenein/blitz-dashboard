@@ -162,6 +162,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     }
 }
 
+#[allow(dead_code)]
 pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
     Ok(redis
         .get::<_, Option<f64>>(TRAINER_TEST_ERROR_KEY)

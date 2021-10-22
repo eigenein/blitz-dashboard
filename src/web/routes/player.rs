@@ -18,7 +18,7 @@ use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_hours, from_months};
 use crate::trainer::math::predict_win_rate;
-use crate::trainer::{get_account_factors, get_all_vehicle_factors, get_test_error};
+use crate::trainer::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
@@ -82,7 +82,6 @@ pub async fn get(
     let mut redis = MultiplexedConnection::clone(redis);
     let account_factors = get_account_factors(&mut redis, account_id).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
-    let trainer_test_error = get_test_error(&mut redis).await?;
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -496,7 +495,7 @@ pub async fn get(
                                             @for tank in &tanks_delta {
                                                 @let predicted_win_rate = account_factors.as_ref().and_then(|account_factors| {
                                                     vehicles_factors.get(&tank.statistics.base.tank_id).map(|vehicle_factors| {
-                                                        (predict_win_rate(vehicle_factors, account_factors) - trainer_test_error).clamp(0.0, 1.0)
+                                                        predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0)
                                                     })
                                                 });
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate))
