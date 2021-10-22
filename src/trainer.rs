@@ -4,7 +4,6 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::hash::BuildHasherDefault;
 use std::result::Result as StdResult;
@@ -14,11 +13,9 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use bytes::Bytes;
 use chrono::{Duration, TimeZone, Utc};
-use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline, Value};
-use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
@@ -36,7 +33,10 @@ const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
-type FxLruCache<K, V> = LruCache<K, V, BuildHasherDefault<FxHasher>>;
+type BuildHasher = BuildHasherDefault<rustc_hash::FxHasher>;
+type LruCache<K, V> = lru::LruCache<K, V, BuildHasher>;
+type HashMap<K, V> = std::collections::HashMap<K, V, BuildHasher>;
+type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
@@ -51,12 +51,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
     log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
 
-    let mut vehicle_cache = FxHashMap::default();
-    let mut account_cache = LruCache::with_hasher(
-        opts.account_cache_size,
-        BuildHasherDefault::<FxHasher>::default(),
-    );
-    let mut modified_account_ids = FxHashSet::default();
+    let mut vehicle_cache = HashMap::default();
+    let mut account_cache = LruCache::with_hasher(opts.account_cache_size, BuildHasher::default());
+    let mut modified_account_ids = HashSet::default();
     let mut best_test_error: f64 = 0.5;
 
     log::info!("Running…");
@@ -318,7 +315,7 @@ pub async fn get_vehicle_factors(
 
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
-) -> crate::Result<FxHashMap<i32, Vector>> {
+) -> crate::Result<HashMap<i32, Vector>> {
     let hash_map: HashMap<i32, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
@@ -336,7 +333,7 @@ static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
 
 async fn set_all_vehicles_factors(
     redis: &mut MultiplexedConnection,
-    vehicles_factors: &FxHashMap<i32, Vector>,
+    vehicles_factors: &HashMap<i32, Vector>,
 ) -> crate::Result {
     let items: crate::Result<Vec<(i32, Vec<u8>)>> = vehicles_factors
         .iter()
@@ -372,8 +369,8 @@ fn set_account_factors(
 
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
-    account_ids: &mut FxHashSet<i32>,
-    cache: &mut FxLruCache<i32, Vector>,
+    account_ids: &mut HashSet<i32>,
+    cache: &mut LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
