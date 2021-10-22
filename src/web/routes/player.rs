@@ -528,6 +528,10 @@ pub async fn get(
                         })();
                     """#))
                 }
+
+                (PreEscaped("<!-- Account factors: "))
+                (format!("{:?}", account_factors))
+                (PreEscaped(" -->"))
             }
         }
     };
