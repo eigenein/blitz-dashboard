@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.90.19"
+version = "0.90.20"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
@@ -19,7 +19,6 @@ debug = 1
 split-debuginfo = "unpacked"
 
 [dependencies]
-ahash = "0.7.6"
 anyhow = "1.0.40"
 bytes = "1.0.1"
 chrono-humanize = "0.2.1"
@@ -36,6 +35,7 @@ rand = "0.8.4"
 rand_distr = "0.4.2"
 rmp-serde = "0.15.5"
 rocket = "0.5.0-rc.1"
+rustc-hash = { version = "1.1.0", default-features = false }
 serde_json = "1.0.64"
 serde_qs = "0.8.4"
 smallvec = { version = "1.7.0", features = ["serde", "union", "const_generics", "const_new"] }
