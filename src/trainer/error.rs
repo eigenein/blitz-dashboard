@@ -5,12 +5,10 @@ pub struct Error {
 }
 
 impl Error {
+    #[inline]
     pub fn push(&mut self, prediction: f64, is_win: bool) {
-        self.error -= if is_win {
-            prediction.ln()
-        } else {
-            (1.0 - prediction).ln()
-        };
+        let argument = if is_win { prediction } else { 1.0 - prediction };
+        self.error -= argument.max(0.000001).ln();
         self.count += 1;
     }
 
