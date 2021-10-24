@@ -40,6 +40,8 @@ type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
+    debug_assert!(opts.learning_rate >= 0.0);
+    debug_assert!(opts.regularization >= 0.0);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let time_span = Duration::from_std(opts.time_span)?;
@@ -99,15 +101,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             };
 
             let prediction = predict_win_rate(vehicle_factors, account_factors);
+            assert!(!prediction.is_nan());
             let target = if battle.is_win { 1.0 } else { 0.0 };
-            let residual_error = target - prediction;
-            assert!(!residual_error.is_nan());
 
             if !battle.is_test {
                 sgd(
                     account_factors,
                     vehicle_factors,
-                    residual_error,
+                    prediction,
+                    target,
                     opts.learning_rate,
                     opts.regularization,
                 );

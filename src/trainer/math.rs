@@ -27,7 +27,7 @@ pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool
 pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
     let prediction = dot(vehicle_factors, account_factors);
     assert!(!prediction.is_nan());
-    0.5 + prediction
+    logistic(prediction)
 }
 
 /// Adjusts the latent factors.
@@ -35,15 +35,15 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
 pub fn sgd(
     x: &mut [f64],
     y: &mut [f64],
-    residual_error: f64,
+    prediction: f64,
+    target: f64,
     learning_rate: f64,
     regularization: f64,
 ) {
-    debug_assert!(learning_rate >= 0.0);
-    debug_assert!(regularization >= 0.0);
-
-    let residual_multiplier = learning_rate * residual_error;
+    let residual_multiplier =
+        learning_rate * (target - prediction) * (prediction * (1.0 - prediction));
     let regularization_multiplier = learning_rate * regularization;
+
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         let old_xi = *xi;
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
@@ -64,6 +64,11 @@ pub fn dot(x: &[f64], y: &[f64]) -> f64 {
 #[must_use]
 pub fn cosine_similarity(x: &[f64], y: &[f64]) -> f64 {
     dot(x, y) / norm(x) / norm(y)
+}
+
+#[must_use]
+fn logistic(x: f64) -> f64 {
+    1.0 / (1.0 + (-x).exp())
 }
 
 #[cfg(test)]

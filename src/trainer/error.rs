@@ -8,7 +8,7 @@ impl Error {
     #[inline]
     pub fn push(&mut self, prediction: f64, is_win: bool) {
         let argument = if is_win { prediction } else { 1.0 - prediction };
-        self.error -= argument.max(0.000001).ln();
+        self.error -= argument.ln();
         self.count += 1;
     }
 
