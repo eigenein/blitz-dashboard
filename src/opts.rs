@@ -174,13 +174,9 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
 
-    /// Account latent vector learning rate
-    #[structopt(long = "account-lr", default_value = "0.001")]
-    pub account_learning_rate: f64,
-
-    /// Vehicle latent vector learning rate
-    #[structopt(long = "vehicle-lr", default_value = "0.001")]
-    pub vehicle_learning_rate: f64,
+    /// Learning rate
+    #[structopt(long = "lr", default_value = "0.001")]
+    pub learning_rate: f64,
 
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0.000001")]

@@ -108,7 +108,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     account_factors,
                     vehicle_factors,
                     residual_error,
-                    opts.account_learning_rate,
+                    opts.learning_rate,
                     opts.regularization,
                 );
 
