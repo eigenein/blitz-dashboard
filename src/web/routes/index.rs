@@ -27,6 +27,12 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
                                 div.column."is-8"."is-offset-2" {
                                     form action="/search" method="GET" {
                                         div.field.is-grouped.is-grouped-centered.is-grouped-multiline {
+                                            div.control {
+                                                div.buttons.has-addons.is-small.is-rounded {
+                                                    a.button.is-rounded.is-small href="/ru/103809874" { "Invincible_Beast" }
+                                                    a.button.is-rounded.is-small href="/ru/133054164" { "Lucky_Vikk" }
+                                                }
+                                            }
                                             p.control {
                                                 a.button.is-rounded.is-small href="/ru/3851977" { "D_W_S" }
                                             }
@@ -38,12 +44,6 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
                                             }
                                             p.control {
                                                 a.button.is-rounded.is-small href="/ru/2992069" { "Tortik" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/103809874" { "Invincible_Beast" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/123484971" { "Chunya_Dobryak" }
                                             }
                                         }
                                         (account_search("is-medium", "", true, false))
