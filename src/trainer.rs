@@ -56,8 +56,12 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut vehicle_cache = HashMap::default();
     let mut account_cache = LruCache::with_hasher(opts.account_cache_size, BuildHasher::default());
     let mut modified_account_ids = HashSet::default();
-    let mut best_test_error: f64 = f64::INFINITY;
 
+    log::info!(
+        "Model: {} factors ⨯ {} regularization.",
+        opts.n_factors,
+        opts.regularization,
+    );
     log::info!("Running…");
     loop {
         let start_instant = Instant::now();
@@ -139,7 +143,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         let train_error = train_error.average();
         let test_error = test_error.average();
         set_errors(&mut redis, train_error, test_error).await?;
-        best_test_error = best_test_error.min(test_error);
 
         let max_factor = vehicle_cache
             .iter()
@@ -149,11 +152,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>8.6} | test: {:>8.6} {:>+5.2}% | best: {:>8.6} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "Err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
-            best_test_error,
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             battles.len() as f64 / 1000.0,
             n_accounts as f64 / 1000.0,
