@@ -22,7 +22,7 @@ struct Entry {
 }
 
 impl AccountTanksCache {
-    const TTL_SECS: usize = 15 * 60;
+    const TTL_SECS: usize = 60 * 60;
 
     pub fn new(api: WargamingApi, redis: MultiplexedConnection) -> Self {
         Self { api, redis }
