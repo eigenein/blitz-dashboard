@@ -42,9 +42,8 @@ pub fn sgd(
     let regularization_multiplier = learning_rate * regularization;
 
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
-        let old_xi = *xi;
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
-        *yi += residual_multiplier * old_xi - regularization_multiplier * *yi;
+        *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
     }
 }
 
