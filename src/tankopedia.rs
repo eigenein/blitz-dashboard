@@ -93,8 +93,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
 
 /// Inserts the hand-coded tanks that are somehow missing from the Tankopedia.
 fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
-    insert_missing_vehicle(
-        vehicles,
+    const VEHICLES: [Vehicle; 22] = [
         Vehicle {
             tank_id: 23057,
             name: Cow::Borrowed("Kunze Panzer"),
@@ -103,9 +102,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 20817,
             name: Cow::Borrowed("Эксплорер"),
@@ -114,9 +110,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Uk,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 3089,
             name: Cow::Borrowed("Leichttraktor"),
@@ -125,9 +118,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 64081,
             name: Cow::Borrowed("Mk I* Heavy Tank"),
@@ -136,9 +126,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Uk,
             type_: TankType::Heavy,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 1329,
             name: Cow::Borrowed("Renault NC-31"),
@@ -147,9 +134,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::China,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 609,
             name: Cow::Borrowed("R. Otsu"),
@@ -158,9 +142,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Japan,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 3329,
             name: Cow::Borrowed("MS-1 mod. 1"),
@@ -169,9 +150,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Ussr,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 24081,
             name: Cow::Borrowed("U-Panzer"),
@@ -180,9 +158,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 23825,
             name: Cow::Borrowed("Steyr WT"),
@@ -191,9 +166,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::AT,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 24337,
             name: Cow::Borrowed("M48A2 Räumpanzer"),
@@ -202,9 +174,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 7297,
             name: Cow::Borrowed("60TP"),
@@ -213,9 +182,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Europe,
             type_: TankType::Heavy,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 22305,
             name: Cow::Borrowed("AE Phase I"),
@@ -224,9 +190,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Usa,
             type_: TankType::Heavy,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 23297,
             name: Cow::Borrowed("Объект 244"),
@@ -235,9 +198,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Ussr,
             type_: TankType::Heavy,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 18241,
             name: Cow::Borrowed("B-C Bourrasque"),
@@ -246,9 +206,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::France,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 577,
             name: Cow::Borrowed("Renault FT"),
@@ -257,9 +214,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::France,
             type_: TankType::AT,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 81,
             name: Cow::Borrowed("Vickers Medium Mk. I"),
@@ -268,9 +222,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Uk,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 545,
             name: Cow::Borrowed("T1 Cunningham"),
@@ -279,9 +230,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Usa,
             type_: TankType::Light,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 23313,
             name: Cow::Borrowed("Kampfpanzer 50 t"),
@@ -290,9 +238,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Germany,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 15617,
             name: Cow::Borrowed("Объект 907"),
@@ -301,9 +246,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Ussr,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 18753,
             name: Cow::Borrowed("AMX CDA 105"),
@@ -312,9 +254,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::France,
             type_: TankType::AT,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 23041,
             name: Cow::Borrowed("Т-34 экр."),
@@ -323,9 +262,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Ussr,
             type_: TankType::Medium,
         },
-    )?;
-    insert_missing_vehicle(
-        vehicles,
         Vehicle {
             tank_id: 22529,
             name: Cow::Borrowed("ЛТ-432"),
@@ -334,18 +270,14 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Ussr,
             type_: TankType::Light,
         },
-    )?;
-    Ok(())
-}
+    ];
 
-/// Inserts a single hard-coded vehicle to the Tankopedia.
-fn insert_missing_vehicle(
-    vehicles: &mut BTreeMap<String, Vehicle>,
-    vehicle: Vehicle,
-) -> crate::Result {
-    match vehicles.get(&vehicle.tank_id.to_string()) {
-        Some(_) => anyhow::bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
-        None => vehicles.insert(vehicle.tank_id.to_string(), vehicle),
-    };
+    for vehicle in VEHICLES {
+        match vehicles.get(&vehicle.tank_id.to_string()) {
+            Some(_) => anyhow::bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
+            None => vehicles.insert(vehicle.tank_id.to_string(), vehicle),
+        };
+    }
+
     Ok(())
 }
