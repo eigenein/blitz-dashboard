@@ -1645,6 +1645,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Germany,
         type_: TankType::Medium,
     },
+    24609_i32 => Vehicle {
+        tank_id: 24609,
+        name: Cow::Borrowed("Concept 1B"),
+        tier: 10,
+        is_premium: true,
+        nation: Nation::Usa,
+        type_: TankType::Heavy,
+    },
     2561_i32 => Vehicle {
         tank_id: 2561,
         name: Cow::Borrowed("Т-34-85"),
@@ -3493,6 +3501,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Other,
         type_: TankType::AT,
     },
+    7553_i32 => Vehicle {
+        tank_id: 7553,
+        name: Cow::Borrowed("50TP Tyszkiewicza"),
+        tier: 9,
+        is_premium: false,
+        nation: Nation::Europe,
+        type_: TankType::Heavy,
+    },
     769_i32 => Vehicle {
         tank_id: 769,
         name: Cow::Borrowed("БТ-7"),
@@ -3547,6 +3563,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         tier: 7,
         is_premium: true,
         nation: Nation::Other,
+        type_: TankType::Heavy,
+    },
+    7809_i32 => Vehicle {
+        tank_id: 7809,
+        name: Cow::Borrowed("53TP Markowskiego"),
+        tier: 8,
+        is_premium: false,
+        nation: Nation::Europe,
         type_: TankType::Heavy,
     },
     785_i32 => Vehicle {
@@ -3612,6 +3636,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Other,
         type_: TankType::Medium,
+    },
+    8065_i32 => Vehicle {
+        tank_id: 8065,
+        name: Cow::Borrowed("40TP Habicha"),
+        tier: 6,
+        is_premium: false,
+        nation: Nation::Europe,
+        type_: TankType::Heavy,
     },
     81_i32 => Vehicle {
         tank_id: 81,
@@ -3685,6 +3717,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Other,
         type_: TankType::Heavy,
     },
+    8321_i32 => Vehicle {
+        tank_id: 8321,
+        name: Cow::Borrowed("45TP Habicha"),
+        tier: 7,
+        is_premium: false,
+        nation: Nation::Europe,
+        type_: TankType::Heavy,
+    },
     8465_i32 => Vehicle {
         tank_id: 8465,
         name: Cow::Borrowed("Panther II"),
@@ -3732,6 +3772,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Other,
         type_: TankType::Light,
+    },
+    8577_i32 => Vehicle {
+        tank_id: 8577,
+        name: Cow::Borrowed("Lansen C"),
+        tier: 8,
+        is_premium: true,
+        nation: Nation::Europe,
+        type_: TankType::Medium,
     },
     865_i32 => Vehicle {
         tank_id: 865,

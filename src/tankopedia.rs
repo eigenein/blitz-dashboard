@@ -93,7 +93,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
 
 /// Inserts the hand-coded tanks that are somehow missing from the Tankopedia.
 fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
-    const VEHICLES: [Vehicle; 22] = [
+    const VEHICLES: [Vehicle; 28] = [
         Vehicle {
             tank_id: 23057,
             name: Cow::Borrowed("Kunze Panzer"),
@@ -269,6 +269,54 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             is_premium: true,
             nation: Nation::Ussr,
             type_: TankType::Light,
+        },
+        Vehicle {
+            tank_id: 8065,
+            name: Cow::Borrowed("40TP Habicha"),
+            tier: 6,
+            is_premium: false,
+            nation: Nation::Europe,
+            type_: TankType::Heavy,
+        },
+        Vehicle {
+            tank_id: 8321,
+            name: Cow::Borrowed("45TP Habicha"),
+            tier: 7,
+            is_premium: false,
+            nation: Nation::Europe,
+            type_: TankType::Heavy,
+        },
+        Vehicle {
+            tank_id: 7809,
+            name: Cow::Borrowed("53TP Markowskiego"),
+            tier: 8,
+            is_premium: false,
+            nation: Nation::Europe,
+            type_: TankType::Heavy,
+        },
+        Vehicle {
+            tank_id: 7553,
+            name: Cow::Borrowed("50TP Tyszkiewicza"),
+            tier: 9,
+            is_premium: false,
+            nation: Nation::Europe,
+            type_: TankType::Heavy,
+        },
+        Vehicle {
+            tank_id: 24609,
+            name: Cow::Borrowed("Concept 1B"),
+            tier: 10,
+            is_premium: true,
+            nation: Nation::Usa,
+            type_: TankType::Heavy,
+        },
+        Vehicle {
+            tank_id: 8577,
+            name: Cow::Borrowed("Lansen C"),
+            tier: 8,
+            is_premium: true,
+            nation: Nation::Europe,
+            type_: TankType::Medium,
         },
     ];
 
