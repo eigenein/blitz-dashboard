@@ -25,9 +25,7 @@ pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool
 
 #[must_use]
 pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
-    let prediction = dot(vehicle_factors, account_factors);
-    assert!(!prediction.is_nan());
-    logistic(prediction)
+    logistic(dot(vehicle_factors, account_factors))
 }
 
 /// Adjusts the latent factors.
@@ -40,8 +38,7 @@ pub fn sgd(
     learning_rate: f64,
     regularization: f64,
 ) {
-    let residual_multiplier =
-        learning_rate * (target - prediction) * (prediction * (1.0 - prediction));
+    let residual_multiplier = learning_rate * (target - prediction);
     let regularization_multiplier = learning_rate * regularization;
 
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
