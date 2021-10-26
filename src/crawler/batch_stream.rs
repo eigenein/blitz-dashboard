@@ -3,7 +3,7 @@ use std::time::Duration as StdDuration;
 use anyhow::Context;
 use futures::{stream, Stream};
 use sqlx::PgPool;
-use tokio::time::{sleep, Instant};
+use tokio::time::{sleep, timeout, Instant};
 
 use crate::crawler::selector::Selector;
 use crate::models::BaseAccountInfo;
@@ -69,9 +69,8 @@ async fn retrieve_batch(
                 .bind(min_offset)
         }
     };
-    let accounts = query
-        .fetch_all(connection)
+    timeout(StdDuration::from_secs(60), query.fetch_all(connection))
         .await
-        .context("failed to retrieve a batch")?;
-    Ok(accounts)
+        .context("the `retrieve_batch` query has timed out")?
+        .context("failed to retrieve a batch")
 }
