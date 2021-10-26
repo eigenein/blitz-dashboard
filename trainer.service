@@ -7,12 +7,11 @@ After = network-online.target redis.service
 ExecStart = /home/pi/bin/blitz-dashboard \
     -v \
     train \
-    --account-lr=0.001 \
-    --vehicle-lr=0.001 \
-    -r=0.000001 \
-    --factors=9 \
-    --train-size=7500000 \
-    --redis-uri=redis+unix:///var/run/redis/redis-server.sock
+    --lr=0.05 \
+    -r=0.09 \
+    --factors=8 \
+    --time-span=48h \
+    --redis-uri="redis+unix:///var/run/redis/redis-server.sock"
 WorkingDirectory = /home/pi
 StandardOutput = journal
 StandardError = journal
