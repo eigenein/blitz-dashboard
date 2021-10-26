@@ -91,15 +91,13 @@ impl WargamingApi {
         if account_ids.is_empty() {
             return Ok(HashMap::new());
         }
-        let account_id = account_ids
-            .iter()
-            .map(|account_id| account_id.to_string())
-            .join(",");
+        let account_id = account_ids.iter().map(ToString::to_string).join(",");
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/info/",
             &[
                 ("application_id", self.application_id.as_str()),
                 ("account_id", account_id.as_str()),
+                ("extra", "statistics.rating"),
             ],
         )?)
         .await

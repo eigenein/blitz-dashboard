@@ -53,8 +53,18 @@ pub struct AccountInfo {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
-    #[serde(rename = "all")]
     pub all: Statistics,
+    pub rating: Statistics,
+}
+
+impl AccountInfoStatistics {
+    pub fn n_battles(&self) -> i32 {
+        self.all.battles + self.rating.battles
+    }
+
+    pub fn n_wins(&self) -> i32 {
+        self.all.wins + self.rating.wins
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]

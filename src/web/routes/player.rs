@@ -73,8 +73,8 @@ pub async fn get(
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
         .sum();
     let current_win_rate = ConfidenceInterval::default_wilson_score_interval(
-        current_info.statistics.all.battles,
-        current_info.statistics.all.wins,
+        current_info.statistics.n_battles(),
+        current_info.statistics.n_wins(),
     );
     let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
     let is_account_birthday = current_info.created_at.date() == Utc::today();
@@ -106,7 +106,7 @@ pub async fn get(
                         div.navbar-item title="Боев" {
                             span.icon-text {
                                 span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                                span { (current_info.statistics.all.battles) }
+                                span { (current_info.statistics.n_battles()) }
                             }
                         }
                         div.navbar-item title="Возраст аккаунта" {
