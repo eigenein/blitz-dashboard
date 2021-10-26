@@ -108,9 +108,9 @@ pub async fn get(
                                 }
                             }
                             @if let Some(exact_match) = exact_match {
-                                h1.title."is-4" { "Точное совпадение" }
+                                h1.title.block."is-4" { "Точное совпадение" }
                                 (account_card(&exact_match))
-                                h1.title."is-4"."mt-6" { "Другие результаты" }
+                                h1.title.block."is-4" { "Другие результаты" }
                             }
                             @for account in &accounts {
                                 (account_card(account))
