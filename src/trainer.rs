@@ -30,8 +30,6 @@ mod error;
 mod learning_rate;
 pub mod math;
 
-const TRAINER_TRAIN_ERROR_KEY: &str = "trainer::errors::train";
-const TRAINER_TEST_ERROR_KEY: &str = "trainer::errors::test";
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
@@ -147,12 +145,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
         let train_error = train_error.average();
         let test_error = test_error.average();
-        set_errors(&mut redis, train_error, test_error).await?;
-
         let max_factor = vehicle_cache
             .iter()
             .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
+
         let new_pointer = refresh_battles(&mut redis, pointer, &mut battles, time_span).await?;
         pointer = new_pointer;
 
@@ -172,29 +169,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     }
 
     unreachable!();
-}
-
-#[allow(dead_code)]
-pub async fn get_test_error(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
-    Ok(redis
-        .get::<_, Option<f64>>(TRAINER_TEST_ERROR_KEY)
-        .await?
-        .unwrap_or_default())
-}
-
-async fn set_errors(
-    redis: &mut MultiplexedConnection,
-    train_error: f64,
-    test_error: f64,
-) -> crate::Result {
-    pipe()
-        .set(TRAINER_TRAIN_ERROR_KEY, train_error)
-        .ignore()
-        .set(TRAINER_TEST_ERROR_KEY, test_error)
-        .ignore()
-        .query_async(redis)
-        .await
-        .context("failed to set the errors")
 }
 
 pub async fn push_battles(
