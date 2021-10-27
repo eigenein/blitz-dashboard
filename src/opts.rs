@@ -175,8 +175,16 @@ pub struct TrainerOpts {
     pub redis_uri: String,
 
     /// Learning rate
-    #[structopt(long = "lr", default_value = "0.001")]
+    #[structopt(long = "lr", default_value = "0.2")]
     pub learning_rate: f64,
+
+    /// Minimal learning rate, used together with the decay
+    #[structopt(long = "lr-decay", default_value = "0.01")]
+    pub learning_rate_decay: f64,
+
+    /// Minimal learning rate, used together with the decay
+    #[structopt(long = "minimal-lr", default_value = "0.002")]
+    pub minimal_learning_rate: f64,
 
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0.000001")]

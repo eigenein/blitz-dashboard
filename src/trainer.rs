@@ -21,11 +21,13 @@ use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
+use crate::trainer::learning_rate::LearningRate;
 use crate::trainer::math::sgd;
 use crate::{DateTime, Vector};
 
 pub mod battle;
 mod error;
+mod learning_rate;
 pub mod math;
 
 const TRAINER_TRAIN_ERROR_KEY: &str = "trainer::errors::train";
@@ -40,11 +42,14 @@ type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
 
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
-    debug_assert!(opts.learning_rate >= 0.0);
-    debug_assert!(opts.regularization >= 0.0);
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let time_span = Duration::from_std(opts.time_span)?;
+    let learning_rate = LearningRate::new(
+        opts.learning_rate,
+        opts.learning_rate_decay,
+        opts.minimal_learning_rate,
+    );
 
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
@@ -63,7 +68,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         opts.regularization,
     );
     log::info!("Running…");
-    loop {
+    for learning_rate in learning_rate {
         let start_instant = Instant::now();
 
         let mut train_error = error::Error::default();
@@ -114,7 +119,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     vehicle_factors,
                     prediction,
                     target,
-                    opts.learning_rate,
+                    learning_rate,
                     opts.regularization,
                 );
 
@@ -152,10 +157,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer = new_pointer;
 
         log::info!(
-            "Err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "Err: {:>8.6} | test: {:>8.6} {:>+5.2}% | LR: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
+            learning_rate,
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             battles.len() as f64 / 1000.0,
             n_accounts as f64 / 1000.0,
@@ -164,6 +170,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             max_factor,
         );
     }
+
+    unreachable!();
 }
 
 #[allow(dead_code)]
