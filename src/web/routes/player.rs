@@ -16,7 +16,7 @@ use crate::logging::set_user;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::statistics::ConfidenceInterval;
-use crate::time::{from_days, from_hours, from_months};
+use crate::time::{from_days, from_months};
 use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;

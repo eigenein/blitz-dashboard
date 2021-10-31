@@ -86,7 +86,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                         .await?
                         .unwrap_or_else(|| {
                             n_new_accounts += 1;
-                            Vector::new_const()
+                            Vector::new()
                         });
                     if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                         n_initialized_accounts += 1;

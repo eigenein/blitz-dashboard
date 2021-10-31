@@ -32,7 +32,7 @@ const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 type Result<T = ()> = anyhow::Result<T>;
-type Vector = smallvec::SmallVec<[f64; 64]>;
+type Vector = Vec<f64>;
 type DateTime = chrono::DateTime<chrono::Utc>;
 
 #[tokio::main]
