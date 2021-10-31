@@ -186,11 +186,7 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
 
 pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Option<i32>> {
     // language=SQL
-    const QUERY: &str = r#"
-        SELECT account_id FROM accounts
-        WHERE last_battle_time >= NOW() - INTERVAL '24 hours'
-        LIMIT 1
-    "#;
+    const QUERY: &str = r#"SELECT account_id FROM accounts LIMIT 1"#;
     let account_id = sqlx::query_scalar(QUERY)
         .fetch_optional(connection)
         .await

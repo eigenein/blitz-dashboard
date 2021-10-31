@@ -11,7 +11,7 @@ use crate::web::routes::player::rocket_uri_macro_get as rocket_uri_macro_get_pla
 pub async fn get(database: &State<PgPool>) -> crate::web::result::Result<Redirect> {
     let account_id = retrieve_random_account_id(database)
         .await?
-        .ok_or_else(|| anyhow!("failed to retrieve a random account ID"))?;
+        .ok_or_else(|| anyhow!("no account found"))?;
     Ok(Redirect::temporary(uri!(get_player(
         account_id = account_id,
         period = _,
