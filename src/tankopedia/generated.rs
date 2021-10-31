@@ -3455,9 +3455,9 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
     },
     7297_i32 => Vehicle {
         tank_id: 7297,
-        name: Cow::Borrowed("60TP"),
+        name: Cow::Borrowed("60TP Lewandowskiego"),
         tier: 10,
-        is_premium: true,
+        is_premium: false,
         nation: Nation::Europe,
         type_: TankType::Heavy,
     },

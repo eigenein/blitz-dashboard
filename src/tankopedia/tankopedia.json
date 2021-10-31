@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -38027,8 +38027,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -46210,8 +46210,8 @@
         "name": "Kw.K. 39 L/60",
         "next_modules": null,
         "next_tanks": [
-          17425,
-          1809
+          1809,
+          17425
         ],
         "price_credit": 0,
         "price_xp": 1050,
@@ -48003,8 +48003,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          7729,
-          5169
+          5169,
+          7729
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -75935,6 +75935,167 @@
     ],
     "type": "heavyTank"
   },
+  "7297": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 120,
+          "rear": 90,
+          "sides": 100
+        },
+        "turret": {
+          "front": 280,
+          "rear": 100,
+          "sides": 160
+        }
+      },
+      "battle_level_range_max": 11,
+      "battle_level_range_min": 10,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "MT-50TM",
+        "power": 750,
+        "tier": 10,
+        "weight": 2100
+      },
+      "engine_id": 11141,
+      "firepower": 57,
+      "gun": {
+        "aim_time": 6.17,
+        "caliber": 152,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.42,
+        "fire_rate": 3.64,
+        "move_down_arc": 7,
+        "move_up_arc": 20,
+        "name": "152 mm J 2",
+        "reload_time": 16.5,
+        "tier": 10,
+        "traverse_speed": 24.0,
+        "weight": 4370
+      },
+      "gun_id": 10628,
+      "hp": 2600,
+      "hull_hp": 2080,
+      "hull_weight": 27250,
+      "is_default": true,
+      "maneuverability": 29,
+      "max_ammo": 40,
+      "max_weight": 68000,
+      "profile_id": "10628-10883-11138-11141",
+      "protection": 100,
+      "shells": [
+        {
+          "damage": 600,
+          "penetration": 258,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 530,
+          "penetration": 330,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 680,
+          "penetration": 80,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 76,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 36,
+      "suspension": {
+        "load_limit": 68000,
+        "name": "60TP Lewandowskiego",
+        "tier": 10,
+        "traverse_speed": 24,
+        "weight": 12000
+      },
+      "suspension_id": 11138,
+      "turret": {
+        "hp": 520,
+        "name": "60TP Lewandowskiego",
+        "tier": 10,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 17,
+        "view_range": 250,
+        "weight": 14000
+      },
+      "turret_id": 10883,
+      "weight": 60020
+    },
+    "description": "Проект тяжёлого танка, разработанный курсантом Военно-Технической академии в Варшаве Ричердом Левандовским в 1956 г. Проект предусматривал создание танка массой до 60 тонн и толщиной бронирования до 200 мм. Работы были остановлены на стадии компоновочного чертежа.",
+    "engines": [
+      11141
+    ],
+    "guns": [
+      10628
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl15_60TP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl15_60TP.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "10628": {
+        "is_default": true,
+        "module_id": 10628,
+        "name": "152 mm J 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "10883": {
+        "is_default": true,
+        "module_id": 10883,
+        "name": "60TP Lewandowskiego",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "11138": {
+        "is_default": true,
+        "module_id": 11138,
+        "name": "60TP Lewandowskiego",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "11141": {
+        "is_default": true,
+        "module_id": 11141,
+        "name": "MT-50TM",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "60TP Lewandowskiego",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      11138
+    ],
+    "tank_id": 7297,
+    "tier": 10,
+    "turrets": [
+      10883
+    ],
+    "type": "heavyTank"
+  },
   "7425": {
     "cost": {
       "price_credit": 2520000,
@@ -76982,6 +77143,223 @@
     "tier": 5,
     "turrets": [],
     "type": "AT-SPG"
+  },
+  "7553": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 120,
+          "rear": 60,
+          "sides": 90
+        },
+        "turret": {
+          "front": 250,
+          "rear": 90,
+          "sides": 150
+        }
+      },
+      "battle_level_range_max": 10,
+      "battle_level_range_min": 9,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "W12-5B",
+        "power": 600,
+        "tier": 9,
+        "weight": 2000
+      },
+      "engine_id": 11653,
+      "firepower": 40,
+      "gun": {
+        "aim_time": 6.07,
+        "caliber": 122,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.4,
+        "fire_rate": 3.87,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "122 mm wz.53",
+        "reload_time": 15.5,
+        "tier": 9,
+        "traverse_speed": 26.25,
+        "weight": 2790
+      },
+      "gun_id": 10884,
+      "hp": 2000,
+      "hull_hp": 1620,
+      "hull_weight": 19610,
+      "is_default": true,
+      "maneuverability": 29,
+      "max_ammo": 48,
+      "max_weight": 50000,
+      "profile_id": "10884-11139-11394-11653",
+      "protection": 71,
+      "shells": [
+        {
+          "damage": 420,
+          "penetration": 225,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 360,
+          "penetration": 265,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 550,
+          "penetration": 61,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 71,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 36,
+      "suspension": {
+        "load_limit": 50000,
+        "name": "50TP Tyszkiewicza I",
+        "tier": 8,
+        "traverse_speed": 24,
+        "weight": 11000
+      },
+      "suspension_id": 11394,
+      "turret": {
+        "hp": 380,
+        "name": "50TP Tyszkiewicza I",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 26,
+        "view_range": 240,
+        "weight": 12000
+      },
+      "turret_id": 11139,
+      "weight": 47700
+    },
+    "description": "Проект тяжёлого танка курсанта Военно-Технической академии Тадеуша Тышкевича. Разрабатывался в первой половине 1950-х годов и предусматривал проектирование машины массой до 50 тонн. В металле не изготавливался.",
+    "engines": [
+      11397,
+      11653
+    ],
+    "guns": [
+      11140,
+      10884
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl05_50TP_Tyszkiewicza.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl05_50TP_Tyszkiewicza.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "10884": {
+        "is_default": true,
+        "module_id": 10884,
+        "name": "122 mm wz.53",
+        "next_modules": [
+          11395
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "11139": {
+        "is_default": true,
+        "module_id": 11139,
+        "name": "50TP Tyszkiewicza I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "11140": {
+        "is_default": false,
+        "module_id": 11140,
+        "name": "130 mm R 14 wz.56",
+        "next_modules": null,
+        "next_tanks": [
+          7297
+        ],
+        "price_credit": 0,
+        "price_xp": 62500,
+        "type": "vehicleGun"
+      },
+      "11394": {
+        "is_default": true,
+        "module_id": 11394,
+        "name": "50TP Tyszkiewicza I",
+        "next_modules": [
+          11650
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "11395": {
+        "is_default": false,
+        "module_id": 11395,
+        "name": "50TP Tyszkiewicza II",
+        "next_modules": [
+          11140
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 32500,
+        "type": "vehicleTurret"
+      },
+      "11397": {
+        "is_default": false,
+        "module_id": 11397,
+        "name": "MT-50T",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 24000,
+        "type": "vehicleEngine"
+      },
+      "11650": {
+        "is_default": false,
+        "module_id": 11650,
+        "name": "50TP Tyszkiewicza II",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 20000,
+        "type": "vehicleChassis"
+      },
+      "11653": {
+        "is_default": true,
+        "module_id": 11653,
+        "name": "W12-5B",
+        "next_modules": [
+          11397
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "50TP Tyszkiewicza",
+    "nation": "european",
+    "next_tanks": {
+      "7297": 265000
+    },
+    "prices_xp": null,
+    "suspensions": [
+      11650,
+      11394
+    ],
+    "tank_id": 7553,
+    "tier": 9,
+    "turrets": [
+      11395,
+      11139
+    ],
+    "type": "heavyTank"
   },
   "769": {
     "cost": {
@@ -78252,6 +78630,223 @@
     ],
     "type": "heavyTank"
   },
+  "7809": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 140,
+          "rear": 50,
+          "sides": 90
+        },
+        "turret": {
+          "front": 200,
+          "rear": 80,
+          "sides": 110
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 108x2",
+        "power": 750,
+        "tier": 8,
+        "weight": 900
+      },
+      "engine_id": 11909,
+      "firepower": 39,
+      "gun": {
+        "aim_time": 6.86,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 5.45,
+        "move_down_arc": 10,
+        "move_up_arc": 20,
+        "name": "105 mm Bofors wz. 34",
+        "reload_time": 11.0,
+        "tier": 7,
+        "traverse_speed": 33.25,
+        "weight": 1245
+      },
+      "gun_id": 11396,
+      "hp": 1700,
+      "hull_hp": 1470,
+      "hull_weight": 29091,
+      "is_default": true,
+      "maneuverability": 36,
+      "max_ammo": 48,
+      "max_weight": 65000,
+      "profile_id": "11396-11651-11906-11909",
+      "protection": 57,
+      "shells": [
+        {
+          "damage": 290,
+          "penetration": 192,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 250,
+          "penetration": 225,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 380,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 66,
+      "signal_range": null,
+      "speed_backward": 16,
+      "speed_forward": 40,
+      "suspension": {
+        "load_limit": 65000,
+        "name": "53TP Markowskiego I",
+        "tier": 8,
+        "traverse_speed": 28,
+        "weight": 11000
+      },
+      "suspension_id": 11906,
+      "turret": {
+        "hp": 230,
+        "name": "53TP Markowskiego I",
+        "tier": 7,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 22,
+        "view_range": 230,
+        "weight": 11000
+      },
+      "turret_id": 11651,
+      "weight": 53511
+    },
+    "description": "Аванпроект тяжёлого танка, разработка которого планировалась на 1940 год. В связи с началом Второй мировой войны все работы были свёрнуты. Существовал только в эскизах.",
+    "engines": [
+      12165,
+      11909
+    ],
+    "guns": [
+      11396,
+      10884
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl13_53TP_Markowskiego.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl13_53TP_Markowskiego.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "10884": {
+        "is_default": false,
+        "module_id": 10884,
+        "name": "122 mm wz.53",
+        "next_modules": null,
+        "next_tanks": [
+          7553
+        ],
+        "price_credit": 0,
+        "price_xp": 30000,
+        "type": "vehicleGun"
+      },
+      "11396": {
+        "is_default": true,
+        "module_id": 11396,
+        "name": "105 mm Bofors wz. 34",
+        "next_modules": [
+          11907
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "11651": {
+        "is_default": true,
+        "module_id": 11651,
+        "name": "53TP Markowskiego I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "11906": {
+        "is_default": true,
+        "module_id": 11906,
+        "name": "53TP Markowskiego I",
+        "next_modules": [
+          12162
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "11907": {
+        "is_default": false,
+        "module_id": 11907,
+        "name": "53TP Markowskiego II",
+        "next_modules": [
+          10884
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 20000,
+        "type": "vehicleTurret"
+      },
+      "11909": {
+        "is_default": true,
+        "module_id": 11909,
+        "name": "Maybach HL 108x2",
+        "next_modules": [
+          12165
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "12162": {
+        "is_default": false,
+        "module_id": 12162,
+        "name": "53TP Markowskiego II",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 15000,
+        "type": "vehicleChassis"
+      },
+      "12165": {
+        "is_default": false,
+        "module_id": 12165,
+        "name": "W12-5P",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 18000,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "53TP Markowskiego",
+    "nation": "european",
+    "next_tanks": {
+      "7553": 165000
+    },
+    "prices_xp": null,
+    "suspensions": [
+      11906,
+      12162
+    ],
+    "tank_id": 7809,
+    "tier": 8,
+    "turrets": [
+      11651,
+      11907
+    ],
+    "type": "heavyTank"
+  },
   "785": {
     "cost": {
       "price_credit": 1200,
@@ -79435,8 +80030,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -79803,6 +80398,223 @@
       33395
     ],
     "type": "mediumTank"
+  },
+  "8065": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 110,
+          "rear": 40,
+          "sides": 60
+        },
+        "turret": {
+          "front": 110,
+          "rear": 50,
+          "sides": 80
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 120",
+        "power": 400,
+        "tier": 6,
+        "weight": 750
+      },
+      "engine_id": 12933,
+      "firepower": 35,
+      "gun": {
+        "aim_time": 5.52,
+        "caliber": 88,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.4,
+        "fire_rate": 6.67,
+        "move_down_arc": 8,
+        "move_up_arc": 15,
+        "name": "88 mm wz. 39",
+        "reload_time": 9.0,
+        "tier": 6,
+        "traverse_speed": 35.0,
+        "weight": 2050
+      },
+      "gun_id": 11908,
+      "hp": 1050,
+      "hull_hp": 872,
+      "hull_weight": 22300,
+      "is_default": true,
+      "maneuverability": 24,
+      "max_ammo": 80,
+      "max_weight": 50000,
+      "profile_id": "11908-12163-12418-12933",
+      "protection": 40,
+      "shells": [
+        {
+          "damage": 220,
+          "penetration": 150,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 200,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 44,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 54,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 40,
+      "suspension": {
+        "load_limit": 50000,
+        "name": "40TP Habicha I",
+        "tier": 5,
+        "traverse_speed": 22,
+        "weight": 7800
+      },
+      "suspension_id": 12418,
+      "turret": {
+        "hp": 178,
+        "name": "40TP Habicha I",
+        "tier": 5,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 18,
+        "view_range": 230,
+        "weight": 6250
+      },
+      "turret_id": 12163,
+      "weight": 39425
+    },
+    "description": "        \r\nВ середине 1939 года под руководством инженера Эдварда Хабиха разрабатывались оригинальные проекты боевых машин с учётом опыта немецких и советских танкостроителей. Один из таких проектов предусматривал ходовую по типу блокированных тележек, рациональный угол наклона бронелистов толщиной до 60 мм, компактную башню немецкого образца и орудие высокой бронепробиваемости с малым откатом. Таким образом, Хабих мог получить нечто среднее между немецким средним танком Pz.Kpfw.IV и советским Т-34. Работы над проектом были остановлены после оккупации Польши в сентябре 1939 года.",
+    "engines": [
+      12933,
+      13189
+    ],
+    "guns": [
+      11908,
+      12164
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl10_40TP_Habicha.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl10_40TP_Habicha.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "11908": {
+        "is_default": true,
+        "module_id": 11908,
+        "name": "88 mm wz. 39",
+        "next_modules": [
+          12419
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "12163": {
+        "is_default": true,
+        "module_id": 12163,
+        "name": "40TP Habicha I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "12164": {
+        "is_default": false,
+        "module_id": 12164,
+        "name": "90 mm wz. 39/90",
+        "next_modules": null,
+        "next_tanks": [
+          8321
+        ],
+        "price_credit": 0,
+        "price_xp": 9800,
+        "type": "vehicleGun"
+      },
+      "12418": {
+        "is_default": true,
+        "module_id": 12418,
+        "name": "40TP Habicha I",
+        "next_modules": [
+          12674
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "12419": {
+        "is_default": false,
+        "module_id": 12419,
+        "name": "40TP Habicha II",
+        "next_modules": [
+          12164
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 8400,
+        "type": "vehicleTurret"
+      },
+      "12674": {
+        "is_default": false,
+        "module_id": 12674,
+        "name": "40TP Habicha II",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 6200,
+        "type": "vehicleChassis"
+      },
+      "12933": {
+        "is_default": true,
+        "module_id": 12933,
+        "name": "Maybach HL 120",
+        "next_modules": [
+          13189
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "13189": {
+        "is_default": false,
+        "module_id": 13189,
+        "name": "Maybach HL 157",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 7000,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "40TP Habicha",
+    "nation": "european",
+    "next_tanks": {
+      "8321": 62150
+    },
+    "prices_xp": null,
+    "suspensions": [
+      12418,
+      12674
+    ],
+    "tank_id": 8065,
+    "tier": 6,
+    "turrets": [
+      12419,
+      12163
+    ],
+    "type": "heavyTank"
   },
   "817": {
     "cost": null,
@@ -81178,6 +81990,223 @@
     "tier": 7,
     "turrets": [
       33651
+    ],
+    "type": "heavyTank"
+  },
+  "8321": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 110,
+          "rear": 60,
+          "sides": 80
+        },
+        "turret": {
+          "front": 160,
+          "rear": 60,
+          "sides": 80
+        }
+      },
+      "battle_level_range_max": 8,
+      "battle_level_range_min": 7,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 157 P",
+        "power": 550,
+        "tier": 7,
+        "weight": 850
+      },
+      "engine_id": 12421,
+      "firepower": 42,
+      "gun": {
+        "aim_time": 5.84,
+        "caliber": 90,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 7.5,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "90 mm wz. 39/90",
+        "reload_time": 8.0,
+        "tier": 7,
+        "traverse_speed": 39.38,
+        "weight": 1850
+      },
+      "gun_id": 12164,
+      "hp": 1300,
+      "hull_hp": 1160,
+      "hull_weight": 22550,
+      "is_default": true,
+      "maneuverability": 25,
+      "max_ammo": 45,
+      "max_weight": 50500,
+      "profile_id": "12164-12421-12675-12930",
+      "protection": 48,
+      "shells": [
+        {
+          "damage": 225,
+          "penetration": 160,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 210,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 45,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 59,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 35,
+      "suspension": {
+        "load_limit": 50500,
+        "name": "45TP Habicha I",
+        "tier": 6,
+        "traverse_speed": 20,
+        "weight": 11500
+      },
+      "suspension_id": 12930,
+      "turret": {
+        "hp": 140,
+        "name": "45TP Habicha I",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 38,
+        "view_range": 230,
+        "weight": 7200
+      },
+      "turret_id": 12675,
+      "weight": 44225
+    },
+    "description": "Аванпроект тяжёлого танка. Предполагалось, что машина будет являться дальнейшим развитием среднего танка Хабиха. Броневые листы корпуса сделали толще и расположили под рациональными углами наклона. Предполагалось установить более мощное, чем на предшественнике, орудие. Работы были прекращены на стадии эскизного проекта.",
+    "engines": [
+      12421,
+      12677
+    ],
+    "guns": [
+      12164,
+      12420
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl11_45TP_Habicha.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl11_45TP_Habicha.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "12164": {
+        "is_default": true,
+        "module_id": 12164,
+        "name": "90 mm wz. 39/90",
+        "next_modules": [
+          12931
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "12420": {
+        "is_default": false,
+        "module_id": 12420,
+        "name": "105 mm Bofors wz. 32",
+        "next_modules": null,
+        "next_tanks": [
+          7809
+        ],
+        "price_credit": 0,
+        "price_xp": 18800,
+        "type": "vehicleGun"
+      },
+      "12421": {
+        "is_default": true,
+        "module_id": 12421,
+        "name": "Maybach HL 157 P",
+        "next_modules": [
+          12677
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "12675": {
+        "is_default": true,
+        "module_id": 12675,
+        "name": "45TP Habicha I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "12677": {
+        "is_default": false,
+        "module_id": 12677,
+        "name": "2x PZInż. Rytla-Wernera",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 12000,
+        "type": "vehicleEngine"
+      },
+      "12930": {
+        "is_default": true,
+        "module_id": 12930,
+        "name": "45TP Habicha I",
+        "next_modules": [
+          13186
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "12931": {
+        "is_default": false,
+        "module_id": 12931,
+        "name": "45TP Habicha II",
+        "next_modules": [
+          12420
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 14100,
+        "type": "vehicleTurret"
+      },
+      "13186": {
+        "is_default": false,
+        "module_id": 13186,
+        "name": "45TP Habicha II",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 9800,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "45TP Habicha",
+    "nation": "european",
+    "next_tanks": {
+      "7809": 110000
+    },
+    "prices_xp": null,
+    "suspensions": [
+      12930,
+      13186
+    ],
+    "tank_id": 8321,
+    "tier": 7,
+    "turrets": [
+      12675,
+      12931
     ],
     "type": "heavyTank"
   },
