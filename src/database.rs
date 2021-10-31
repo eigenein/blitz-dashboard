@@ -188,7 +188,7 @@ pub async fn retrieve_random_account_id(connection: &PgPool) -> crate::Result<Op
     // language=SQL
     const QUERY: &str = r#"
         SELECT account_id FROM accounts
-        WHERE last_battle_time >= NOW() - INTERVAL '1 hour'
+        WHERE last_battle_time >= NOW() - INTERVAL '24 hours'
         LIMIT 1
     "#;
     let account_id = sqlx::query_scalar(QUERY)

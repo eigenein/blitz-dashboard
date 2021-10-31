@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use rocket::response::Redirect;
 use rocket::{uri, State};
 use sqlx::PgPool;
@@ -7,12 +8,12 @@ use crate::web::routes::player::rocket_uri_macro_get as rocket_uri_macro_get_pla
 
 /// Selects a "random" user and redirects the player view.
 #[rocket::get("/random")]
-pub async fn get(database: &State<PgPool>) -> crate::web::result::Result<Option<Redirect>> {
-    match retrieve_random_account_id(database).await? {
-        Some(account_id) => Ok(Some(Redirect::temporary(uri!(get_player(
-            account_id = account_id,
-            period = _,
-        ))))),
-        None => Ok(None),
-    }
+pub async fn get(database: &State<PgPool>) -> crate::web::result::Result<Redirect> {
+    let account_id = retrieve_random_account_id(database)
+        .await?
+        .ok_or_else(|| anyhow!("failed to retrieve a random account ID"))?;
+    Ok(Redirect::temporary(uri!(get_player(
+        account_id = account_id,
+        period = _,
+    ))))
 }
