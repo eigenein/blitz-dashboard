@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -36,7 +35,7 @@ impl AccountTanksCache {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);
 
-        if let Some(blob) = redis.get::<_, Option<Bytes>>(&cache_key).await? {
+        if let Some(blob) = redis.get::<_, Option<Vec<u8>>>(&cache_key).await? {
             let entry: Entry = rmp_serde::from_read_ref(&decompress_to_vec(blob).await?)?;
             if entry.last_battle_time == last_battle_time {
                 log::debug!("Cache hit on account #{} tanks.", account_id);

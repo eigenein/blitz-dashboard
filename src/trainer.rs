@@ -11,7 +11,6 @@ use std::str::FromStr;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
-use bytes::Bytes;
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
@@ -293,7 +292,7 @@ pub async fn get_vehicle_factors(
     redis: &mut MultiplexedConnection,
     tank_id: i32,
 ) -> crate::Result<Option<Vector>> {
-    let bytes: Option<Bytes> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
+    let bytes: Option<Vec<u8>> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
     match bytes {
         Some(bytes) => Ok(rmp_serde::from_read_ref(&bytes)?),
         None => Ok(None),

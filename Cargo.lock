@@ -201,7 +201,6 @@ name = "blitz-dashboard"
 version = "0.91.3"
 dependencies = [
  "anyhow",
- "bytes",
  "chrono",
  "chrono-humanize",
  "fastrand",

@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 
@@ -21,7 +20,7 @@ impl AccountInfoCache {
         let mut redis = self.redis.clone();
 
         if let Some(blob) = redis
-            .get::<_, Option<Bytes>>(Self::cache_key(account_id))
+            .get::<_, Option<Vec<u8>>>(Self::cache_key(account_id))
             .await?
         {
             log::debug!("Cache hit on account #{} info.", account_id,);
