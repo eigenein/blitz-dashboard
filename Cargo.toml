@@ -5,9 +5,8 @@ authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
 license-file = "LICENSE"
-documentation = "https://github.com/eigenein/blitz-dashboard"
 repository = "https://github.com/eigenein/blitz-dashboard"
-homepage = "https://github.com/eigenein/blitz-dashboard"
+homepage = "https://yastati.st"
 readme = "README.md"
 
 [profile.release]
