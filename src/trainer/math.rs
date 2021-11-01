@@ -46,5 +46,8 @@ pub fn sgd(
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
         *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
+
+        assert!(!xi.is_nan(), "lower the learning rate and restart");
+        assert!(!yi.is_nan(), "lower the learning rate and restart");
     }
 }

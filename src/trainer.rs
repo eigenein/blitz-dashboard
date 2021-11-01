@@ -109,7 +109,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             };
 
             let prediction = predict_win_rate(vehicle_factors, account_factors);
-            assert!(!prediction.is_nan());
             let target = if battle.is_win { 1.0 } else { 0.0 };
 
             if !battle.is_test {
