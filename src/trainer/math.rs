@@ -38,10 +38,9 @@ pub fn sgd(
     prediction: f64,
     target: f64,
     learning_rate: f64,
-    regularization: f64,
+    regularization_multiplier: f64,
 ) {
     let residual_multiplier = learning_rate * (target - prediction);
-    let regularization_multiplier = learning_rate * regularization;
 
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;

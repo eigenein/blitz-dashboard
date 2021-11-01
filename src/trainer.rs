@@ -78,6 +78,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         fastrand::shuffle(&mut battles);
         modified_account_ids.clear();
 
+        let regularization_multiplier = learning_rate * opts.regularization;
+
         for (_, battle) in battles.iter() {
             let account_factors = match account_cache.get_mut(&battle.account_id) {
                 Some(factors) => factors,
@@ -118,7 +120,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                     prediction,
                     target,
                     learning_rate,
-                    opts.regularization,
+                    regularization_multiplier,
                 );
 
                 modified_account_ids.insert(battle.account_id);
