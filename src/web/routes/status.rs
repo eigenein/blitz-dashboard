@@ -5,9 +5,9 @@ use rocket::response::content::Html;
 use rocket::{uri, State};
 
 use crate::logging::clear_user;
+use crate::math::vector;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::get_all_vehicle_factors;
-use crate::trainer::math;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };
@@ -146,7 +146,7 @@ pub fn tr(tank_id: i32, factors: &[f64], n_factors: usize) -> Markup {
             }
             (tier_td(vehicle.tier, None))
 
-            @let magnitude = math::norm(factors);
+            @let magnitude = vector::norm(factors);
             td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
             @for i in 0..n_factors {

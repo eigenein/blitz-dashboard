@@ -3,8 +3,8 @@ use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
 use rocket::uri;
 
+use crate::math::vector;
 use crate::models::{Nation, TankType, Vehicle};
-use crate::trainer::math;
 use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
@@ -294,7 +294,7 @@ pub fn factors_table(factors: &[f64]) -> Markup {
                     }
                 }
                 tbody {
-                    td { (render_f64(math::norm(factors), 4)) }
+                    td { (render_f64(vector::norm(factors), 4)) }
 
                     @for factor in factors {
                         td.(sign_class(*factor)) { (format!("{:+.4}", factor)) }
