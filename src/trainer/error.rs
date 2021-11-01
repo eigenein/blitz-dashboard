@@ -6,9 +6,11 @@ pub struct Error {
 
 impl Error {
     #[inline]
-    pub fn push(&mut self, prediction: f64, is_win: bool) {
-        let argument = if is_win { prediction } else { 1.0 - prediction };
-        self.error -= argument.ln();
+    pub fn push(&mut self, mut prediction: f64, is_win: bool) {
+        if !is_win {
+            prediction = 1.0 - prediction;
+        }
+        self.error -= prediction.ln();
         self.count += 1;
     }
 
