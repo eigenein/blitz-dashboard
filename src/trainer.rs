@@ -343,7 +343,7 @@ pub async fn get_account_factors(
 fn set_account_factors(
     pipeline: &mut Pipeline,
     account_id: i32,
-    factors: &Vector,
+    factors: &[f64],
     ttl_secs: usize,
 ) -> crate::Result {
     let bytes = rmp_serde::to_vec(factors)?;

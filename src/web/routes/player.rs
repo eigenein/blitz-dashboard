@@ -13,9 +13,9 @@ use partials::*;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::logging::set_user;
+use crate::math::statistics::ConfidenceInterval;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
-use crate::statistics::ConfidenceInterval;
 use crate::time::{from_days, from_months};
 use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
