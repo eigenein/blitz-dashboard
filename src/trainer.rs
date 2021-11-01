@@ -20,6 +20,7 @@ use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
 use crate::opts::TrainerOpts;
+use crate::tankopedia::remap_tank_id;
 use crate::trainer::learning_rate::LearningRate;
 use crate::trainer::math::sgd;
 use crate::{DateTime, Vector};
@@ -95,10 +96,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
                 }
             };
 
-            let vehicle_factors = match vehicle_cache.entry(battle.tank_id) {
+            let tank_id = remap_tank_id(battle.tank_id);
+            let vehicle_factors = match vehicle_cache.entry(tank_id) {
                 Entry::Occupied(entry) => entry.into_mut(),
                 Entry::Vacant(entry) => {
-                    let mut factors = get_vehicle_factors(&mut redis, battle.tank_id)
+                    let mut factors = get_vehicle_factors(&mut redis, tank_id)
                         .await?
                         .unwrap_or_else(Vector::new);
                     initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
@@ -122,11 +124,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
                 modified_account_ids.insert(battle.account_id);
                 train_error.push(prediction, battle.is_win);
-
-                if let Some(duplicate_id) = REMAP_TANK_ID.get(&battle.tank_id) {
-                    let vehicle_factors = vehicle_factors.clone();
-                    vehicle_cache.insert(*duplicate_id, vehicle_factors);
-                }
             } else {
                 test_error.push(prediction, battle.is_win);
             }
@@ -308,14 +305,6 @@ pub async fn get_all_vehicle_factors(
         .map(|(tank_id, value)| Ok((tank_id, rmp_serde::from_read_ref(&value)?)))
         .collect()
 }
-
-/// Some vehicles are just copies of some other vehicles.
-/// Remap them to improve the latent factors.
-static REMAP_TANK_ID: phf::Map<i32, i32> = phf::phf_map! {
-    64273_i32 => 55313, // 8,8 cm Pak 43 Jagdtiger
-    64769_i32 => 9217, // ИС-6 Бесстрашный
-    64801_i32 => 2849, // T34 Independence
-};
 
 async fn set_all_vehicles_factors(
     redis: &mut MultiplexedConnection,

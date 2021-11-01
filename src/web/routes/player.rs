@@ -16,6 +16,7 @@ use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
+use crate::tankopedia::remap_tank_id;
 use crate::time::{from_days, from_months};
 use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
@@ -491,7 +492,8 @@ pub async fn get(
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let predicted_win_rate = account_factors.as_ref().and_then(|account_factors| {
-                                                    vehicles_factors.get(&tank.statistics.base.tank_id).map(|vehicle_factors| {
+                                                    let tank_id = remap_tank_id(tank.statistics.base.tank_id);
+                                                    vehicles_factors.get(&tank_id).map(|vehicle_factors| {
                                                         predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0)
                                                     })
                                                 });

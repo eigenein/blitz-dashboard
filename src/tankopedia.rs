@@ -18,6 +18,18 @@ pub fn get_vehicle(tank_id: i32) -> Vehicle {
         .unwrap_or_else(|| new_hardcoded_vehicle(tank_id))
 }
 
+/// Some vehicles are just copies of another vehicles.
+/// Maps a tank ID to its original vehicle.
+#[must_use]
+pub fn remap_tank_id(tank_id: i32) -> i32 {
+    match tank_id {
+        64273 => 55313, // 8,8 cm Pak 43 Jagdtiger
+        64769 => 9217,  // ИС-6 Бесстрашный
+        64801 => 2849,  // T34 Independence
+        _ => tank_id,
+    }
+}
+
 /// Creates a fake vehicle instance with the specified ID.
 fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
     Vehicle {
