@@ -15,3 +15,18 @@ cargo install --git 'https://github.com/eigenein/blitz-dashboard.git' --branch m
 ```
 
 ## Setting up
+
+### Prerequisites
+
+- PostgreSQL ≥ `13.4`
+- Redis ≥ `6.0.15`
+
+These are the versions I'm running with. Lower versions may work, but I haven't tested them.
+
+### Overview
+
+Blitz Dashboard consists of a single executable `blitz-dashboard`, which serves multiple sub-commands:
+
+- Web application
+- Account crawler
+- Win rate prediction model trainer
