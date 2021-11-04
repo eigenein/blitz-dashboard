@@ -1,7 +1,6 @@
 use chrono::{Duration, TimeZone, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
-use log::Level;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use rocket::response::content::Html;
@@ -14,10 +13,9 @@ use partials::*;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::metrics::Stopwatch;
 use crate::models::{subtract_tanks, Statistics};
 use crate::tankopedia::remap_tank_id;
-use crate::time::{from_days, from_months};
+use crate::time::{from_days, from_months, Instant};
 use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
@@ -41,13 +39,12 @@ pub async fn get(
     account_tanks_cache: &State<AccountTanksCache>,
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<Response> {
+    let start_instant = Instant::now();
     let period = period.map(|period| parse_duration(&period)).transpose();
     let period = match period {
         Ok(period) => period,
         Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
     };
-    let _stopwatch =
-        Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 
     let current_info = match account_info_cache.get(account_id).await? {
         Some(info) => info,
@@ -534,5 +531,6 @@ pub async fn get(
         }
     };
 
+    tracing::info!(account_id = account_id, elapsed = %start_instant.elapsed());
     Ok(Response::Html(Html(markup.into_string())))
 }
