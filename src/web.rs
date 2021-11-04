@@ -20,10 +20,10 @@ mod result;
 mod routes;
 
 /// Run the web app.
+#[tracing::instrument(skip(opts), fields(host = opts.host.as_str(), port = opts.port), err)]
 pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
-    log::info!("Listening on {}:{}.", opts.host, opts.port);
     let api = WargamingApi::new(&opts.connections.application_id)?;
     let database = crate::database::open(
         &opts.connections.internal.database_uri,
@@ -69,10 +69,18 @@ pub async fn run(opts: WebOpts) -> crate::Result {
 fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::status::Custom<()> {
     match status.class() {
         StatusClass::ClientError => {
-            log::warn!("{} {}: {}", request.method(), request.uri(), status);
+            tracing::warn!(
+                method = %request.method(),
+                uri = %request.uri(),
+                status = status.code,
+            );
         }
         StatusClass::ServerError => {
-            log::error!("{} {}: {}", request.method(), request.uri(), status);
+            tracing::error!(
+                method = %request.method(),
+                uri = %request.uri(),
+                status = status.code,
+            );
         }
         _ => {}
     }

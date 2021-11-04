@@ -30,6 +30,7 @@ use crate::web::TrackingCode;
 
 pub mod partials;
 
+#[tracing::instrument(skip_all, err, fields(account_id = account_id, period = period.as_deref()))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
     account_id: i32,
@@ -45,7 +46,6 @@ pub async fn get(
         Ok(period) => period,
         Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
     };
-    log::info!("GET #{} within {:?}.", account_id, period);
     let _stopwatch =
         Stopwatch::new(format!("Done #{} within {:?}", account_id, period)).level(Level::Info);
 

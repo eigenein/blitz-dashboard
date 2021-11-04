@@ -51,7 +51,7 @@ async fn main() -> crate::Result {
 }
 
 async fn run_subcommand(opts: Opts) -> crate::Result {
-    let _stopwatch = Stopwatch::new("The subcommand has finished").level(Level::Info);
+    let _stopwatch = Stopwatch::new("finished").level(Level::Info);
     match opts.subcommand {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,

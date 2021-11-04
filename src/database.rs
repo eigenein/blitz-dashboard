@@ -15,8 +15,9 @@ use crate::models::{
 };
 
 /// Open and initialize the database.
+#[tracing::instrument(skip(uri), err)]
 pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
-    log::info!("Connecting to the database…");
+    log::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
     options.log_statements(LevelFilter::Trace);
     options.log_slow_statements(LevelFilter::Warn, StdDuration::from_secs(1));
@@ -26,14 +27,14 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
         .context("failed to connect")?;
 
     if initialize_schema {
-        log::info!("Initializing the database schema…");
+        log::info!("initializing the schema…");
         inner
             .execute(include_str!("database/script.sql"))
             .await
             .context("failed to run the script")?;
     }
 
-    log::info!("The database is ready.");
+    tracing::info!("ready");
     Ok(inner)
 }
 

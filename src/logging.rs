@@ -11,18 +11,22 @@ pub fn init(max_level: LevelFilter) -> anyhow::Result<()> {
     Ok(())
 }
 
+const PREFIX: &str = "blitz_dashboard::";
+const PREFIX_LEN: usize = PREFIX.len();
+
 struct JournaldLogger;
 
 impl Log for JournaldLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.target().starts_with("blitz_dashboard")
+        metadata.target().starts_with(PREFIX)
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             eprintln!(
-                "{}{}\u{001b}[0m",
+                "{} ({}) {}\u{001b}[0m",
                 convert_level_to_prefix(record.level()),
+                &record.target()[PREFIX_LEN..],
                 record.args(),
             );
         }
@@ -35,11 +39,11 @@ impl Log for JournaldLogger {
 
 fn convert_level_to_prefix(level: Level) -> &'static str {
     match level {
-        Level::Trace => "<7>[T] ",
-        Level::Debug => "<6>[D] ",
-        Level::Info => "<5>\u{001b}[32m[I] ",
-        Level::Warn => "<4>\u{001b}[33;1m[W] ",
-        Level::Error => "<3>\u{001b}[31;1m[E] ",
+        Level::Trace => "<7>[T]",
+        Level::Debug => "<6>[D]",
+        Level::Info => "<5>\u{001b}[32m[I]",
+        Level::Warn => "<4>\u{001b}[33;1m[W]",
+        Level::Error => "<3>\u{001b}[31;1m[E]",
     }
 }
 
