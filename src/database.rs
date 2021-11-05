@@ -20,7 +20,7 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
     options.log_statements(LevelFilter::Trace);
-    options.log_slow_statements(LevelFilter::Warn, StdDuration::from_secs(1));
+    options.log_slow_statements(LevelFilter::Warn, StdDuration::from_millis(500));
     let inner = PgPoolOptions::new()
         .connect_with(options)
         .await
