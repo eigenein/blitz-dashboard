@@ -12,6 +12,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
+use futures::StreamExt;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
@@ -22,7 +23,7 @@ use math::{initialize_factors, predict_win_rate};
 use crate::helpers::format_duration;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
-use crate::trainer::learning_rate::LearningRate;
+use crate::trainer::learning_rate::learning_rates;
 use crate::trainer::math::sgd;
 use crate::{DateTime, Vector};
 
@@ -46,11 +47,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let time_span = Duration::from_std(opts.time_span)?;
-    let learning_rate = LearningRate::new(
+    let mut learning_rates = Box::pin(learning_rates(
         opts.learning_rate,
         opts.learning_rate_decay,
         opts.minimal_learning_rate,
-    );
+    ));
 
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
@@ -67,7 +68,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut modified_account_ids = HashSet::default();
 
     tracing::info!("running…");
-    for learning_rate in learning_rate {
+    while let Some(learning_rate) = learning_rates.next().await {
         let start_instant = Instant::now();
 
         let mut train_error = error::Error::default();
