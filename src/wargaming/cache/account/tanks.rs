@@ -51,7 +51,7 @@ impl AccountTanksCache {
             tanks: merge_tanks(account_id, statistics, achievements),
         };
         let blob = compress_to_vec(rmp_serde::to_vec(&entry)?, 1).await?;
-        log::debug!("Caching account #{} tanks: {} B.", account_id, blob.len());
+        tracing::debug!(account_id = account_id, size = blob.len(), "set cache");
         redis.set_ex(&cache_key, blob, Self::TTL_SECS).await?;
         Ok(entry.tanks)
     }

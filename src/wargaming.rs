@@ -14,7 +14,7 @@ use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 
 use crate::backoff::Backoff;
-use crate::helpers::format_duration;
+use crate::helpers::{format_duration, format_elapsed};
 use crate::models;
 use crate::wargaming::response::Response;
 use crate::StdDuration;
@@ -133,8 +133,9 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
+    #[tracing::instrument(err, skip_all)]
     pub async fn get_tankopedia(&self) -> crate::Result<Tankopedia> {
-        log::info!("Retrieving the tankopedia…");
+        tracing::info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
             &[("application_id", self.application_id.as_str())],
@@ -205,17 +206,21 @@ impl WargamingApi {
         }
     }
 
+    #[tracing::instrument(skip_all, err, level = "debug")]
     async fn call_once<T: DeserializeOwned>(
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        log::debug!("Get #{} {}", request_id, url);
+        tracing::debug!(request_id = request_id, "get");
 
         let start_instant = Instant::now();
         let result = self.client.get(url).send().await;
-        let elapsed = Instant::now() - start_instant;
-        log::debug!("Done #{} in {:?}", request_id, elapsed);
+        tracing::debug!(
+            request_id = request_id,
+            elapsed = format_elapsed(&start_instant).as_str(),
+            "done",
+        );
 
         if let Err(error) = &result {
             if error.is_timeout() {

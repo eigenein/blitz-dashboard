@@ -1,13 +1,14 @@
 #![warn(clippy::all)]
 
 pub use std::time::Duration as StdDuration;
+use std::time::Instant;
 
 use itertools::Itertools;
-use log::{Level, LevelFilter};
+use log::LevelFilter;
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
 
-use crate::metrics::Stopwatch;
+use crate::helpers::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
 mod backoff;
@@ -35,11 +36,12 @@ type Vector = Vec<f64>;
 type DateTime = chrono::DateTime<chrono::Utc>;
 
 #[tokio::main]
+#[tracing::instrument(err)]
 async fn main() -> crate::Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity)?;
     log::info!("{} {}", CRATE_NAME, CRATE_VERSION);
-    log::info!("Started with: {}", std::env::args().skip(1).join(" "));
+    log::info!("started with: {}", std::env::args().skip(1).join(" "));
     let _sentry_guard = init_sentry(&opts);
 
     let result = run_subcommand(opts).await;
@@ -49,15 +51,21 @@ async fn main() -> crate::Result {
     result
 }
 
+#[tracing::instrument(err, skip_all)]
 async fn run_subcommand(opts: Opts) -> crate::Result {
-    let _stopwatch = Stopwatch::new("finished").level(Level::Info);
-    match opts.subcommand {
+    let start_instant = Instant::now();
+    let result = match opts.subcommand {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Train(opts) => trainer::run(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
-    }
+    };
+    tracing::info!(
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "finished",
+    );
+    result
 }
 
 /// Initialize Sentry.

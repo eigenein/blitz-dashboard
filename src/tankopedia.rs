@@ -43,6 +43,7 @@ fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
 }
 
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
+#[tracing::instrument(err, skip_all)]
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
@@ -62,7 +63,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     let mut vehicles: BTreeMap<String, Vehicle> =
         serde_json::from_value(serde_json::to_value(&tankopedia)?)?;
     insert_missing_vehicles(&mut vehicles)?;
-    log::info!("{} vehicles.", vehicles.len());
+    tracing::info!(n_vehicles = vehicles.len(), "finished");
 
     let mut file = fs::File::create(
         Path::new(file!())
