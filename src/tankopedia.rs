@@ -21,6 +21,7 @@ pub fn get_vehicle(tank_id: i32) -> Vehicle {
 /// Some vehicles are just copies of another vehicles.
 /// Maps a tank ID to its original vehicle.
 #[must_use]
+#[inline]
 pub fn remap_tank_id(tank_id: i32) -> i32 {
     match tank_id {
         64273 => 55313, // 8,8 cm Pak 43 Jagdtiger

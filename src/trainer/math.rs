@@ -32,6 +32,7 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
 
 /// Adjusts the latent factors.
 /// See: https://sifter.org/~simon/journal/20061211.html.
+#[inline]
 pub fn sgd(
     x: &mut [f64],
     y: &mut [f64],
