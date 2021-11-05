@@ -339,6 +339,7 @@ pub async fn get_account_factors(
     }
 }
 
+#[inline]
 fn set_account_factors(
     pipeline: &mut Pipeline,
     account_id: i32,
