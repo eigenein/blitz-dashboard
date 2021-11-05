@@ -3829,6 +3829,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         nation: Nation::Other,
         type_: TankType::Light,
     },
+    8833_i32 => Vehicle {
+        tank_id: 8833,
+        name: Cow::Borrowed("Spark"),
+        tier: 6,
+        is_premium: true,
+        nation: Nation::Europe,
+        type_: TankType::Medium,
+    },
     8961_i32 => Vehicle {
         tank_id: 8961,
         name: Cow::Borrowed("КВ-13"),

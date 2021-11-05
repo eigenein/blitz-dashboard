@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -34100,9 +34100,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34181,8 +34181,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -48003,8 +48003,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          5169,
-          7729
+          7729,
+          5169
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -84460,6 +84460,167 @@
       34163
     ],
     "type": "lightTank"
+  },
+  "8833": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 50,
+          "rear": 35,
+          "sides": 40
+        },
+        "turret": {
+          "front": 50,
+          "rear": 35,
+          "sides": 35
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Škoda V12 B",
+        "power": 350,
+        "tier": 5,
+        "weight": 510
+      },
+      "engine_id": 13701,
+      "firepower": 42,
+      "gun": {
+        "aim_time": 4.86,
+        "caliber": 75,
+        "clip_capacity": 3,
+        "clip_reload_time": 1.0,
+        "dispersion": 0.36,
+        "fire_rate": 10.59,
+        "move_down_arc": 10,
+        "move_up_arc": 20,
+        "name": "75 mm Škoda A18 B",
+        "reload_time": 15.0,
+        "tier": 6,
+        "traverse_speed": 40.0,
+        "weight": 1300
+      },
+      "gun_id": 12932,
+      "hp": 930,
+      "hull_hp": 756,
+      "hull_weight": 13400,
+      "is_default": true,
+      "maneuverability": 56,
+      "max_ammo": 90,
+      "max_weight": 28000,
+      "profile_id": "12932-13443-13698-13701",
+      "protection": 22,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 132,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 135,
+          "penetration": 185,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 175,
+          "penetration": 38,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 55,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 60,
+      "suspension": {
+        "load_limit": 28000,
+        "name": "Spark",
+        "tier": 6,
+        "traverse_speed": 44,
+        "weight": 4000
+      },
+      "suspension_id": 13698,
+      "turret": {
+        "hp": 174,
+        "name": "Spark",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 36,
+        "view_range": 240,
+        "weight": 3500
+      },
+      "turret_id": 13443,
+      "weight": 22960
+    },
+    "description": "Средний танк по классу, чемпион по способностям. Этот сияющий красавец, созданный на основе Škoda T 25, сохранил и приумножил его лучшие качества.",
+    "engines": [
+      13701
+    ],
+    "guns": [
+      12932
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Cz08_T-25BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Cz08_T-25BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "12932": {
+        "is_default": true,
+        "module_id": 12932,
+        "name": "75 mm Škoda A18 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "13443": {
+        "is_default": true,
+        "module_id": 13443,
+        "name": "Spark",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "13698": {
+        "is_default": true,
+        "module_id": 13698,
+        "name": "Spark",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "13701": {
+        "is_default": true,
+        "module_id": 13701,
+        "name": "Škoda V12 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Spark",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      13698
+    ],
+    "tank_id": 8833,
+    "tier": 6,
+    "turrets": [
+      13443
+    ],
+    "type": "mediumTank"
   },
   "8961": {
     "cost": {
