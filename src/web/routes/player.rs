@@ -54,10 +54,20 @@ pub async fn get(
     };
     set_user(&current_info.nickname);
     insert_account_if_not_exists(database, account_id).await?;
+    tracing::info!(
+        account_id = account_id,
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "account ready",
+    );
 
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
         .await?;
+    tracing::info!(
+        account_id = account_id,
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "tanks ready",
+    );
     let tanks_delta = match period {
         Some(period) => {
             let before = Utc::now() - Duration::from_std(period)?;
@@ -533,9 +543,11 @@ pub async fn get(
         }
     };
 
+    let result = Ok(Response::Html(Html(markup.into_string())));
     tracing::info!(
         account_id = account_id,
         elapsed = format_elapsed(&start_instant).as_str(),
+        "finished",
     );
-    Ok(Response::Html(Html(markup.into_string())))
+    result
 }
