@@ -5,7 +5,7 @@ pub fn norm(x: &[f64]) -> f64 {
 
 #[must_use]
 pub fn dot(x: &[f64], y: &[f64]) -> f64 {
-    x.iter().zip(y).map(|(xi, yi)| xi * yi).sum()
+    x.iter().zip(y).fold(0.0, |dot, (xi, yi)| dot + xi * yi)
 }
 
 #[must_use]
