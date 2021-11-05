@@ -162,7 +162,7 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    #[tracing::instrument(level = "debug", skip(self))]
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
         let mut backoff = Backoff::new(100, 25600);
         loop {

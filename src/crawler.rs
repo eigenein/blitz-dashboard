@@ -180,19 +180,20 @@ impl Crawler {
         metrics.n_accounts += 1;
     }
 
+    #[tracing::instrument(skip_all)]
     async fn crawl_account(
         &self,
         account: BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result {
-        let _stopwatch = Stopwatch::new(format!("Account #{} crawled", account.id));
+        let _stopwatch = Stopwatch::new(format!("account #{} crawled", account.id));
 
         if new_info.base.last_battle_time == account.last_battle_time {
-            log::trace!("#{}: last battle time is not changed.", account.id);
+            tracing::trace!(account_id = account.id, "last battle time unchanged");
             return Ok(());
         }
 
-        log::debug!("Crawling account #{}…", account.id);
+        tracing::debug!(account_id = account.id, "crawling…");
         let statistics = self
             .get_updated_tanks_statistics(account.id, account.last_battle_time)
             .await?;
