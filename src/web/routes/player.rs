@@ -93,6 +93,12 @@ pub async fn get(
     let account_factors = get_account_factors(&mut redis, account_id).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
+    tracing::info!(
+        account_id = account_id,
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "model ready",
+    );
+
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
             div.container {
