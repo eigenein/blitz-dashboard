@@ -84,7 +84,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
     let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
 
-    log::info!("Running…");
+    tracing::info!("running…");
     tokio::spawn(log_metrics(request_counter, metrics, opts.log_interval));
     let fast_run = fast_crawler.run(get_batch_stream(
         database.clone(),

@@ -13,12 +13,13 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
-use redis::streams::StreamMaxlen;
+use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
+use crate::helpers::format_duration;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::learning_rate::LearningRate;
@@ -32,12 +33,14 @@ pub mod math;
 
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
+const REFRESH_BATTLES_MAX_COUNT: usize = 500000;
 
 type BuildHasher = BuildHasherDefault<rustc_hash::FxHasher>;
 type LruCache<K, V> = lru::LruCache<K, V, BuildHasher>;
 type HashMap<K, V> = std::collections::HashMap<K, V, BuildHasher>;
 type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
 
+#[tracing::instrument(err, skip_all, fields(n_factors = opts.n_factors, regularization = opts.regularization))]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
@@ -52,20 +55,18 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    log::info!("Loading battles…");
     let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
-    log::info!("Loaded {} battles, last ID: {}.", battles.len(), pointer);
+    tracing::info!(
+        n_battles = battles.len(),
+        pointer = pointer.as_str(),
+        "loaded",
+    );
 
     let mut vehicle_cache = HashMap::default();
     let mut account_cache = LruCache::with_hasher(opts.account_cache_size, BuildHasher::default());
     let mut modified_account_ids = HashSet::default();
 
-    log::info!(
-        "Model: {} factors ⨯ {} regularization.",
-        opts.n_factors,
-        opts.regularization,
-    );
-    log::info!("Running…");
+    tracing::info!("running…");
     for learning_rate in learning_rate {
         let start_instant = Instant::now();
 
@@ -147,11 +148,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
             .fold(0.0, f64::max);
 
-        let new_pointer = refresh_battles(&mut redis, pointer, &mut battles, time_span).await?;
-        pointer = new_pointer;
+        if let Some((_, new_pointer)) =
+            refresh_battles(&mut redis, &pointer, &mut battles, time_span).await?
+        {
+            pointer = new_pointer;
+        }
 
         log::info!(
-            "Err: {:>8.6} | test: {:>8.6} {:>+5.2}% | LR: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | LR: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
@@ -190,48 +194,52 @@ pub async fn push_battles(
     Ok(())
 }
 
+#[tracing::instrument(err, skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
 async fn load_battles(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
 ) -> crate::Result<(String, Vec<(DateTime, Battle)>)> {
-    let mut queue = Vec::new();
-    let start = (Utc::now() - time_span).timestamp_millis().to_string();
-    let reply: Value = redis.xrevrange(TRAIN_STREAM_KEY, "+", start).await?;
-    log::info!("Almost done…");
-    let entries = parse_stream(reply)?;
-    let last_id = entries
-        .first()
-        .ok_or_else(|| anyhow!("the training set is empty, try a longer time span"))?
-        .0
-        .clone();
-    for (id, battle) in entries {
-        queue.push((parse_entry_id(&id)?, battle));
+    let mut battles = Vec::new();
+    let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
+
+    while match refresh_battles(redis, &pointer, &mut battles, time_span).await? {
+        Some((n_battles, new_pointer)) => {
+            tracing::info!(n_battles = n_battles, pointer = new_pointer.as_str());
+            pointer = new_pointer;
+            n_battles >= REFRESH_BATTLES_MAX_COUNT
+        }
+        None => false,
+    } {}
+
+    match battles.is_empty() {
+        false => Ok((pointer, battles)),
+        true => Err(anyhow!("training set is empty, try a longer time span")),
     }
-    Ok((last_id, queue))
 }
 
-/// Fetches the recent battles and throws away the oldest ones.
+#[tracing::instrument(level = "debug", skip(redis, queue, time_span))]
 async fn refresh_battles(
     redis: &mut MultiplexedConnection,
-    last_id: String,
+    last_id: &str,
     queue: &mut Vec<(DateTime, Battle)>,
     time_span: Duration,
-) -> crate::Result<String> {
+) -> crate::Result<Option<(usize, String)>> {
     // Remove the expired battles.
     let expire_time = Utc::now() - time_span;
     queue.retain(|(timestamp, _)| timestamp > &expire_time);
 
     // Fetch new battles.
-    let reply: Value = redis.xread(&[TRAIN_STREAM_KEY], &[&last_id]).await?;
+    let options = StreamReadOptions::default().count(REFRESH_BATTLES_MAX_COUNT);
+    let reply: Value = redis
+        .xread_options(&[TRAIN_STREAM_KEY], &[&last_id], &options)
+        .await?;
     let entries = parse_multiple_streams(reply)?;
-    let last_id = match entries.last() {
-        Some((id, _)) => id.clone(),
-        None => last_id,
-    };
+    let result = entries.last().map(|(id, _)| (entries.len(), id.clone()));
     for (id, battle) in entries {
         queue.push((parse_entry_id(&id)?, battle));
     }
-    Ok(last_id)
+    tracing::debug!(n_battles = result.as_ref().map(|result| result.0));
+    Ok(result)
 }
 
 fn parse_entry_id(id: &str) -> crate::Result<DateTime> {

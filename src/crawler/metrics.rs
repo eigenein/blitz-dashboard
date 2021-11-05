@@ -68,7 +68,7 @@ pub async fn log_metrics(
             let mut metrics = metrics.lock().await;
             let (lag_p50, lag_p90) = metrics.lags();
             log::info!(
-                "Sub-crawler #{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
+                "#{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
                 i,
                 format_duration(lag_p50).to_string(),
                 format_duration(lag_p90).to_string(),

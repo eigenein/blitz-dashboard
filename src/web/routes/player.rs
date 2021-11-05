@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use chrono::{Duration, TimeZone, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
@@ -11,7 +13,7 @@ use sqlx::PgPool;
 use partials::*;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
-use crate::helpers::{from_days, from_months, Instant};
+use crate::helpers::{format_elapsed, from_days, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics};
@@ -531,6 +533,9 @@ pub async fn get(
         }
     };
 
-    tracing::info!(account_id = account_id, elapsed = %start_instant.elapsed());
+    tracing::info!(
+        account_id = account_id,
+        elapsed = format_elapsed(&start_instant).as_str(),
+    );
     Ok(Response::Html(Html(markup.into_string())))
 }

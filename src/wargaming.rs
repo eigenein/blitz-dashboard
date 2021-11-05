@@ -14,6 +14,7 @@ use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 
 use crate::backoff::Backoff;
+use crate::helpers::format_duration;
 use crate::models;
 use crate::wargaming::response::Response;
 use crate::StdDuration;
@@ -161,47 +162,45 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
+    #[tracing::instrument(level = "debug", skip(self))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
         let mut backoff = Backoff::new(100, 25600);
         loop {
             match self.call_once(url.clone()).await {
-                Ok(response) => {
-                    match response {
-                        Response::Data { data } => {
-                            // 🎉 The request has simply succeeded.
-                            return Ok(data);
-                        }
-                        Response::Error { error } => match error.message.as_str() {
-                            "REQUEST_LIMIT_EXCEEDED" => {
-                                // ♻️ The HTTP request has succeeded, but we've reached the RPS limit.
-                                log::warn!("Exceeded the request limit.");
-                                capture_message("Exceeded the API RPS limit", Level::Warning);
-                            }
-                            "SOURCE_NOT_AVAILABLE" => {
-                                // ♻️ The HTTP request has succeeded, but the API has an issue.
-                                log::warn!("API source is unavailable.");
-                                capture_message("API source is unavailable", Level::Warning);
+                Ok(response) => match response {
+                    Response::Data { data } => {
+                        return Ok(data);
+                    }
+                    Response::Error { error } => {
+                        let message = error.message.as_str();
+                        match message {
+                            "REQUEST_LIMIT_EXCEEDED" | "SOURCE_NOT_AVAILABLE" => {
+                                tracing::warn!(message = message);
+                                capture_message(message, Level::Warning);
                             }
                             _ => {
-                                // 🥅 The HTTP request has succeeded, but the API has returned an unexpected error.
                                 return Err(anyhow!("{}/{}", error.code, error.message));
                             }
-                        },
+                        }
                     }
-                }
+                },
                 Err(error) if error.is_timeout() => {
                     // ♻️ The HTTP request has timed out. No action needed, retrying…
                 }
                 Err(error) => {
                     // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
-                    if backoff.attempts() >= 10 {
+                    if backoff.n_attempts() >= 10 {
                         // 🥅 Don't know what to do.
                         return Err(error).context("failed to call the Wargaming.net API");
                     }
                 }
             };
             let sleep_duration = backoff.next();
-            log::warn!("Retrying in {:?}…", sleep_duration);
+            tracing::warn!(
+                sleep_duration = format_duration(sleep_duration).as_str(),
+                n_attempts = backoff.n_attempts(),
+                "retrying…",
+            );
             tokio::time::sleep(sleep_duration).await;
         }
     }

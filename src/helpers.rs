@@ -1,9 +1,7 @@
-use std::fmt::{Display, Formatter};
-use std::time::Duration as StdDuration;
+use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::anyhow;
 use chrono::Duration;
-use humantime::format_duration;
 use serde::{Deserialize, Serializer};
 use tokio::task::spawn_blocking;
 
@@ -28,26 +26,6 @@ pub const fn from_years(years: u64) -> StdDuration {
     StdDuration::from_secs(years * 31557600)
 }
 
-pub struct Instant(std::time::Instant);
-
-impl Instant {
-    pub fn now() -> Self {
-        Self(std::time::Instant::now())
-    }
-
-    pub fn elapsed(&self) -> Elapsed {
-        Elapsed(self.0.elapsed())
-    }
-}
-
-pub struct Elapsed(StdDuration);
-
-impl Display for Elapsed {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(&format_duration(self.0).to_string())
-    }
-}
-
 pub async fn compress_to_vec(input: Vec<u8>, level: u8) -> crate::Result<Vec<u8>> {
     Ok(spawn_blocking(move || miniz_oxide::deflate::compress_to_vec(&input, level)).await?)
 }
@@ -69,4 +47,12 @@ pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Duration, D::Error> {
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
+}
+
+pub fn format_duration(duration: StdDuration) -> String {
+    humantime::format_duration(duration).to_string()
+}
+
+pub fn format_elapsed(instant: &Instant) -> String {
+    format_duration(instant.elapsed())
 }
