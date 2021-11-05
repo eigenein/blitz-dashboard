@@ -205,7 +205,7 @@ impl Crawler {
             self.insert_missing_vehicles(&mut transaction, &tanks)
                 .await?;
 
-            log::debug!("Inserted {} tanks for #{}.", tanks.len(), account.id);
+            tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "inserted");
             self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
                 .await?;
 
@@ -218,7 +218,7 @@ impl Crawler {
                 }
             }
         } else {
-            log::trace!("#{}: tanks are not updated.", account.id);
+            tracing::trace!(account_id = account.id, "no updated tanks");
         }
 
         replace_account(&mut transaction, new_info.base).await?;

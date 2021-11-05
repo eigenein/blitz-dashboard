@@ -27,6 +27,7 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
+    #[tracing::instrument(err, skip_all)]
     pub async fn get(
         &self,
         account_id: i32,
@@ -38,7 +39,7 @@ impl AccountTanksCache {
         if let Some(blob) = redis.get::<_, Option<Vec<u8>>>(&cache_key).await? {
             let entry: Entry = rmp_serde::from_read_ref(&decompress_to_vec(blob).await?)?;
             if entry.last_battle_time == last_battle_time {
-                log::debug!("Cache hit on account #{} tanks.", account_id);
+                tracing::debug!(account_id = account_id, "cache hit");
                 return Ok(entry.tanks);
             }
         }
