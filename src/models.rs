@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::iter::Sum;
 use std::ops::Sub;
 
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
@@ -49,6 +49,25 @@ pub struct AccountInfo {
     pub created_at: DateTime<Utc>,
 
     pub statistics: AccountInfoStatistics,
+}
+
+impl AccountInfo {
+    pub fn is_active(&self) -> bool {
+        self.base.last_battle_time > (Utc::now() - Duration::days(365))
+    }
+
+    pub fn has_recently_played(&self) -> bool {
+        self.base.last_battle_time > (Utc::now() - Duration::hours(1))
+    }
+
+    pub fn is_account_birthday(&self) -> bool {
+        let today = Utc::today();
+        today.day() == self.created_at.day() && today.month() == self.created_at.month()
+    }
+
+    pub fn is_prerelease_account(&self) -> bool {
+        self.created_at.date() < Utc.ymd(2014, 6, 26)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -293,16 +312,6 @@ impl Sub for Tank {
             statistics: self.statistics - rhs.statistics,
             achievements: self.achievements - rhs.achievements,
         }
-    }
-}
-
-impl AccountInfo {
-    pub fn is_active(&self) -> bool {
-        self.base.last_battle_time > (Utc::now() - Duration::days(365))
-    }
-
-    pub fn has_recently_played(&self) -> bool {
-        self.base.last_battle_time > (Utc::now() - Duration::hours(1))
     }
 }
 

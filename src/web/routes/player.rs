@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use humantime::parse_duration;
 use maud::{html, PreEscaped, DOCTYPE};
@@ -86,8 +86,6 @@ pub async fn get(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
     );
-    let is_prerelease_account = current_info.created_at.date() < Utc.ymd(2014, 6, 26);
-    let is_account_birthday = current_info.created_at.date() == Utc::today();
 
     let mut redis = MultiplexedConnection::clone(redis);
     let account_factors = get_account_factors(&mut redis, account_id).await?;
@@ -127,7 +125,7 @@ pub async fn get(
                         }
                         div.navbar-item title="Возраст аккаунта" {
                             span.icon-text {
-                                @if is_account_birthday {
+                                @if current_info.is_account_birthday() {
                                     span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
                                 } @else {
                                     span.icon { i.far.fa-calendar-alt {} }
@@ -140,7 +138,7 @@ pub async fn get(
                     }
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
-                            (account_search("", &current_info.nickname, false, is_prerelease_account))
+                            (account_search("", &current_info.nickname, false, current_info.is_prerelease_account()))
                         }
                     }
                 }
