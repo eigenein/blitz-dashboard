@@ -9,6 +9,7 @@ use rocket::response::content::Html;
 use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
+use tokio::spawn;
 
 use partials::*;
 
@@ -60,23 +61,28 @@ pub async fn get(
         "account ready",
     );
 
-    let tanks = account_tanks_cache
-        .get(current_info.base.id, current_info.base.last_battle_time)
-        .await?;
-    tracing::info!(
-        account_id = account_id,
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "tanks ready",
-    );
+    let get_tanks = {
+        let cache = AccountTanksCache::clone(account_tanks_cache);
+        spawn(async move {
+            cache
+                .get(current_info.base.id, current_info.base.last_battle_time)
+                .await
+        })
+    };
     let tanks_delta = match period {
         Some(period) => {
             let before = Utc::now() - Duration::from_std(period)?;
             let old_tank_snapshots =
                 retrieve_latest_tank_snapshots(database, account_id, &before).await?;
-            subtract_tanks(tanks, old_tank_snapshots)
+            subtract_tanks(get_tanks.await??, old_tank_snapshots)
         }
-        None => tanks,
+        None => get_tanks.await??,
     };
+    tracing::info!(
+        account_id = account_id,
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "tanks delta ready",
+    );
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()

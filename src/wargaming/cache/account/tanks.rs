@@ -7,6 +7,7 @@ use crate::helpers::{compress_to_vec, decompress_to_vec};
 use crate::models::{merge_tanks, Tank};
 use crate::wargaming::WargamingApi;
 
+#[derive(Clone)]
 pub struct AccountTanksCache {
     api: WargamingApi,
     redis: MultiplexedConnection,
