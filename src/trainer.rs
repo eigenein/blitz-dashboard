@@ -34,7 +34,7 @@ pub mod math;
 
 const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
-const REFRESH_BATTLES_MAX_COUNT: usize = 500000;
+const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
 
 #[tracing::instrument(err, skip_all, fields(n_factors = opts.n_factors, regularization = opts.regularization))]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
@@ -200,7 +200,7 @@ async fn load_battles(
 
     while match refresh_battles(redis, &pointer, &mut battles, time_span).await? {
         Some((n_battles, new_pointer)) => {
-            tracing::info!(n_battles = n_battles, pointer = new_pointer.as_str());
+            tracing::info!(n_battles = battles.len(), pointer = new_pointer.as_str());
             pointer = new_pointer;
             n_battles >= REFRESH_BATTLES_MAX_COUNT
         }
