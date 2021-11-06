@@ -59,7 +59,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     );
 
     let mut vehicle_cache = HashMap::new();
-    let mut account_cache = LruCache::new(opts.account_cache_size);
+    let mut account_cache = LruCache::unbounded();
     let mut modified_account_ids = HashSet::new();
 
     tracing::info!("running…");
@@ -135,6 +135,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             account_ttl_secs,
         )
         .await?;
+        account_cache.resize(opts.account_cache_size);
         set_all_vehicles_factors(&mut redis, &vehicle_cache).await?;
 
         let train_error = train_error.average();
@@ -360,9 +361,7 @@ async fn set_all_accounts_factors(
         set_account_factors(
             &mut pipeline,
             account_id,
-            cache.peek(&account_id).ok_or_else(|| {
-                anyhow!("#{} is dropped, the cache size is too small", account_id)
-            })?,
+            cache.peek(&account_id).unwrap(),
             ttl_secs,
         )?;
     }
