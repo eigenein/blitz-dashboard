@@ -220,6 +220,7 @@ dependencies = [
  "reqwest",
  "rmp-serde",
  "rocket",
+ "rustversion",
  "sentry",
  "serde",
  "serde_json",
