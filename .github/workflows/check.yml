@@ -15,6 +15,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get previous tag
+        id: previous_tag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
 
       - name: Set up the toolchain
         uses: actions-rs/toolchain@v1
@@ -28,7 +34,6 @@ jobs:
 
       - name: Test
         uses: actions-rs/cargo@v1
-        continue-on-error: false
         with:
           command: test
 
@@ -38,3 +43,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
+
+      - run: echo "${{ steps.previous_tag.outputs.tag }}-${{ github.sha }}"
