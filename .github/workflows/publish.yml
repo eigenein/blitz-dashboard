@@ -22,10 +22,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - name: Install Cross
-        run: cargo install --git 'https://github.com/rust-embedded/cross.git'
-        env:
-          CARGO_TARGET_DIR: ./target
+      - uses: actions-rs/install@v0.1.2
+        with:
+          crate: cross
+          version: latest
 
       - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
         run: cross build --target armv7-unknown-linux-gnueabihf --release
