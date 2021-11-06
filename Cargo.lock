@@ -167,7 +167,7 @@ dependencies = [
  "cc",
  "cfg-if",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.4.4",
  "object",
  "rustc-demangle",
 ]
@@ -212,7 +212,7 @@ dependencies = [
  "log",
  "lru",
  "maud",
- "miniz_oxide",
+ "miniz_oxide 0.5.0",
  "phf",
  "rand",
  "rand_distr",
@@ -554,7 +554,7 @@ dependencies = [
  "cfg-if",
  "crc32fast",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.4.4",
 ]
 
 [[package]]
@@ -1126,6 +1126,15 @@ checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
 dependencies = [
  "adler",
  "autocfg",
+]
+
+[[package]]
+name = "miniz_oxide"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "972e674995946bbd2a8324ad41211cb65b731177c06b5d1aee83ac114a06ebff"
+dependencies = [
+ "adler",
 ]
 
 [[package]]

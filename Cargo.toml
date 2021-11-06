@@ -18,38 +18,38 @@ debug = 1
 split-debuginfo = "unpacked"
 
 [dependencies]
-anyhow = "1.0.40"
+anyhow = "1.0.45"
 chrono-humanize = "0.2.1"
 fastrand = "1.5.0"
 hashbrown = "0.11.2"
 humantime = "2.1.0"
-itertools = "0.10.0"
+itertools = "0.10.1"
 jemallocator = "0.3.2"
 log = "0.4.14"
 lru = "0.7.0"
-maud = "0.22.2"
-miniz_oxide = "0.4.4"
+maud = "0.22.3"
+miniz_oxide = "0.5.0"
 phf = { version = "0.10.0", features = ["macros"] }
 rand = "0.8.4"
 rand_distr = "0.4.2"
 rmp-serde = "0.15.5"
 rocket = "0.5.0-rc.1"
-serde_json = "1.0.64"
-serde_qs = "0.8.4"
-structopt = { version = "0.3.22", default_features = false, features = ["color", "suggestions"] }
+serde_json = "1.0.69"
+serde_qs = "0.8.5"
+structopt = { version = "0.3.25", default_features = false, features = ["color", "suggestions"] }
 tracing = { version = "0.1.29", features = ["log-always"] }
 tracing-futures = "0.2.5"
 
 [dependencies.tokio]
-version = "1.9.0"
+version = "1.13.0"
 features = ["rt-multi-thread", "time"]
 
 [dependencies.futures]
-version = "0.3.15"
+version = "0.3.17"
 default-features = false
 
 [dependencies.reqwest]
-version = "0.11.4"
+version = "0.11.6"
 default-features = false
 features = ["rustls-tls", "gzip", "brotli", "deflate", "json"]
 
@@ -63,18 +63,18 @@ default-features = false
 features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "log"]
 
 [dependencies.serde]
-version = "1.0"
+version = "1.0.130"
 features = ["derive"]
 
 [dependencies.sqlx]
-version = "0.5.5"
+version = "0.5.9"
 default-features = false
 features = ["runtime-tokio-rustls", "postgres", "chrono"]
 
 [dependencies.redis]
-version = "0.21.0"
+version = "0.21.4"
 default-features = false
 features = ["aio", "tokio-comp", "streams"]
 
 [dev-dependencies]
-serde_json = "1.0.59"
+serde_json = "1.0.69"
