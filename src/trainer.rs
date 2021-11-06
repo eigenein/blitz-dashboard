@@ -3,9 +3,7 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::collections::hash_map::Entry;
 use std::convert::TryInto;
-use std::hash::BuildHasherDefault;
 use std::result::Result as StdResult;
 use std::str::FromStr;
 use std::time::Instant;
@@ -13,6 +11,8 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use futures::StreamExt;
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
+use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
@@ -36,11 +36,6 @@ const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const REFRESH_BATTLES_MAX_COUNT: usize = 500000;
 
-type BuildHasher = BuildHasherDefault<rustc_hash::FxHasher>;
-type LruCache<K, V> = lru::LruCache<K, V, BuildHasher>;
-type HashMap<K, V> = std::collections::HashMap<K, V, BuildHasher>;
-type HashSet<V> = std::collections::HashSet<V, BuildHasher>;
-
 #[tracing::instrument(err, skip_all, fields(n_factors = opts.n_factors, regularization = opts.regularization))]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
@@ -63,9 +58,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
-    let mut vehicle_cache = HashMap::default();
-    let mut account_cache = LruCache::with_hasher(opts.account_cache_size, BuildHasher::default());
-    let mut modified_account_ids = HashSet::default();
+    let mut vehicle_cache = HashMap::new();
+    let mut account_cache = LruCache::new(opts.account_cache_size);
+    let mut modified_account_ids = HashSet::new();
 
     tracing::info!("running…");
     while let Some(learning_rate) = learning_rates.next().await {
@@ -309,7 +304,8 @@ pub async fn get_vehicle_factors(
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
 ) -> crate::Result<HashMap<i32, Vector>> {
-    let hash_map: HashMap<i32, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
+    let hash_map: std::collections::HashMap<i32, Vec<u8>> =
+        redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
         .map(|(tank_id, value)| Ok((tank_id, rmp_serde::from_read_ref(&value)?)))
