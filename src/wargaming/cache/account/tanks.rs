@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use futures::future::try_join;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
@@ -45,8 +46,11 @@ impl AccountTanksCache {
             }
         }
 
-        let statistics = self.api.get_tanks_stats(account_id).await?;
-        let achievements = self.api.get_tanks_achievements(account_id).await?;
+        let (statistics, achievements) = {
+            let get_statistics = self.api.get_tanks_stats(account_id);
+            let get_achievements = self.api.get_tanks_achievements(account_id);
+            try_join(get_statistics, get_achievements).await?
+        };
         let entry = Entry {
             last_battle_time,
             tanks: merge_tanks(account_id, statistics, achievements),

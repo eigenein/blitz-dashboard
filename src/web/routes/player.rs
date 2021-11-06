@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
+use futures::future::try_join;
 use humantime::parse_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
@@ -9,7 +10,6 @@ use rocket::response::content::Html;
 use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
-use tokio::spawn;
 
 use partials::*;
 
@@ -61,22 +61,16 @@ pub async fn get(
         "account ready",
     );
 
-    let get_tanks = {
-        let cache = AccountTanksCache::clone(account_tanks_cache);
-        spawn(async move {
-            cache
-                .get(current_info.base.id, current_info.base.last_battle_time)
-                .await
-        })
-    };
+    let get_tanks =
+        account_tanks_cache.get(current_info.base.id, current_info.base.last_battle_time);
     let tanks_delta = match period {
         Some(period) => {
             let before = Utc::now() - Duration::from_std(period)?;
-            let old_tank_snapshots =
-                retrieve_latest_tank_snapshots(database, account_id, &before).await?;
-            subtract_tanks(get_tanks.await??, old_tank_snapshots)
+            let get_snapshots = retrieve_latest_tank_snapshots(database, account_id, &before);
+            let (tanks, old_tank_snapshots) = try_join(get_tanks, get_snapshots).await?;
+            subtract_tanks(tanks, old_tank_snapshots)
         }
-        None => get_tanks.await??,
+        None => get_tanks.await?,
     };
     tracing::info!(
         account_id = account_id,
