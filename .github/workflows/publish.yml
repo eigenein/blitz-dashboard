@@ -20,14 +20,16 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - uses: Swatinem/rust-cache@v1
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/install@v0.1.2
+      - name: Install Cross
+        uses: actions-rs/install@v0.1.2
         with:
           crate: cross
           version: latest
 
-      - name: Build blitz-dashboard.armv7-unknown-linux-gnueabihf (Raspberry Pi 2/3/4)
+      - name: Build for ARMv7 (Raspberry Pi 2/3/4)
         run: cross build --target armv7-unknown-linux-gnueabihf --release
 
       - name: Build Changelog
