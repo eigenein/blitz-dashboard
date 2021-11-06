@@ -131,7 +131,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         set_all_accounts_factors(
             &mut redis,
             &mut modified_account_ids,
-            &mut account_cache,
+            &account_cache,
             account_ttl_secs,
         )
         .await?;
@@ -353,7 +353,7 @@ fn set_account_factors(
 async fn set_all_accounts_factors(
     redis: &mut MultiplexedConnection,
     account_ids: &mut HashSet<i32>,
-    cache: &mut LruCache<i32, Vector>,
+    cache: &LruCache<i32, Vector>,
     ttl_secs: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
