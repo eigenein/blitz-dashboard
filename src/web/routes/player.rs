@@ -10,6 +10,7 @@ use rocket::response::content::Html;
 use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
+use tokio::task::spawn_blocking;
 
 use partials::*;
 
@@ -68,7 +69,7 @@ pub async fn get(
             let before = Utc::now() - Duration::from_std(period)?;
             let get_snapshots = retrieve_latest_tank_snapshots(database, account_id, &before);
             let (tanks, old_tank_snapshots) = try_join(get_tanks, get_snapshots).await?;
-            subtract_tanks(tanks, old_tank_snapshots)
+            spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await?
         }
         None => get_tanks.await?,
     };
