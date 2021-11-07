@@ -67,11 +67,9 @@ pub async fn get(
             (tracking_code.0)
 
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
-                div.container {
+                div.container."mx-6" {
                     div.navbar-brand {
-                        div.navbar-item {
-                            div.buttons { (home_button()) }
-                        }
+                        (home_button())
                         div.navbar-item {
                             (vehicle_title(&vehicle))
                         }

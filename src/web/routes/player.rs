@@ -101,11 +101,9 @@ pub async fn get(
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-            div.container {
+            div.container."mx-6" {
                 div.navbar-brand {
-                    div.navbar-item {
-                        div.buttons { (home_button()) }
-                    }
+                    (home_button())
                     div.navbar-item title="Последний бой" {
                         span.icon-text.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" }) {
                             span.icon { i.fas.fa-bullseye {} }
