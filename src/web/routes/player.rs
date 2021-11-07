@@ -17,7 +17,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::{format_elapsed, from_days, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::{subtract_tanks, Statistics};
+use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_win_rate;
 use crate::trainer::{get_account_factors, get_all_vehicle_factors};
@@ -67,10 +67,7 @@ pub async fn get(
     let tanks_delta = match period {
         Some(period) => {
             let before = Utc::now() - Duration::from_std(period)?;
-            let tank_ids: Vec<i32> = tanks
-                .iter()
-                .map(|tank| tank.statistics.base.tank_id)
-                .collect();
+            let tank_ids: Vec<i32> = tanks.iter().map(Tank::tank_id).collect();
             let old_tank_snapshots =
                 retrieve_latest_tank_snapshots(database, account_id, &tank_ids, &before).await?;
             spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await?

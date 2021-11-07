@@ -1,12 +1,12 @@
-use chrono::{DateTime, Utc};
 use futures::future::try_join;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
 use crate::helpers::{compress_to_vec, decompress_to_vec};
-use crate::models::{merge_tanks, Tank};
+use crate::models::{merge_tanks, Tank, TankAchievements, TankStatistics};
 use crate::wargaming::WargamingApi;
+use crate::DateTime;
 
 #[derive(Clone)]
 pub struct AccountTanksCache {
@@ -19,7 +19,21 @@ struct Entry {
     tanks: Vec<Tank>,
 
     #[serde(with = "chrono::serde::ts_seconds")]
-    last_battle_time: DateTime<Utc>,
+    last_battle_time: DateTime,
+}
+
+impl Entry {
+    pub fn new(
+        account_id: i32,
+        last_battle_time: DateTime,
+        statistics: Vec<TankStatistics>,
+        achievements: Vec<TankAchievements>,
+    ) -> Self {
+        Self {
+            last_battle_time,
+            tanks: merge_tanks(account_id, statistics, achievements),
+        }
+    }
 }
 
 impl AccountTanksCache {
@@ -33,7 +47,7 @@ impl AccountTanksCache {
     pub async fn get(
         &self,
         account_id: i32,
-        last_battle_time: DateTime<Utc>,
+        last_battle_time: DateTime,
     ) -> crate::Result<Vec<Tank>> {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);
@@ -51,10 +65,7 @@ impl AccountTanksCache {
             let get_achievements = self.api.get_tanks_achievements(account_id);
             try_join(get_statistics, get_achievements).await?
         };
-        let entry = Entry {
-            last_battle_time,
-            tanks: merge_tanks(account_id, statistics, achievements),
-        };
+        let entry = Entry::new(account_id, last_battle_time, statistics, achievements);
         let blob = compress_to_vec(rmp_serde::to_vec(&entry)?, 1).await?;
         tracing::debug!(account_id = account_id, size = blob.len(), "set cache");
         redis.set_ex(&cache_key, blob, Self::TTL_SECS).await?;
