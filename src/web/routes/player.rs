@@ -5,7 +5,6 @@ use chrono_humanize::Tense;
 use humantime::parse_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
-use rocket::response::content::Html;
 use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
@@ -26,6 +25,7 @@ use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
     account_search, datetime, footer, headers, home_button, icon_text, render_f64,
 };
+use crate::web::responders::CachedHtml;
 use crate::web::response::Response;
 use crate::web::TrackingCode;
 
@@ -549,7 +549,10 @@ pub async fn get(
         }
     };
 
-    let result = Ok(Response::Html(Html(markup.into_string())));
+    let result = Ok(Response::CachedHtml(CachedHtml(
+        "max-age=60, stale-while-revalidate=3600",
+        markup.into_string(),
+    )));
     tracing::info!(
         account_id = account_id,
         elapsed = format_elapsed(&start_instant).as_str(),

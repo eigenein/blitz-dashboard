@@ -1,14 +1,13 @@
 use maud::{html, DOCTYPE};
-use rocket::response::content;
-use rocket::response::content::Html;
 use rocket::State;
 
 use crate::logging::clear_user;
 use crate::web::partials::{account_search, headers};
+use crate::web::responders::CachedHtml;
 use crate::web::TrackingCode;
 
 #[rocket::get("/")]
-pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Result<Html<String>> {
+pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Result<CachedHtml> {
     clear_user();
 
     let markup = html! {
@@ -62,5 +61,8 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
         }
     };
 
-    Ok(content::Html(markup.into_string()))
+    Ok(CachedHtml(
+        "max-age=604800, stale-while-revalidate=86400",
+        markup.into_string(),
+    ))
 }

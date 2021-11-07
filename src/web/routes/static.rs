@@ -1,9 +1,7 @@
-use std::io::Cursor;
-
 use rocket::get;
-use rocket::http::{ContentType, Status};
-use rocket::response::Responder;
-use rocket::{Request, Response};
+use rocket::http::ContentType;
+
+use crate::web::responders::Static;
 
 #[get("/site.webmanifest")]
 pub async fn get_site_manifest() -> Static {
@@ -65,17 +63,4 @@ pub async fn get_theme_css() -> Static {
 #[get("/robots.txt")]
 pub async fn get_robots_txt() -> Static {
     Static(ContentType::Text, include_bytes!("static/robots.txt"))
-}
-
-pub struct Static(ContentType, &'static [u8]);
-
-#[rocket::async_trait]
-impl<'r> Responder<'r, 'static> for Static {
-    fn respond_to(self, _request: &'r Request) -> Result<Response<'static>, Status> {
-        Response::build()
-            .header(self.0)
-            .sized_body(self.1.len(), Cursor::new(self.1))
-            .raw_header("Cache-Control", "public, max-age=31536000, immutable")
-            .ok()
-    }
 }
