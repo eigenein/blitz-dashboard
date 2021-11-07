@@ -101,7 +101,7 @@ pub async fn get(
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-            div.container."mx-6" {
+            div.container {
                 div.navbar-brand {
                     (home_button())
                     div.navbar-item title="Последний бой" {
