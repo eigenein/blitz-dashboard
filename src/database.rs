@@ -41,18 +41,19 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
 pub async fn retrieve_latest_tank_snapshots(
     connection: &PgPool,
     account_id: i32,
+    tank_ids: &[i32],
     before: &DateTime<Utc>,
 ) -> crate::Result<HashMap<i32, Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT snapshot.*
-        FROM vehicles vehicle
+        FROM (SELECT unnest($2) AS tank_id) vehicle
         CROSS JOIN LATERAL (
             SELECT * FROM tank_snapshots snapshot
             WHERE
                 snapshot.account_id = $1
                 AND snapshot.tank_id = vehicle.tank_id
-                AND snapshot.last_battle_time <= $2
+                AND snapshot.last_battle_time <= $3
             ORDER BY snapshot.last_battle_time DESC
             LIMIT 1
         ) snapshot
@@ -66,6 +67,7 @@ pub async fn retrieve_latest_tank_snapshots(
     .level(Level::Debug);
     let tanks = sqlx::query_as(QUERY)
         .bind(account_id)
+        .bind(tank_ids)
         .bind(before)
         .fetch_all(connection)
         .await
