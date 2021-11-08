@@ -137,6 +137,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
             opts.n_factors = *n_factors;
             let error = run_grid_search_on_parameters(&opts, &mut state).await?;
             results.insert((*n_factors, *regularization), error);
+            tracing::info!(n_results = results.len(), mean_error = error, "done");
         }
     }
 
