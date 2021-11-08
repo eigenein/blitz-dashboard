@@ -40,6 +40,7 @@ const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
     fields(
         account_ttl_secs = opts.account_ttl_secs,
         time_span = opts.time_span.to_string().as_str(),
+        learning_rate = opts.learning_rate,
     ),
 )]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
