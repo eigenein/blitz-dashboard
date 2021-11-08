@@ -10,6 +10,7 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
+use itertools::Itertools;
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
@@ -33,7 +34,6 @@ const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
 
 #[tracing::instrument(
-    err,
     skip_all,
     fields(
         account_ttl_secs = opts.account_ttl_secs,
@@ -53,7 +53,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
-    let state = State {
+    let mut state = State {
         redis,
         battles,
         pointer,
@@ -61,10 +61,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
-    if opts.n_grid_search_iterations == 0 {
-        run_iterations(1.., opts, state).await?;
+    if opts.n_grid_search_epochs == 0 {
+        run_epochs(1.., &opts, &mut state).await?;
     } else {
-        run_iterations(1..=opts.n_grid_search_iterations, opts, state).await?;
+        run_grid_search(opts, state).await?;
     }
     Ok(())
 }
@@ -101,19 +101,18 @@ struct State {
 }
 
 #[tracing::instrument(
-    err,
     skip_all,
     fields(n_factors = opts.n_factors, regularization = opts.regularization),
 )]
-async fn run_iterations(
+async fn run_epochs(
     iterations: impl Iterator<Item = usize>,
-    opts: TrainerOpts,
-    mut state: State,
+    opts: &TrainerOpts,
+    state: &mut State,
 ) -> crate::Result<f64> {
     tracing::info!("running…");
     let mut error = 0.0;
     for i in iterations {
-        error = run_epoch(i, &opts, &mut state).await?;
+        error = run_epoch(i, opts, state).await?;
     }
     tracing::info!(
         n_factors = opts.n_factors,
@@ -123,7 +122,72 @@ async fn run_iterations(
     Ok(error)
 }
 
-#[tracing::instrument(err, skip_all)]
+#[tracing::instrument(skip_all)]
+async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Result {
+    tracing::info!(
+        n_sgd_steps = opts.n_grid_search_epochs
+            * opts.grid_search_iterations
+            * opts.grid_search_factors.len()
+            * opts.grid_search_regularizations.len()
+            * state.battles.len(),
+        "starting",
+    );
+
+    let mut results: HashMap<(usize, usize), Vec<f64>> = HashMap::new();
+
+    for iteration in 1..=opts.grid_search_iterations {
+        tracing::info!(iteration = iteration, "started");
+        for (i_regularization, regularization) in
+            opts.grid_search_regularizations.iter().enumerate()
+        {
+            tracing::info!(
+                iteration = iteration,
+                regularization = regularization,
+                "started",
+            );
+            opts.regularization = *regularization;
+            for n_factors in &opts.grid_search_factors {
+                opts.n_factors = *n_factors;
+                state.account_cache.clear();
+                state.vehicle_cache.clear();
+                let error = run_epochs(1..=opts.n_grid_search_epochs, &opts, &mut state).await?;
+                match results.entry((opts.n_factors, i_regularization)) {
+                    Entry::Occupied(mut entry) => {
+                        entry.get_mut().push(error);
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(vec![error]);
+                    }
+                }
+            }
+            tracing::info!(
+                iteration = iteration,
+                regularization = regularization,
+                "finished",
+            );
+        }
+        tracing::info!(iteration = iteration, "finished");
+    }
+
+    let results: Vec<((usize, usize), f64)> = results
+        .into_iter()
+        .map(|(parameters, errors)| (parameters, errors.iter().sum::<f64>() / errors.len() as f64))
+        .sorted_unstable_by(|(_, left), (_, right)| right.partial_cmp(left).unwrap())
+        .collect();
+
+    tracing::info!("completed, results follow (the last is the best)");
+    for ((n_factors, i_regularization), error) in results.iter() {
+        tracing::info!(
+            n_factors = n_factors,
+            regularization = opts.grid_search_regularizations[*i_regularization],
+            error = error,
+        );
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
 async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
     let start_instant = Instant::now();
 
@@ -188,15 +252,17 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
     }
 
     let n_accounts = state.modified_account_ids.len();
-    set_all_accounts_factors(
-        &mut state.redis,
-        &mut state.modified_account_ids,
-        &state.account_cache,
-        opts.account_ttl_secs,
-    )
-    .await?;
-    state.account_cache.resize(opts.account_cache_size);
-    set_all_vehicles_factors(&mut state.redis, &state.vehicle_cache).await?;
+    if opts.n_grid_search_epochs == 0 {
+        set_all_accounts_factors(
+            &mut state.redis,
+            &mut state.modified_account_ids,
+            &state.account_cache,
+            opts.account_ttl_secs,
+        )
+        .await?;
+        state.account_cache.resize(opts.account_cache_size);
+        set_all_vehicles_factors(&mut state.redis, &state.vehicle_cache).await?;
+    }
 
     let train_error = train_error.average();
     let test_error = test_error.average();
@@ -206,15 +272,17 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
         .fold(0.0, f64::max);
 
-    if let Some((_, new_pointer)) = refresh_battles(
-        &mut state.redis,
-        &state.pointer,
-        &mut state.battles,
-        opts.time_span,
-    )
-    .await?
-    {
-        state.pointer = new_pointer;
+    if opts.n_grid_search_epochs == 0 {
+        if let Some((_, new_pointer)) = refresh_battles(
+            &mut state.redis,
+            &state.pointer,
+            &mut state.battles,
+            opts.time_span,
+        )
+        .await?
+        {
+            state.pointer = new_pointer;
+        }
     }
 
     log::info!(
@@ -233,7 +301,7 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
     Ok(test_error)
 }
 
-#[tracing::instrument(err, skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
+#[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
 async fn load_battles(
     redis: &mut MultiplexedConnection,
     time_span: Duration,

@@ -133,7 +133,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
-    #[tracing::instrument(err, skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn get_tankopedia(&self) -> crate::Result<Tankopedia> {
         tracing::info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
@@ -206,7 +206,7 @@ impl WargamingApi {
         }
     }
 
-    #[tracing::instrument(skip_all, err, level = "debug")]
+    #[tracing::instrument(skip_all, level = "debug")]
     async fn call_once<T: DeserializeOwned>(
         &self,
         url: Url,

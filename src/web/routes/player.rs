@@ -31,7 +31,7 @@ use crate::web::TrackingCode;
 
 pub mod partials;
 
-#[tracing::instrument(skip_all, err, fields(account_id = account_id, period = period.as_deref()))]
+#[tracing::instrument(skip_all, fields(account_id = account_id, period = period.as_deref()))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
     account_id: i32,

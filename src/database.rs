@@ -15,7 +15,7 @@ use crate::models::{
 };
 
 /// Open and initialize the database.
-#[tracing::instrument(skip(uri), err)]
+#[tracing::instrument(skip(uri))]
 pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;

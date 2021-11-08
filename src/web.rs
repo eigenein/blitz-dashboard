@@ -21,7 +21,7 @@ mod result;
 mod routes;
 
 /// Run the web app.
-#[tracing::instrument(skip(opts), fields(host = opts.host.as_str(), port = opts.port), err)]
+#[tracing::instrument(skip(opts), fields(host = opts.host.as_str(), port = opts.port))]
 pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 

@@ -43,7 +43,7 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
-    #[tracing::instrument(err, skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn get(
         &self,
         account_id: i32,

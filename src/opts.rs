@@ -169,17 +169,26 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "2days", parse(try_from_str = parsers::duration))]
     pub time_span: Duration,
 
-    /// Number of cached account latent vectors – must be at least the number of unique accounts in the training set
+    /// Maximum number of cached account latent vectors
     #[structopt(
         long,
-        default_value = "1000000",
+        default_value = "500000",
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub account_cache_size: usize,
 
-    /// Run the grid search, perform the specified number of iterations for each set of parameters
-    #[structopt(default_value = "0", long = "grid-search")]
-    pub n_grid_search_iterations: usize,
+    /// Run the grid search, perform the specified number of epochs for each set of parameters
+    #[structopt(default_value = "0", long = "gse")]
+    pub n_grid_search_epochs: usize,
+
+    #[structopt(long = "gsr")]
+    pub grid_search_regularizations: Vec<f64>,
+
+    #[structopt(long = "gsf")]
+    pub grid_search_factors: Vec<usize>,
+
+    #[structopt(long = "gsi", default_value = "3")]
+    pub grid_search_iterations: usize,
 }
 
 #[derive(StructOpt)]

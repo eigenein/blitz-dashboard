@@ -37,7 +37,7 @@ type Vector = Vec<f64>;
 type DateTime = chrono::DateTime<chrono::Utc>;
 
 #[tokio::main]
-#[tracing::instrument(err)]
+#[tracing::instrument]
 async fn main() -> crate::Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity)?;
@@ -52,7 +52,7 @@ async fn main() -> crate::Result {
     result
 }
 
-#[tracing::instrument(err, skip_all)]
+#[tracing::instrument(skip_all)]
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let start_instant = Instant::now();
     let result = match opts.subcommand {
