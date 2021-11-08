@@ -129,35 +129,14 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
         "starting",
     );
 
-    let mut results: HashMap<(usize, Decimal), f64> = HashMap::new();
+    let mut results = HashMap::new();
 
     for regularization in &opts.grid_search_regularizations {
         opts.regularization = regularization.to_f64().unwrap();
-
         for n_factors in &opts.grid_search_factors {
             opts.n_factors = *n_factors;
-
-            let mut errors = Vec::with_capacity(opts.grid_search_iterations);
-            for iteration in 1..=opts.grid_search_iterations {
-                let start_instant = Instant::now();
-                state.account_cache.clear();
-                state.vehicle_cache.clear();
-
-                let error =
-                    run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, &mut state).await?;
-                errors.push(error);
-                tracing::info!(
-                    iteration = iteration,
-                    n_factors = opts.n_factors,
-                    regularization = opts.regularization,
-                    error = error,
-                    elapsed = format_elapsed(&start_instant).as_str(),
-                );
-            }
-            results.insert(
-                (*n_factors, *regularization),
-                errors.iter().sum::<f64>() / errors.len() as f64,
-            );
+            let error = run_grid_search_on_parameters(&opts, &mut state).await?;
+            results.insert((*n_factors, *regularization), error);
         }
     }
 
@@ -176,6 +155,30 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
     }
 
     Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+async fn run_grid_search_on_parameters(
+    opts: &TrainerOpts,
+    state: &mut State,
+) -> crate::Result<f64> {
+    let mut errors = Vec::with_capacity(opts.grid_search_iterations);
+    for iteration in 1..=opts.grid_search_iterations {
+        let start_instant = Instant::now();
+        state.account_cache.clear();
+        state.vehicle_cache.clear();
+
+        let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, state).await?;
+        errors.push(error);
+        tracing::info!(
+            iteration = iteration,
+            n_factors = opts.n_factors,
+            regularization = opts.regularization,
+            error = error,
+            elapsed = format_elapsed(&start_instant).as_str(),
+        );
+    }
+    Ok(errors.iter().sum::<f64>() / errors.len() as f64)
 }
 
 #[tracing::instrument(skip_all)]
