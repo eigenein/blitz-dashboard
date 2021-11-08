@@ -109,16 +109,10 @@ async fn run_epochs(
     opts: &TrainerOpts,
     state: &mut State,
 ) -> crate::Result<f64> {
-    tracing::info!("running…");
     let mut error = 0.0;
     for i in iterations {
         error = run_epoch(i, opts, state).await?;
     }
-    tracing::info!(
-        n_factors = opts.n_factors,
-        regularization = opts.regularization,
-        error = error,
-    );
     Ok(error)
 }
 
@@ -136,15 +130,9 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
     let mut results: HashMap<(usize, usize), Vec<f64>> = HashMap::new();
 
     for iteration in 1..=opts.grid_search_iterations {
-        tracing::info!(iteration = iteration, "started");
         for (i_regularization, regularization) in
             opts.grid_search_regularizations.iter().enumerate()
         {
-            tracing::info!(
-                iteration = iteration,
-                regularization = regularization,
-                "started",
-            );
             opts.regularization = *regularization;
             for n_factors in &opts.grid_search_factors {
                 opts.n_factors = *n_factors;
@@ -159,14 +147,14 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                         entry.insert(vec![error]);
                     }
                 }
+                tracing::info!(
+                    iteration = iteration,
+                    n_factors = opts.n_factors,
+                    regularization = opts.regularization,
+                    error = error,
+                );
             }
-            tracing::info!(
-                iteration = iteration,
-                regularization = regularization,
-                "finished",
-            );
         }
-        tracing::info!(iteration = iteration, "finished");
     }
 
     let results: Vec<((usize, usize), f64)> = results
@@ -175,7 +163,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
         .sorted_unstable_by(|(_, left), (_, right)| right.partial_cmp(left).unwrap())
         .collect();
 
-    tracing::info!("completed, results follow (the last is the best)");
+    tracing::info!("completed, results follow (the last one is the best)");
     for ((n_factors, i_regularization), error) in results.iter() {
         tracing::info!(
             n_factors = n_factors,
