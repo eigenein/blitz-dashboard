@@ -37,123 +37,33 @@ const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
-    let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
+    let account_ttl_secs = opts.account_ttl.as_secs().try_into()?;
     let time_span = Duration::from_std(opts.time_span)?;
 
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let (mut pointer, mut battles) = load_battles(&mut redis, time_span).await?;
+    let (pointer, battles) = load_battles(&mut redis, time_span).await?;
     tracing::info!(
         n_battles = battles.len(),
         pointer = pointer.as_str(),
         "loaded",
     );
 
-    let mut vehicle_cache = HashMap::new();
-    let mut account_cache = LruCache::unbounded();
-    let mut modified_account_ids = HashSet::new();
+    let mut state = State {
+        redis,
+        battles,
+        time_span,
+        account_ttl_secs,
+        pointer,
+        vehicle_cache: HashMap::new(),
+        account_cache: LruCache::unbounded(),
+        modified_account_ids: HashSet::new(),
+    };
 
     tracing::info!("running…");
     loop {
-        let start_instant = Instant::now();
-
-        let mut train_error = error::Error::default();
-        let mut test_error = error::Error::default();
-
-        let mut n_new_accounts = 0;
-        let mut n_initialized_accounts = 0;
-
-        fastrand::shuffle(&mut battles);
-        modified_account_ids.clear();
-
-        let regularization_multiplier = opts.learning_rate * opts.regularization;
-
-        for (_, battle) in battles.iter() {
-            let account_factors = match account_cache.get_mut(&battle.account_id) {
-                Some(factors) => factors,
-                None => {
-                    let mut factors = get_account_factors(&mut redis, battle.account_id)
-                        .await?
-                        .unwrap_or_else(|| {
-                            n_new_accounts += 1;
-                            Vector::new()
-                        });
-                    if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
-                        n_initialized_accounts += 1;
-                    }
-                    account_cache.put(battle.account_id, factors);
-                    account_cache.get_mut(&battle.account_id).unwrap()
-                }
-            };
-
-            let tank_id = remap_tank_id(battle.tank_id);
-            let vehicle_factors = match vehicle_cache.entry(tank_id) {
-                Entry::Occupied(entry) => entry.into_mut(),
-                Entry::Vacant(entry) => {
-                    let mut factors = get_vehicle_factors(&mut redis, tank_id)
-                        .await?
-                        .unwrap_or_else(Vector::new);
-                    initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
-                    entry.insert(factors)
-                }
-            };
-
-            let prediction = predict_win_rate(vehicle_factors, account_factors);
-
-            if !battle.is_test {
-                let target = if battle.is_win { 1.0 } else { 0.0 };
-                let residual_multiplier = opts.learning_rate * (target - prediction);
-                sgd(
-                    account_factors,
-                    vehicle_factors,
-                    residual_multiplier,
-                    regularization_multiplier,
-                );
-
-                modified_account_ids.insert(battle.account_id);
-                train_error.push(prediction, battle.is_win);
-            } else {
-                test_error.push(prediction, battle.is_win);
-            }
-        }
-
-        let n_accounts = modified_account_ids.len();
-        set_all_accounts_factors(
-            &mut redis,
-            &mut modified_account_ids,
-            &account_cache,
-            account_ttl_secs,
-        )
-        .await?;
-        account_cache.resize(opts.account_cache_size);
-        set_all_vehicles_factors(&mut redis, &vehicle_cache).await?;
-
-        let train_error = train_error.average();
-        let test_error = test_error.average();
-        let max_factor = vehicle_cache
-            .iter()
-            .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
-            .fold(0.0, f64::max);
-
-        if let Some((_, new_pointer)) =
-            refresh_battles(&mut redis, &pointer, &mut battles, time_span).await?
-        {
-            pointer = new_pointer;
-        }
-
-        log::info!(
-            "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
-            train_error,
-            test_error,
-            (test_error / train_error - 1.0) * 100.0,
-            battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            battles.len() as f64 / 1000.0,
-            n_accounts as f64 / 1000.0,
-            n_initialized_accounts,
-            n_new_accounts,
-            max_factor,
-        );
+        run_epoch(&opts, &mut state).await?;
     }
 }
 
@@ -177,6 +87,126 @@ pub async fn push_battles(
         .await
         .context("failed to add the battles to the stream")?;
     Ok(())
+}
+
+struct State {
+    redis: MultiplexedConnection,
+    battles: Vec<(DateTime, Battle)>,
+    account_ttl_secs: usize,
+    time_span: Duration,
+    pointer: String,
+    vehicle_cache: HashMap<i32, Vector>,
+    account_cache: LruCache<i32, Vector>,
+    modified_account_ids: HashSet<i32>,
+}
+
+#[tracing::instrument(err, skip_all)]
+async fn run_epoch(opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
+    let start_instant = Instant::now();
+
+    let mut train_error = error::Error::default();
+    let mut test_error = error::Error::default();
+
+    let mut n_new_accounts = 0;
+    let mut n_initialized_accounts = 0;
+
+    fastrand::shuffle(&mut state.battles);
+    state.modified_account_ids.clear();
+
+    let regularization_multiplier = opts.learning_rate * opts.regularization;
+
+    for (_, battle) in state.battles.iter() {
+        let account_factors = match state.account_cache.get_mut(&battle.account_id) {
+            Some(factors) => factors,
+            None => {
+                let mut factors = get_account_factors(&mut state.redis, battle.account_id)
+                    .await?
+                    .unwrap_or_else(|| {
+                        n_new_accounts += 1;
+                        Vector::new()
+                    });
+                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
+                    n_initialized_accounts += 1;
+                }
+                state.account_cache.put(battle.account_id, factors);
+                state.account_cache.get_mut(&battle.account_id).unwrap()
+            }
+        };
+
+        let tank_id = remap_tank_id(battle.tank_id);
+        let vehicle_factors = match state.vehicle_cache.entry(tank_id) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let mut factors = get_vehicle_factors(&mut state.redis, tank_id)
+                    .await?
+                    .unwrap_or_else(Vector::new);
+                initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
+                entry.insert(factors)
+            }
+        };
+
+        let prediction = predict_win_rate(vehicle_factors, account_factors);
+
+        if !battle.is_test {
+            let target = if battle.is_win { 1.0 } else { 0.0 };
+            let residual_multiplier = opts.learning_rate * (target - prediction);
+            sgd(
+                account_factors,
+                vehicle_factors,
+                residual_multiplier,
+                regularization_multiplier,
+            );
+
+            state.modified_account_ids.insert(battle.account_id);
+            train_error.push(prediction, battle.is_win);
+        } else {
+            test_error.push(prediction, battle.is_win);
+        }
+    }
+
+    let n_accounts = state.modified_account_ids.len();
+    set_all_accounts_factors(
+        &mut state.redis,
+        &mut state.modified_account_ids,
+        &state.account_cache,
+        state.account_ttl_secs,
+    )
+    .await?;
+    state.account_cache.resize(opts.account_cache_size);
+    set_all_vehicles_factors(&mut state.redis, &state.vehicle_cache).await?;
+
+    let train_error = train_error.average();
+    let test_error = test_error.average();
+    let max_factor = state
+        .vehicle_cache
+        .iter()
+        .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
+        .fold(0.0, f64::max);
+
+    if let Some((_, new_pointer)) = refresh_battles(
+        &mut state.redis,
+        &state.pointer,
+        &mut state.battles,
+        state.time_span,
+    )
+    .await?
+    {
+        state.pointer = new_pointer;
+    }
+
+    log::info!(
+        "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+        train_error,
+        test_error,
+        (test_error / train_error - 1.0) * 100.0,
+        state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+        state.battles.len() as f64 / 1000.0,
+        n_accounts as f64 / 1000.0,
+        n_initialized_accounts,
+        n_new_accounts,
+        max_factor,
+    );
+    Ok(test_error)
 }
 
 #[tracing::instrument(err, skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
