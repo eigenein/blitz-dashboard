@@ -55,7 +55,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
-    let mut state = State {
+    let state = State {
         redis,
         battles,
         pointer,
@@ -63,11 +63,8 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
-
-    tracing::info!("running…");
-    loop {
-        run_epoch(&opts, &mut state).await?;
-    }
+    run_forever(opts, state).await?;
+    Ok(())
 }
 
 pub async fn push_battles(
@@ -99,6 +96,14 @@ struct State {
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
+}
+
+#[tracing::instrument(err, skip_all)]
+async fn run_forever(opts: TrainerOpts, mut state: State) -> crate::Result {
+    tracing::info!("running…");
+    loop {
+        run_epoch(&opts, &mut state).await?;
+    }
 }
 
 #[tracing::instrument(err, skip_all)]
