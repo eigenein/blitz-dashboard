@@ -129,26 +129,23 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
         "starting",
     );
 
-    let mut results: HashMap<(usize, Decimal), Vec<f64>> = HashMap::new();
+    let mut results: HashMap<(usize, Decimal), f64> = HashMap::new();
 
-    for iteration in 1..=opts.grid_search_iterations {
-        for regularization in &opts.grid_search_regularizations {
-            opts.regularization = regularization.to_f64().unwrap();
-            for n_factors in &opts.grid_search_factors {
-                opts.n_factors = *n_factors;
+    for regularization in &opts.grid_search_regularizations {
+        opts.regularization = regularization.to_f64().unwrap();
+
+        for n_factors in &opts.grid_search_factors {
+            opts.n_factors = *n_factors;
+
+            let mut errors = Vec::with_capacity(opts.grid_search_iterations);
+            for iteration in 1..=opts.grid_search_iterations {
+                let start_instant = Instant::now();
                 state.account_cache.clear();
                 state.vehicle_cache.clear();
-                let start_instant = Instant::now();
+
                 let error =
                     run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, &mut state).await?;
-                match results.entry((opts.n_factors, *regularization)) {
-                    Entry::Occupied(mut entry) => {
-                        entry.get_mut().push(error);
-                    }
-                    Entry::Vacant(entry) => {
-                        entry.insert(vec![error]);
-                    }
-                }
+                errors.push(error);
                 tracing::info!(
                     iteration = iteration,
                     n_factors = opts.n_factors,
@@ -157,12 +154,15 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                     elapsed = format_elapsed(&start_instant).as_str(),
                 );
             }
+            results.insert(
+                (*n_factors, *regularization),
+                errors.iter().sum::<f64>() / errors.len() as f64,
+            );
         }
     }
 
     let results: Vec<((usize, Decimal), f64)> = results
         .into_iter()
-        .map(|(parameters, errors)| (parameters, errors.iter().sum::<f64>() / errors.len() as f64))
         .sorted_unstable_by(|(_, left), (_, right)| right.partial_cmp(left).unwrap())
         .collect();
 
