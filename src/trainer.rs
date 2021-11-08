@@ -122,11 +122,11 @@ async fn run_epochs(
 #[tracing::instrument(skip_all)]
 async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Result {
     tracing::info!(
-        n_sgd_steps = opts.n_grid_search_epochs.unwrap()
-            * opts.grid_search_iterations
-            * opts.grid_search_factors.len()
-            * opts.grid_search_regularizations.len()
-            * state.battles.len(),
+        n_sgd_steps = opts.n_grid_search_epochs.unwrap() as u64
+            * opts.grid_search_iterations as u64
+            * opts.grid_search_factors.len() as u64
+            * opts.grid_search_regularizations.len() as u64
+            * state.battles.len() as u64,
         "starting",
     );
 
