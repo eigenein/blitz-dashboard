@@ -101,13 +101,14 @@ struct State {
 #[tracing::instrument(err, skip_all)]
 async fn run_forever(opts: TrainerOpts, mut state: State) -> crate::Result {
     tracing::info!("running…");
-    loop {
-        run_epoch(&opts, &mut state).await?;
+    for i in 1.. {
+        run_epoch(i, &opts, &mut state).await?;
     }
+    Ok(())
 }
 
 #[tracing::instrument(err, skip_all)]
-async fn run_epoch(opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
+async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
     let start_instant = Instant::now();
 
     let mut train_error = error::Error::default();
@@ -201,7 +202,8 @@ async fn run_epoch(opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> 
     }
 
     log::info!(
-        "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+        "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+        iteration,
         train_error,
         test_error,
         (test_error / train_error - 1.0) * 100.0,

@@ -176,6 +176,9 @@ pub struct TrainerOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub account_cache_size: usize,
+
+    #[structopt(default_value = "0", long = "grid-search")]
+    pub n_grid_search_iterations: usize,
 }
 
 #[derive(StructOpt)]
