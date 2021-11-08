@@ -19,7 +19,7 @@ use redis::{pipe, AsyncCommands, Pipeline, Value};
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
-use crate::helpers::format_duration;
+use crate::helpers::{format_duration, format_elapsed};
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
@@ -138,6 +138,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                 opts.n_factors = *n_factors;
                 state.account_cache.clear();
                 state.vehicle_cache.clear();
+                let start_instant = Instant::now();
                 let error = run_epochs(1..=opts.n_grid_search_epochs, &opts, &mut state).await?;
                 match results.entry((opts.n_factors, i_regularization)) {
                     Entry::Occupied(mut entry) => {
@@ -152,6 +153,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                     n_factors = opts.n_factors,
                     regularization = opts.regularization,
                     error = error,
+                    elapsed = format_elapsed(&start_instant).as_str(),
                 );
             }
         }
