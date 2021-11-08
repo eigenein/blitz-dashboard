@@ -15,6 +15,8 @@ use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
@@ -127,13 +129,11 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
         "starting",
     );
 
-    let mut results: HashMap<(usize, usize), Vec<f64>> = HashMap::new();
+    let mut results: HashMap<(usize, Decimal), Vec<f64>> = HashMap::new();
 
     for iteration in 1..=opts.grid_search_iterations {
-        for (i_regularization, regularization) in
-            opts.grid_search_regularizations.iter().enumerate()
-        {
-            opts.regularization = *regularization;
+        for regularization in &opts.grid_search_regularizations {
+            opts.regularization = regularization.to_f64().unwrap();
             for n_factors in &opts.grid_search_factors {
                 opts.n_factors = *n_factors;
                 state.account_cache.clear();
@@ -141,7 +141,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                 let start_instant = Instant::now();
                 let error =
                     run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, &mut state).await?;
-                match results.entry((opts.n_factors, i_regularization)) {
+                match results.entry((opts.n_factors, *regularization)) {
                     Entry::Occupied(mut entry) => {
                         entry.get_mut().push(error);
                     }
@@ -160,17 +160,17 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
         }
     }
 
-    let results: Vec<((usize, usize), f64)> = results
+    let results: Vec<((usize, Decimal), f64)> = results
         .into_iter()
         .map(|(parameters, errors)| (parameters, errors.iter().sum::<f64>() / errors.len() as f64))
         .sorted_unstable_by(|(_, left), (_, right)| right.partial_cmp(left).unwrap())
         .collect();
 
     tracing::info!("completed, results follow (the last one is the best)");
-    for ((n_factors, i_regularization), error) in results.iter() {
+    for ((n_factors, regularization), error) in results.iter() {
         tracing::info!(
             n_factors = n_factors,
-            regularization = opts.grid_search_regularizations[*i_regularization],
+            regularization = regularization.to_f64().unwrap(),
             error = error,
         );
     }

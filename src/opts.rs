@@ -6,6 +6,7 @@ use chrono::Duration;
 use std::time::Duration as StdDuration;
 
 use log::LevelFilter;
+use rust_decimal::Decimal;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
@@ -182,7 +183,7 @@ pub struct TrainerOpts {
     pub n_grid_search_epochs: Option<usize>,
 
     #[structopt(long = "gsr")]
-    pub grid_search_regularizations: Vec<f64>,
+    pub grid_search_regularizations: Vec<Decimal>,
 
     #[structopt(long = "gsf")]
     pub grid_search_factors: Vec<usize>,
