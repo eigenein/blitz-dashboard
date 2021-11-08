@@ -61,7 +61,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
-    if opts.n_grid_search_epochs == 0 {
+    if opts.n_grid_search_epochs.is_none() {
         run_epochs(1.., &opts, &mut state).await?;
     } else {
         run_grid_search(opts, state).await?;
@@ -119,7 +119,7 @@ async fn run_epochs(
 #[tracing::instrument(skip_all)]
 async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Result {
     tracing::info!(
-        n_sgd_steps = opts.n_grid_search_epochs
+        n_sgd_steps = opts.n_grid_search_epochs.unwrap()
             * opts.grid_search_iterations
             * opts.grid_search_factors.len()
             * opts.grid_search_regularizations.len()
@@ -139,7 +139,8 @@ async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Resu
                 state.account_cache.clear();
                 state.vehicle_cache.clear();
                 let start_instant = Instant::now();
-                let error = run_epochs(1..=opts.n_grid_search_epochs, &opts, &mut state).await?;
+                let error =
+                    run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, &mut state).await?;
                 match results.entry((opts.n_factors, i_regularization)) {
                     Entry::Occupied(mut entry) => {
                         entry.get_mut().push(error);
@@ -242,7 +243,7 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
     }
 
     let n_accounts = state.modified_account_ids.len();
-    if opts.n_grid_search_epochs == 0 {
+    if opts.n_grid_search_epochs.is_none() {
         set_all_accounts_factors(
             &mut state.redis,
             &mut state.modified_account_ids,
@@ -262,7 +263,7 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
         .fold(0.0, f64::max);
 
-    if opts.n_grid_search_epochs == 0 {
+    if opts.n_grid_search_epochs.is_none() {
         if let Some((_, new_pointer)) = refresh_battles(
             &mut state.redis,
             &state.pointer,
