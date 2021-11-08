@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
+use chrono::Duration;
 use log::LevelFilter;
 
 pub fn verbosity(n_occurences: u64) -> LevelFilter {
@@ -31,4 +32,16 @@ pub fn non_zero_usize(value: &str) -> crate::Result<usize> {
         limit if limit >= 1 => Ok(limit),
         _ => Err(anyhow!("expected a positive size")),
     }
+}
+
+pub fn duration_as_secs<T>(value: &str) -> crate::Result<T>
+where
+    T: TryFrom<u64>,
+    T::Error: std::error::Error + Send + Sync + 'static,
+{
+    Ok(humantime::parse_duration(value)?.as_secs().try_into()?)
+}
+
+pub fn duration(value: &str) -> crate::Result<Duration> {
+    Ok(Duration::from_std(humantime::parse_duration(value)?)?)
 }

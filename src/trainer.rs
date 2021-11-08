@@ -3,7 +3,6 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::convert::TryInto;
 use std::result::Result as StdResult;
 use std::str::FromStr;
 use std::time::Instant;
@@ -33,17 +32,23 @@ const TRAIN_STREAM_KEY: &str = "streams::steps";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
 
-#[tracing::instrument(err, skip_all, fields(n_factors = opts.n_factors, regularization = opts.regularization))]
+#[tracing::instrument(
+    err,
+    skip_all,
+    fields(
+        n_factors = opts.n_factors,
+        regularization = opts.regularization,
+        account_ttl_secs = opts.account_ttl_secs,
+        time_span = opts.time_span.to_string().as_str(),
+    ),
+)]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
-
-    let account_ttl_secs = opts.account_ttl.as_secs().try_into()?;
-    let time_span = Duration::from_std(opts.time_span)?;
 
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let (pointer, battles) = load_battles(&mut redis, time_span).await?;
+    let (pointer, battles) = load_battles(&mut redis, opts.time_span).await?;
     tracing::info!(
         n_battles = battles.len(),
         pointer = pointer.as_str(),
@@ -53,8 +58,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut state = State {
         redis,
         battles,
-        time_span,
-        account_ttl_secs,
         pointer,
         vehicle_cache: HashMap::new(),
         account_cache: LruCache::unbounded(),
@@ -92,8 +95,6 @@ pub async fn push_battles(
 struct State {
     redis: MultiplexedConnection,
     battles: Vec<(DateTime, Battle)>,
-    account_ttl_secs: usize,
-    time_span: Duration,
     pointer: String,
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,
@@ -169,7 +170,7 @@ async fn run_epoch(opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> 
         &mut state.redis,
         &mut state.modified_account_ids,
         &state.account_cache,
-        state.account_ttl_secs,
+        opts.account_ttl_secs,
     )
     .await?;
     state.account_cache.resize(opts.account_cache_size);
@@ -187,7 +188,7 @@ async fn run_epoch(opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> 
         &mut state.redis,
         &state.pointer,
         &mut state.battles,
-        state.time_span,
+        opts.time_span,
     )
     .await?
     {

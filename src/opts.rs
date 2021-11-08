@@ -2,6 +2,7 @@
 
 mod parsers;
 
+use chrono::Duration;
 use std::time::Duration as StdDuration;
 
 use log::LevelFilter;
@@ -161,12 +162,12 @@ pub struct TrainerOpts {
     pub factor_std: f64,
 
     /// Maximum account idle time after which the account factors expire
-    #[structopt(long, default_value = "2months", parse(try_from_str = humantime::parse_duration))]
-    pub account_ttl: StdDuration,
+    #[structopt(long = "account-ttl", default_value = "2months", parse(try_from_str = parsers::duration_as_secs))]
+    pub account_ttl_secs: usize,
 
     /// Time span of the training set (most recent battles)
-    #[structopt(long, default_value = "2days", parse(try_from_str = humantime::parse_duration))]
-    pub time_span: StdDuration,
+    #[structopt(long, default_value = "2days", parse(try_from_str = parsers::duration))]
+    pub time_span: Duration,
 
     /// Number of cached account latent vectors – must be at least the number of unique accounts in the training set
     #[structopt(
