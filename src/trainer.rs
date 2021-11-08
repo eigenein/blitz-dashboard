@@ -197,12 +197,15 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         let account_factors = match state.account_cache.get_mut(&battle.account_id) {
             Some(factors) => factors,
             None => {
-                let mut factors = get_account_factors(&mut state.redis, battle.account_id)
-                    .await?
-                    .unwrap_or_else(|| {
-                        n_new_accounts += 1;
-                        Vector::new()
-                    });
+                let factors = if opts.n_grid_search_epochs.is_none() {
+                    get_account_factors(&mut state.redis, battle.account_id).await?
+                } else {
+                    None
+                };
+                let mut factors = factors.unwrap_or_else(|| {
+                    n_new_accounts += 1;
+                    Vector::new()
+                });
                 if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                     n_initialized_accounts += 1;
                 }
@@ -215,9 +218,12 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         let vehicle_factors = match state.vehicle_cache.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
-                let mut factors = get_vehicle_factors(&mut state.redis, tank_id)
-                    .await?
-                    .unwrap_or_else(Vector::new);
+                let factors = if opts.n_grid_search_epochs.is_none() {
+                    get_vehicle_factors(&mut state.redis, tank_id).await?
+                } else {
+                    None
+                };
+                let mut factors = factors.unwrap_or_else(Vector::new);
                 initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
                 entry.insert(factors)
             }
