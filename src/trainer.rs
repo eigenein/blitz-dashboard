@@ -36,8 +36,6 @@ const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
     err,
     skip_all,
     fields(
-        n_factors = opts.n_factors,
-        regularization = opts.regularization,
         account_ttl_secs = opts.account_ttl_secs,
         time_span = opts.time_span.to_string().as_str(),
     ),
@@ -63,7 +61,11 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
-    run_iterations(1.., opts, state).await?;
+    if opts.n_grid_search_iterations == 0 {
+        run_iterations(1.., opts, state).await?;
+    } else {
+        run_iterations(1..=opts.n_grid_search_iterations, opts, state).await?;
+    }
     Ok(())
 }
 
@@ -98,7 +100,11 @@ struct State {
     modified_account_ids: HashSet<i32>,
 }
 
-#[tracing::instrument(err, skip_all)]
+#[tracing::instrument(
+    err,
+    skip_all,
+    fields(n_factors = opts.n_factors, regularization = opts.regularization),
+)]
 async fn run_iterations(
     iterations: impl Iterator<Item = usize>,
     opts: TrainerOpts,
@@ -109,6 +115,11 @@ async fn run_iterations(
     for i in iterations {
         error = run_epoch(i, &opts, &mut state).await?;
     }
+    tracing::info!(
+        n_factors = opts.n_factors,
+        regularization = opts.regularization,
+        error = error,
+    );
     Ok(error)
 }
 

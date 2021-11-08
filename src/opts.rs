@@ -177,6 +177,7 @@ pub struct TrainerOpts {
     )]
     pub account_cache_size: usize,
 
+    /// Run the grid search, perform the specified number of iterations for each set of parameters
     #[structopt(default_value = "0", long = "grid-search")]
     pub n_grid_search_iterations: usize,
 }
