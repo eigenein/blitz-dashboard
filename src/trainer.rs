@@ -10,7 +10,6 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
-use futures::StreamExt;
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
@@ -23,13 +22,11 @@ use math::{initialize_factors, predict_win_rate};
 use crate::helpers::format_duration;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
-use crate::trainer::learning_rate::learning_rates;
 use crate::trainer::math::sgd;
 use crate::{DateTime, Vector};
 
 pub mod battle;
 mod error;
-mod learning_rate;
 pub mod math;
 
 const TRAIN_STREAM_KEY: &str = "streams::steps";
@@ -42,11 +39,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
     let account_ttl_secs: usize = opts.account_ttl.as_secs().try_into()?;
     let time_span = Duration::from_std(opts.time_span)?;
-    let mut learning_rates = Box::pin(learning_rates(
-        opts.learning_rate,
-        opts.learning_rate_decay,
-        opts.minimal_learning_rate,
-    ));
 
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
@@ -63,7 +55,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut modified_account_ids = HashSet::new();
 
     tracing::info!("running…");
-    while let Some(learning_rate) = learning_rates.next().await {
+    loop {
         let start_instant = Instant::now();
 
         let mut train_error = error::Error::default();
@@ -75,7 +67,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         fastrand::shuffle(&mut battles);
         modified_account_ids.clear();
 
-        let regularization_multiplier = learning_rate * opts.regularization;
+        let regularization_multiplier = opts.learning_rate * opts.regularization;
 
         for (_, battle) in battles.iter() {
             let account_factors = match account_cache.get_mut(&battle.account_id) {
@@ -111,7 +103,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
 
             if !battle.is_test {
                 let target = if battle.is_win { 1.0 } else { 0.0 };
-                let residual_multiplier = learning_rate * (target - prediction);
+                let residual_multiplier = opts.learning_rate * (target - prediction);
                 sgd(
                     account_factors,
                     vehicle_factors,
@@ -151,11 +143,10 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         }
 
         log::info!(
-            "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | LR: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
-            learning_rate,
             battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             battles.len() as f64 / 1000.0,
             n_accounts as f64 / 1000.0,
@@ -164,8 +155,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
             max_factor,
         );
     }
-
-    unreachable!();
 }
 
 pub async fn push_battles(
