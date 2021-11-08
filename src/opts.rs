@@ -1,9 +1,9 @@
 //! CLI options.
 
-use std::str::FromStr;
+mod parsers;
+
 use std::time::Duration as StdDuration;
 
-use anyhow::anyhow;
 use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -22,21 +22,12 @@ pub struct Opts {
     #[structopt(
         short = "v",
         long = "verbose",
-        parse(from_occurrences = parse_verbosity),
+        parse(from_occurrences = parsers::verbosity),
     )]
     pub verbosity: LevelFilter,
 
     #[structopt(subcommand)]
     pub subcommand: Subcommand,
-}
-
-fn parse_verbosity(n_occurences: u64) -> LevelFilter {
-    match n_occurences {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    }
 }
 
 #[derive(StructOpt)]
@@ -80,13 +71,6 @@ pub struct WebOpts {
     pub disable_caches: bool,
 }
 
-fn parse_task_count(value: &str) -> crate::Result<usize> {
-    match usize::from_str(value)? {
-        count if count >= 1 => Ok(count),
-        _ => Err(anyhow!("expected non-zero number of tasks")),
-    }
-}
-
 /// Runs the account crawler
 #[derive(StructOpt)]
 pub struct CrawlerOpts {
@@ -105,7 +89,7 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "1",
-        parse(try_from_str = parse_task_count),
+        parse(try_from_str = parsers::task_count),
     )]
     pub n_fast_tasks: usize,
 
@@ -117,16 +101,9 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "7500000",
-        parse(try_from_str = parse_non_zero_usize),
+        parse(try_from_str = parsers::non_zero_usize),
     )]
     pub training_stream_size: usize,
-}
-
-fn parse_non_zero_usize(value: &str) -> crate::Result<usize> {
-    match FromStr::from_str(value)? {
-        limit if limit >= 1 => Ok(limit),
-        _ => Err(anyhow!("expected a positive size")),
-    }
 }
 
 /// Updates the bundled Tankopedia module
@@ -144,27 +121,20 @@ pub struct CrawlAccountsOpts {
     pub connections: ConnectionOpts,
 
     /// Starting account ID
-    #[structopt(long, parse(try_from_str = parse_account_id))]
+    #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub start_id: i32,
 
     /// Ending account ID (non-inclusive)
-    #[structopt(long, parse(try_from_str = parse_account_id))]
+    #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub end_id: i32,
 
     /// Number of tasks for the crawler
     #[structopt(
         long,
         default_value = "1",
-        parse(try_from_str = parse_task_count),
+        parse(try_from_str = parsers::task_count),
     )]
     pub n_tasks: usize,
-}
-
-fn parse_account_id(value: &str) -> crate::Result<i32> {
-    match i32::from_str(value)? {
-        account_id if account_id >= 1 => Ok(account_id),
-        account_id => Err(anyhow!("{} is an invalid account ID", account_id)),
-    }
 }
 
 /// Trains the collaborative filtering model
@@ -202,7 +172,7 @@ pub struct TrainerOpts {
     #[structopt(
         long,
         default_value = "1000000",
-        parse(try_from_str = parse_non_zero_usize),
+        parse(try_from_str = parsers::non_zero_usize),
     )]
     pub account_cache_size: usize,
 }
