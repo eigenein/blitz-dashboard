@@ -63,7 +63,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
-    run_forever(opts, state).await?;
+    run_iterations(1.., opts, state).await?;
     Ok(())
 }
 
@@ -99,12 +99,17 @@ struct State {
 }
 
 #[tracing::instrument(err, skip_all)]
-async fn run_forever(opts: TrainerOpts, mut state: State) -> crate::Result {
+async fn run_iterations(
+    iterations: impl Iterator<Item = usize>,
+    opts: TrainerOpts,
+    mut state: State,
+) -> crate::Result<f64> {
     tracing::info!("running…");
-    for i in 1.. {
-        run_epoch(i, &opts, &mut state).await?;
+    let mut error = 0.0;
+    for i in iterations {
+        error = run_epoch(i, &opts, &mut state).await?;
     }
-    Ok(())
+    Ok(error)
 }
 
 #[tracing::instrument(err, skip_all)]
