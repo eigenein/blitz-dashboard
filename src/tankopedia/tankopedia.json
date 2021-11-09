@@ -17118,8 +17118,8 @@
     ],
     "guns": [
       6500,
-      3428,
-      3684
+      3684,
+      3428
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Chi_He.png",
@@ -17176,8 +17176,8 @@
         "module_id": 3171,
         "name": "Type 2 Ho-I",
         "next_modules": [
-          3684,
-          3428
+          3428,
+          3684
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          25124,
-          24868
+          24868,
+          25124
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -19236,8 +19236,8 @@
         "name": "7,5 cm Kw.K. 40 L/48",
         "next_modules": null,
         "next_tanks": [
-          7185,
-          2321
+          2321,
+          7185
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -25116,9 +25116,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          8065,
           1409,
-          3713,
-          8065
+          3713
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -34100,9 +34100,9 @@
       24101
     ],
     "guns": [
-      264484,
+      264996,
       263204,
-      264996
+      264484
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34181,8 +34181,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264484,
-          264996
+          264996,
+          264484
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -51613,8 +51613,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "price_credit": 0,
         "price_xp": 1250,
