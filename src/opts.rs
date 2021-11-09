@@ -6,7 +6,6 @@ use chrono::Duration;
 use std::time::Duration as StdDuration;
 
 use log::LevelFilter;
-use rust_decimal::Decimal;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
@@ -140,18 +139,22 @@ pub struct CrawlAccountsOpts {
 }
 
 /// Trains the collaborative filtering model
-#[derive(StructOpt)]
+#[derive(Clone, StructOpt)]
 pub struct TrainerOpts {
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
+
+    /// Do not log individual epoch metrics
+    #[structopt(long)]
+    pub silence_epochs: bool,
 
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.2")]
     pub learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.000001")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.01")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -181,12 +184,6 @@ pub struct TrainerOpts {
     /// Run the grid search, perform the specified number of epochs for each set of parameters
     #[structopt(long = "gse")]
     pub n_grid_search_epochs: Option<usize>,
-
-    #[structopt(long = "gsr")]
-    pub grid_search_regularizations: Vec<Decimal>,
-
-    #[structopt(long = "gsf")]
-    pub grid_search_factors: Vec<usize>,
 
     #[structopt(long = "gsi", default_value = "3")]
     pub grid_search_iterations: usize,

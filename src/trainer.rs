@@ -10,13 +10,10 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
-use itertools::Itertools;
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
 
 use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
@@ -105,55 +102,116 @@ struct State {
 
 #[tracing::instrument(
     skip_all,
-    fields(n_factors = opts.n_factors, regularization = opts.regularization),
+    fields(
+        n_factors = opts.n_factors,
+        regularization = opts.regularization,
+        factor_std = opts.factor_std,
+    ),
 )]
 async fn run_epochs(
-    iterations: impl Iterator<Item = usize>,
+    epochs: impl Iterator<Item = usize>,
     opts: &TrainerOpts,
     state: &mut State,
 ) -> crate::Result<f64> {
     let mut error = 0.0;
-    for i in iterations {
+    for i in epochs {
         error = run_epoch(i, opts, state).await?;
     }
     Ok(error)
 }
 
+#[derive(Debug)]
+enum GridSearchMode {
+    NFactors,
+    Regularization,
+    FactorStd,
+}
+
 #[tracing::instrument(skip_all)]
-async fn run_grid_search(mut opts: TrainerOpts, mut state: State) -> crate::Result {
-    tracing::info!(
-        n_sgd_steps = opts.n_grid_search_epochs.unwrap() as u64
-            * opts.grid_search_iterations as u64
-            * opts.grid_search_factors.len() as u64
-            * opts.grid_search_regularizations.len() as u64
-            * state.battles.len() as u64,
-        "starting",
-    );
+async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
+    tracing::info!("running the initial evaluation");
+    let mut best_opts = opts.clone();
+    let mut best_error = run_grid_search_on_parameters(&opts, &mut state).await?;
 
-    let mut results = HashMap::new();
+    tracing::info!("starting the search");
+    let mut mode = GridSearchMode::NFactors;
+    let mut n_stale_iterations = 0;
+    loop {
+        tracing::info!(mode = format!("{:?}", mode).as_str(), "trying");
+        let (next_mode, mut trial_opts) = match mode {
+            GridSearchMode::NFactors => (
+                GridSearchMode::Regularization,
+                vec![
+                    TrainerOpts {
+                        n_factors: best_opts.n_factors - 1,
+                        ..best_opts.clone()
+                    },
+                    TrainerOpts {
+                        n_factors: best_opts.n_factors + 1,
+                        ..best_opts.clone()
+                    },
+                ],
+            ),
+            GridSearchMode::Regularization => (
+                GridSearchMode::FactorStd,
+                vec![
+                    TrainerOpts {
+                        regularization: 0.9 * best_opts.regularization,
+                        ..best_opts.clone()
+                    },
+                    TrainerOpts {
+                        regularization: 1.1 * best_opts.regularization,
+                        ..best_opts.clone()
+                    },
+                ],
+            ),
+            GridSearchMode::FactorStd => (
+                GridSearchMode::NFactors,
+                vec![
+                    TrainerOpts {
+                        factor_std: 0.9 * best_opts.factor_std,
+                        ..best_opts.clone()
+                    },
+                    TrainerOpts {
+                        factor_std: 1.1 * best_opts.factor_std,
+                        ..best_opts.clone()
+                    },
+                ],
+            ),
+        };
 
-    for regularization in &opts.grid_search_regularizations {
-        opts.regularization = regularization.to_f64().unwrap();
-        for n_factors in &opts.grid_search_factors {
-            opts.n_factors = *n_factors;
+        fastrand::shuffle(&mut trial_opts);
+        let mut is_improved = false;
+        for opts in trial_opts {
+            if opts.n_factors < 1 {
+                continue;
+            }
             let error = run_grid_search_on_parameters(&opts, &mut state).await?;
-            results.insert((*n_factors, *regularization), error);
-            tracing::info!(n_results = results.len(), mean_error = error, "done");
+            if error < best_error {
+                tracing::info!(error = error, was = best_error, "IMPROVED");
+                best_error = error;
+                best_opts = opts.clone();
+                is_improved = true;
+            } else {
+                tracing::info!("no improvement");
+            }
+            tracing::info!(
+                n_factors = best_opts.n_factors,
+                regularization = best_opts.regularization,
+                factor_std = best_opts.factor_std,
+                learning_rate = best_opts.learning_rate,
+                error = best_error,
+                "BEST SO FAR",
+            );
         }
-    }
-
-    let results: Vec<((usize, Decimal), f64)> = results
-        .into_iter()
-        .sorted_unstable_by(|(_, left), (_, right)| right.partial_cmp(left).unwrap())
-        .collect();
-
-    tracing::info!("completed, results follow (the last one is the best)");
-    for ((n_factors, regularization), error) in results.iter() {
-        tracing::info!(
-            n_factors = n_factors,
-            regularization = regularization.to_f64().unwrap(),
-            error = error,
-        );
+        if !is_improved {
+            n_stale_iterations += 1;
+            if n_stale_iterations >= 3 {
+                tracing::info!("completed");
+                break;
+            }
+        }
+        mode = next_mode;
     }
 
     Ok(())
@@ -164,27 +222,29 @@ async fn run_grid_search_on_parameters(
     opts: &TrainerOpts,
     state: &mut State,
 ) -> crate::Result<f64> {
+    let start_instant = Instant::now();
     let mut errors = Vec::with_capacity(opts.grid_search_iterations);
-    for iteration in 1..=opts.grid_search_iterations {
-        let start_instant = Instant::now();
+    for i in 1..=opts.grid_search_iterations {
+        tracing::info!(iteration = i, of = opts.grid_search_iterations, "starting");
         state.account_cache.clear();
         state.vehicle_cache.clear();
-
         let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, state).await?;
         errors.push(error);
-        tracing::info!(
-            iteration = iteration,
-            n_factors = opts.n_factors,
-            regularization = opts.regularization,
-            error = error,
-            elapsed = format_elapsed(&start_instant).as_str(),
-        );
     }
-    Ok(errors.iter().sum::<f64>() / errors.len() as f64)
+    let error = errors.iter().sum::<f64>() / errors.len() as f64;
+    tracing::info!(
+        n_factors = opts.n_factors,
+        regularization = opts.regularization,
+        factor_std = opts.factor_std,
+        mean_error = error,
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "tested the parameters"
+    );
+    Ok(error)
 }
 
 #[tracing::instrument(skip_all)]
-async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
+async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
     let start_instant = Instant::now();
 
     let mut train_error = error::Error::default();
@@ -287,9 +347,10 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         }
     }
 
-    log::info!(
+    if !opts.silence_epochs {
+        log::info!(
         "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
-        iteration,
+        nr_epoch,
         train_error,
         test_error,
         (test_error / train_error - 1.0) * 100.0,
@@ -300,6 +361,7 @@ async fn run_epoch(iteration: usize, opts: &TrainerOpts, state: &mut State) -> c
         n_new_accounts,
         max_factor,
     );
+    }
     Ok(test_error)
 }
 

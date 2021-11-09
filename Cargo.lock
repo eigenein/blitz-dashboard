@@ -77,12 +77,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee10e43ae4a853c0a3591d4e2ada1719e553be18199d9da9d4a83f5927c2f5c7"
 
 [[package]]
-name = "arrayvec"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
-
-[[package]]
 name = "async-compression"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -204,7 +198,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.92.3"
+version = "0.92.4"
 dependencies = [
  "anyhow",
  "chrono",
@@ -226,7 +220,6 @@ dependencies = [
  "reqwest",
  "rmp-serde",
  "rocket",
- "rust_decimal",
  "rustversion",
  "sentry",
  "serde",
@@ -1758,17 +1751,6 @@ dependencies = [
  "time 0.2.27",
  "tokio",
  "uncased",
-]
-
-[[package]]
-name = "rust_decimal"
-version = "1.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "353775f96a1f400edcca737f843cb201af3645912e741e64456a257c770173e8"
-dependencies = [
- "arrayvec",
- "num-traits",
- "serde",
 ]
 
 [[package]]
