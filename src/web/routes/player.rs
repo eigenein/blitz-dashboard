@@ -8,6 +8,7 @@ use redis::aio::MultiplexedConnection;
 use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
+use tokio::spawn;
 use tokio::task::spawn_blocking;
 
 use partials::*;
@@ -54,7 +55,10 @@ pub async fn get(
         None => return Ok(Response::NotFound(NotFound(()))),
     };
     set_user(&current_info.nickname);
-    insert_account_if_not_exists(database, account_id).await?;
+    let insert_account_future = {
+        let database = PgPool::clone(database);
+        spawn(async move { insert_account_if_not_exists(&database, account_id).await })
+    };
     tracing::info!(
         account_id = account_id,
         elapsed = format_elapsed(&start_instant).as_str(),
@@ -551,6 +555,7 @@ pub async fn get(
         "max-age=60, stale-while-revalidate=3600",
         markup.into_string(),
     )));
+    insert_account_future.await??;
     tracing::info!(
         account_id = account_id,
         elapsed = format_elapsed(&start_instant).as_str(),
