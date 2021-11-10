@@ -104,7 +104,6 @@ struct State {
     fields(
         n_factors = opts.n_factors,
         regularization = opts.regularization,
-        factor_std = opts.factor_std,
     ),
 )]
 async fn run_epochs(
@@ -123,7 +122,6 @@ async fn run_epochs(
 enum GridSearchMode {
     NFactors,
     Regularization,
-    FactorStd,
 }
 
 #[tracing::instrument(skip_all)]
@@ -152,7 +150,7 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
                 ],
             ),
             GridSearchMode::Regularization => (
-                GridSearchMode::FactorStd,
+                GridSearchMode::NFactors,
                 vec![
                     TrainerOpts {
                         regularization: 0.9 * best_opts.regularization,
@@ -160,19 +158,6 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
                     },
                     TrainerOpts {
                         regularization: 1.1 * best_opts.regularization,
-                        ..best_opts.clone()
-                    },
-                ],
-            ),
-            GridSearchMode::FactorStd => (
-                GridSearchMode::NFactors,
-                vec![
-                    TrainerOpts {
-                        factor_std: 0.9 * best_opts.factor_std,
-                        ..best_opts.clone()
-                    },
-                    TrainerOpts {
-                        factor_std: 1.1 * best_opts.factor_std,
                         ..best_opts.clone()
                     },
                 ],
@@ -197,14 +182,13 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
             tracing::info!(
                 n_factors = best_opts.n_factors,
                 regularization = best_opts.regularization,
-                factor_std = best_opts.factor_std,
                 error = best_error,
                 "BEST SO FAR",
             );
         }
         if !is_improved {
             n_stale_iterations += 1;
-            if n_stale_iterations >= 3 {
+            if n_stale_iterations >= 2 {
                 tracing::info!("completed");
                 break;
             }
@@ -233,7 +217,6 @@ async fn run_grid_search_on_parameters(
     tracing::info!(
         n_factors = opts.n_factors,
         regularization = opts.regularization,
-        factor_std = opts.factor_std,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
         "tested the parameters"
