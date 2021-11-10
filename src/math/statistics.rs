@@ -27,7 +27,7 @@ impl ConfidenceInterval {
 
     #[must_use]
     pub fn default_wilson_score_interval(n_trials: i32, n_successes: i32) -> Self {
-        Self::wilson_score_interval(n_trials, n_successes, Z_90)
+        Self::wilson_score_interval(n_trials, n_successes, Z_95)
     }
 
     #[must_use]
@@ -102,6 +102,9 @@ impl PartialOrd for ConfidenceInterval {
         }
     }
 }
+
+#[allow(dead_code)]
+pub const Z_95: f64 = 1.96;
 
 #[allow(dead_code)]
 pub const Z_90: f64 = 1.645;
