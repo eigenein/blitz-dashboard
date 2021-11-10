@@ -153,6 +153,10 @@ pub struct TrainerOpts {
     #[structopt(long = "lr", default_value = "0.2")]
     pub learning_rate: f64,
 
+    /// Boost the learning rate by 10x for the specified number of epochs
+    #[structopt(long = "boost-lr")]
+    pub boost_learning_rate: Option<usize>,
+
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0.01")]
     pub regularization: f64,

@@ -37,7 +37,6 @@ const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
     fields(
         account_ttl_secs = opts.account_ttl_secs,
         time_span = opts.time_span.to_string().as_str(),
-        learning_rate = opts.learning_rate,
     ),
 )]
 pub async fn run(opts: TrainerOpts) -> crate::Result {
@@ -199,7 +198,6 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
                 n_factors = best_opts.n_factors,
                 regularization = best_opts.regularization,
                 factor_std = best_opts.factor_std,
-                learning_rate = best_opts.learning_rate,
                 error = best_error,
                 "BEST SO FAR",
             );
@@ -247,6 +245,11 @@ async fn run_grid_search_on_parameters(
 async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
     let start_instant = Instant::now();
 
+    let learning_rate = match opts.boost_learning_rate {
+        Some(n_epochs) if nr_epoch <= n_epochs => 10.0 * opts.learning_rate,
+        _ => opts.learning_rate,
+    };
+
     let mut train_error = error::Error::default();
     let mut test_error = error::Error::default();
 
@@ -256,7 +259,7 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
     fastrand::shuffle(&mut state.battles);
     state.modified_account_ids.clear();
 
-    let regularization_multiplier = opts.learning_rate * opts.regularization;
+    let regularization_multiplier = learning_rate * opts.regularization;
 
     for (_, battle) in state.battles.iter() {
         let account_factors = match state.account_cache.get_mut(&battle.account_id) {
@@ -298,7 +301,7 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
 
         if !battle.is_test {
             let target = if battle.is_win { 1.0 } else { 0.0 };
-            let residual_multiplier = opts.learning_rate * (target - prediction);
+            let residual_multiplier = learning_rate * (target - prediction);
             sgd(
                 account_factors,
                 vehicle_factors,
