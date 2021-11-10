@@ -118,12 +118,6 @@ async fn run_epochs(
     Ok(error)
 }
 
-#[derive(Debug)]
-enum GridSearchMode {
-    NFactors,
-    Regularization,
-}
-
 #[tracing::instrument(skip_all)]
 async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
     tracing::info!("running the initial evaluation");
@@ -131,69 +125,56 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
     let mut best_error = run_grid_search_on_parameters(&opts, &mut state).await?;
 
     tracing::info!("starting the search");
-    let mut mode = GridSearchMode::NFactors;
-    let mut n_stale_iterations = 0;
-    loop {
-        tracing::info!(mode = format!("{:?}", mode).as_str(), "trying");
-        let (next_mode, mut trial_opts) = match mode {
-            GridSearchMode::NFactors => (
-                GridSearchMode::Regularization,
-                vec![
-                    TrainerOpts {
-                        n_factors: best_opts.n_factors - 1,
-                        ..best_opts.clone()
-                    },
-                    TrainerOpts {
-                        n_factors: best_opts.n_factors + 1,
-                        ..best_opts.clone()
-                    },
-                ],
-            ),
-            GridSearchMode::Regularization => (
-                GridSearchMode::NFactors,
-                vec![
-                    TrainerOpts {
-                        regularization: 0.9 * best_opts.regularization,
-                        ..best_opts.clone()
-                    },
-                    TrainerOpts {
-                        regularization: 1.1 * best_opts.regularization,
-                        ..best_opts.clone()
-                    },
-                ],
-            ),
-        };
-
+    'search_loop: loop {
+        let mut trial_opts = vec![
+            TrainerOpts {
+                n_factors: best_opts.n_factors - 1,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                n_factors: best_opts.n_factors + 1,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                regularization: 0.9 * best_opts.regularization,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                regularization: 1.1 * best_opts.regularization,
+                ..best_opts.clone()
+            },
+        ];
         fastrand::shuffle(&mut trial_opts);
-        let mut is_improved = false;
+
         for opts in trial_opts {
             if opts.n_factors < 1 {
                 continue;
             }
             let error = run_grid_search_on_parameters(&opts, &mut state).await?;
-            if error < best_error {
-                tracing::info!(error = error, was = best_error, "IMPROVED");
+            let is_improved = error < best_error;
+            if is_improved {
+                tracing::info!(
+                    error = error,
+                    was = best_error,
+                    by = best_error - error,
+                    "IMPROVED",
+                );
                 best_error = error;
                 best_opts = opts.clone();
-                is_improved = true;
             } else {
                 tracing::info!("no improvement");
-            }
+            };
             tracing::info!(
                 n_factors = best_opts.n_factors,
                 regularization = best_opts.regularization,
                 error = best_error,
                 "BEST SO FAR",
             );
-        }
-        if !is_improved {
-            n_stale_iterations += 1;
-            if n_stale_iterations >= 2 {
-                tracing::info!("completed");
-                break;
+            if is_improved {
+                continue 'search_loop;
             }
         }
-        mode = next_mode;
+        break 'search_loop;
     }
 
     Ok(())
