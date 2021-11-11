@@ -113,7 +113,11 @@ async fn run_epochs(
 ) -> crate::Result<f64> {
     let mut error = 0.0;
     for i in epochs {
+        let start_instant = Instant::now();
         error = run_epoch(i, opts, state).await?;
+        if i == 1 {
+            tracing::info!(elapsed_per_epoch = format_elapsed(&start_instant).as_str());
+        }
     }
     Ok(error)
 }
@@ -126,7 +130,8 @@ async fn run_epochs(
     ),
 )]
 async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
-    tracing::info!(baseline_error = get_baseline_error(&state));
+    let baseline_error = get_baseline_error(&state);
+    tracing::info!(baseline_error = baseline_error);
 
     tracing::info!("running the initial evaluation");
     let mut best_opts = opts.clone();
@@ -176,6 +181,7 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
                 n_factors = best_opts.n_factors,
                 regularization = best_opts.regularization,
                 error = best_error,
+                over_baseline = best_error - baseline_error,
                 "BEST SO FAR",
             );
             if is_improved {
@@ -199,7 +205,9 @@ async fn run_grid_search_on_parameters(
         tracing::info!(iteration = i, of = opts.grid_search_iterations, "starting");
         state.account_cache.clear();
         state.vehicle_cache.clear();
+        let start_instant = Instant::now();
         let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, state).await?;
+        tracing::info!(elapsed = format_elapsed(&start_instant).as_str());
         errors.push(error);
     }
     let error = errors.iter().sum::<f64>() / errors.len() as f64;
