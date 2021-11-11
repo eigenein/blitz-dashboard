@@ -118,8 +118,16 @@ async fn run_epochs(
     Ok(error)
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(
+    skip_all,
+    fields(
+        n_iterations = opts.grid_search_iterations,
+        n_epochs = opts.n_grid_search_epochs.unwrap(),
+    ),
+)]
 async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
+    tracing::info!(baseline_error = get_baseline_error(&state));
+
     tracing::info!("running the initial evaluation");
     let mut best_opts = opts.clone();
     let mut best_error = run_grid_search_on_parameters(&opts, &mut state).await?;
@@ -203,6 +211,15 @@ async fn run_grid_search_on_parameters(
         "tested the parameters"
     );
     Ok(error)
+}
+
+#[tracing::instrument(skip_all)]
+fn get_baseline_error(state: &State) -> f64 {
+    let mut error = error::Error::default();
+    for (_, battle) in &state.battles {
+        error.push(0.5, battle.is_win);
+    }
+    error.average()
 }
 
 #[tracing::instrument(skip_all)]
