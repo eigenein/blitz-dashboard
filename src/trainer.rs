@@ -52,18 +52,15 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
-    let mut state = State {
+    let mut data_state = DataState {
         redis,
         battles,
         pointer,
-        vehicle_cache: HashMap::new(),
-        account_cache: LruCache::unbounded(),
-        modified_account_ids: HashSet::new(),
     };
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(1.., &opts, &mut state).await?;
+        run_epochs(1.., &opts, &mut data_state).await?;
     } else {
-        run_grid_search(opts, state).await?;
+        run_grid_search(opts, data_state).await?;
     }
     Ok(())
 }
@@ -90,10 +87,13 @@ pub async fn push_battles(
     Ok(())
 }
 
-struct State {
+struct DataState {
     redis: MultiplexedConnection,
     battles: Vec<(DateTime, Battle)>,
     pointer: String,
+}
+
+struct TrainingState {
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
@@ -109,11 +109,16 @@ struct State {
 async fn run_epochs(
     epochs: impl Iterator<Item = usize>,
     opts: &TrainerOpts,
-    state: &mut State,
+    data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let mut error = 0.0;
+    let mut training_state = TrainingState {
+        vehicle_cache: HashMap::new(),
+        account_cache: LruCache::unbounded(),
+        modified_account_ids: HashSet::new(),
+    };
     for i in epochs {
-        error = run_epoch(i, opts, state).await?;
+        error = run_epoch(i, opts, data_state, &mut training_state).await?;
     }
     Ok(error)
 }
@@ -125,13 +130,13 @@ async fn run_epochs(
         n_epochs = opts.n_grid_search_epochs.unwrap(),
     ),
 )]
-async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
-    let baseline_error = get_baseline_error(&state);
+async fn run_grid_search(opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
+    let baseline_error = get_baseline_error(&data_state);
     tracing::info!(baseline_error = baseline_error);
 
     tracing::info!("running the initial evaluation");
     let mut best_opts = opts.clone();
-    let mut best_error = run_grid_search_on_parameters(&opts, &mut state).await?;
+    let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
 
     tracing::info!("starting the search");
     'search_loop: loop {
@@ -179,7 +184,7 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
             if opts.n_factors < 1 {
                 continue;
             }
-            let error = run_grid_search_on_parameters(&opts, &mut state).await?;
+            let error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
             let is_improved = error < best_error;
             if is_improved {
                 tracing::info!(
@@ -213,14 +218,12 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
 #[tracing::instrument(skip_all)]
 async fn run_grid_search_on_parameters(
     opts: &TrainerOpts,
-    state: &mut State,
+    data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
     let mut errors = Vec::with_capacity(opts.grid_search_iterations);
     for _ in 1..=opts.grid_search_iterations {
-        state.account_cache.clear();
-        state.vehicle_cache.clear();
-        let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, state).await?;
+        let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, data_state).await?;
         errors.push(error);
     }
     let error = errors.iter().sum::<f64>() / errors.len() as f64;
@@ -235,7 +238,7 @@ async fn run_grid_search_on_parameters(
 }
 
 #[tracing::instrument(skip_all)]
-fn get_baseline_error(state: &State) -> f64 {
+fn get_baseline_error(state: &DataState) -> f64 {
     let mut error = error::Error::default();
     for (_, battle) in &state.battles {
         error.push(0.5, battle.is_win);
@@ -244,7 +247,12 @@ fn get_baseline_error(state: &State) -> f64 {
 }
 
 #[tracing::instrument(skip_all)]
-async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> crate::Result<f64> {
+async fn run_epoch(
+    nr_epoch: usize,
+    opts: &TrainerOpts,
+    data_state: &mut DataState,
+    training_state: &mut TrainingState,
+) -> crate::Result<f64> {
     let start_instant = Instant::now();
 
     let learning_rate = match opts.boost_learning_rate {
@@ -258,17 +266,17 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
     let mut n_new_accounts = 0;
     let mut n_initialized_accounts = 0;
 
-    fastrand::shuffle(&mut state.battles);
-    state.modified_account_ids.clear();
+    fastrand::shuffle(&mut data_state.battles);
+    training_state.modified_account_ids.clear();
 
     let regularization_multiplier = learning_rate * opts.regularization;
 
-    for (_, battle) in state.battles.iter() {
-        let account_factors = match state.account_cache.get_mut(&battle.account_id) {
+    for (_, battle) in data_state.battles.iter() {
+        let account_factors = match training_state.account_cache.get_mut(&battle.account_id) {
             Some(factors) => factors,
             None => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_account_factors(&mut state.redis, battle.account_id).await?
+                    get_account_factors(&mut data_state.redis, battle.account_id).await?
                 } else {
                     None
                 };
@@ -279,17 +287,20 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
                 if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                     n_initialized_accounts += 1;
                 }
-                state.account_cache.put(battle.account_id, factors);
-                state.account_cache.get_mut(&battle.account_id).unwrap()
+                training_state.account_cache.put(battle.account_id, factors);
+                training_state
+                    .account_cache
+                    .get_mut(&battle.account_id)
+                    .unwrap()
             }
         };
 
         let tank_id = remap_tank_id(battle.tank_id);
-        let vehicle_factors = match state.vehicle_cache.entry(tank_id) {
+        let vehicle_factors = match training_state.vehicle_cache.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_vehicle_factors(&mut state.redis, tank_id).await?
+                    get_vehicle_factors(&mut data_state.redis, tank_id).await?
                 } else {
                     None
                 };
@@ -311,29 +322,31 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
                 regularization_multiplier,
             );
 
-            state.modified_account_ids.insert(battle.account_id);
+            training_state
+                .modified_account_ids
+                .insert(battle.account_id);
             train_error.push(prediction, battle.is_win);
         } else {
             test_error.push(prediction, battle.is_win);
         }
     }
 
-    let n_accounts = state.modified_account_ids.len();
+    let n_accounts = training_state.modified_account_ids.len();
     if opts.n_grid_search_epochs.is_none() {
         set_all_accounts_factors(
-            &mut state.redis,
-            &mut state.modified_account_ids,
-            &state.account_cache,
+            &mut data_state.redis,
+            &mut training_state.modified_account_ids,
+            &training_state.account_cache,
             opts.account_ttl_secs,
         )
         .await?;
-        state.account_cache.resize(opts.account_cache_size);
-        set_all_vehicles_factors(&mut state.redis, &state.vehicle_cache).await?;
+        training_state.account_cache.resize(opts.account_cache_size);
+        set_all_vehicles_factors(&mut data_state.redis, &training_state.vehicle_cache).await?;
     }
 
     let train_error = train_error.average();
     let test_error = test_error.average();
-    let max_factor = state
+    let max_factor = training_state
         .vehicle_cache
         .iter()
         .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
@@ -341,14 +354,14 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
 
     if opts.n_grid_search_epochs.is_none() {
         if let Some((_, new_pointer)) = refresh_battles(
-            &mut state.redis,
-            &state.pointer,
-            &mut state.battles,
+            &mut data_state.redis,
+            &data_state.pointer,
+            &mut data_state.battles,
             opts.time_span,
         )
         .await?
         {
-            state.pointer = new_pointer;
+            data_state.pointer = new_pointer;
         }
     }
 
@@ -359,8 +372,8 @@ async fn run_epoch(nr_epoch: usize, opts: &TrainerOpts, state: &mut State) -> cr
         train_error,
         test_error,
         (test_error / train_error - 1.0) * 100.0,
-        state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-        state.battles.len() as f64 / 1000.0,
+        data_state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+        data_state.battles.len() as f64 / 1000.0,
         n_accounts as f64 / 1000.0,
         n_initialized_accounts,
         n_new_accounts,
