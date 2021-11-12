@@ -222,14 +222,13 @@ async fn run_grid_search_on_parameters(
     data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
-    let mut tasks = Vec::new();
-    for _ in 1..=opts.grid_search_iterations {
+    let tasks = (1..=opts.grid_search_iterations).map(|_| {
         let opts = opts.clone();
         let data_state = data_state.clone();
-        tasks.push(tokio::spawn(async move {
+        tokio::spawn(async move {
             run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, data_state).await
-        }));
-    }
+        })
+    });
     let errors = futures::future::try_join_all(tasks)
         .await?
         .into_iter()
