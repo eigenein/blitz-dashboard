@@ -59,7 +59,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         pointer,
     };
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(1.., &opts, data_state).await?;
+        run_epochs(1.., opts, data_state).await?;
     } else {
         run_grid_search(opts, data_state).await?;
     }
@@ -110,19 +110,34 @@ struct TrainingState {
 )]
 async fn run_epochs(
     epochs: impl Iterator<Item = usize>,
-    opts: &TrainerOpts,
+    mut opts: TrainerOpts,
     mut data_state: DataState,
 ) -> crate::Result<f64> {
-    let mut error = 0.0;
+    let mut test_error = 0.0;
+    let mut old_errors = None;
+
     let mut training_state = TrainingState {
         vehicle_cache: HashMap::new(),
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
+
     for i in epochs {
-        error = run_epoch(i, opts, &mut data_state, &mut training_state).await?;
+        let (train_error, new_test_error) =
+            run_epoch(i, &opts, &mut data_state, &mut training_state).await?;
+        test_error = new_test_error;
+        if let Some((old_train_error, old_test_error)) = old_errors {
+            if opts.auto_r && test_error > old_test_error {
+                if train_error <= old_train_error {
+                    opts.regularization += 0.001
+                } else {
+                    opts.regularization = (opts.regularization - 0.001).max(0.001)
+                }
+            }
+        }
+        old_errors = Some((train_error, test_error));
     }
-    Ok(error)
+    Ok(test_error)
 }
 
 #[tracing::instrument(
@@ -132,86 +147,37 @@ async fn run_epochs(
         n_epochs = opts.n_grid_search_epochs.unwrap(),
     ),
 )]
-async fn run_grid_search(opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
+async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
     let baseline_error = get_baseline_error(&data_state);
     tracing::info!(baseline_error = baseline_error);
 
     tracing::info!("running the initial evaluation");
     let mut best_opts = opts.clone();
-    let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
+    let mut best_error = run_grid_search_on_parameters(opts.clone(), &mut data_state).await?;
 
     tracing::info!("starting the search");
-    'search_loop: loop {
-        let mut trial_opts = vec![
-            TrainerOpts {
-                n_factors: best_opts.n_factors - 1,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                n_factors: best_opts.n_factors + 1,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                regularization: 0.9 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                regularization: 1.1 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                n_factors: best_opts.n_factors - 1,
-                regularization: 0.9 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                n_factors: best_opts.n_factors - 1,
-                regularization: 1.1 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                n_factors: best_opts.n_factors + 1,
-                regularization: 0.9 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-            TrainerOpts {
-                n_factors: best_opts.n_factors + 1,
-                regularization: 1.1 * best_opts.regularization,
-                ..best_opts.clone()
-            },
-        ];
-        fastrand::shuffle(&mut trial_opts);
-
-        for opts in trial_opts {
-            if opts.n_factors < 1 {
-                continue;
-            }
-            let error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
-            let is_improved = error < best_error;
-            if is_improved {
-                tracing::info!(
-                    error = error,
-                    was = best_error,
-                    by = best_error - error,
-                    "IMPROVED",
-                );
-                best_error = error;
-                best_opts = opts.clone();
-            } else {
-                tracing::info!("no improvement");
-            };
+    for n_factors in &opts.grid_search_factors {
+        opts.n_factors = *n_factors;
+        let error = run_grid_search_on_parameters(opts.clone(), &mut data_state).await?;
+        if error < best_error {
             tracing::info!(
-                n_factors = best_opts.n_factors,
-                regularization = best_opts.regularization,
-                error = best_error,
-                over_baseline = best_error - baseline_error,
-                "BEST SO FAR",
+                error = error,
+                was = best_error,
+                by = best_error - error,
+                "IMPROVED",
             );
-            if is_improved {
-                continue 'search_loop;
-            }
-        }
-        break 'search_loop;
+            best_error = error;
+            best_opts = opts.clone();
+        } else {
+            tracing::info!("no improvement");
+        };
+        tracing::info!(
+            n_factors = best_opts.n_factors,
+            regularization = best_opts.regularization,
+            error = best_error,
+            over_baseline = best_error - baseline_error,
+            "BEST SO FAR",
+        );
     }
 
     Ok(())
@@ -219,7 +185,7 @@ async fn run_grid_search(opts: TrainerOpts, mut data_state: DataState) -> crate:
 
 #[tracing::instrument(skip_all)]
 async fn run_grid_search_on_parameters(
-    opts: &TrainerOpts,
+    opts: TrainerOpts,
     data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
@@ -227,7 +193,7 @@ async fn run_grid_search_on_parameters(
         let opts = opts.clone();
         let data_state = data_state.clone();
         tokio::spawn(async move {
-            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, data_state).await
+            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, data_state).await
         })
     });
     let errors = futures::future::try_join_all(tasks)
@@ -260,7 +226,7 @@ async fn run_epoch(
     opts: &TrainerOpts,
     data_state: &mut DataState,
     training_state: &mut TrainingState,
-) -> crate::Result<f64> {
+) -> crate::Result<(f64, f64)> {
     let start_instant = Instant::now();
 
     let learning_rate = match opts.boost_learning_rate {
@@ -375,20 +341,21 @@ async fn run_epoch(
 
     if !opts.silence_epochs {
         log::info!(
-        "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
-        nr_epoch,
-        train_error,
-        test_error,
-        (test_error / train_error - 1.0) * 100.0,
-        data_state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-        data_state.battles.len() as f64 / 1000.0,
-        n_accounts as f64 / 1000.0,
-        n_initialized_accounts,
-        n_new_accounts,
-        max_factor,
-    );
+            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            nr_epoch,
+            train_error,
+            test_error,
+            (test_error / train_error - 1.0) * 100.0,
+            opts.regularization,
+            data_state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+            data_state.battles.len() as f64 / 1000.0,
+            n_accounts as f64 / 1000.0,
+            n_initialized_accounts,
+            n_new_accounts,
+            max_factor,
+        );
     }
-    Ok(test_error)
+    Ok((train_error, test_error))
 }
 
 #[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]

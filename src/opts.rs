@@ -149,8 +149,12 @@ pub struct TrainerOpts {
     #[structopt(long)]
     pub silence_epochs: bool,
 
+    /// Enable experimental automatically adjusted regularization
+    #[structopt(long)]
+    pub auto_r: bool,
+
     /// Learning rate
-    #[structopt(long = "lr", default_value = "0.2")]
+    #[structopt(long = "lr", default_value = "0.01")]
     pub learning_rate: f64,
 
     /// Boost the learning rate by 10x for the specified number of epochs
@@ -158,7 +162,7 @@ pub struct TrainerOpts {
     pub boost_learning_rate: Option<usize>,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.01")]
+    #[structopt(short = "r", long = "regularization", default_value = "0")]
     pub regularization: f64,
 
     /// Number of latent factors
@@ -191,6 +195,9 @@ pub struct TrainerOpts {
 
     #[structopt(long = "gsi", default_value = "3")]
     pub grid_search_iterations: usize,
+
+    #[structopt(long = "gsf")]
+    pub grid_search_factors: Vec<usize>,
 }
 
 #[derive(StructOpt)]
