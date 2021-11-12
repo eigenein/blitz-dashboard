@@ -19,6 +19,7 @@ use battle::Battle;
 use math::{initialize_factors, predict_win_rate};
 
 use crate::helpers::{format_duration, format_elapsed};
+use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
@@ -233,7 +234,7 @@ async fn run_grid_search_on_parameters(
         .await?
         .into_iter()
         .collect::<crate::Result<Vec<f64>>>()?;
-    let error = errors.iter().sum::<f64>() / errors.len() as f64;
+    let error = mean(&errors);
     tracing::info!(
         n_factors = opts.n_factors,
         regularization = opts.regularization,

@@ -1,6 +1,10 @@
 use std::cmp::Ordering;
 use std::ops::{Add, Mul};
 
+pub fn mean(values: &[f64]) -> f64 {
+    values.iter().sum::<f64>() / values.len().max(1) as f64
+}
+
 #[derive(Copy, Clone)]
 pub struct ConfidenceInterval {
     pub mean: f64,
