@@ -52,13 +52,13 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
-    let mut data_state = DataState {
+    let data_state = DataState {
         redis,
         battles,
         pointer,
     };
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(1.., &opts, &mut data_state).await?;
+        run_epochs(1.., &opts, data_state).await?;
     } else {
         run_grid_search(opts, data_state).await?;
     }
@@ -87,6 +87,7 @@ pub async fn push_battles(
     Ok(())
 }
 
+#[derive(Clone)]
 struct DataState {
     redis: MultiplexedConnection,
     battles: Vec<(DateTime, Battle)>,
@@ -109,7 +110,7 @@ struct TrainingState {
 async fn run_epochs(
     epochs: impl Iterator<Item = usize>,
     opts: &TrainerOpts,
-    data_state: &mut DataState,
+    mut data_state: DataState,
 ) -> crate::Result<f64> {
     let mut error = 0.0;
     let mut training_state = TrainingState {
@@ -118,7 +119,7 @@ async fn run_epochs(
         modified_account_ids: HashSet::new(),
     };
     for i in epochs {
-        error = run_epoch(i, opts, data_state, &mut training_state).await?;
+        error = run_epoch(i, opts, &mut data_state, &mut training_state).await?;
     }
     Ok(error)
 }
@@ -221,11 +222,18 @@ async fn run_grid_search_on_parameters(
     data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
-    let mut errors = Vec::with_capacity(opts.grid_search_iterations);
+    let mut tasks = Vec::new();
     for _ in 1..=opts.grid_search_iterations {
-        let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, data_state).await?;
-        errors.push(error);
+        let opts = opts.clone();
+        let data_state = data_state.clone();
+        tasks.push(tokio::spawn(async move {
+            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), &opts, data_state).await
+        }));
     }
+    let errors = futures::future::try_join_all(tasks)
+        .await?
+        .into_iter()
+        .collect::<crate::Result<Vec<f64>>>()?;
     let error = errors.iter().sum::<f64>() / errors.len() as f64;
     tracing::info!(
         n_factors = opts.n_factors,
