@@ -58,10 +58,14 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         battles,
         pointer,
     };
+
+    let baseline_error = get_baseline_error(&data_state);
+    tracing::info!(baseline_error = baseline_error);
+
     if opts.n_grid_search_epochs.is_none() {
         run_epochs(1.., opts, data_state).await?;
     } else {
-        run_grid_search(opts, data_state).await?;
+        run_grid_search(opts, data_state, baseline_error).await?;
     }
     Ok(())
 }
@@ -148,10 +152,11 @@ async fn run_epochs(
         n_epochs = opts.n_grid_search_epochs.unwrap(),
     ),
 )]
-async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
-    let baseline_error = get_baseline_error(&data_state);
-    tracing::info!(baseline_error = baseline_error);
-
+async fn run_grid_search(
+    mut opts: TrainerOpts,
+    mut data_state: DataState,
+    baseline_error: f64,
+) -> crate::Result {
     tracing::info!("running the initial evaluation");
     let mut best_n_factors = opts.n_factors;
     let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
