@@ -156,6 +156,26 @@ async fn run_grid_search(opts: TrainerOpts, mut state: State) -> crate::Result {
                 regularization: 1.1 * best_opts.regularization,
                 ..best_opts.clone()
             },
+            TrainerOpts {
+                n_factors: best_opts.n_factors - 1,
+                regularization: 0.9 * best_opts.regularization,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                n_factors: best_opts.n_factors - 1,
+                regularization: 1.1 * best_opts.regularization,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                n_factors: best_opts.n_factors + 1,
+                regularization: 0.9 * best_opts.regularization,
+                ..best_opts.clone()
+            },
+            TrainerOpts {
+                n_factors: best_opts.n_factors + 1,
+                regularization: 1.1 * best_opts.regularization,
+                ..best_opts.clone()
+            },
         ];
         fastrand::shuffle(&mut trial_opts);
 
