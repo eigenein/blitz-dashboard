@@ -113,11 +113,7 @@ async fn run_epochs(
 ) -> crate::Result<f64> {
     let mut error = 0.0;
     for i in epochs {
-        let start_instant = Instant::now();
         error = run_epoch(i, opts, state).await?;
-        if i == 1 {
-            tracing::info!(elapsed_per_epoch = format_elapsed(&start_instant).as_str());
-        }
     }
     Ok(error)
 }
@@ -221,13 +217,10 @@ async fn run_grid_search_on_parameters(
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
     let mut errors = Vec::with_capacity(opts.grid_search_iterations);
-    for i in 1..=opts.grid_search_iterations {
-        tracing::info!(iteration = i, of = opts.grid_search_iterations, "starting");
+    for _ in 1..=opts.grid_search_iterations {
         state.account_cache.clear();
         state.vehicle_cache.clear();
-        let start_instant = Instant::now();
         let error = run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, state).await?;
-        tracing::info!(elapsed = format_elapsed(&start_instant).as_str());
         errors.push(error);
     }
     let error = errors.iter().sum::<f64>() / errors.len() as f64;
