@@ -106,6 +106,7 @@ struct TrainingState {
     fields(
         n_factors = opts.n_factors,
         regularization = opts.regularization,
+        auto_r = opts.auto_r,
     ),
 )]
 async fn run_epochs(
@@ -152,13 +153,13 @@ async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> cr
     tracing::info!(baseline_error = baseline_error);
 
     tracing::info!("running the initial evaluation");
-    let mut best_opts = opts.clone();
-    let mut best_error = run_grid_search_on_parameters(opts.clone(), &mut data_state).await?;
+    let mut best_n_factors = opts.n_factors;
+    let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
 
     tracing::info!("starting the search");
     for n_factors in &opts.grid_search_factors {
         opts.n_factors = *n_factors;
-        let error = run_grid_search_on_parameters(opts.clone(), &mut data_state).await?;
+        let error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
         if error < best_error {
             tracing::info!(
                 error = error,
@@ -167,13 +168,12 @@ async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> cr
                 "IMPROVED",
             );
             best_error = error;
-            best_opts = opts.clone();
+            best_n_factors = *n_factors;
         } else {
             tracing::info!("no improvement");
         };
         tracing::info!(
-            n_factors = best_opts.n_factors,
-            regularization = best_opts.regularization,
+            n_factors = best_n_factors,
             error = best_error,
             over_baseline = best_error - baseline_error,
             "BEST SO FAR",
@@ -185,7 +185,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> cr
 
 #[tracing::instrument(skip_all)]
 async fn run_grid_search_on_parameters(
-    opts: TrainerOpts,
+    opts: &TrainerOpts,
     data_state: &mut DataState,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
