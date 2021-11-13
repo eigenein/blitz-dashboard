@@ -53,19 +53,20 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         "loaded",
     );
 
+    let baseline_error = get_baseline_error(&battles);
+    tracing::info!(baseline_error = baseline_error);
+
     let data_state = DataState {
         redis,
         battles,
         pointer,
+        baseline_error,
     };
-
-    let baseline_error = get_baseline_error(&data_state);
-    tracing::info!(baseline_error = baseline_error);
 
     if opts.n_grid_search_epochs.is_none() {
         run_epochs(1.., opts, data_state).await?;
     } else {
-        run_grid_search(opts, data_state, baseline_error).await?;
+        run_grid_search(opts, data_state).await?;
     }
     Ok(())
 }
@@ -97,6 +98,7 @@ struct DataState {
     redis: MultiplexedConnection,
     battles: Vec<(DateTime, Battle)>,
     pointer: String,
+    baseline_error: f64,
 }
 
 struct TrainingState {
@@ -128,8 +130,17 @@ async fn run_epochs(
     };
 
     for i in epochs {
-        let (train_error, new_test_error) =
-            run_epoch(i, &opts, &mut data_state, &mut training_state).await?;
+        let turbo_learning_rate = old_errors
+            .map(|(_, test_error)| test_error > data_state.baseline_error)
+            .unwrap_or(true);
+        let (train_error, new_test_error) = run_epoch(
+            i,
+            &opts,
+            turbo_learning_rate,
+            &mut data_state,
+            &mut training_state,
+        )
+        .await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
             if !opts.no_auto_regularization && test_error > old_test_error {
@@ -152,11 +163,7 @@ async fn run_epochs(
         n_epochs = opts.n_grid_search_epochs.unwrap(),
     ),
 )]
-async fn run_grid_search(
-    mut opts: TrainerOpts,
-    mut data_state: DataState,
-    baseline_error: f64,
-) -> crate::Result {
+async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
     tracing::info!("running the initial evaluation");
     let mut best_n_factors = opts.n_factors;
     let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
@@ -180,7 +187,7 @@ async fn run_grid_search(
         tracing::info!(
             n_factors = best_n_factors,
             error = best_error,
-            over_baseline = best_error - baseline_error,
+            over_baseline = best_error - data_state.baseline_error,
             "BEST SO FAR",
         );
     }
@@ -217,9 +224,9 @@ async fn run_grid_search_on_parameters(
 }
 
 #[tracing::instrument(skip_all)]
-fn get_baseline_error(state: &DataState) -> f64 {
+fn get_baseline_error(battles: &[(DateTime, Battle)]) -> f64 {
     let mut error = error::Error::default();
-    for (_, battle) in &state.battles {
+    for (_, battle) in battles {
         error.push(0.5, battle.is_win);
     }
     error.average()
@@ -229,14 +236,16 @@ fn get_baseline_error(state: &DataState) -> f64 {
 async fn run_epoch(
     nr_epoch: usize,
     opts: &TrainerOpts,
+    turbo_learning_rate: bool,
     data_state: &mut DataState,
     training_state: &mut TrainingState,
 ) -> crate::Result<(f64, f64)> {
     let start_instant = Instant::now();
 
-    let learning_rate = match opts.boost_learning_rate {
-        Some(n_epochs) if nr_epoch <= n_epochs => 10.0 * opts.learning_rate,
-        _ => opts.learning_rate,
+    let learning_rate = if turbo_learning_rate {
+        opts.turbo_learning_rate
+    } else {
+        opts.learning_rate
     };
 
     let mut train_error = error::Error::default();

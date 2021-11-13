@@ -154,12 +154,12 @@ pub struct TrainerOpts {
     pub no_auto_regularization: bool,
 
     /// Learning rate
-    #[structopt(long = "lr", default_value = "0.01")]
+    #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
 
-    /// Boost the learning rate by 10x for the specified number of epochs
-    #[structopt(long = "boost-lr")]
-    pub boost_learning_rate: Option<usize>,
+    /// Learning rate for when the test error is above the baseline error
+    #[structopt(long = "turbo-lr", default_value = "0.01")]
+    pub turbo_learning_rate: f64,
 
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0")]
