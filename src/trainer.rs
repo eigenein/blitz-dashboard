@@ -110,7 +110,7 @@ struct TrainingState {
     fields(
         n_factors = opts.n_factors,
         regularization = opts.regularization,
-        auto_r = opts.auto_r,
+        auto_regularization = !opts.no_auto_regularization,
     ),
 )]
 async fn run_epochs(
@@ -132,7 +132,7 @@ async fn run_epochs(
             run_epoch(i, &opts, &mut data_state, &mut training_state).await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
-            if opts.auto_r && test_error > old_test_error {
+            if !opts.no_auto_regularization && test_error > old_test_error {
                 if train_error <= old_train_error {
                     opts.regularization += 0.001
                 } else {

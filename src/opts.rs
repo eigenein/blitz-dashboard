@@ -149,9 +149,9 @@ pub struct TrainerOpts {
     #[structopt(long)]
     pub silence_epochs: bool,
 
-    /// Enable experimental automatically adjusted regularization
-    #[structopt(long)]
-    pub auto_r: bool,
+    /// Disable automatic regularization adjustment
+    #[structopt(long = "no-auto-r")]
+    pub no_auto_regularization: bool,
 
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.01")]
