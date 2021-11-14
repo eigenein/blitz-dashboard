@@ -170,7 +170,7 @@ pub struct TrainerOpts {
     pub n_factors: usize,
 
     /// Standard deviation of newly initialised latent factors
-    #[structopt(long, default_value = "0.1")]
+    #[structopt(long, default_value = "1.0")]
     pub factor_std: f64,
 
     /// Maximum account idle time after which the account factors expire
