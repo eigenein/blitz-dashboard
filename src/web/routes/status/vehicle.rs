@@ -4,8 +4,6 @@ use itertools::Itertools;
 use maud::{html, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
-use rocket::response::content::Html;
-use rocket::response::status::NotFound;
 use rocket::{uri, State};
 
 use crate::logging::clear_user;
@@ -15,7 +13,7 @@ use crate::trainer::get_all_vehicle_factors;
 use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
-use crate::web::response::Response;
+use crate::web::response::CustomResponse;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::{DisableCaches, TrackingCode};
 
@@ -25,21 +23,21 @@ pub async fn get(
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
     disable_caches: &State<DisableCaches>,
-) -> crate::web::result::Result<Response> {
+) -> crate::web::result::Result<CustomResponse> {
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
     let cache_key = format!("html::status::vehicle::{}", tank_id);
     if !disable_caches.0 {
         if let Some(cached_response) = redis.get(&cache_key).await? {
-            return Ok(Response::Html(Html(cached_response)));
+            return Ok(CustomResponse::RawHtml(cached_response));
         }
     }
 
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     let vehicle_factors = match vehicles_factors.get(&tank_id) {
         Some(factors) => factors,
-        None => return Ok(Response::NotFound(NotFound(()))),
+        None => return Ok(CustomResponse::NotFound),
     };
 
     let vehicle = get_vehicle(tank_id);
@@ -143,5 +141,5 @@ pub async fn get(
 
     let response = markup.into_string();
     redis.set_ex(&cache_key, &response, 60).await?;
-    Ok(Response::Html(Html(response)))
+    Ok(CustomResponse::RawHtml(response))
 }

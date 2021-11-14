@@ -15,7 +15,6 @@ use crate::wargaming::WargamingApi;
 mod error;
 mod fairings;
 mod partials;
-mod responders;
 mod response;
 mod result;
 mod routes;

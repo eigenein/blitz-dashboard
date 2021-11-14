@@ -3,11 +3,13 @@ use rocket::State;
 
 use crate::logging::clear_user;
 use crate::web::partials::{account_search, headers};
-use crate::web::responders::CachedHtml;
+use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;
 
 #[rocket::get("/")]
-pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Result<CachedHtml> {
+pub async fn get(
+    tracking_code: &State<TrackingCode>,
+) -> crate::web::result::Result<CustomResponse> {
     clear_user();
 
     let markup = html! {
@@ -61,8 +63,8 @@ pub async fn get(tracking_code: &State<TrackingCode>) -> crate::web::result::Res
         }
     };
 
-    Ok(CachedHtml(
+    Ok(CustomResponse::CachedHtml(
         "max-age=604800, stale-while-revalidate=86400",
-        markup.into_string(),
+        markup,
     ))
 }

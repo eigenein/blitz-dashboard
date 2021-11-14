@@ -5,7 +5,6 @@ use chrono_humanize::Tense;
 use humantime::parse_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
-use rocket::response::status::{BadRequest, NotFound};
 use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::spawn;
@@ -26,8 +25,7 @@ use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
     account_search, datetime, footer, headers, home_button, icon_text, render_f64,
 };
-use crate::web::responders::CachedHtml;
-use crate::web::response::Response;
+use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;
 
 pub mod partials;
@@ -42,19 +40,19 @@ pub async fn get(
     tracking_code: &State<TrackingCode>,
     account_tanks_cache: &State<AccountTanksCache>,
     redis: &State<MultiplexedConnection>,
-) -> crate::web::result::Result<Response> {
+) -> crate::web::result::Result<CustomResponse> {
     let start_instant = Instant::now();
     let period = match period {
         Some(period) => match parse_duration(&period) {
             Ok(period) => period,
-            Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
+            Err(_) => return Ok(CustomResponse::BadRequest),
         },
         None => from_days(1),
     };
 
     let current_info = match account_info_cache.get(account_id).await? {
         Some(info) => info,
-        None => return Ok(Response::NotFound(NotFound(()))),
+        None => return Ok(CustomResponse::NotFound),
     };
     set_user(&current_info.nickname);
     let insert_account_future = {
@@ -549,10 +547,10 @@ pub async fn get(
         }
     };
 
-    let result = Ok(Response::CachedHtml(CachedHtml(
+    let result = Ok(CustomResponse::CachedHtml(
         "max-age=60, stale-while-revalidate=3600",
-        markup.into_string(),
-    )));
+        markup,
+    ));
     insert_account_future.await??;
     tracing::info!(
         account_id = account_id,

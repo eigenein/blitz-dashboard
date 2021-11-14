@@ -2,8 +2,6 @@ use std::ops::Range;
 
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
-use rocket::response::content::Html;
-use rocket::response::status::BadRequest;
 use rocket::response::Redirect;
 use rocket::{uri, State};
 
@@ -12,7 +10,7 @@ use crate::models::AccountInfo;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
-use crate::web::response::Response;
+use crate::web::response::CustomResponse;
 use crate::web::routes::player::rocket_uri_macro_get as rocket_uri_macro_get_player;
 use crate::web::TrackingCode;
 
@@ -26,11 +24,11 @@ pub async fn get(
     tracking_code: &State<TrackingCode>,
     api: &State<WargamingApi>,
     account_info_cache: &State<AccountInfoCache>,
-) -> crate::web::result::Result<Response> {
+) -> crate::web::result::Result<CustomResponse> {
     clear_user();
 
     if !SEARCH_QUERY_LENGTH.contains(&query.len()) {
-        return Ok(Response::BadRequest(BadRequest(None)));
+        return Ok(CustomResponse::BadRequest);
     }
 
     let account_ids: Vec<i32> = api
@@ -48,10 +46,9 @@ pub async fn get(
     if accounts.len() == 1 {
         let account_info = accounts.first().unwrap();
         account_info_cache.put(account_info).await?;
-        return Ok(Response::Redirect(Redirect::temporary(uri!(get_player(
-            account_id = account_info.base.id,
-            period = _,
-        )))));
+        return Ok(CustomResponse::Redirect(Redirect::temporary(uri!(
+            get_player(account_id = account_info.base.id, period = _,)
+        ))));
     }
     let exact_match = accounts
         .iter()
@@ -122,7 +119,7 @@ pub async fn get(
         }
     };
 
-    Ok(Response::Html(Html(markup.into_string())))
+    Ok(CustomResponse::Html(markup))
 }
 
 fn account_card(account_info: &AccountInfo) -> Markup {
