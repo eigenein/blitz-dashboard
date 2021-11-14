@@ -44,10 +44,12 @@ pub async fn get(
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<Response> {
     let start_instant = Instant::now();
-    let period = period.map(|period| parse_duration(&period)).transpose();
     let period = match period {
-        Ok(period) => period,
-        Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
+        Some(period) => match parse_duration(&period) {
+            Ok(period) => period,
+            Err(_) => return Ok(Response::BadRequest(BadRequest(None))),
+        },
+        None => from_days(1),
     };
 
     let current_info = match account_info_cache.get(account_id).await? {
@@ -68,15 +70,12 @@ pub async fn get(
     let tanks = account_tanks_cache
         .get(current_info.base.id, current_info.base.last_battle_time)
         .await?;
-    let tanks_delta = match period {
-        Some(period) => {
-            let before = Utc::now() - Duration::from_std(period)?;
-            let tank_ids: Vec<i32> = tanks.iter().map(Tank::tank_id).collect();
-            let old_tank_snapshots =
-                retrieve_latest_tank_snapshots(database, account_id, &tank_ids, &before).await?;
-            spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await?
-        }
-        None => tanks,
+    let tanks_delta = {
+        let before = Utc::now() - Duration::from_std(period)?;
+        let tank_ids: Vec<i32> = tanks.iter().map(Tank::tank_id).collect();
+        let old_tank_snapshots =
+            retrieve_latest_tank_snapshots(database, account_id, &tank_ids, &before).await?;
+        spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await?
     };
     tracing::info!(
         account_id = account_id,
@@ -153,16 +152,15 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
-                    (render_period_li(period, None, "Все время"))
-                    (render_period_li(period, Some(from_days(1)), "День"))
-                    (render_period_li(period, Some(from_days(2)), "2 дня"))
-                    (render_period_li(period, Some(from_days(3)), "3 дня"))
-                    (render_period_li(period, Some(from_days(7)), "Неделя"))
-                    (render_period_li(period, Some(from_days(14)), "2 недели"))
-                    (render_period_li(period, Some(from_days(21)), "3 недели"))
-                    (render_period_li(period, Some(from_months(1)), "Месяц"))
-                    (render_period_li(period, Some(from_months(2)), "2 месяца"))
-                    (render_period_li(period, Some(from_months(3)), "3 месяца"))
+                    (render_period_li(period, from_days(1), "24 часа"))
+                    (render_period_li(period, from_days(2), "2 дня"))
+                    (render_period_li(period, from_days(3), "3 дня"))
+                    (render_period_li(period, from_days(7), "Неделя"))
+                    (render_period_li(period, from_days(14), "2 недели"))
+                    (render_period_li(period, from_days(21), "3 недели"))
+                    (render_period_li(period, from_months(1), "Месяц"))
+                    (render_period_li(period, from_months(2), "2 месяца"))
+                    (render_period_li(period, from_months(3), "3 месяца"))
                 }
             }
         }
