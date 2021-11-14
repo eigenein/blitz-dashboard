@@ -180,6 +180,7 @@ async fn commit_factors(
         opts.account_ttl_secs,
     )
     .await?;
+    training_state.modified_account_ids.clear();
     training_state.account_cache.resize(opts.account_cache_size);
     set_all_vehicles_factors(&mut data_state.redis, &training_state.vehicle_cache).await?;
     tracing::info!(
@@ -288,8 +289,6 @@ async fn run_epoch(
     let mut n_initialized_accounts = 0;
 
     fastrand::shuffle(&mut data_state.battles);
-    training_state.modified_account_ids.clear();
-
     let regularization_multiplier = learning_rate * opts.regularization;
 
     for (_, battle) in data_state.battles.iter() {
