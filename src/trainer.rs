@@ -113,6 +113,7 @@ struct TrainingState {
         n_factors = opts.n_factors,
         regularization = opts.regularization,
         auto_regularization = !opts.no_auto_regularization,
+        commit_period = format_duration(opts.commit_period).as_str(),
     ),
 )]
 async fn run_epochs(
@@ -122,6 +123,7 @@ async fn run_epochs(
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
     let mut old_errors = None;
+    let mut last_commit_instant = Instant::now();
 
     let mut training_state = TrainingState {
         vehicle_cache: HashMap::new(),
@@ -152,8 +154,39 @@ async fn run_epochs(
             }
         }
         old_errors = Some((train_error, test_error));
+
+        if opts.n_grid_search_epochs.is_none()
+            && last_commit_instant.elapsed() >= opts.commit_period
+        {
+            commit_factors(&opts, &mut data_state, &mut training_state).await?;
+            last_commit_instant = Instant::now();
+        }
     }
+
     Ok(test_error)
+}
+
+#[tracing::instrument(skip_all)]
+async fn commit_factors(
+    opts: &TrainerOpts,
+    data_state: &mut DataState,
+    training_state: &mut TrainingState,
+) -> crate::Result {
+    let start_instant = Instant::now();
+    set_all_accounts_factors(
+        &mut data_state.redis,
+        &mut training_state.modified_account_ids,
+        &training_state.account_cache,
+        opts.account_ttl_secs,
+    )
+    .await?;
+    training_state.account_cache.resize(opts.account_cache_size);
+    set_all_vehicles_factors(&mut data_state.redis, &training_state.vehicle_cache).await?;
+    tracing::info!(
+        elapsed = format_elapsed(&start_instant).as_str(),
+        "factors committed",
+    );
+    Ok(())
 }
 
 #[tracing::instrument(
@@ -319,19 +352,6 @@ async fn run_epoch(
         }
     }
 
-    let n_accounts = training_state.modified_account_ids.len();
-    if opts.n_grid_search_epochs.is_none() {
-        set_all_accounts_factors(
-            &mut data_state.redis,
-            &mut training_state.modified_account_ids,
-            &training_state.account_cache,
-            opts.account_ttl_secs,
-        )
-        .await?;
-        training_state.account_cache.resize(opts.account_cache_size);
-        set_all_vehicles_factors(&mut data_state.redis, &training_state.vehicle_cache).await?;
-    }
-
     let train_error = train_error.average();
     let test_error = test_error.average();
     let max_factor = training_state
@@ -363,7 +383,7 @@ async fn run_epoch(
             opts.regularization,
             data_state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             data_state.battles.len() as f64 / 1000.0,
-            n_accounts as f64 / 1000.0,
+            training_state.modified_account_ids.len() as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
             max_factor,

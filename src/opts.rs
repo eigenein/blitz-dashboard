@@ -189,6 +189,10 @@ pub struct TrainerOpts {
     )]
     pub account_cache_size: usize,
 
+    /// Commit the feature vectors with the specified period
+    #[structopt(long, default_value = "1minute", parse(try_from_str = humantime::parse_duration))]
+    pub commit_period: StdDuration,
+
     /// Run the grid search, perform the specified number of epochs for each set of parameters
     #[structopt(long = "gse")]
     pub n_grid_search_epochs: Option<usize>,
