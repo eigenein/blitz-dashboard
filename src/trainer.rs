@@ -163,6 +163,7 @@ async fn run_epochs(
         }
     }
 
+    tracing::info!(final_regularization = opts.regularization);
     Ok(test_error)
 }
 
@@ -249,7 +250,7 @@ async fn run_grid_search_on_parameters(
     let error = mean(&errors);
     tracing::info!(
         n_factors = opts.n_factors,
-        regularization = opts.regularization,
+        initial_regularization = opts.regularization,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
         "tested the parameters"
