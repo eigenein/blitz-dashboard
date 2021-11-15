@@ -141,9 +141,13 @@ pub struct TrainerOpts {
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
 
-    /// Do not log individual epoch metrics
-    #[structopt(long)]
-    pub silence_epochs: bool,
+    /// Log every n-th epoch metrics
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub log_epochs: usize,
 
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.001")]

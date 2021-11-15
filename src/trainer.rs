@@ -15,7 +15,7 @@ use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
 
-use battle::Battle;
+use battle::SamplePoint;
 use math::{initialize_factors, predict_win_rate};
 
 use crate::helpers::{format_duration, format_elapsed};
@@ -29,9 +29,9 @@ pub mod battle;
 mod error;
 pub mod math;
 
-const TRAIN_STREAM_KEY: &str = "streams::steps";
+const TRAIN_STREAM_KEY: &str = "streams::battles";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
-const REFRESH_BATTLES_MAX_COUNT: usize = 250000;
+const REFRESH_POINTS_LIMIT: usize = 250000;
 
 #[tracing::instrument(
     skip_all,
@@ -46,19 +46,19 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let mut redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let (pointer, battles) = load_battles(&mut redis, opts.time_span).await?;
+    let (pointer, sample) = load_sample(&mut redis, opts.time_span).await?;
     tracing::info!(
-        n_battles = battles.len(),
+        n_points = sample.len(),
         pointer = pointer.as_str(),
         "loaded",
     );
 
-    let baseline_error = get_baseline_error(&battles);
+    let baseline_error = get_baseline_error(&sample);
     tracing::info!(baseline_error = baseline_error);
 
     let data_state = DataState {
         redis,
-        battles,
+        sample,
         pointer,
         baseline_error,
     };
@@ -71,32 +71,32 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     Ok(())
 }
 
-pub async fn push_battles(
+pub async fn push_sample_points(
     redis: &mut MultiplexedConnection,
-    battles: &[Battle],
+    points: &[SamplePoint],
     stream_size: usize,
 ) -> crate::Result {
-    let battles: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
-        battles.iter().map(rmp_serde::to_vec).collect();
-    let battles = battles.context("failed to serialize the battles")?;
+    let points: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
+        points.iter().map(rmp_serde::to_vec).collect();
+    let points = points.context("failed to serialize the battles")?;
     let maxlen = StreamMaxlen::Approx(stream_size);
     let mut pipeline = pipe();
-    for battle in battles {
+    for point in points {
         pipeline
-            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", battle)])
+            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
             .ignore();
     }
     pipeline
         .query_async(redis)
         .await
-        .context("failed to add the battles to the stream")?;
+        .context("failed to add the sample points to the stream")?;
     Ok(())
 }
 
 #[derive(Clone)]
 struct DataState {
     redis: MultiplexedConnection,
-    battles: Vec<(DateTime, Battle)>,
+    sample: Vec<(DateTime, SamplePoint)>,
     pointer: String,
     baseline_error: f64,
 }
@@ -260,10 +260,14 @@ async fn run_grid_search_on_parameters(
 }
 
 #[tracing::instrument(skip_all)]
-fn get_baseline_error(battles: &[(DateTime, Battle)]) -> f64 {
+fn get_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
     let mut error = error::Error::default();
-    for (_, battle) in battles {
-        error.push(0.5, battle.is_win);
+    for (_, point) in sample {
+        error.push(
+            0.5,
+            point.n_wins as f64 / point.n_battles as f64,
+            point.n_battles as f64,
+        );
     }
     error.average()
 }
@@ -290,15 +294,15 @@ async fn run_epoch(
     let mut n_new_accounts = 0;
     let mut n_initialized_accounts = 0;
 
-    fastrand::shuffle(&mut data_state.battles);
+    fastrand::shuffle(&mut data_state.sample);
     let regularization_multiplier = learning_rate * opts.regularization;
 
-    for (_, battle) in data_state.battles.iter() {
-        let account_factors = match training_state.account_cache.get_mut(&battle.account_id) {
+    for (_, point) in data_state.sample.iter() {
+        let account_factors = match training_state.account_cache.get_mut(&point.account_id) {
             Some(factors) => factors,
             None => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_account_factors(&mut data_state.redis, battle.account_id).await?
+                    get_account_factors(&mut data_state.redis, point.account_id).await?
                 } else {
                     None
                 };
@@ -309,15 +313,15 @@ async fn run_epoch(
                 if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                     n_initialized_accounts += 1;
                 }
-                training_state.account_cache.put(battle.account_id, factors);
+                training_state.account_cache.put(point.account_id, factors);
                 training_state
                     .account_cache
-                    .get_mut(&battle.account_id)
+                    .get_mut(&point.account_id)
                     .unwrap()
             }
         };
 
-        let tank_id = remap_tank_id(battle.tank_id);
+        let tank_id = remap_tank_id(point.tank_id);
         let vehicle_factors = match training_state.vehicle_cache.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
@@ -333,23 +337,20 @@ async fn run_epoch(
         };
 
         let prediction = predict_win_rate(vehicle_factors, account_factors);
+        let label = point.n_wins as f64 / point.n_battles as f64;
+        let weight = point.n_battles as f64;
 
-        if !battle.is_test {
-            let target = if battle.is_win { 1.0 } else { 0.0 };
-            let residual_multiplier = learning_rate * (target - prediction);
+        if !point.is_test {
             sgd(
                 account_factors,
                 vehicle_factors,
-                residual_multiplier,
-                regularization_multiplier,
-            );
-
-            training_state
-                .modified_account_ids
-                .insert(battle.account_id);
-            train_error.push(prediction, battle.is_win);
+                learning_rate * (label - prediction) * weight,
+                regularization_multiplier * weight,
+            )?;
+            training_state.modified_account_ids.insert(point.account_id);
+            train_error.push(prediction, label, weight);
         } else {
-            test_error.push(prediction, battle.is_win);
+            test_error.push(prediction, label, weight);
         }
     }
 
@@ -362,10 +363,10 @@ async fn run_epoch(
         .fold(0.0, f64::max);
 
     if opts.n_grid_search_epochs.is_none() {
-        if let Some((_, new_pointer)) = refresh_battles(
+        if let Some((_, new_pointer)) = refresh_sample(
             &mut data_state.redis,
             &data_state.pointer,
-            &mut data_state.battles,
+            &mut data_state.sample,
             opts.time_span,
         )
         .await?
@@ -374,70 +375,74 @@ async fn run_epoch(
         }
     }
 
-    if !opts.silence_epochs {
+    if nr_epoch % opts.log_epochs == 0 {
         log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | BPS: {:>3.0}k | B: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
             nr_epoch,
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
             opts.regularization,
-            data_state.battles.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            data_state.battles.len() as f64 / 1000.0,
+            data_state.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+            data_state.sample.len() as f64 / 1000.0,
             training_state.modified_account_ids.len() as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
             max_factor,
         );
     }
-    Ok((train_error, test_error))
+    if train_error.is_finite() && test_error.is_finite() {
+        Ok((train_error, test_error))
+    } else {
+        Err(anyhow!("the learning rate is too big"))
+    }
 }
 
 #[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
-async fn load_battles(
+async fn load_sample(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
-) -> crate::Result<(String, Vec<(DateTime, Battle)>)> {
-    let mut battles = Vec::new();
+) -> crate::Result<(String, Vec<(DateTime, SamplePoint)>)> {
+    let mut sample = Vec::new();
     let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
 
-    while match refresh_battles(redis, &pointer, &mut battles, time_span).await? {
-        Some((n_battles, new_pointer)) => {
-            tracing::info!(n_battles = battles.len(), pointer = new_pointer.as_str());
+    while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
+        Some((n_points, new_pointer)) => {
+            tracing::info!(n_points = sample.len(), pointer = new_pointer.as_str());
             pointer = new_pointer;
-            n_battles >= REFRESH_BATTLES_MAX_COUNT
+            n_points >= REFRESH_POINTS_LIMIT
         }
         None => false,
     } {}
 
-    match battles.is_empty() {
-        false => Ok((pointer, battles)),
+    match sample.is_empty() {
+        false => Ok((pointer, sample)),
         true => Err(anyhow!("training set is empty, try a longer time span")),
     }
 }
 
-#[tracing::instrument(level = "debug", skip(redis, queue, time_span))]
-async fn refresh_battles(
+#[tracing::instrument(level = "debug", skip(redis, sample, time_span))]
+async fn refresh_sample(
     redis: &mut MultiplexedConnection,
     last_id: &str,
-    queue: &mut Vec<(DateTime, Battle)>,
+    sample: &mut Vec<(DateTime, SamplePoint)>,
     time_span: Duration,
 ) -> crate::Result<Option<(usize, String)>> {
-    // Remove the expired battles.
+    // Remove the expired points.
     let expire_time = Utc::now() - time_span;
-    queue.retain(|(timestamp, _)| timestamp > &expire_time);
+    sample.retain(|(timestamp, _)| timestamp > &expire_time);
 
-    // Fetch new battles.
-    let options = StreamReadOptions::default().count(REFRESH_BATTLES_MAX_COUNT);
+    // Fetch new points.
+    let options = StreamReadOptions::default().count(REFRESH_POINTS_LIMIT);
     let reply: Value = redis
         .xread_options(&[TRAIN_STREAM_KEY], &[&last_id], &options)
         .await?;
     let entries = parse_multiple_streams(reply)?;
     let result = entries.last().map(|(id, _)| (entries.len(), id.clone()));
     for (id, battle) in entries {
-        queue.push((parse_entry_id(&id)?, battle));
+        sample.push((parse_entry_id(&id)?, battle));
     }
-    tracing::debug!(n_battles = result.as_ref().map(|result| result.0));
+    tracing::debug!(n_points = result.as_ref().map(|result| result.0));
     Ok(result)
 }
 
@@ -449,7 +454,7 @@ fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
     Ok(Utc.timestamp_millis(i64::from_str(millis)?))
 }
 
-fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, Battle)>> {
+fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
     match reply {
         Value::Nil => Ok(Vec::new()),
         Value::Bulk(mut streams) => match streams.pop() {
@@ -463,7 +468,7 @@ fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, Battle)>> 
     }
 }
 
-fn parse_stream(reply: Value) -> crate::Result<Vec<(String, Battle)>> {
+fn parse_stream(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
     match reply {
         Value::Nil => Ok(Vec::new()),
         Value::Bulk(entries) => entries.into_iter().map(parse_stream_entry).collect(),
@@ -471,7 +476,7 @@ fn parse_stream(reply: Value) -> crate::Result<Vec<(String, Battle)>> {
     }
 }
 
-fn parse_stream_entry(reply: Value) -> crate::Result<(String, Battle)> {
+fn parse_stream_entry(reply: Value) -> crate::Result<(String, SamplePoint)> {
     match reply {
         Value::Bulk(mut entry) => {
             let fields = entry.pop();

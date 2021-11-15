@@ -1,5 +1,6 @@
 //! Collaborative filtering.
 
+use anyhow::anyhow;
 use std::cmp::Ordering;
 
 use rand::distributions::Distribution;
@@ -34,16 +35,21 @@ pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64
 /// Adjusts the latent factors.
 /// See: https://sifter.org/~simon/journal/20061211.html.
 #[inline]
-pub fn sgd(x: &mut [f64], y: &mut [f64], residual_multiplier: f64, regularization_multiplier: f64) {
+pub fn sgd(
+    x: &mut [f64],
+    y: &mut [f64],
+    residual_multiplier: f64,
+    regularization_multiplier: f64,
+) -> crate::Result {
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
         *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
 
-        assert!(
-            !xi.is_nan() && !yi.is_nan(),
-            "lower the learning rate and restart",
-        );
+        if !xi.is_finite() || !yi.is_finite() {
+            return Err(anyhow!("the learning rate is too big"));
+        }
     }
+    Ok(())
 }
 
 #[cfg(test)]

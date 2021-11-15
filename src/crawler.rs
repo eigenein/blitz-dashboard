@@ -19,8 +19,8 @@ use crate::database::{
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::battle::Battle;
-use crate::trainer::push_battles;
+use crate::trainer::battle::SamplePoint;
+use crate::trainer::push_sample_points;
 use crate::wargaming::WargamingApi;
 
 mod batch_stream;
@@ -198,7 +198,7 @@ impl Crawler {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_train_steps(account.id, &tanks, opts.training_stream_size)
+                    self.push_sample_points(account.id, &tanks, opts.training_stream_size)
                         .await?;
                 }
             }
@@ -256,13 +256,13 @@ impl Crawler {
         Ok(())
     }
 
-    async fn push_train_steps(
+    async fn push_sample_points(
         &self,
         account_id: i32,
         tanks: &[Tank],
         stream_size: usize,
     ) -> crate::Result {
-        let mut steps = Vec::new();
+        let mut points = Vec::new();
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
@@ -272,20 +272,19 @@ impl Crawler {
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
                 self.metrics.lock().await.n_battles += n_battles;
-                for i in 0..n_battles {
-                    steps.push(Battle {
-                        account_id,
-                        tank_id,
-                        is_win: i < n_wins,
-                        is_test: fastrand::usize(0..10) == 0,
-                    });
-                }
+                points.push(SamplePoint {
+                    account_id,
+                    tank_id,
+                    n_battles,
+                    n_wins,
+                    is_test: fastrand::usize(0..10) == 0,
+                });
             }
         }
 
-        if !steps.is_empty() {
+        if !points.is_empty() {
             let mut redis = MultiplexedConnection::clone(&self.redis);
-            push_battles(&mut redis, &steps, stream_size).await?;
+            push_sample_points(&mut redis, &points, stream_size).await?;
         }
 
         Ok(())

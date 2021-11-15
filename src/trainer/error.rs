@@ -1,21 +1,24 @@
 #[derive(Default)]
 pub struct Error {
     error: f64,
-    count: usize,
+    weight: f64,
 }
 
 impl Error {
     #[inline]
-    pub fn push(&mut self, mut prediction: f64, is_win: bool) {
-        if !is_win {
-            prediction = 1.0 - prediction;
+    pub fn push(&mut self, prediction: f64, label: f64, weight: f64) {
+        if label.abs() > f64::EPSILON {
+            self.error -= weight * label * prediction.ln();
         }
-        self.error -= prediction.ln();
-        self.count += 1;
+        let inverse_label = 1.0 - label;
+        if inverse_label.abs() > f64::EPSILON {
+            self.error -= weight * inverse_label * (1.0 - prediction).ln();
+        }
+        self.weight += weight;
     }
 
     #[must_use]
     pub fn average(&self) -> f64 {
-        (self.error / self.count.max(1) as f64).sqrt()
+        (self.error / self.weight.max(1.0)).sqrt()
     }
 }
