@@ -15,8 +15,8 @@ use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands, Pipeline, Value};
 
-use battle::SamplePoint;
 use math::{initialize_factors, predict_win_rate};
+use sample_point::SamplePoint;
 
 use crate::helpers::{format_duration, format_elapsed};
 use crate::math::statistics::mean;
@@ -25,9 +25,9 @@ use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
 use crate::{DateTime, Vector};
 
-pub mod battle;
 mod error;
 pub mod math;
+pub mod sample_point;
 
 const TRAIN_STREAM_KEY: &str = "streams::battles";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
