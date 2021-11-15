@@ -85,7 +85,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 }
 
 /// Performs a very slow one-time account scan.
-/// Spawns a single sub-crawler which unconditionally inserts and/or updates
+/// Spawns a crawler which unconditionally inserts and/or updates
 /// accounts in the specified range.
 ///
 /// This is a technical script which is intended to be run one time for an entire region
