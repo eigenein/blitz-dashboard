@@ -112,7 +112,7 @@ struct TrainingState {
     fields(
         n_factors = opts.n_factors,
         regularization = opts.regularization,
-        auto_regularization = !opts.no_auto_regularization,
+        regularization_step = opts.regularization_step,
         commit_period = format_duration(opts.commit_period).as_str(),
     ),
 )]
@@ -145,11 +145,12 @@ async fn run_epochs(
         .await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
-            if !opts.no_auto_regularization && test_error > old_test_error {
+            if test_error > old_test_error {
                 if train_error <= old_train_error {
-                    opts.regularization += 0.001
+                    opts.regularization += opts.regularization_step;
                 } else {
-                    opts.regularization = (opts.regularization - 0.001).max(0.001)
+                    opts.regularization = (opts.regularization - opts.regularization_step)
+                        .max(opts.regularization_step);
                 }
             }
         }

@@ -149,10 +149,6 @@ pub struct TrainerOpts {
     #[structopt(long)]
     pub silence_epochs: bool,
 
-    /// Disable automatic regularization adjustment
-    #[structopt(long = "no-auto-r")]
-    pub no_auto_regularization: bool,
-
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
@@ -164,6 +160,10 @@ pub struct TrainerOpts {
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0")]
     pub regularization: f64,
+
+    /// Automatic regularization adjustment step
+    #[structopt(long = "r-step", default_value = "0.001")]
+    pub regularization_step: f64,
 
     /// Number of latent factors
     #[structopt(short = "f", long = "factors", default_value = "8")]
