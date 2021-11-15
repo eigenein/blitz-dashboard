@@ -6,7 +6,7 @@ use humantime::format_duration;
 use tokio::sync::Mutex;
 
 #[derive(Default)]
-pub struct SubCrawlerMetrics {
+pub struct CrawlerMetrics {
     /// Scanned account count.
     pub n_accounts: u32,
 
@@ -21,7 +21,7 @@ pub struct SubCrawlerMetrics {
     lags: Vec<u64>,
 }
 
-impl SubCrawlerMetrics {
+impl CrawlerMetrics {
     pub fn reset(&mut self) {
         self.n_accounts = 0;
         self.n_tanks = 0;
@@ -52,7 +52,7 @@ impl SubCrawlerMetrics {
 
 pub async fn log_metrics(
     request_counter: Arc<AtomicU32>,
-    metrics: Vec<Arc<Mutex<SubCrawlerMetrics>>>,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
     interval: StdDuration,
 ) -> crate::Result {
     loop {
@@ -62,28 +62,19 @@ pub async fn log_metrics(
 
         let elapsed_secs = start_instant.elapsed().as_secs_f64();
         let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
-        let mut n_battles = 0;
 
-        for (i, metrics) in metrics.iter().enumerate() {
-            let mut metrics = metrics.lock().await;
-            let (lag_p50, lag_p90) = metrics.lags();
-            log::info!(
-                "#{} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
-                i,
-                format_duration(lag_p50).to_string(),
-                format_duration(lag_p90).to_string(),
-                metrics.n_accounts as f64 / elapsed_secs,
-                metrics.n_tanks as f64 / elapsed_secs,
-                metrics.last_account_id,
-            );
-            n_battles += metrics.n_battles;
-            metrics.reset();
-        }
-
+        let mut metrics = metrics.lock().await;
+        let (lag_p50, lag_p90) = metrics.lags();
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4.0}",
+            "RPS: {:>4.1} | battles: {:>4.0} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
             n_requests as f64 / elapsed_secs,
-            n_battles,
+            metrics.n_battles,
+            format_duration(lag_p50).to_string(),
+            format_duration(lag_p90).to_string(),
+            metrics.n_accounts as f64 / elapsed_secs,
+            metrics.n_tanks as f64 / elapsed_secs,
+            metrics.last_account_id,
         );
+        metrics.reset();
     }
 }

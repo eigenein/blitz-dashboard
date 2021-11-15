@@ -11,8 +11,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
-use crate::crawler::metrics::{log_metrics, SubCrawlerMetrics};
-use crate::crawler::selector::Selector;
+use crate::crawler::metrics::{log_metrics, CrawlerMetrics};
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
     retrieve_tank_battle_count, retrieve_tank_ids,
@@ -26,7 +25,6 @@ use crate::wargaming::WargamingApi;
 
 mod batch_stream;
 mod metrics;
-mod selector;
 
 pub struct Crawler {
     api: WargamingApi,
@@ -34,7 +32,7 @@ pub struct Crawler {
     redis: MultiplexedConnection,
 
     n_tasks: usize,
-    metrics: Arc<Mutex<SubCrawlerMetrics>>,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
@@ -62,40 +60,27 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
     let redis = redis::Client::open(internal.redis_uri.as_str())?;
 
-    let slow_crawler = Crawler::new(
-        api.clone(),
-        database.clone(),
-        redis.get_multiplexed_async_connection().await?,
-        1,
-        Some(IncrementalOpts {
-            training_stream_size: opts.training_stream_size,
-        }),
-    )
-    .await?;
-    let fast_crawler = Crawler::new(
+    let crawler = Crawler::new(
         api,
         database.clone(),
         redis.get_multiplexed_async_connection().await?,
-        opts.n_fast_tasks,
+        opts.n_tasks,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
         }),
     )
     .await?;
-    let metrics = vec![fast_crawler.metrics.clone(), slow_crawler.metrics.clone()];
 
     tracing::info!("running…");
-    tokio::spawn(log_metrics(request_counter, metrics, opts.log_interval));
-    let fast_run = fast_crawler.run(get_batch_stream(
-        database.clone(),
-        Selector::Between(opts.min_offset, opts.slow_offset),
+    tokio::spawn(log_metrics(
+        request_counter,
+        crawler.metrics.clone(),
+        opts.log_interval,
     ));
-    let slow_run = slow_crawler.run(get_batch_stream(
-        database,
-        Selector::Before(opts.slow_offset),
-    ));
+    crawler
+        .run(get_batch_stream(database.clone(), opts.min_offset))
+        .await?;
 
-    futures::future::try_join(fast_run, slow_run).await?;
     Ok(())
 }
 
@@ -122,7 +107,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
-        vec![crawler.metrics.clone()],
+        crawler.metrics.clone(),
         StdDuration::from_secs(60),
     ));
     crawler.run(stream).await?;
@@ -144,7 +129,7 @@ impl Crawler {
             redis,
             n_tasks,
             incremental,
-            metrics: Arc::new(Mutex::new(SubCrawlerMetrics::default())),
+            metrics: Arc::new(Mutex::new(CrawlerMetrics::default())),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
         Ok(this)

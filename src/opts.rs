@@ -78,24 +78,20 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
-    /// Minimum last battle time offset for the «slow» sub-crawler
-    #[structopt(long, default_value = "1w", parse(try_from_str = humantime::parse_duration))]
-    pub slow_offset: StdDuration,
-
-    /// Minimum last battle time offset for the «fast» sub-crawler
-    #[structopt(long, default_value = "5m", parse(try_from_str = humantime::parse_duration))]
+    /// Minimum last battle time offset
+    #[structopt(long, default_value = "6hours", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 
-    /// Number of tasks for the «fast» sub-crawler
+    /// Number of concurrent tasks
     #[structopt(
         long,
         default_value = "1",
         parse(try_from_str = parsers::task_count),
     )]
-    pub n_fast_tasks: usize,
+    pub n_tasks: usize,
 
     /// Metrics logging interval
-    #[structopt(long, default_value = "1m", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 
     /// Maximum training stream size
