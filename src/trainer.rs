@@ -113,6 +113,7 @@ struct TrainingState {
         n_factors = opts.n_factors,
         regularization = opts.regularization,
         regularization_step = opts.regularization_step,
+        factor_std = opts.factor_std,
         commit_period = format_duration(opts.commit_period).as_str(),
     ),
 )]
@@ -356,11 +357,6 @@ async fn run_epoch(
 
     let train_error = train_error.average();
     let test_error = test_error.average();
-    let max_factor = training_state
-        .vehicle_cache
-        .iter()
-        .flat_map(|(_, factors)| factors.iter().map(|factor| factor.abs()))
-        .fold(0.0, f64::max);
 
     if opts.n_grid_search_epochs.is_none() {
         if let Some((_, new_pointer)) = refresh_sample(
@@ -377,7 +373,7 @@ async fn run_epoch(
 
     if nr_epoch % opts.log_epochs == 0 {
         log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2} | MF: {:>7.4}",
+            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
             nr_epoch,
             train_error,
             test_error,
@@ -388,7 +384,6 @@ async fn run_epoch(
             training_state.modified_account_ids.len() as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
-            max_factor,
         );
     }
     if train_error.is_finite() && test_error.is_finite() {

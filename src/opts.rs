@@ -158,7 +158,7 @@ pub struct TrainerOpts {
     pub turbo_learning_rate: f64,
 
     /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
     pub regularization: f64,
 
     /// Automatic regularization adjustment step
@@ -170,7 +170,7 @@ pub struct TrainerOpts {
     pub n_factors: usize,
 
     /// Standard deviation of newly initialised latent factors
-    #[structopt(long, default_value = "1.0")]
+    #[structopt(long, default_value = "0.01")]
     pub factor_std: f64,
 
     /// Maximum account idle time after which the account factors expire
