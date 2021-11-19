@@ -13,6 +13,7 @@ use redis::aio::MultiplexedConnection;
 use redis::streams::StreamMaxlen;
 use redis::{pipe, AsyncCommands, Pipeline};
 
+use cache::Cache;
 use dataset::Dataset;
 use math::{initialize_factors, predict_win_rate};
 use sample_point::SamplePoint;
@@ -24,6 +25,7 @@ use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
 use crate::Vector;
 
+mod cache;
 mod dataset;
 mod error;
 pub mod math;
@@ -74,12 +76,6 @@ pub async fn push_sample_points(
         .await
         .context("failed to add the sample points to the stream")?;
     Ok(())
-}
-
-struct Cache {
-    vehicles: HashMap<i32, Vector>,
-    accounts: LruCache<i32, Vector>,
-    modified_account_ids: HashSet<i32>,
 }
 
 #[tracing::instrument(
