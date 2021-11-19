@@ -76,9 +76,9 @@ pub async fn push_sample_points(
     Ok(())
 }
 
-struct Model {
-    vehicle_cache: HashMap<i32, Vector>,
-    account_cache: LruCache<i32, Vector>,
+struct Cache {
+    vehicles: HashMap<i32, Vector>,
+    accounts: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
 }
 
@@ -101,9 +101,9 @@ async fn run_epochs(
     let mut old_errors = None;
     let mut last_commit_instant = Instant::now();
 
-    let mut model = Model {
-        vehicle_cache: HashMap::new(),
-        account_cache: LruCache::unbounded(),
+    let mut cache = Cache {
+        vehicles: HashMap::new(),
+        accounts: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
     };
 
@@ -112,7 +112,7 @@ async fn run_epochs(
             .map(|(_, test_error)| test_error > dataset.baseline_error)
             .unwrap_or(true);
         let (train_error, new_test_error) =
-            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut model).await?;
+            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut cache).await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
@@ -129,7 +129,7 @@ async fn run_epochs(
         if opts.n_grid_search_epochs.is_none()
             && last_commit_instant.elapsed() >= opts.commit_period
         {
-            commit_factors(&opts, &mut dataset, &mut model).await?;
+            commit_factors(&opts, &mut dataset, &mut cache).await?;
             last_commit_instant = Instant::now();
         }
     }
@@ -142,19 +142,19 @@ async fn run_epochs(
 async fn commit_factors(
     opts: &TrainerOpts,
     dataset: &mut Dataset,
-    model: &mut Model,
+    cache: &mut Cache,
 ) -> crate::Result {
     let start_instant = Instant::now();
     set_all_accounts_factors(
         &mut dataset.redis,
-        &mut model.modified_account_ids,
-        &model.account_cache,
+        &mut cache.modified_account_ids,
+        &cache.accounts,
         opts.account_ttl_secs,
     )
     .await?;
-    model.modified_account_ids.clear();
-    model.account_cache.resize(opts.account_cache_size);
-    set_all_vehicles_factors(&mut dataset.redis, &model.vehicle_cache).await?;
+    cache.modified_account_ids.clear();
+    cache.accounts.resize(opts.account_cache_size);
+    set_all_vehicles_factors(&mut dataset.redis, &cache.vehicles).await?;
     tracing::info!(
         elapsed = format_elapsed(&start_instant).as_str(),
         "factors committed",
@@ -235,7 +235,7 @@ async fn run_epoch(
     opts: &TrainerOpts,
     turbo_learning_rate: bool,
     dataset: &mut Dataset,
-    model: &mut Model,
+    cache: &mut Cache,
 ) -> crate::Result<(f64, f64)> {
     let start_instant = Instant::now();
 
@@ -255,7 +255,7 @@ async fn run_epoch(
     let regularization_multiplier = learning_rate * opts.regularization;
 
     for (_, point) in dataset.sample.iter() {
-        let account_factors = match model.account_cache.get_mut(&point.account_id) {
+        let account_factors = match cache.accounts.get_mut(&point.account_id) {
             Some(factors) => factors,
             None => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
@@ -270,13 +270,13 @@ async fn run_epoch(
                 if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                     n_initialized_accounts += 1;
                 }
-                model.account_cache.put(point.account_id, factors);
-                model.account_cache.get_mut(&point.account_id).unwrap()
+                cache.accounts.put(point.account_id, factors);
+                cache.accounts.get_mut(&point.account_id).unwrap()
             }
         };
 
         let tank_id = remap_tank_id(point.tank_id);
-        let vehicle_factors = match model.vehicle_cache.entry(tank_id) {
+        let vehicle_factors = match cache.vehicles.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
@@ -301,7 +301,7 @@ async fn run_epoch(
                 learning_rate * (label - prediction) * weight,
                 regularization_multiplier * weight,
             )?;
-            model.modified_account_ids.insert(point.account_id);
+            cache.modified_account_ids.insert(point.account_id);
             train_error.push(prediction, label, weight);
         } else {
             test_error.push(prediction, label, weight);
@@ -325,7 +325,7 @@ async fn run_epoch(
             opts.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
-            model.modified_account_ids.len() as f64 / 1000.0,
+            cache.modified_account_ids.len() as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
         );
