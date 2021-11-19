@@ -51,7 +51,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     if opts.n_grid_search_epochs.is_none() {
         run_epochs(1.., opts, dataset).await?;
     } else {
-        run_grid_search(opts, dataset).await?;
+        run_grid_search(opts, dataset.freeze()).await?;
     }
     Ok(())
 }
@@ -307,9 +307,7 @@ async fn run_epoch(
     let train_error = train_error.average();
     let test_error = test_error.average();
 
-    if opts.n_grid_search_epochs.is_none() {
-        dataset.refresh().await?;
-    }
+    dataset.refresh().await?;
 
     if nr_epoch % opts.log_epochs == 0 {
         log::info!(
