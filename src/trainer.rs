@@ -56,7 +56,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let baseline_error = get_baseline_error(&sample);
     tracing::info!(baseline_error = baseline_error);
 
-    let data_state = DataState {
+    let dataset = Dataset {
         redis,
         sample,
         pointer,
@@ -64,9 +64,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     };
 
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(1.., opts, data_state).await?;
+        run_epochs(1.., opts, dataset).await?;
     } else {
-        run_grid_search(opts, data_state).await?;
+        run_grid_search(opts, dataset).await?;
     }
     Ok(())
 }
@@ -94,14 +94,14 @@ pub async fn push_sample_points(
 }
 
 #[derive(Clone)]
-struct DataState {
+struct Dataset {
     redis: MultiplexedConnection,
     sample: Vec<(DateTime, SamplePoint)>,
     pointer: String,
     baseline_error: f64,
 }
 
-struct TrainingState {
+struct Model {
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
@@ -120,13 +120,13 @@ struct TrainingState {
 async fn run_epochs(
     epochs: impl Iterator<Item = usize>,
     mut opts: TrainerOpts,
-    mut data_state: DataState,
+    mut dataset: Dataset,
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
     let mut old_errors = None;
     let mut last_commit_instant = Instant::now();
 
-    let mut training_state = TrainingState {
+    let mut model = Model {
         vehicle_cache: HashMap::new(),
         account_cache: LruCache::unbounded(),
         modified_account_ids: HashSet::new(),
@@ -134,16 +134,10 @@ async fn run_epochs(
 
     for i in epochs {
         let turbo_learning_rate = old_errors
-            .map(|(_, test_error)| test_error > data_state.baseline_error)
+            .map(|(_, test_error)| test_error > dataset.baseline_error)
             .unwrap_or(true);
-        let (train_error, new_test_error) = run_epoch(
-            i,
-            &opts,
-            turbo_learning_rate,
-            &mut data_state,
-            &mut training_state,
-        )
-        .await?;
+        let (train_error, new_test_error) =
+            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut model).await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
@@ -160,7 +154,7 @@ async fn run_epochs(
         if opts.n_grid_search_epochs.is_none()
             && last_commit_instant.elapsed() >= opts.commit_period
         {
-            commit_factors(&opts, &mut data_state, &mut training_state).await?;
+            commit_factors(&opts, &mut dataset, &mut model).await?;
             last_commit_instant = Instant::now();
         }
     }
@@ -172,20 +166,20 @@ async fn run_epochs(
 #[tracing::instrument(skip_all)]
 async fn commit_factors(
     opts: &TrainerOpts,
-    data_state: &mut DataState,
-    training_state: &mut TrainingState,
+    dataset: &mut Dataset,
+    model: &mut Model,
 ) -> crate::Result {
     let start_instant = Instant::now();
     set_all_accounts_factors(
-        &mut data_state.redis,
-        &mut training_state.modified_account_ids,
-        &training_state.account_cache,
+        &mut dataset.redis,
+        &mut model.modified_account_ids,
+        &model.account_cache,
         opts.account_ttl_secs,
     )
     .await?;
-    training_state.modified_account_ids.clear();
-    training_state.account_cache.resize(opts.account_cache_size);
-    set_all_vehicles_factors(&mut data_state.redis, &training_state.vehicle_cache).await?;
+    model.modified_account_ids.clear();
+    model.account_cache.resize(opts.account_cache_size);
+    set_all_vehicles_factors(&mut dataset.redis, &model.vehicle_cache).await?;
     tracing::info!(
         elapsed = format_elapsed(&start_instant).as_str(),
         "factors committed",
@@ -200,15 +194,15 @@ async fn commit_factors(
         n_epochs = opts.n_grid_search_epochs.unwrap(),
     ),
 )]
-async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> crate::Result {
+async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::Result {
     tracing::info!("running the initial evaluation");
     let mut best_n_factors = opts.n_factors;
-    let mut best_error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
+    let mut best_error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
 
     tracing::info!("starting the search");
     for n_factors in &opts.grid_search_factors {
         opts.n_factors = *n_factors;
-        let error = run_grid_search_on_parameters(&opts, &mut data_state).await?;
+        let error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
         if error < best_error {
             tracing::info!(
                 error = error,
@@ -224,7 +218,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> cr
         tracing::info!(
             n_factors = best_n_factors,
             error = best_error,
-            over_baseline = best_error - data_state.baseline_error,
+            over_baseline = best_error - dataset.baseline_error,
             "BEST SO FAR",
         );
     }
@@ -235,14 +229,14 @@ async fn run_grid_search(mut opts: TrainerOpts, mut data_state: DataState) -> cr
 #[tracing::instrument(skip_all)]
 async fn run_grid_search_on_parameters(
     opts: &TrainerOpts,
-    data_state: &mut DataState,
+    dataset: &mut Dataset,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
     let tasks = (1..=opts.grid_search_iterations).map(|_| {
         let opts = opts.clone();
-        let data_state = data_state.clone();
+        let dataset = dataset.clone();
         tokio::spawn(async move {
-            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, data_state).await
+            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, dataset).await
         })
     });
     let errors = futures::future::try_join_all(tasks)
@@ -278,8 +272,8 @@ async fn run_epoch(
     nr_epoch: usize,
     opts: &TrainerOpts,
     turbo_learning_rate: bool,
-    data_state: &mut DataState,
-    training_state: &mut TrainingState,
+    dataset: &mut Dataset,
+    model: &mut Model,
 ) -> crate::Result<(f64, f64)> {
     let start_instant = Instant::now();
 
@@ -295,15 +289,15 @@ async fn run_epoch(
     let mut n_new_accounts = 0;
     let mut n_initialized_accounts = 0;
 
-    fastrand::shuffle(&mut data_state.sample);
+    fastrand::shuffle(&mut dataset.sample);
     let regularization_multiplier = learning_rate * opts.regularization;
 
-    for (_, point) in data_state.sample.iter() {
-        let account_factors = match training_state.account_cache.get_mut(&point.account_id) {
+    for (_, point) in dataset.sample.iter() {
+        let account_factors = match model.account_cache.get_mut(&point.account_id) {
             Some(factors) => factors,
             None => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_account_factors(&mut data_state.redis, point.account_id).await?
+                    get_account_factors(&mut dataset.redis, point.account_id).await?
                 } else {
                     None
                 };
@@ -314,20 +308,17 @@ async fn run_epoch(
                 if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
                     n_initialized_accounts += 1;
                 }
-                training_state.account_cache.put(point.account_id, factors);
-                training_state
-                    .account_cache
-                    .get_mut(&point.account_id)
-                    .unwrap()
+                model.account_cache.put(point.account_id, factors);
+                model.account_cache.get_mut(&point.account_id).unwrap()
             }
         };
 
         let tank_id = remap_tank_id(point.tank_id);
-        let vehicle_factors = match training_state.vehicle_cache.entry(tank_id) {
+        let vehicle_factors = match model.vehicle_cache.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_vehicle_factors(&mut data_state.redis, tank_id).await?
+                    get_vehicle_factors(&mut dataset.redis, tank_id).await?
                 } else {
                     None
                 };
@@ -348,7 +339,7 @@ async fn run_epoch(
                 learning_rate * (label - prediction) * weight,
                 regularization_multiplier * weight,
             )?;
-            training_state.modified_account_ids.insert(point.account_id);
+            model.modified_account_ids.insert(point.account_id);
             train_error.push(prediction, label, weight);
         } else {
             test_error.push(prediction, label, weight);
@@ -360,14 +351,14 @@ async fn run_epoch(
 
     if opts.n_grid_search_epochs.is_none() {
         if let Some((_, new_pointer)) = refresh_sample(
-            &mut data_state.redis,
-            &data_state.pointer,
-            &mut data_state.sample,
+            &mut dataset.redis,
+            &dataset.pointer,
+            &mut dataset.sample,
             opts.time_span,
         )
         .await?
         {
-            data_state.pointer = new_pointer;
+            dataset.pointer = new_pointer;
         }
     }
 
@@ -379,9 +370,9 @@ async fn run_epoch(
             test_error,
             (test_error / train_error - 1.0) * 100.0,
             opts.regularization,
-            data_state.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            data_state.sample.len() as f64 / 1000.0,
-            training_state.modified_account_ids.len() as f64 / 1000.0,
+            dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+            dataset.sample.len() as f64 / 1000.0,
+            model.modified_account_ids.len() as f64 / 1000.0,
             n_initialized_accounts,
             n_new_accounts,
         );
