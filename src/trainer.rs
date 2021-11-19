@@ -4,17 +4,16 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::result::Result as StdResult;
-use std::str::FromStr;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
-use chrono::{Duration, TimeZone, Utc};
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use lru::LruCache;
 use redis::aio::MultiplexedConnection;
-use redis::streams::{StreamMaxlen, StreamReadOptions};
-use redis::{pipe, AsyncCommands, Pipeline, Value};
+use redis::streams::StreamMaxlen;
+use redis::{pipe, AsyncCommands, Pipeline};
 
+use dataset::Dataset;
 use math::{initialize_factors, predict_win_rate};
 use sample_point::SamplePoint;
 
@@ -23,15 +22,14 @@ use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
-use crate::{DateTime, Vector};
+use crate::Vector;
 
+mod dataset;
 mod error;
 pub mod math;
 pub mod sample_point;
 
-const TRAIN_STREAM_KEY: &str = "streams::battles";
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
-const REFRESH_POINTS_LIMIT: usize = 250000;
 
 #[tracing::instrument(
     skip_all,
@@ -43,25 +41,10 @@ const REFRESH_POINTS_LIMIT: usize = 250000;
 pub async fn run(opts: TrainerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
-    let mut redis = redis::Client::open(opts.redis_uri.as_str())?
+    let redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let (pointer, sample) = load_sample(&mut redis, opts.time_span).await?;
-    tracing::info!(
-        n_points = sample.len(),
-        pointer = pointer.as_str(),
-        "loaded",
-    );
-
-    let baseline_error = get_baseline_error(&sample);
-    tracing::info!(baseline_error = baseline_error);
-
-    let dataset = Dataset {
-        redis,
-        sample,
-        pointer,
-        baseline_error,
-    };
+    let dataset = Dataset::load(redis, opts.time_span).await?;
 
     if opts.n_grid_search_epochs.is_none() {
         run_epochs(1.., opts, dataset).await?;
@@ -83,7 +66,7 @@ pub async fn push_sample_points(
     let mut pipeline = pipe();
     for point in points {
         pipeline
-            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
+            .xadd_maxlen(dataset::TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
             .ignore();
     }
     pipeline
@@ -91,14 +74,6 @@ pub async fn push_sample_points(
         .await
         .context("failed to add the sample points to the stream")?;
     Ok(())
-}
-
-#[derive(Clone)]
-struct Dataset {
-    redis: MultiplexedConnection,
-    sample: Vec<(DateTime, SamplePoint)>,
-    pointer: String,
-    baseline_error: f64,
 }
 
 struct Model {
@@ -255,19 +230,6 @@ async fn run_grid_search_on_parameters(
 }
 
 #[tracing::instrument(skip_all)]
-fn get_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
-    let mut error = error::Error::default();
-    for (_, point) in sample {
-        error.push(
-            0.5,
-            point.n_wins as f64 / point.n_battles as f64,
-            point.n_battles as f64,
-        );
-    }
-    error.average()
-}
-
-#[tracing::instrument(skip_all)]
 async fn run_epoch(
     nr_epoch: usize,
     opts: &TrainerOpts,
@@ -350,16 +312,7 @@ async fn run_epoch(
     let test_error = test_error.average();
 
     if opts.n_grid_search_epochs.is_none() {
-        if let Some((_, new_pointer)) = refresh_sample(
-            &mut dataset.redis,
-            &dataset.pointer,
-            &mut dataset.sample,
-            opts.time_span,
-        )
-        .await?
-        {
-            dataset.pointer = new_pointer;
-        }
+        dataset.refresh().await?;
     }
 
     if nr_epoch % opts.log_epochs == 0 {
@@ -381,106 +334,6 @@ async fn run_epoch(
         Ok((train_error, test_error))
     } else {
         Err(anyhow!("the learning rate is too big"))
-    }
-}
-
-#[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
-async fn load_sample(
-    redis: &mut MultiplexedConnection,
-    time_span: Duration,
-) -> crate::Result<(String, Vec<(DateTime, SamplePoint)>)> {
-    let mut sample = Vec::new();
-    let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
-
-    while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
-        Some((n_points, new_pointer)) => {
-            tracing::info!(n_points = sample.len(), pointer = new_pointer.as_str());
-            pointer = new_pointer;
-            n_points >= REFRESH_POINTS_LIMIT
-        }
-        None => false,
-    } {}
-
-    match sample.is_empty() {
-        false => Ok((pointer, sample)),
-        true => Err(anyhow!("training set is empty, try a longer time span")),
-    }
-}
-
-#[tracing::instrument(level = "debug", skip(redis, sample, time_span))]
-async fn refresh_sample(
-    redis: &mut MultiplexedConnection,
-    last_id: &str,
-    sample: &mut Vec<(DateTime, SamplePoint)>,
-    time_span: Duration,
-) -> crate::Result<Option<(usize, String)>> {
-    // Remove the expired points.
-    let expire_time = Utc::now() - time_span;
-    sample.retain(|(timestamp, _)| timestamp > &expire_time);
-
-    // Fetch new points.
-    let options = StreamReadOptions::default().count(REFRESH_POINTS_LIMIT);
-    let reply: Value = redis
-        .xread_options(&[TRAIN_STREAM_KEY], &[&last_id], &options)
-        .await?;
-    let entries = parse_multiple_streams(reply)?;
-    let result = entries.last().map(|(id, _)| (entries.len(), id.clone()));
-    for (id, battle) in entries {
-        sample.push((parse_entry_id(&id)?, battle));
-    }
-    tracing::debug!(n_points = result.as_ref().map(|result| result.0));
-    Ok(result)
-}
-
-fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
-    let millis = id
-        .split_once("-")
-        .ok_or_else(|| anyhow!("unexpected stream entry ID"))?
-        .0;
-    Ok(Utc.timestamp_millis(i64::from_str(millis)?))
-}
-
-fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
-    match reply {
-        Value::Nil => Ok(Vec::new()),
-        Value::Bulk(mut streams) => match streams.pop() {
-            Some(Value::Bulk(mut stream)) => match stream.pop() {
-                Some(value) => parse_stream(value),
-                other => Err(anyhow!("expected entries, got: {:?}", other)),
-            },
-            other => Err(anyhow!("expected (name, entries), got: {:?}", other)),
-        },
-        other => Err(anyhow!("expected a bulk of streams, got: {:?}", other)),
-    }
-}
-
-fn parse_stream(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
-    match reply {
-        Value::Nil => Ok(Vec::new()),
-        Value::Bulk(entries) => entries.into_iter().map(parse_stream_entry).collect(),
-        other => Err(anyhow!("expected a bulk of entries, got: {:?}", other)),
-    }
-}
-
-fn parse_stream_entry(reply: Value) -> crate::Result<(String, SamplePoint)> {
-    match reply {
-        Value::Bulk(mut entry) => {
-            let fields = entry.pop();
-            let id = entry.pop();
-            match (id, fields) {
-                (Some(Value::Data(id)), Some(Value::Bulk(mut fields))) => {
-                    let value = fields.pop();
-                    match value {
-                        Some(Value::Data(data)) => {
-                            Ok((String::from_utf8(id)?, rmp_serde::from_read_ref(&data)?))
-                        }
-                        other => Err(anyhow!("expected a binary data, got: {:?}", other)),
-                    }
-                }
-                other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
-            }
-        }
-        other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
     }
 }
 
