@@ -36,7 +36,7 @@ const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 #[tracing::instrument(
     skip_all,
     fields(
-        account_ttl_secs = opts.account_ttl_secs,
+        account_ttl_secs = opts.model.account_ttl_secs,
         time_span = opts.time_span.to_string().as_str(),
     ),
 )]
@@ -81,11 +81,11 @@ pub async fn push_sample_points(
 #[tracing::instrument(
     skip_all,
     fields(
-        n_factors = opts.n_factors,
-        regularization = opts.regularization,
-        regularization_step = opts.regularization_step,
-        factor_std = opts.factor_std,
-        commit_period = format_duration(opts.commit_period).as_str(),
+        n_factors = opts.model.n_factors,
+        regularization = opts.model.regularization,
+        regularization_step = opts.model.regularization_step,
+        factor_std = opts.model.factor_std,
+        commit_period = format_duration(opts.model.commit_period).as_str(),
     ),
 )]
 async fn run_epochs(
@@ -113,24 +113,25 @@ async fn run_epochs(
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
                 if train_error <= old_train_error {
-                    opts.regularization += opts.regularization_step;
+                    opts.model.regularization += opts.model.regularization_step;
                 } else {
-                    opts.regularization = (opts.regularization - opts.regularization_step)
-                        .max(opts.regularization_step);
+                    opts.model.regularization = (opts.model.regularization
+                        - opts.model.regularization_step)
+                        .max(opts.model.regularization_step);
                 }
             }
         }
         old_errors = Some((train_error, test_error));
 
         if opts.n_grid_search_epochs.is_none()
-            && last_commit_instant.elapsed() >= opts.commit_period
+            && last_commit_instant.elapsed() >= opts.model.commit_period
         {
             commit_factors(&opts, &mut dataset, &mut cache).await?;
             last_commit_instant = Instant::now();
         }
     }
 
-    tracing::info!(final_regularization = opts.regularization);
+    tracing::info!(final_regularization = opts.model.regularization);
     Ok(test_error)
 }
 
@@ -145,11 +146,11 @@ async fn commit_factors(
         &mut dataset.redis,
         &mut cache.modified_account_ids,
         &cache.accounts,
-        opts.account_ttl_secs,
+        opts.model.account_ttl_secs,
     )
     .await?;
     cache.modified_account_ids.clear();
-    cache.accounts.resize(opts.account_cache_size);
+    cache.accounts.resize(opts.model.account_cache_size);
     set_all_vehicles_factors(&mut dataset.redis, &cache.vehicles).await?;
     tracing::info!(
         elapsed = format_elapsed(&start_instant).as_str(),
@@ -167,12 +168,12 @@ async fn commit_factors(
 )]
 async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::Result {
     tracing::info!("running the initial evaluation");
-    let mut best_n_factors = opts.n_factors;
+    let mut best_n_factors = opts.model.n_factors;
     let mut best_error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
 
     tracing::info!("starting the search");
     for n_factors in &opts.grid_search_factors {
-        opts.n_factors = *n_factors;
+        opts.model.n_factors = *n_factors;
         let error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
         if error < best_error {
             tracing::info!(
@@ -216,8 +217,8 @@ async fn run_grid_search_on_parameters(
         .collect::<crate::Result<Vec<f64>>>()?;
     let error = mean(&errors);
     tracing::info!(
-        n_factors = opts.n_factors,
-        initial_regularization = opts.regularization,
+        n_factors = opts.model.n_factors,
+        initial_regularization = opts.model.regularization,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
         "tested the parameters"
@@ -236,9 +237,9 @@ async fn run_epoch(
     let start_instant = Instant::now();
 
     let learning_rate = if turbo_learning_rate {
-        opts.turbo_learning_rate
+        opts.model.turbo_learning_rate
     } else {
-        opts.learning_rate
+        opts.model.learning_rate
     };
 
     let mut train_error = error::Error::default();
@@ -248,7 +249,7 @@ async fn run_epoch(
     let mut n_initialized_accounts = 0;
 
     fastrand::shuffle(&mut dataset.sample);
-    let regularization_multiplier = learning_rate * opts.regularization;
+    let regularization_multiplier = learning_rate * opts.model.regularization;
 
     for (_, point) in dataset.sample.iter() {
         let account_factors = match cache.accounts.get_mut(&point.account_id) {
@@ -263,7 +264,7 @@ async fn run_epoch(
                     n_new_accounts += 1;
                     Vector::new()
                 });
-                if initialize_factors(&mut factors, opts.n_factors, opts.factor_std) {
+                if initialize_factors(&mut factors, opts.model.n_factors, opts.model.factor_std) {
                     n_initialized_accounts += 1;
                 }
                 cache.accounts.put(point.account_id, factors);
@@ -281,7 +282,7 @@ async fn run_epoch(
                     None
                 };
                 let mut factors = factors.unwrap_or_else(Vector::new);
-                initialize_factors(&mut factors, opts.n_factors, opts.factor_std);
+                initialize_factors(&mut factors, opts.model.n_factors, opts.model.factor_std);
                 entry.insert(factors)
             }
         };
@@ -316,7 +317,7 @@ async fn run_epoch(
             train_error,
             test_error,
             (test_error / train_error - 1.0) * 100.0,
-            opts.regularization,
+            opts.model.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
             cache.modified_account_ids.len() as f64 / 1000.0,

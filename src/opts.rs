@@ -149,6 +149,26 @@ pub struct TrainerOpts {
     )]
     pub log_epochs: usize,
 
+    /// Time span of the training set (most recent battles)
+    #[structopt(long, default_value = "2days", parse(try_from_str = parsers::duration))]
+    pub time_span: Duration,
+
+    #[structopt(flatten)]
+    pub model: TrainerModelOpts,
+
+    /// Run the grid search, perform the specified number of epochs for each set of parameters
+    #[structopt(long = "gse")]
+    pub n_grid_search_epochs: Option<usize>,
+
+    #[structopt(long = "gsi", default_value = "3")]
+    pub grid_search_iterations: usize,
+
+    #[structopt(long = "gsf")]
+    pub grid_search_factors: Vec<usize>,
+}
+
+#[derive(Copy, Clone, StructOpt)]
+pub struct TrainerModelOpts {
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
@@ -177,10 +197,6 @@ pub struct TrainerOpts {
     #[structopt(long = "account-ttl", default_value = "2months", parse(try_from_str = parsers::duration_as_secs))]
     pub account_ttl_secs: usize,
 
-    /// Time span of the training set (most recent battles)
-    #[structopt(long, default_value = "2days", parse(try_from_str = parsers::duration))]
-    pub time_span: Duration,
-
     /// Maximum number of cached account latent vectors
     #[structopt(
         long,
@@ -192,16 +208,6 @@ pub struct TrainerOpts {
     /// Commit the feature vectors with the specified period
     #[structopt(long, default_value = "1minute", parse(try_from_str = humantime::parse_duration))]
     pub commit_period: StdDuration,
-
-    /// Run the grid search, perform the specified number of epochs for each set of parameters
-    #[structopt(long = "gse")]
-    pub n_grid_search_epochs: Option<usize>,
-
-    #[structopt(long = "gsi", default_value = "3")]
-    pub grid_search_iterations: usize,
-
-    #[structopt(long = "gsf")]
-    pub grid_search_factors: Vec<usize>,
 }
 
 #[derive(StructOpt)]
