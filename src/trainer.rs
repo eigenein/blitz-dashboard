@@ -135,7 +135,7 @@ async fn run_epochs(
         }
         old_errors = Some((train_error, test_error));
 
-        model.flush_lazily().await?;
+        model.flush().await?;
     }
 
     tracing::info!(final_regularization = opts.model.regularization);

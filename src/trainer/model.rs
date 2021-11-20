@@ -124,21 +124,23 @@ impl Model {
         Ok(Factors { account, vehicle })
     }
 
+    /// Marks the account factors as modified.
     pub fn touch(&mut self, account_id: i32) {
         self.modified_account_ids.insert(account_id);
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn flush_lazily(&mut self) -> crate::Result {
+    pub async fn flush(&mut self) -> crate::Result {
         if self.last_flush_instant.elapsed() >= self.opts.commit_period {
-            self.flush().await?;
+            self.force_flush().await?;
             self.last_flush_instant = Instant::now();
         }
         Ok(())
     }
 
+    /// Store all the account and vehicle factors to Redis and shrink the caches.
     #[tracing::instrument(skip_all)]
-    async fn flush(&mut self) -> crate::Result {
+    async fn force_flush(&mut self) -> crate::Result {
         if let Some(redis) = &mut self.redis {
             tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
             let start_instant = Instant::now();
@@ -150,6 +152,7 @@ impl Model {
                     .set_ex(key, bytes, self.opts.account_ttl_secs)
                     .ignore();
             }
+            self.account_cache.resize(self.opts.account_cache_size);
             let vehicles: crate::Result<Vec<(i32, Vec<u8>)>> = self
                 .vehicle_cache
                 .iter()
@@ -161,7 +164,6 @@ impl Model {
                 .query_async(redis)
                 .await
                 .context("failed to flush the factors")?;
-            self.account_cache.resize(self.opts.account_cache_size);
             tracing::info!(
                 elapsed = format_elapsed(&start_instant).as_str(),
                 "factors flushed",
