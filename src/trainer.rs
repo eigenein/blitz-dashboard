@@ -100,12 +100,9 @@ async fn run_epochs(
     let mut model = Model::new(redis, opts.model);
 
     for i in epochs {
-        let turbo_learning_rate = old_errors
-            .map(|(_, test_error)| test_error > dataset.baseline_error)
-            .unwrap_or(true);
         let start_instant = Instant::now();
         let (train_error, new_test_error) =
-            run_epoch(&opts.model, turbo_learning_rate, &mut dataset, &mut model).await?;
+            run_epoch(&opts.model, &mut dataset, &mut model).await?;
         test_error = new_test_error;
         if i % opts.log_epochs == 0 {
             log::info!(
@@ -215,21 +212,14 @@ async fn run_grid_search_on_parameters(
 #[tracing::instrument(skip_all)]
 async fn run_epoch(
     opts: &TrainerModelOpts,
-    turbo_learning_rate: bool,
     dataset: &mut Dataset,
     model: &mut Model,
 ) -> crate::Result<(f64, f64)> {
-    let learning_rate = if turbo_learning_rate {
-        opts.turbo_learning_rate
-    } else {
-        opts.learning_rate
-    };
-
     let mut train_error = error::Error::default();
     let mut test_error = error::Error::default();
 
     fastrand::shuffle(&mut dataset.sample);
-    let regularization_multiplier = learning_rate * opts.regularization;
+    let regularization_multiplier = opts.learning_rate * opts.regularization;
 
     for (_, point) in dataset.sample.iter() {
         let factors = model
@@ -244,7 +234,7 @@ async fn run_epoch(
             sgd(
                 factors.account,
                 factors.vehicle,
-                learning_rate * (label - prediction) * weight,
+                opts.learning_rate * (label - prediction) * weight,
                 regularization_multiplier * weight,
             )?;
             model.touch(point.account_id);

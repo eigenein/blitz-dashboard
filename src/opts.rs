@@ -173,10 +173,6 @@ pub struct TrainerModelOpts {
     #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
 
-    /// Learning rate for when the test error is above the baseline error
-    #[structopt(long = "turbo-lr", default_value = "0.001")]
-    pub turbo_learning_rate: f64,
-
     /// Regularization
     #[structopt(short = "r", long = "regularization", default_value = "0.001")]
     pub regularization: f64,
