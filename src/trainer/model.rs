@@ -53,8 +53,8 @@ pub async fn get_all_vehicle_factors(
 pub struct Model {
     pub n_new_accounts: usize,
     pub n_initialized_accounts: usize,
+    pub opts: TrainerModelOpts,
 
-    opts: TrainerModelOpts,
     redis: Option<MultiplexedConnection>,
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,

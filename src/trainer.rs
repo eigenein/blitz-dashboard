@@ -18,7 +18,7 @@ use sample_point::SamplePoint;
 
 use crate::helpers::{format_duration, format_elapsed};
 use crate::math::statistics::mean;
-use crate::opts::{TrainerModelOpts, TrainerOpts};
+use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
 
@@ -91,7 +91,7 @@ pub async fn push_sample_points(
 async fn run_epochs(
     redis: Option<MultiplexedConnection>,
     epochs: impl Iterator<Item = usize>,
-    mut opts: TrainerOpts,
+    opts: TrainerOpts,
     mut dataset: Dataset,
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
@@ -101,8 +101,7 @@ async fn run_epochs(
 
     for i in epochs {
         let start_instant = Instant::now();
-        let (train_error, new_test_error) =
-            run_epoch(&opts.model, &mut dataset, &mut model).await?;
+        let (train_error, new_test_error) = run_epoch(&mut dataset, &mut model).await?;
         test_error = new_test_error;
         if i % opts.log_epochs == 0 {
             log::info!(
@@ -110,7 +109,7 @@ async fn run_epochs(
             i,
             train_error,
             test_error,
-            opts.model.regularization,
+            model.opts.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
             model.n_modified_accounts() as f64 / 1000.0,
@@ -124,11 +123,11 @@ async fn run_epochs(
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
                 if train_error <= old_train_error {
-                    opts.model.regularization += opts.model.regularization_step;
+                    model.opts.regularization += model.opts.regularization_step;
                 } else {
-                    opts.model.regularization = (opts.model.regularization
-                        - opts.model.regularization_step)
-                        .max(opts.model.regularization_step);
+                    model.opts.regularization = (model.opts.regularization
+                        - model.opts.regularization_step)
+                        .max(model.opts.regularization_step);
                 }
             }
         }
@@ -137,7 +136,7 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    tracing::info!(final_regularization = opts.model.regularization);
+    tracing::info!(final_regularization = model.opts.regularization);
     Ok(test_error)
 }
 
@@ -209,16 +208,13 @@ async fn run_grid_search_on_parameters(
 }
 
 #[tracing::instrument(skip_all)]
-async fn run_epoch(
-    opts: &TrainerModelOpts,
-    dataset: &mut Dataset,
-    model: &mut Model,
-) -> crate::Result<(f64, f64)> {
+async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f64, f64)> {
     let mut train_error = error::Error::default();
     let mut test_error = error::Error::default();
 
     fastrand::shuffle(&mut dataset.sample);
-    let regularization_multiplier = opts.learning_rate * opts.regularization;
+    let learning_rate = model.opts.learning_rate;
+    let regularization_multiplier = learning_rate * model.opts.regularization;
 
     for (_, point) in dataset.sample.iter() {
         let factors = model
@@ -233,7 +229,7 @@ async fn run_epoch(
             sgd(
                 factors.account,
                 factors.vehicle,
-                opts.learning_rate * (label - prediction) * weight,
+                learning_rate * (label - prediction) * weight,
                 regularization_multiplier * weight,
             )?;
             model.touch(point.account_id);
