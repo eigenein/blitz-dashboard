@@ -18,7 +18,7 @@ use sample_point::SamplePoint;
 
 use crate::helpers::{format_duration, format_elapsed};
 use crate::math::statistics::mean;
-use crate::opts::TrainerOpts;
+use crate::opts::{TrainerModelOpts, TrainerOpts};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
 
@@ -103,9 +103,28 @@ async fn run_epochs(
         let turbo_learning_rate = old_errors
             .map(|(_, test_error)| test_error > dataset.baseline_error)
             .unwrap_or(true);
+        let start_instant = Instant::now();
         let (train_error, new_test_error) =
-            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut model).await?;
+            run_epoch(&opts.model, turbo_learning_rate, &mut dataset, &mut model).await?;
         test_error = new_test_error;
+        if i % opts.log_epochs == 0 {
+            log::info!(
+            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+            i,
+            train_error,
+            test_error,
+            (test_error / train_error - 1.0) * 100.0,
+            opts.model.regularization,
+            dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+            dataset.sample.len() as f64 / 1000.0,
+            model.n_modified_accounts() as f64 / 1000.0,
+            model.n_initialized_accounts,
+            model.n_new_accounts,
+        );
+            model.n_initialized_accounts = 0;
+            model.n_new_accounts = 0;
+        }
+
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
                 if train_error <= old_train_error {
@@ -195,25 +214,22 @@ async fn run_grid_search_on_parameters(
 
 #[tracing::instrument(skip_all)]
 async fn run_epoch(
-    nr_epoch: usize,
-    opts: &TrainerOpts,
+    opts: &TrainerModelOpts,
     turbo_learning_rate: bool,
     dataset: &mut Dataset,
     model: &mut Model,
 ) -> crate::Result<(f64, f64)> {
-    let start_instant = Instant::now();
-
     let learning_rate = if turbo_learning_rate {
-        opts.model.turbo_learning_rate
+        opts.turbo_learning_rate
     } else {
-        opts.model.learning_rate
+        opts.learning_rate
     };
 
     let mut train_error = error::Error::default();
     let mut test_error = error::Error::default();
 
     fastrand::shuffle(&mut dataset.sample);
-    let regularization_multiplier = learning_rate * opts.model.regularization;
+    let regularization_multiplier = learning_rate * opts.regularization;
 
     for (_, point) in dataset.sample.iter() {
         let factors = model
@@ -243,23 +259,6 @@ async fn run_epoch(
 
     dataset.refresh().await?;
 
-    if nr_epoch % opts.log_epochs == 0 {
-        log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
-            nr_epoch,
-            train_error,
-            test_error,
-            (test_error / train_error - 1.0) * 100.0,
-            opts.model.regularization,
-            dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            dataset.sample.len() as f64 / 1000.0,
-            model.n_modified_accounts() as f64 / 1000.0,
-            model.n_initialized_accounts,
-            model.n_new_accounts,
-        );
-        model.n_initialized_accounts = 0;
-        model.n_new_accounts = 0;
-    }
     if train_error.is_finite() && test_error.is_finite() {
         Ok((train_error, test_error))
     } else {
