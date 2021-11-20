@@ -106,11 +106,10 @@ async fn run_epochs(
         test_error = new_test_error;
         if i % opts.log_epochs == 0 {
             log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} {:>+5.2}% | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+            "#{} | err: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
             i,
             train_error,
             test_error,
-            (test_error / train_error - 1.0) * 100.0,
             opts.model.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
