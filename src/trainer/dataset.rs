@@ -17,18 +17,21 @@ const REFRESH_POINTS_LIMIT: usize = 250000;
 pub struct Dataset {
     pub sample: Vec<(DateTime, SamplePoint)>,
     pub baseline_error: f64,
-    pub redis: MultiplexedConnection,
+    pub redis: Option<MultiplexedConnection>,
 
-    is_frozen: bool,
     pointer: String,
     time_span: Duration,
 }
 
 impl Dataset {
-    #[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
+    #[tracing::instrument(
+        skip_all,
+        fields(time_span = format_duration(time_span.to_std()?).as_str(), is_online = is_online),
+    )]
     pub async fn load(
         mut redis: MultiplexedConnection,
         time_span: Duration,
+        is_online: bool,
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
         let baseline_error = get_baseline_error(&sample);
@@ -39,30 +42,19 @@ impl Dataset {
             "loaded",
         );
         Ok(Self {
-            redis,
+            redis: if is_online { Some(redis) } else { None },
             sample,
             pointer,
             baseline_error,
             time_span,
-            is_frozen: false,
         })
-    }
-
-    pub fn freeze(mut self) -> Self {
-        self.is_frozen = true;
-        self
     }
 
     #[tracing::instrument(skip_all)]
     pub async fn refresh(&mut self) -> crate::Result {
-        if !self.is_frozen {
-            if let Some((_, new_pointer)) = refresh_sample(
-                &mut self.redis,
-                &self.pointer,
-                &mut self.sample,
-                self.time_span,
-            )
-            .await?
+        if let Some(redis) = &mut self.redis {
+            if let Some((_, new_pointer)) =
+                refresh_sample(redis, &self.pointer, &mut self.sample, self.time_span).await?
             {
                 self.pointer = new_pointer;
             }

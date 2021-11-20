@@ -7,15 +7,13 @@ use std::result::Result as StdResult;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
-use hashbrown::{hash_map::Entry, HashMap, HashSet};
-use lru::LruCache;
 use redis::aio::MultiplexedConnection;
+use redis::pipe;
 use redis::streams::StreamMaxlen;
-use redis::{pipe, AsyncCommands, Pipeline};
 
-use cache::Cache;
 use dataset::Dataset;
-use math::{initialize_factors, predict_win_rate};
+use math::predict_probability;
+use model::Model;
 use sample_point::SamplePoint;
 
 use crate::helpers::{format_duration, format_elapsed};
@@ -23,15 +21,12 @@ use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::sgd;
-use crate::Vector;
 
-mod cache;
 mod dataset;
 mod error;
 pub mod math;
+pub mod model;
 pub mod sample_point;
-
-const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 
 #[tracing::instrument(
     skip_all,
@@ -46,12 +41,17 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let dataset = Dataset::load(redis, opts.time_span).await?;
+    let dataset = Dataset::load(
+        redis.clone(),
+        opts.time_span,
+        opts.n_grid_search_epochs.is_none(),
+    )
+    .await?;
 
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(1.., opts, dataset).await?;
+        run_epochs(Some(redis), 1.., opts, dataset).await?;
     } else {
-        run_grid_search(opts, dataset.freeze()).await?;
+        run_grid_search(opts, dataset).await?;
     }
     Ok(())
 }
@@ -89,26 +89,22 @@ pub async fn push_sample_points(
     ),
 )]
 async fn run_epochs(
+    redis: Option<MultiplexedConnection>,
     epochs: impl Iterator<Item = usize>,
     mut opts: TrainerOpts,
     mut dataset: Dataset,
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
     let mut old_errors = None;
-    let mut last_commit_instant = Instant::now();
 
-    let mut cache = Cache {
-        vehicles: HashMap::new(),
-        accounts: LruCache::unbounded(),
-        modified_account_ids: HashSet::new(),
-    };
+    let mut model = Model::new(redis, opts.model);
 
     for i in epochs {
         let turbo_learning_rate = old_errors
             .map(|(_, test_error)| test_error > dataset.baseline_error)
             .unwrap_or(true);
         let (train_error, new_test_error) =
-            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut cache).await?;
+            run_epoch(i, &opts, turbo_learning_rate, &mut dataset, &mut model).await?;
         test_error = new_test_error;
         if let Some((old_train_error, old_test_error)) = old_errors {
             if test_error > old_test_error {
@@ -123,40 +119,11 @@ async fn run_epochs(
         }
         old_errors = Some((train_error, test_error));
 
-        if opts.n_grid_search_epochs.is_none()
-            && last_commit_instant.elapsed() >= opts.model.commit_period
-        {
-            commit_factors(&opts, &mut dataset, &mut cache).await?;
-            last_commit_instant = Instant::now();
-        }
+        model.flush_lazily().await?;
     }
 
     tracing::info!(final_regularization = opts.model.regularization);
     Ok(test_error)
-}
-
-#[tracing::instrument(skip_all)]
-async fn commit_factors(
-    opts: &TrainerOpts,
-    dataset: &mut Dataset,
-    cache: &mut Cache,
-) -> crate::Result {
-    let start_instant = Instant::now();
-    set_all_accounts_factors(
-        &mut dataset.redis,
-        &mut cache.modified_account_ids,
-        &cache.accounts,
-        opts.model.account_ttl_secs,
-    )
-    .await?;
-    cache.modified_account_ids.clear();
-    cache.accounts.resize(opts.model.account_cache_size);
-    set_all_vehicles_factors(&mut dataset.redis, &cache.vehicles).await?;
-    tracing::info!(
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "factors committed",
-    );
-    Ok(())
 }
 
 #[tracing::instrument(
@@ -208,7 +175,7 @@ async fn run_grid_search_on_parameters(
         let opts = opts.clone();
         let dataset = dataset.clone();
         tokio::spawn(async move {
-            run_epochs(1..=opts.n_grid_search_epochs.unwrap(), opts, dataset).await
+            run_epochs(None, 1..=opts.n_grid_search_epochs.unwrap(), opts, dataset).await
         })
     });
     let errors = futures::future::try_join_all(tasks)
@@ -221,7 +188,7 @@ async fn run_grid_search_on_parameters(
         initial_regularization = opts.model.regularization,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
-        "tested the parameters"
+        "tested the parameters",
     );
     Ok(error)
 }
@@ -232,7 +199,7 @@ async fn run_epoch(
     opts: &TrainerOpts,
     turbo_learning_rate: bool,
     dataset: &mut Dataset,
-    cache: &mut Cache,
+    model: &mut Model,
 ) -> crate::Result<(f64, f64)> {
     let start_instant = Instant::now();
 
@@ -245,60 +212,26 @@ async fn run_epoch(
     let mut train_error = error::Error::default();
     let mut test_error = error::Error::default();
 
-    let mut n_new_accounts = 0;
-    let mut n_initialized_accounts = 0;
-
     fastrand::shuffle(&mut dataset.sample);
     let regularization_multiplier = learning_rate * opts.model.regularization;
 
     for (_, point) in dataset.sample.iter() {
-        let account_factors = match cache.accounts.get_mut(&point.account_id) {
-            Some(factors) => factors,
-            None => {
-                let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_account_factors(&mut dataset.redis, point.account_id).await?
-                } else {
-                    None
-                };
-                let mut factors = factors.unwrap_or_else(|| {
-                    n_new_accounts += 1;
-                    Vector::new()
-                });
-                if initialize_factors(&mut factors, opts.model.n_factors, opts.model.factor_std) {
-                    n_initialized_accounts += 1;
-                }
-                cache.accounts.put(point.account_id, factors);
-                cache.accounts.get_mut(&point.account_id).unwrap()
-            }
-        };
+        let factors = model
+            .get_factors_mut(point.account_id, remap_tank_id(point.tank_id))
+            .await?;
 
-        let tank_id = remap_tank_id(point.tank_id);
-        let vehicle_factors = match cache.vehicles.entry(tank_id) {
-            Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(entry) => {
-                let factors = if opts.n_grid_search_epochs.is_none() {
-                    get_vehicle_factors(&mut dataset.redis, tank_id).await?
-                } else {
-                    None
-                };
-                let mut factors = factors.unwrap_or_else(Vector::new);
-                initialize_factors(&mut factors, opts.model.n_factors, opts.model.factor_std);
-                entry.insert(factors)
-            }
-        };
-
-        let prediction = predict_win_rate(vehicle_factors, account_factors);
+        let prediction = predict_probability(factors.vehicle, factors.account);
         let label = point.n_wins as f64 / point.n_battles as f64;
         let weight = point.n_battles as f64;
 
         if !point.is_test {
             sgd(
-                account_factors,
-                vehicle_factors,
+                factors.account,
+                factors.vehicle,
                 learning_rate * (label - prediction) * weight,
                 regularization_multiplier * weight,
             )?;
-            cache.modified_account_ids.insert(point.account_id);
+            model.touch(point.account_id);
             train_error.push(prediction, label, weight);
         } else {
             test_error.push(prediction, label, weight);
@@ -320,94 +253,16 @@ async fn run_epoch(
             opts.model.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
-            cache.modified_account_ids.len() as f64 / 1000.0,
-            n_initialized_accounts,
-            n_new_accounts,
+            model.n_modified_accounts() as f64 / 1000.0,
+            model.n_initialized_accounts,
+            model.n_new_accounts,
         );
+        model.n_initialized_accounts = 0;
+        model.n_new_accounts = 0;
     }
     if train_error.is_finite() && test_error.is_finite() {
         Ok((train_error, test_error))
     } else {
         Err(anyhow!("the learning rate is too big"))
     }
-}
-
-pub async fn get_vehicle_factors(
-    redis: &mut MultiplexedConnection,
-    tank_id: i32,
-) -> crate::Result<Option<Vector>> {
-    let bytes: Option<Vec<u8>> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
-    match bytes {
-        Some(bytes) => Ok(rmp_serde::from_read_ref(&bytes)?),
-        None => Ok(None),
-    }
-}
-
-pub async fn get_all_vehicle_factors(
-    redis: &mut MultiplexedConnection,
-) -> crate::Result<HashMap<i32, Vector>> {
-    let hash_map: std::collections::HashMap<i32, Vec<u8>> =
-        redis.hgetall(VEHICLE_FACTORS_KEY).await?;
-    hash_map
-        .into_iter()
-        .map(|(tank_id, value)| Ok((tank_id, rmp_serde::from_read_ref(&value)?)))
-        .collect()
-}
-
-async fn set_all_vehicles_factors(
-    redis: &mut MultiplexedConnection,
-    vehicles_factors: &HashMap<i32, Vector>,
-) -> crate::Result {
-    let items: crate::Result<Vec<(i32, Vec<u8>)>> = vehicles_factors
-        .iter()
-        .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
-        .collect();
-    redis.hset_multiple(VEHICLE_FACTORS_KEY, &items?).await?;
-    Ok(())
-}
-
-pub async fn get_account_factors(
-    redis: &mut MultiplexedConnection,
-    account_id: i32,
-) -> crate::Result<Option<Vector>> {
-    let bytes: Option<Vec<u8>> = redis.get(format!("f::ru::{}", account_id)).await?;
-    match bytes {
-        Some(bytes) => Ok(rmp_serde::from_read_ref(&bytes)?),
-        None => Ok(None),
-    }
-}
-
-#[inline]
-fn set_account_factors(
-    pipeline: &mut Pipeline,
-    account_id: i32,
-    factors: &[f64],
-    ttl_secs: usize,
-) -> crate::Result {
-    let bytes = rmp_serde::to_vec(factors)?;
-    pipeline
-        .set_ex(format!("f::ru::{}", account_id), bytes, ttl_secs)
-        .ignore();
-    Ok(())
-}
-
-async fn set_all_accounts_factors(
-    redis: &mut MultiplexedConnection,
-    account_ids: &mut HashSet<i32>,
-    cache: &LruCache<i32, Vector>,
-    ttl_secs: usize,
-) -> crate::Result {
-    let mut pipeline = pipe();
-    for account_id in account_ids.drain() {
-        set_account_factors(
-            &mut pipeline,
-            account_id,
-            cache.peek(&account_id).unwrap(),
-            ttl_secs,
-        )?;
-    }
-    pipeline
-        .query_async(redis)
-        .await
-        .context("failed to update the accounts factors")
 }

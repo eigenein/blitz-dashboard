@@ -7,7 +7,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::math::vector;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::model::get_all_vehicle_factors;
 use crate::web::partials::{
     footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
 };

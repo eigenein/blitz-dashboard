@@ -18,8 +18,8 @@ use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::remap_tank_id;
-use crate::trainer::math::predict_win_rate;
-use crate::trainer::{get_account_factors, get_all_vehicle_factors};
+use crate::trainer::math::predict_probability;
+use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::{
@@ -507,7 +507,7 @@ pub async fn get(
                                                 @let predicted_win_rate = account_factors.as_ref().and_then(|account_factors| {
                                                     let tank_id = remap_tank_id(tank.statistics.base.tank_id);
                                                     vehicles_factors.get(&tank_id).map(|vehicle_factors| {
-                                                        predict_win_rate(vehicle_factors, account_factors).clamp(0.0, 1.0)
+                                                        predict_probability(vehicle_factors, account_factors).clamp(0.0, 1.0)
                                                     })
                                                 });
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate))

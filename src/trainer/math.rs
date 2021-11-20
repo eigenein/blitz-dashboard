@@ -1,35 +1,14 @@
 //! Collaborative filtering.
 
 use anyhow::anyhow;
-use std::cmp::Ordering;
-
-use rand::distributions::Distribution;
-use rand::thread_rng;
-use rand_distr::Normal;
 
 use crate::math::logistic;
 use crate::math::vector::dot;
-use crate::Vector;
-
-pub fn initialize_factors(x: &mut Vector, length: usize, magnitude: f64) -> bool {
-    match x.len().cmp(&length) {
-        Ordering::Equal => false,
-        _ => {
-            let mut rng = thread_rng();
-            let distribution = Normal::new(0.0, magnitude).unwrap();
-            x.clear();
-            while x.len() < length {
-                x.push(distribution.sample(&mut rng));
-            }
-            true
-        }
-    }
-}
 
 #[must_use]
 #[inline]
-pub fn predict_win_rate(vehicle_factors: &[f64], account_factors: &[f64]) -> f64 {
-    logistic(dot(vehicle_factors, account_factors))
+pub fn predict_probability(x: &[f64], y: &[f64]) -> f64 {
+    logistic(dot(x, y))
 }
 
 /// Adjusts the latent factors.
@@ -80,6 +59,6 @@ mod benches {
         let x = vec![1.0, 2.0, 3.0, 4.0, -1.0, -2.0, -3.0, -4.0];
         let y = vec![1.0, 2.0, 3.0, 4.0, -1.0, -2.0, -3.0, -4.0];
 
-        bencher.iter(|| black_box(predict_win_rate(black_box(&x), black_box(&y))));
+        bencher.iter(|| black_box(predict_probability(black_box(&x), black_box(&y))));
     }
 }

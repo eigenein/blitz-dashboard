@@ -1,6 +1,6 @@
+use itertools::Itertools;
 use std::cmp::Ordering;
 
-use itertools::Itertools;
 use maud::{html, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -9,7 +9,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::math::vector::cosine_similarity;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::get_all_vehicle_factors;
+use crate::trainer::model::get_all_vehicle_factors;
 use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
