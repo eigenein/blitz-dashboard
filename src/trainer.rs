@@ -153,19 +153,19 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
                 error = error,
                 was = best_error,
                 by = best_error - error,
-                "🎉 improved",
+                "↓ improved",
             );
             best_error = error;
             best_opts = Some(opts.model);
         } else {
-            tracing::info!(worse_by = error - best_error, "❌ no improvement");
+            tracing::info!(worse_by = error - best_error, "⨯ no improvement");
         };
         tracing::info!(
             n_factors = best_opts.unwrap().n_factors,
             regularization = best_opts.unwrap().regularization,
             error = best_error,
             over_baseline = best_error - dataset.baseline_error,
-            "📉 best so far",
+            "= best so far",
         );
     }
 
@@ -194,7 +194,7 @@ async fn run_grid_search_on_parameters(
         regularization = opts.model.regularization,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
-        "✅ tested",
+        "✔ tested",
     );
     Ok(error)
 }
