@@ -168,6 +168,10 @@ pub struct TrainerOpts {
     /// Add the specified number of latent factors to the grid search
     #[structopt(long = "gsf")]
     pub grid_search_factors: Vec<usize>,
+
+    /// Add the specified regularization to the grid search
+    #[structopt(long = "gsr")]
+    pub grid_search_regularizations: Vec<f64>,
 }
 
 #[derive(Copy, Clone, StructOpt)]
@@ -176,16 +180,12 @@ pub struct TrainerModelOpts {
     #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
 
-    /// Regularization
-    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
+    /// Regularization. Ignored for the grid search
+    #[structopt(short = "r", long = "regularization", default_value = "0")]
     pub regularization: f64,
 
-    /// Automatic regularization adjustment step
-    #[structopt(long = "r-step", default_value = "0.001")]
-    pub regularization_step: f64,
-
     /// Number of latent factors. Note that the 0-th factor is used as a bias.
-    /// For grid search: initial number of latent factors
+    /// Ignored for the grid search.
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
 

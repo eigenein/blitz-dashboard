@@ -7,6 +7,7 @@ use std::result::Result as StdResult;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
+use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use redis::streams::StreamMaxlen;
@@ -83,7 +84,6 @@ pub async fn push_sample_points(
     fields(
         n_factors = opts.model.n_factors,
         regularization = opts.model.regularization,
-        regularization_step = opts.model.regularization_step,
         factor_std = opts.model.factor_std,
         commit_period = format_duration(opts.model.flush_period).as_str(),
     ),
@@ -94,8 +94,6 @@ async fn run_epochs(
     mut dataset: Dataset,
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
-    let mut old_errors = None;
-
     let mut model = Model::new(redis, opts.model);
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
@@ -105,11 +103,10 @@ async fn run_epochs(
         test_error = new_test_error;
         if i % opts.log_epochs == 0 {
             log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+            "#{} | err: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
             i,
             train_error,
             test_error,
-            model.opts.regularization,
             dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
             dataset.sample.len() as f64 / 1000.0,
             model.n_modified_accounts() as f64 / 1000.0,
@@ -119,19 +116,6 @@ async fn run_epochs(
             model.n_initialized_accounts = 0;
             model.n_new_accounts = 0;
         }
-
-        if let Some((old_train_error, old_test_error)) = old_errors {
-            if test_error > old_test_error {
-                if train_error <= old_train_error {
-                    model.opts.regularization += model.opts.regularization_step;
-                } else {
-                    model.opts.regularization = (model.opts.regularization
-                        - model.opts.regularization_step)
-                        .max(model.opts.regularization_step);
-                }
-            }
-        }
-        old_errors = Some((train_error, test_error));
 
         model.flush().await?;
     }
@@ -146,34 +130,43 @@ async fn run_epochs(
     fields(
         n_iterations = opts.grid_search_iterations,
         n_epochs = opts.n_grid_search_epochs.unwrap(),
+        n_parameter_sets = opts.grid_search_factors.len() * opts.grid_search_regularizations.len(),
     ),
 )]
 async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::Result {
-    tracing::info!("running the initial evaluation");
-    let mut best_n_factors = opts.model.n_factors;
-    let mut best_error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
+    let mut best_opts = None;
+    let mut best_error = f64::INFINITY;
 
-    tracing::info!("starting the search");
-    for n_factors in &opts.grid_search_factors {
+    for (i, (n_factors, regularization)) in opts
+        .grid_search_factors
+        .iter()
+        .cartesian_product(&opts.grid_search_regularizations)
+        .enumerate()
+    {
+        tracing::info!(run = i + 1, "starting");
+
         opts.model.n_factors = *n_factors;
+        opts.model.regularization = *regularization;
+
         let error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
         if error < best_error {
             tracing::info!(
                 error = error,
                 was = best_error,
                 by = best_error - error,
-                "IMPROVED",
+                "🎉 improved",
             );
             best_error = error;
-            best_n_factors = *n_factors;
+            best_opts = Some(opts.model);
         } else {
-            tracing::info!(worse_by = error - best_error, "no improvement");
+            tracing::info!(worse_by = error - best_error, "❌ no improvement");
         };
         tracing::info!(
-            n_factors = best_n_factors,
+            n_factors = best_opts.unwrap().n_factors,
+            regularization = best_opts.unwrap().regularization,
             error = best_error,
             over_baseline = best_error - dataset.baseline_error,
-            "BEST SO FAR",
+            "📉 best so far",
         );
     }
 
@@ -199,10 +192,10 @@ async fn run_grid_search_on_parameters(
     let error = mean(&errors);
     tracing::info!(
         n_factors = opts.model.n_factors,
-        initial_regularization = opts.model.regularization,
+        regularization = opts.model.regularization,
         mean_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
-        "tested the parameters",
+        "✅ tested",
     );
     Ok(error)
 }
