@@ -20,7 +20,7 @@ use crate::helpers::{format_duration, format_elapsed};
 use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
-use crate::trainer::math::sgd;
+use crate::trainer::math::make_gradient_descent_step;
 
 mod dataset;
 mod error;
@@ -140,6 +140,7 @@ async fn run_epochs(
     Ok(test_error)
 }
 
+/// Run the grid search on all the specified parameter sets.
 #[tracing::instrument(
     skip_all,
     fields(
@@ -166,7 +167,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
             best_error = error;
             best_n_factors = *n_factors;
         } else {
-            tracing::info!("no improvement");
+            tracing::info!(worse_by = error - best_error, "no improvement");
         };
         tracing::info!(
             n_factors = best_n_factors,
@@ -179,6 +180,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
     Ok(())
 }
 
+/// Run the grid search with the specified parameters.
 #[tracing::instrument(skip_all)]
 async fn run_grid_search_on_parameters(
     opts: &TrainerOpts,
@@ -207,6 +209,7 @@ async fn run_grid_search_on_parameters(
     Ok(error)
 }
 
+/// Run one SGD epoch on the entire dataset.
 #[tracing::instrument(skip_all)]
 async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f64, f64)> {
     let mut train_error = error::Error::default();
@@ -226,7 +229,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
         let weight = point.n_battles as f64;
 
         if !point.is_test {
-            sgd(
+            make_gradient_descent_step(
                 factors.account,
                 factors.vehicle,
                 learning_rate * (label - prediction) * weight,
