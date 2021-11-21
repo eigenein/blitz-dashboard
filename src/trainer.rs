@@ -120,7 +120,6 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    tracing::info!(final_regularization = model.opts.regularization);
     Ok(test_error)
 }
 
