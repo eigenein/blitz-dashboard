@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Single sample point of a dataset.
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct SamplePoint {
     pub account_id: i32,

@@ -49,7 +49,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     .await?;
 
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(Some(redis), 1.., opts, dataset).await?;
+        run_epochs(Some(redis), opts, dataset).await?;
     } else {
         run_grid_search(opts, dataset).await?;
     }
@@ -85,12 +85,11 @@ pub async fn push_sample_points(
         regularization = opts.model.regularization,
         regularization_step = opts.model.regularization_step,
         factor_std = opts.model.factor_std,
-        commit_period = format_duration(opts.model.commit_period).as_str(),
+        commit_period = format_duration(opts.model.flush_period).as_str(),
     ),
 )]
 async fn run_epochs(
     redis: Option<MultiplexedConnection>,
-    epochs: impl Iterator<Item = usize>,
     opts: TrainerOpts,
     mut dataset: Dataset,
 ) -> crate::Result<f64> {
@@ -99,7 +98,8 @@ async fn run_epochs(
 
     let mut model = Model::new(redis, opts.model);
 
-    for i in epochs {
+    let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
+    for i in 1..=range {
         let start_instant = Instant::now();
         let (train_error, new_test_error) = run_epoch(&mut dataset, &mut model).await?;
         test_error = new_test_error;
@@ -190,9 +190,7 @@ async fn run_grid_search_on_parameters(
     let tasks = (1..=opts.grid_search_iterations).map(|_| {
         let opts = opts.clone();
         let dataset = dataset.clone();
-        tokio::spawn(async move {
-            run_epochs(None, 1..=opts.n_grid_search_epochs.unwrap(), opts, dataset).await
-        })
+        tokio::spawn(async move { run_epochs(None, opts, dataset).await })
     });
     let errors = futures::future::try_join_all(tasks)
         .await?

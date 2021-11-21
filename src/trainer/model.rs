@@ -131,7 +131,7 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     pub async fn flush(&mut self) -> crate::Result {
-        if self.last_flush_instant.elapsed() >= self.opts.commit_period {
+        if self.last_flush_instant.elapsed() >= self.opts.flush_period {
             self.force_flush().await?;
             self.last_flush_instant = Instant::now();
         }

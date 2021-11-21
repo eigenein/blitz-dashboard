@@ -1,9 +1,10 @@
+use std::str::FromStr;
+
 use anyhow::anyhow;
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::StreamReadOptions;
 use redis::{AsyncCommands, Value};
-use std::str::FromStr;
 
 use crate::helpers::format_duration;
 use crate::trainer::error::Error;
@@ -11,7 +12,7 @@ use crate::trainer::sample_point::SamplePoint;
 use crate::DateTime;
 
 pub const TRAIN_STREAM_KEY: &str = "streams::battles";
-const REFRESH_POINTS_LIMIT: usize = 250000;
+const REFRESH_POINTS_LIMIT: usize = 100000;
 
 #[derive(Clone)]
 pub struct Dataset {
@@ -19,7 +20,9 @@ pub struct Dataset {
     pub baseline_error: f64,
     pub redis: Option<MultiplexedConnection>,
 
+    /// Last read entry ID of the Redis stream.
     pointer: String,
+
     time_span: Duration,
 }
 
@@ -34,7 +37,7 @@ impl Dataset {
         is_online: bool,
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
-        let baseline_error = get_baseline_error(&sample);
+        let baseline_error = calculate_baseline_error(&sample);
         tracing::info!(
             n_points = sample.len(),
             pointer = pointer.as_str(),
@@ -63,8 +66,9 @@ impl Dataset {
     }
 }
 
+/// Calculate the error on the constant model that always predicts `0.5`.
 #[tracing::instrument(skip_all)]
-fn get_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
+fn calculate_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
     let mut error = Error::default();
     for (_, point) in sample {
         error.push(
@@ -76,6 +80,7 @@ fn get_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
     error.average()
 }
 
+/// Load sample points from the stream within the specified time span.
 #[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
 async fn load_sample(
     redis: &mut MultiplexedConnection,
@@ -99,6 +104,7 @@ async fn load_sample(
     }
 }
 
+/// Remove outdated sample points and append new ones.
 #[tracing::instrument(level = "debug", skip(redis, sample, time_span))]
 async fn refresh_sample(
     redis: &mut MultiplexedConnection,
@@ -124,6 +130,7 @@ async fn refresh_sample(
     Ok(result)
 }
 
+/// Parse Redis stream entry ID.
 fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
     let millis = id
         .split_once("-")

@@ -160,9 +160,12 @@ pub struct TrainerOpts {
     #[structopt(long = "gse")]
     pub n_grid_search_epochs: Option<usize>,
 
+    /// Perform the specified number of iterations for each set of parameters.
+    /// The test error is then averaged over the iterations
     #[structopt(long = "gsi", default_value = "3")]
     pub grid_search_iterations: usize,
 
+    /// Add the specified number of latent factors to the grid search
     #[structopt(long = "gsf")]
     pub grid_search_factors: Vec<usize>,
 }
@@ -181,7 +184,8 @@ pub struct TrainerModelOpts {
     #[structopt(long = "r-step", default_value = "0.001")]
     pub regularization_step: f64,
 
-    /// Number of latent factors
+    /// Number of latent factors. Note that the 0-th factor is used as a bias.
+    /// For grid search: initial number of latent factors
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
 
@@ -201,9 +205,14 @@ pub struct TrainerModelOpts {
     )]
     pub account_cache_size: usize,
 
-    /// Commit the feature vectors with the specified period
-    #[structopt(long, default_value = "1minute", parse(try_from_str = humantime::parse_duration))]
-    pub commit_period: StdDuration,
+    /// Store the latent vectors with the specified period
+    #[structopt(
+        long,
+        alias = "flush-interval",
+        default_value = "1minute",
+        parse(try_from_str = humantime::parse_duration),
+    )]
+    pub flush_period: StdDuration,
 }
 
 #[derive(StructOpt)]
