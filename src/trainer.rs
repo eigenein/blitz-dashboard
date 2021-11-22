@@ -149,8 +149,11 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
     {
         let should_stop = should_stop.clone();
         ctrlc::set_handler(move || {
-            should_stop.store(true, Ordering::Relaxed);
-            tracing::warn!("interrupting…");
+            if should_stop.swap(true, Ordering::Relaxed) {
+                tracing::warn!("repeated Ctrl+C – exiting");
+                std::process::exit(1);
+            }
+            tracing::warn!("interrupting… Ctrl+C again to exit");
         })?;
     }
 
