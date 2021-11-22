@@ -150,7 +150,7 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
         let should_stop = should_stop.clone();
         ctrlc::set_handler(move || {
             should_stop.store(true, Ordering::Relaxed);
-            tracing::info!("interrupting…");
+            tracing::warn!("interrupting…");
         })?;
     }
 
