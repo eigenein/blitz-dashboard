@@ -4,6 +4,8 @@
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
 use std::result::Result as StdResult;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
@@ -11,6 +13,7 @@ use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use redis::streams::StreamMaxlen;
+use tokio::task::JoinHandle;
 
 use dataset::Dataset;
 use math::predict_probability;
@@ -50,7 +53,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     .await?;
 
     if opts.n_grid_search_epochs.is_none() {
-        run_epochs(Some(redis), opts, dataset).await?;
+        run_epochs(Some(redis), opts, dataset, Arc::new(AtomicBool::new(false))).await?;
     } else {
         run_grid_search(opts, dataset).await?;
     }
@@ -92,6 +95,7 @@ async fn run_epochs(
     redis: Option<MultiplexedConnection>,
     opts: TrainerOpts,
     mut dataset: Dataset,
+    should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
     let mut test_error = 0.0;
     let mut model = Model::new(redis, opts.model);
@@ -101,6 +105,7 @@ async fn run_epochs(
         let start_instant = Instant::now();
         let (train_error, new_test_error) = run_epoch(&mut dataset, &mut model).await?;
         test_error = new_test_error;
+
         if i % opts.log_epochs == 0 {
             log::info!(
             "#{} | err: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
@@ -115,6 +120,10 @@ async fn run_epochs(
         );
             model.n_initialized_accounts = 0;
             model.n_new_accounts = 0;
+        }
+        if should_stop.load(Ordering::Relaxed) {
+            tracing::warn!("interrupted");
+            break;
         }
 
         model.flush().await?;
@@ -136,6 +145,15 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
     let mut best_opts = None;
     let mut best_error = f64::INFINITY;
 
+    let should_stop = Arc::new(AtomicBool::default());
+    {
+        let should_stop = should_stop.clone();
+        ctrlc::set_handler(move || {
+            should_stop.store(true, Ordering::Relaxed);
+            tracing::info!("interrupting…");
+        })?;
+    }
+
     for (i, (n_factors, regularization)) in opts
         .grid_search_factors
         .iter()
@@ -147,7 +165,8 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
         opts.model.n_factors = *n_factors;
         opts.model.regularization = *regularization;
 
-        let error = run_grid_search_on_parameters(&opts, &mut dataset).await?;
+        should_stop.store(false, Ordering::Relaxed);
+        let error = run_grid_search_on_parameters(&opts, &mut dataset, &should_stop).await?;
         if error < best_error {
             tracing::info!(
                 error = error,
@@ -177,13 +196,19 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
 async fn run_grid_search_on_parameters(
     opts: &TrainerOpts,
     dataset: &mut Dataset,
+    should_stop: &Arc<AtomicBool>,
 ) -> crate::Result<f64> {
     let start_instant = Instant::now();
-    let tasks = (1..=opts.grid_search_iterations).map(|_| {
-        let opts = opts.clone();
-        let dataset = dataset.clone();
-        tokio::spawn(async move { run_epochs(None, opts, dataset).await })
-    });
+    let tasks: Vec<JoinHandle<crate::Result<f64>>> = (1..=opts.grid_search_iterations)
+        .map(|_| {
+            tokio::spawn(run_epochs(
+                None,
+                opts.clone(),
+                dataset.clone(),
+                should_stop.clone(),
+            ))
+        })
+        .collect();
     let errors = futures::future::try_join_all(tasks)
         .await?
         .into_iter()

@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.101.0"
+version = "0.102.0"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
@@ -20,6 +20,7 @@ split-debuginfo = "unpacked"
 [dependencies]
 anyhow = "1.0.45"
 chrono-humanize = "0.2.1"
+ctrlc = "3.2.1"
 fastrand = "1.5.0"
 hashbrown = "0.11.2"
 humantime = "2.1.0"
