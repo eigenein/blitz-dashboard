@@ -45,11 +45,7 @@ pub async fn get(
         .iter()
         .filter(|(other_tank_id, _)| **other_tank_id != tank_id)
         .map(|(tank_id, other_factors)| {
-            (
-                *tank_id,
-                // Exclude biases from the similarity metric.
-                cosine_similarity(&vehicle_factors[1..], &other_factors[1..]),
-            )
+            (*tank_id, cosine_similarity(vehicle_factors, other_factors))
         })
         .sorted_unstable_by(|(_, left), (_, right)| {
             right.partial_cmp(left).unwrap_or(Ordering::Equal)

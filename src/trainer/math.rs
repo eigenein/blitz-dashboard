@@ -4,16 +4,13 @@ use crate::math::logistic;
 use crate::math::vector::dot;
 
 /// Predict a probability based on the user and item latent vectors.
-/// The 0-th elements are biases.
 #[must_use]
 #[inline]
 pub fn predict_probability(x: &[f64], y: &[f64]) -> f64 {
-    logistic(x[0] + y[0] + dot(&x[1..], &y[1..]))
+    logistic(dot(x, y))
 }
 
 /// Adjusts the latent factors.
-///
-/// Note that the 0-th elements of the vectors are biases.
 ///
 /// See also: https://sifter.org/~simon/journal/20061211.html.
 #[inline]
@@ -23,11 +20,7 @@ pub fn make_gradient_descent_step(
     residual_multiplier: f64,
     regularization_multiplier: f64,
 ) -> crate::Result {
-    // Adjust the biases separately.
-    x[0] += residual_multiplier - regularization_multiplier * x[0];
-    y[0] += residual_multiplier - regularization_multiplier * y[0];
-
-    for (xi, yi) in x[1..].iter_mut().zip(y[1..].iter_mut()) {
+    for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
         *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
     }

@@ -184,7 +184,7 @@ pub struct TrainerModelOpts {
     #[structopt(short = "r", long = "regularization", default_value = "0")]
     pub regularization: f64,
 
-    /// Number of latent factors. Note that the 0-th factor is used as a bias.
+    /// Number of latent factors.
     /// Ignored for the grid search.
     #[structopt(short = "f", long = "factors", default_value = "8")]
     pub n_factors: usize,
