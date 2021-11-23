@@ -247,11 +247,6 @@ pub struct Tank {
 }
 
 impl Tank {
-    #[inline]
-    pub fn tank_id(&self) -> i32 {
-        self.statistics.base.tank_id
-    }
-
     pub fn wins_per_hour(&self) -> f64 {
         self.statistics.all.wins as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0

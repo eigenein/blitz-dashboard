@@ -23,7 +23,7 @@ impl AccountInfoCache {
             .get::<_, Option<Vec<u8>>>(Self::cache_key(account_id))
             .await?
         {
-            log::debug!("Cache hit on account #{} info.", account_id,);
+            tracing::debug!(account_id = account_id, "cache hit");
             return Ok(rmp_serde::from_read_ref(&blob)?);
         }
 
@@ -41,10 +41,10 @@ impl AccountInfoCache {
 
     pub async fn put(&self, account_info: &AccountInfo) -> crate::Result {
         let blob = rmp_serde::to_vec(&account_info)?;
-        log::debug!(
-            "Caching account #{} info: {} B.",
-            account_info.base.id,
-            blob.len(),
+        tracing::debug!(
+            account_id = account_info.base.id,
+            n_bytes = blob.len(),
+            "caching",
         );
         self.redis
             .clone()

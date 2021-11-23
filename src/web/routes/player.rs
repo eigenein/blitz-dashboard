@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
+use futures::future::try_join3;
 use humantime::parse_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
@@ -16,7 +17,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::{format_elapsed, from_days, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::{subtract_tanks, Statistics, Tank};
+use crate::models::{subtract_tanks, Statistics};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
@@ -50,36 +51,26 @@ pub async fn get(
         None => from_days(1),
     };
 
-    let current_info = match account_info_cache.get(account_id).await? {
+    let (current_info, tanks, old_tank_snapshots) = {
+        let before = Utc::now() - Duration::from_std(period)?;
+        try_join3(
+            account_info_cache.get(account_id),
+            account_tanks_cache.get(account_id),
+            retrieve_latest_tank_snapshots(database, account_id, &before),
+        )
+        .await?
+    };
+    let current_info = match current_info {
         Some(info) => info,
         None => return Ok(CustomResponse::NotFound),
     };
     set_user(&current_info.nickname);
     let insert_account_future = {
-        let database = PgPool::clone(database);
+        let database = (*database).clone();
         spawn(async move { insert_account_if_not_exists(&database, account_id).await })
     };
-    tracing::info!(
-        account_id = account_id,
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "account ready",
-    );
 
-    let tanks = account_tanks_cache
-        .get(current_info.base.id, current_info.base.last_battle_time)
-        .await?;
-    let tanks_delta = {
-        let before = Utc::now() - Duration::from_std(period)?;
-        let tank_ids: Vec<i32> = tanks.iter().map(Tank::tank_id).collect();
-        let old_tank_snapshots =
-            retrieve_latest_tank_snapshots(database, account_id, &tank_ids, &before).await?;
-        spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await?
-    };
-    tracing::info!(
-        account_id = account_id,
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "tanks delta ready",
-    );
+    let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
@@ -90,15 +81,9 @@ pub async fn get(
         current_info.statistics.n_wins(),
     );
 
-    let mut redis = MultiplexedConnection::clone(redis);
+    let mut redis = (*redis).clone();
     let account_factors = get_account_factors(&mut redis, account_id).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
-
-    tracing::info!(
-        account_id = account_id,
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "model ready",
-    );
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
