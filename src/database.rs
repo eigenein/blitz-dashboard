@@ -4,6 +4,7 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
+use futures::{StreamExt, TryStreamExt};
 use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
@@ -64,16 +65,17 @@ pub async fn retrieve_latest_tank_snapshots(
     ))
     .threshold_millis(250)
     .level(Level::Debug);
-    let tanks = sqlx::query_as(QUERY)
+    sqlx::query(QUERY)
         .bind(account_id)
         .bind(before)
-        .fetch_all(connection)
+        .fetch(connection)
+        .map(|row| {
+            let row = row?;
+            sqlx::Result::Ok((row.try_get("tank_id")?, Tank::from_row(&row)?))
+        })
+        .try_collect::<HashMap<i32, Tank>>()
         .await
-        .context("failed to retrieve the latest tank snapshots")?
-        .into_iter()
-        .map(|tank: Tank| (tank.statistics.base.tank_id, tank))
-        .collect();
-    Ok(tanks)
+        .context("failed to retrieve the latest tank snapshots")
 }
 
 pub async fn retrieve_tank_battle_count(
