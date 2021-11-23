@@ -14,7 +14,7 @@ use tokio::task::spawn_blocking;
 use partials::*;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
-use crate::helpers::{format_elapsed, from_days, from_months};
+use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics};
@@ -135,6 +135,7 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
+                    (render_period_li(period, from_hours(12), "12 часов"))
                     (render_period_li(period, from_days(1), "24 часа"))
                     (render_period_li(period, from_days(2), "2 дня"))
                     (render_period_li(period, from_days(3), "3 дня"))
