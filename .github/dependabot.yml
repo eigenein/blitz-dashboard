@@ -6,6 +6,5 @@ updates:
       interval: "daily"
     commit-message:
       prefix: "⬆️"
-      include: "scope"
     reviewers:
       - "eigenein"
