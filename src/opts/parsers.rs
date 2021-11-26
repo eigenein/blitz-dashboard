@@ -13,13 +13,6 @@ pub fn verbosity(n_occurences: u64) -> LevelFilter {
     }
 }
 
-pub fn task_count(value: &str) -> crate::Result<usize> {
-    match usize::from_str(value)? {
-        count if count >= 1 => Ok(count),
-        _ => Err(anyhow!("expected non-zero number of tasks")),
-    }
-}
-
 pub fn account_id(value: &str) -> crate::Result<i32> {
     match i32::from_str(value)? {
         account_id if account_id >= 1 => Ok(account_id),
@@ -30,7 +23,7 @@ pub fn account_id(value: &str) -> crate::Result<i32> {
 pub fn non_zero_usize(value: &str) -> crate::Result<usize> {
     match FromStr::from_str(value)? {
         limit if limit >= 1 => Ok(limit),
-        _ => Err(anyhow!("expected a positive size")),
+        _ => Err(anyhow!("expected a positive number")),
     }
 }
 

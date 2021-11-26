@@ -86,7 +86,7 @@ pub struct CrawlerOpts {
     #[structopt(
         long,
         default_value = "1",
-        parse(try_from_str = parsers::task_count),
+        parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_tasks: usize,
 
@@ -129,7 +129,7 @@ pub struct CrawlAccountsOpts {
     #[structopt(
         long,
         default_value = "1",
-        parse(try_from_str = parsers::task_count),
+        parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_tasks: usize,
 }
@@ -172,6 +172,10 @@ pub struct TrainerOpts {
     /// Add the specified regularization to the grid search
     #[structopt(long = "gsr")]
     pub grid_search_regularizations: Vec<f64>,
+
+    /// Enable automatic regularization adjustment and specify its frequency in epochs
+    #[structopt(long, parse(try_from_str = parsers::non_zero_usize))]
+    pub auto_r: Option<usize>,
 }
 
 #[derive(Copy, Clone, StructOpt)]
@@ -181,7 +185,7 @@ pub struct TrainerModelOpts {
     pub learning_rate: f64,
 
     /// Regularization. Ignored for the grid search
-    #[structopt(short = "r", long = "regularization", default_value = "0")]
+    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
     pub regularization: f64,
 
     /// Number of latent factors.

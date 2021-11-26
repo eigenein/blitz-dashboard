@@ -97,14 +97,27 @@ async fn run_epochs(
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
-    let mut test_error = 0.0;
+    let mut last_train_error = None;
+    let mut last_test_error = None;
     let mut model = Model::new(redis, opts.model);
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
     for i in 1..=range {
         let start_instant = Instant::now();
-        let (train_error, new_test_error) = run_epoch(&mut dataset, &mut model).await?;
-        test_error = new_test_error;
+        let (train_error, test_error) = run_epoch(&mut dataset, &mut model).await?;
+        if let Some(auto_r) = opts.auto_r {
+            if i % auto_r == 0 {
+                adjust_regularization(
+                    last_train_error,
+                    train_error,
+                    last_test_error,
+                    test_error,
+                    &mut model.opts.regularization,
+                );
+                last_train_error = Some(train_error);
+                last_test_error = Some(test_error);
+            }
+        }
 
         if i % opts.log_epochs == 0 {
             log::info!(
@@ -129,7 +142,29 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    Ok(test_error)
+    Ok(last_test_error.unwrap())
+}
+
+fn adjust_regularization(
+    last_train_error: Option<f64>,
+    train_error: f64,
+    last_test_error: Option<f64>,
+    test_error: f64,
+    regularization: &mut f64,
+) {
+    if let Some(last_train_error) = last_train_error {
+        if let Some(last_test_error) = last_test_error {
+            if test_error > last_test_error {
+                if train_error < last_train_error {
+                    *regularization += 0.001;
+                    tracing::warn!(regularization = regularization, "increased");
+                } else {
+                    *regularization = (*regularization - 0.001).max(0.001);
+                    tracing::warn!(regularization = regularization, "decreased");
+                }
+            }
+        }
+    }
 }
 
 /// Run the grid search on all the specified parameter sets.
@@ -268,6 +303,10 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
     if train_error.is_finite() && test_error.is_finite() {
         Ok((train_error, test_error))
     } else {
-        Err(anyhow!("the learning rate is too big"))
+        Err(anyhow!(
+            "the learning rate is too big, train error = {}, test_error = {}",
+            train_error,
+            test_error,
+        ))
     }
 }
