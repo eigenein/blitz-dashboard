@@ -166,6 +166,13 @@ pub async fn get(
             }
             th { "Тип" }
             th {
+                a data-sort="battle-life-time" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Время в боях" }
+                    }
+                }
+            }
+            th {
                 a data-sort="battles" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Бои" }
@@ -496,7 +503,7 @@ pub async fn get(
                                                         predict_probability(vehicle_factors, account_factors).clamp(0.0, 1.0)
                                                     })
                                                 });
-                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate))
+                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate)?)
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {

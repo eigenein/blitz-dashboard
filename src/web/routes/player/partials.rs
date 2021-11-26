@@ -53,8 +53,8 @@ pub fn render_tank_tr(
     tank: &Tank,
     account_win_rate: &ConfidenceInterval,
     predicted_win_rate: Option<f64>,
-) -> Markup {
-    html! {
+) -> crate::Result<Markup> {
+    let markup = html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();
         @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
@@ -64,6 +64,9 @@ pub fn render_tank_tr(
             (tier_td(vehicle.tier, None))
             td {
                 (format!("{:?}", vehicle.type_))
+            }
+            td.is-white-space-nowrap data-sort="battle-life-time" data-value=(tank.statistics.battle_life_time.num_seconds()) {
+                (format_duration(tank.statistics.battle_life_time.to_std()?))
             }
             td data-sort="battles" data-value=(tank.statistics.all.battles) {
                 (tank.statistics.all.battles)
@@ -102,7 +105,6 @@ pub fn render_tank_tr(
                         strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
                     } @else {
                         span.icon { i.fas.fa-hourglass-half {} }
-                        span { "Обучение" }
                     }
                 }
             }
@@ -176,5 +178,6 @@ pub fn render_tank_tr(
                 }
             }
         }
-    }
+    };
+    Ok(markup)
 }
