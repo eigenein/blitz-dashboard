@@ -117,6 +117,8 @@ async fn run_epochs(
                 last_train_error = Some(train_error);
                 last_test_error = Some(test_error);
             }
+        } else if i == range {
+            last_test_error = Some(test_error);
         }
 
         if i % opts.log_epochs == 0 {
