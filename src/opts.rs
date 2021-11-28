@@ -101,6 +101,14 @@ pub struct CrawlerOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub training_stream_size: usize,
+
+    /// Percentage of points sent to the test sample
+    #[structopt(
+        long,
+        default_value = "10",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub test_percentage: usize,
 }
 
 /// Updates the bundled Tankopedia module
@@ -198,7 +206,7 @@ pub struct TrainerModelOpts {
     pub factor_std: f64,
 
     /// Maximum account idle time after which the account factors expire
-    #[structopt(long = "account-ttl", default_value = "2months", parse(try_from_str = parsers::duration_as_secs))]
+    #[structopt(long = "account-ttl", default_value = "1month", parse(try_from_str = parsers::duration_as_secs))]
     pub account_ttl_secs: usize,
 
     /// Maximum number of cached account latent vectors

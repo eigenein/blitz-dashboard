@@ -45,6 +45,7 @@ pub struct Crawler {
 
 pub struct IncrementalOpts {
     training_stream_size: usize,
+    test_percentage: usize,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -67,6 +68,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.n_tasks,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
+            test_percentage: opts.test_percentage,
         }),
     )
     .await?;
@@ -198,8 +200,7 @@ impl Crawler {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_sample_points(account.id, &tanks, opts.training_stream_size)
-                        .await?;
+                    self.push_sample_points(account.id, &tanks, opts).await?;
                 }
             }
         } else {
@@ -260,7 +261,7 @@ impl Crawler {
         &self,
         account_id: i32,
         tanks: &[Tank],
-        stream_size: usize,
+        opts: &IncrementalOpts,
     ) -> crate::Result {
         let mut points = Vec::new();
 
@@ -277,14 +278,14 @@ impl Crawler {
                     tank_id,
                     n_battles,
                     n_wins,
-                    is_test: fastrand::usize(0..10) == 0,
+                    is_test: fastrand::usize(0..100) < opts.test_percentage,
                 });
             }
         }
 
         if !points.is_empty() {
             let mut redis = MultiplexedConnection::clone(&self.redis);
-            push_sample_points(&mut redis, &points, stream_size).await?;
+            push_sample_points(&mut redis, &points, opts.training_stream_size).await?;
         }
 
         Ok(())
