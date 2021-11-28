@@ -107,7 +107,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
 
 /// Inserts the hand-coded tanks that are somehow missing from the Tankopedia.
 fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
-    const VEHICLES: [Vehicle; 23] = [
+    for vehicle in [
         Vehicle {
             tank_id: 23057,
             name: Cow::Borrowed("Kunze Panzer"),
@@ -179,14 +179,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             is_premium: true,
             nation: Nation::Germany,
             type_: TankType::AT,
-        },
-        Vehicle {
-            tank_id: 24337,
-            name: Cow::Borrowed("M48A2 Räumpanzer"),
-            tier: 8,
-            is_premium: true,
-            nation: Nation::Germany,
-            type_: TankType::Medium,
         },
         Vehicle {
             tank_id: 22305,
@@ -292,9 +284,7 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             nation: Nation::Europe,
             type_: TankType::Medium,
         },
-    ];
-
-    for vehicle in VEHICLES {
+    ] {
         match vehicles.get(&vehicle.tank_id.to_string()) {
             Some(_) => anyhow::bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
             None => vehicles.insert(vehicle.tank_id.to_string(), vehicle),
