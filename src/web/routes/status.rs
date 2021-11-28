@@ -5,12 +5,9 @@ use rocket::response::content::Html;
 use rocket::{uri, State};
 
 use crate::logging::clear_user;
-use crate::math::vector;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::model::get_all_vehicle_factors;
-use crate::web::partials::{
-    footer, headers, home_button, render_f64, sign_class, tier_td, vehicle_th,
-};
+use crate::web::partials::{footer, headers, home_button, sign_class, tier_td, vehicle_th};
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
 use crate::web::{DisableCaches, TrackingCode};
 
@@ -110,13 +107,6 @@ pub fn thead(n_factors: usize) -> Markup {
                     }
                 }
             }
-            th {
-                a data-sort="magnitude" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Модуль"  }
-                    }
-                }
-            }
             @for i in 0..n_factors {
                 th {
                     a data-sort=(format!("factor-{}", i)) {
@@ -143,9 +133,6 @@ pub fn tr(tank_id: i32, factors: &[f64], n_factors: usize) -> Markup {
                 }
             }
             (tier_td(vehicle.tier, None))
-
-            @let magnitude = vector::norm(factors);
-            td data-sort="magnitude" data-value=(magnitude) { (render_f64(magnitude, 4)) }
 
             @for i in 0..n_factors {
                 @if let Some(factor) = factors.get(i).copied() {

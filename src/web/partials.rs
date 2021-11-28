@@ -3,7 +3,6 @@ use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
 use rocket::uri;
 
-use crate::math::vector;
 use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
@@ -287,14 +286,11 @@ pub fn factors_table(factors: &[f64]) -> Markup {
         div.table-container {
             table.table.is-hoverable.is-striped.is-fullwidth {
                 thead {
-                    th { "Модуль" }
                     @for i in 0..factors.len() {
                         th { "#" (i) }
                     }
                 }
                 tbody {
-                    td { (render_f64(vector::norm(factors), 4)) }
-
                     @for factor in factors {
                         td.(sign_class(*factor)) { (format!("{:+.4}", factor)) }
                     }
