@@ -123,7 +123,7 @@ async fn run_epochs(
 
         if i % opts.log_epochs == 0 {
             log::info!(
-            "#{} | err: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+            "#{} | train: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
             i,
             train_error,
             test_error,
