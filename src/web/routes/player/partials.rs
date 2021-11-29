@@ -5,7 +5,7 @@ use humantime::format_duration;
 use maud::{html, Markup};
 
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::Tank;
+use crate::models::{Tank, TankType};
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_f64, vehicle_th};
 use crate::DateTime;
@@ -63,8 +63,14 @@ pub fn render_tank_tr(
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
-            td {
-                (format!("{:?}", vehicle.type_))
+            td.has-text-centered {
+                @match vehicle.type_ {
+                    TankType::Light => "ЛТ",
+                    TankType::Medium => "СТ",
+                    TankType::Heavy => "ТТ",
+                    TankType::AT => "ПТ",
+                    TankType::Unknown => "?",
+                }
             }
             td.is-white-space-nowrap data-sort="battle-life-time" data-value=(tank.statistics.battle_life_time.num_seconds()) {
                 (format_duration(tank.statistics.battle_life_time.to_std()?))
