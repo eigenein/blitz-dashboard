@@ -153,13 +153,6 @@ pub async fn get(
                     span { "Техника" }
                 }
             }
-            th {
-                a data-sort="tier" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Уровень" }
-                    }
-                }
-            }
             th { "Тип" }
             th {
                 a data-sort="battle-life-time" {

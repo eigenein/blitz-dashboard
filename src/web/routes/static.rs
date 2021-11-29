@@ -64,3 +64,48 @@ pub async fn get_theme_css() -> CustomResponse {
 pub async fn get_robots_txt() -> CustomResponse {
     CustomResponse::Static(ContentType::Text, include_bytes!("static/robots.txt"))
 }
+
+#[get("/static/flags/cn.svg")]
+pub async fn get_cn_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/cn.svg"))
+}
+
+#[get("/static/flags/de.svg")]
+pub async fn get_de_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/de.svg"))
+}
+
+#[get("/static/flags/eu.svg")]
+pub async fn get_eu_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/eu.svg"))
+}
+
+#[get("/static/flags/fr.svg")]
+pub async fn get_fr_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/fr.svg"))
+}
+
+#[get("/static/flags/gb.svg")]
+pub async fn get_gb_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/gb.svg"))
+}
+
+#[get("/static/flags/jp.svg")]
+pub async fn get_jp_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/jp.svg"))
+}
+
+#[get("/static/flags/ru.svg")]
+pub async fn get_ru_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/ru.svg"))
+}
+
+#[get("/static/flags/us.svg")]
+pub async fn get_us_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/us.svg"))
+}
+
+#[get("/static/flags/xx.svg")]
+pub async fn get_xx_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/xx.svg"))
+}

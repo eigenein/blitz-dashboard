@@ -76,7 +76,7 @@ pub fn headers() -> Markup {
         link rel="manifest" href="/site.webmanifest";
         link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://unpkg.com/bulma-prefers-dark";
-        link rel="stylesheet" href="/static/theme.css?v4";
+        link rel="stylesheet" href="/static/theme.css?v5";
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
     }
 }
@@ -192,15 +192,15 @@ pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
 
 pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     let flag = match vehicle.nation {
-        Nation::China => "🇨🇳",
-        Nation::Europe => "🇪🇺",
-        Nation::France => "🇫🇷",
-        Nation::Germany => "🇩🇪",
-        Nation::Japan => "🇯🇵",
-        Nation::Other => "🏳",
-        Nation::Uk => "🇬🇧",
-        Nation::Usa => "🇺🇸",
-        Nation::Ussr => "🇷🇺",
+        Nation::China => "flag-icon-cn",
+        Nation::Europe => "flag-icon-eu",
+        Nation::France => "flag-icon-fr",
+        Nation::Germany => "flag-icon-de",
+        Nation::Japan => "flag-icon-jp",
+        Nation::Other => "flag-icon-xx",
+        Nation::Uk => "flag-icon-gb",
+        Nation::Usa => "flag-icon-us",
+        Nation::Ussr => "flag-icon-ru",
     };
     let name_class = if vehicle.is_premium {
         "has-text-warning-dark"
@@ -212,8 +212,11 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
 
     html! {
         span.icon-text.is-flex-wrap-nowrap {
+            span.icon { span.flag-icon.(flag) {} }
             span {
-                span."mx-1" { (flag) }
+                @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {
+                    strong."mx-1" { (tier) }
+                }
                 strong."mx-1".(name_class) { (vehicle.name) }
             }
             @if let Ok(external_id) = to_client_id(vehicle.tank_id) {

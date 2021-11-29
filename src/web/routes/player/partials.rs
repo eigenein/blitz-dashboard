@@ -7,7 +7,7 @@ use maud::{html, Markup};
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::Tank;
 use crate::tankopedia::get_vehicle;
-use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
+use crate::web::partials::{margin_class, render_f64, vehicle_th};
 use crate::DateTime;
 
 pub fn render_period_li(
@@ -63,7 +63,6 @@ pub fn render_tank_tr(
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
-            (tier_td(vehicle.tier, None))
             td {
                 (format!("{:?}", vehicle.type_))
             }
