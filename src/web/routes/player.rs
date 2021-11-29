@@ -269,7 +269,6 @@ pub async fn get(
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
                 title { (current_info.nickname) " – Я статист!" }
-                script type="module" src="/static/table.js?v5" {};
             }
             body {
                 (tracking_code.0)
