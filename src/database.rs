@@ -121,19 +121,26 @@ pub async fn replace_account(
     Ok(())
 }
 
-pub async fn insert_account_if_not_exists(connection: &PgPool, account_id: i32) -> crate::Result {
+pub async fn insert_account_if_not_exists(
+    connection: &PgPool,
+    account_id: i32,
+) -> crate::Result<BaseAccountInfo> {
     // language=SQL
     const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time)
-        VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
-        ON CONFLICT (account_id) DO NOTHING
+        WITH existing AS (
+            INSERT INTO accounts (account_id, last_battle_time)
+            VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
+            ON CONFLICT (account_id) DO NOTHING
+            RETURNING *
+        )
+        SELECT * FROM existing
+        UNION SELECT * FROM accounts WHERE account_id = $1;
     ";
-    sqlx::query(QUERY)
+    sqlx::query_as(QUERY)
         .bind(account_id)
-        .execute(connection)
+        .fetch_one(connection)
         .await
-        .context("failed to insert the account if not exists")?;
-    Ok(())
+        .context("failed to insert the account if not exists")
 }
 
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {

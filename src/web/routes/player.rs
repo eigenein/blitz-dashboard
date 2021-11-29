@@ -8,7 +8,6 @@ use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use rocket::{uri, State};
 use sqlx::PgPool;
-use tokio::spawn;
 use tokio::task::spawn_blocking;
 
 use partials::*;
@@ -65,10 +64,7 @@ pub async fn get(
         None => return Ok(CustomResponse::NotFound),
     };
     set_user(&current_info.nickname);
-    let insert_account_future = {
-        let database = (*database).clone();
-        spawn(async move { insert_account_if_not_exists(&database, account_id).await })
-    };
+    let old_info = insert_account_if_not_exists(database, account_id).await?;
 
     let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
@@ -503,7 +499,7 @@ pub async fn get(
                                                         predict_probability(vehicle_factors, account_factors).clamp(0.0, 1.0)
                                                     })
                                                 });
-                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate)?)
+                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, old_info.last_battle_time)?)
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
@@ -544,7 +540,6 @@ pub async fn get(
         "max-age=60, stale-while-revalidate=3600",
         markup,
     ));
-    insert_account_future.await??;
     tracing::info!(
         account_id = account_id,
         elapsed = format_elapsed(&start_instant).as_str(),

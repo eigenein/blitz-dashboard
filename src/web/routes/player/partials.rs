@@ -8,6 +8,7 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::models::Tank;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_f64, tier_td, vehicle_th};
+use crate::DateTime;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -53,6 +54,7 @@ pub fn render_tank_tr(
     tank: &Tank,
     account_win_rate: &ConfidenceInterval,
     predicted_win_rate: Option<f64>,
+    last_account_battle_time: DateTime,
 ) -> crate::Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
@@ -99,13 +101,19 @@ pub fn render_tank_tr(
             }
 
             td data-sort="predicted-win-rate" data-value=(predicted_win_rate.unwrap_or_default()) {
-                span.icon-text.is-flex-wrap-nowrap.has-text-grey-light {
-                    @if let Some(predicted_win_rate) = predicted_win_rate {
-                        span.icon { i.fas.fa-dice-d20 {} }
+                @if let Some(predicted_win_rate) = predicted_win_rate {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span.icon.has-text-grey-light {
+                            @if tank.statistics.base.last_battle_time <= last_account_battle_time {
+                                i.fas.fa-dice-d20 {}
+                            } @else {
+                                i.fas.fa-hourglass-half title="Робот еще не просканировал последние бои на этом танке" {}
+                            }
+                        }
                         strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
-                    } @else {
-                        span.icon { i.fas.fa-hourglass-half {} }
                     }
+                } @else {
+                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
                 }
             }
 
