@@ -32,8 +32,9 @@ mod tests {
 mod benches {
     extern crate test;
 
-    use super::*;
     use test::{black_box, Bencher};
+
+    use super::*;
 
     #[bench]
     fn bench_dot_8d(bencher: &mut Bencher) {

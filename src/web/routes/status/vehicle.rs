@@ -1,6 +1,6 @@
-use itertools::Itertools;
 use std::cmp::Ordering;
 
+use itertools::Itertools;
 use maud::{html, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;

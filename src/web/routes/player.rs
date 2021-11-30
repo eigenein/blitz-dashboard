@@ -11,13 +11,12 @@ use sqlx::PgPool;
 use tokio::task::spawn_blocking;
 
 use crate::crawler::touch_account_if_not_exists;
-use partials::*;
-
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics};
+use crate::partials::*;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};

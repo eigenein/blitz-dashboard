@@ -2,9 +2,9 @@
 
 mod parsers;
 
-use chrono::Duration;
 use std::time::Duration as StdDuration;
 
+use chrono::Duration;
 use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;

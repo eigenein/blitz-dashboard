@@ -12,8 +12,9 @@ pub fn logistic(x: f64) -> f64 {
 mod benches {
     extern crate test;
 
-    use super::*;
     use test::{black_box, Bencher};
+
+    use super::*;
 
     #[bench]
     fn bench_logistic(bencher: &mut Bencher) {

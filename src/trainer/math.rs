@@ -33,8 +33,9 @@ pub fn make_gradient_descent_step(
 mod benches {
     extern crate test;
 
-    use super::*;
     use test::{black_box, Bencher};
+
+    use super::*;
 
     #[bench]
     fn bench_sgd_3d(bencher: &mut Bencher) {

@@ -4,7 +4,6 @@ use std::str::FromStr;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
-
 use routes::r#static;
 
 use crate::opts::WebOpts;

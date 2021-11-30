@@ -1,7 +1,7 @@
-use anyhow::Context;
 use std::cmp::Ordering;
 use std::time::Instant;
 
+use anyhow::Context;
 use hashbrown::hash_map::Entry;
 use hashbrown::{HashMap, HashSet};
 use lru::LruCache;

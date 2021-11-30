@@ -15,14 +15,13 @@ use redis::pipe;
 use redis::streams::StreamMaxlen;
 use tokio::task::JoinHandle;
 
-use dataset::Dataset;
-use math::predict_probability;
-use model::Model;
-use sample_point::SamplePoint;
-
+use crate::dataset::Dataset;
 use crate::helpers::{format_duration, format_elapsed};
+use crate::math::predict_probability;
 use crate::math::statistics::mean;
+use crate::model::Model;
 use crate::opts::TrainerOpts;
+use crate::sample_point::SamplePoint;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::make_gradient_descent_step;
 
@@ -123,16 +122,16 @@ async fn run_epochs(
 
         if i % opts.log_epochs == 0 {
             log::info!(
-            "#{} | train: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
-            i,
-            train_error,
-            test_error,
-            dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
-            dataset.sample.len() as f64 / 1000.0,
-            model.n_modified_accounts() as f64 / 1000.0,
-            model.n_initialized_accounts,
-            model.n_new_accounts,
-        );
+                "#{} | train: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+                i,
+                train_error,
+                test_error,
+                dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+                dataset.sample.len() as f64 / 1000.0,
+                model.n_modified_accounts() as f64 / 1000.0,
+                model.n_initialized_accounts,
+                model.n_new_accounts,
+            );
             model.n_initialized_accounts = 0;
             model.n_new_accounts = 0;
         }

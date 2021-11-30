@@ -6,3 +6,7 @@ tag/%:
 .PHONY: bench
 bench:
 	command cargo +nightly bench
+
+.PHONY: format
+format:
+	command cargo +nightly fmt
