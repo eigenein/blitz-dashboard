@@ -16,16 +16,14 @@ use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics};
-use crate::partials::*;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
-use crate::web::partials::{
-    account_search, datetime, footer, headers, home_button, icon_text, render_f64,
-};
+use crate::web::partials::*;
 use crate::web::response::CustomResponse;
+use crate::web::routes::player::partials::*;
 use crate::web::TrackingCode;
 
 pub mod partials;

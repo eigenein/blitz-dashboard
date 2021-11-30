@@ -15,15 +15,15 @@ use redis::pipe;
 use redis::streams::StreamMaxlen;
 use tokio::task::JoinHandle;
 
-use crate::dataset::Dataset;
 use crate::helpers::{format_duration, format_elapsed};
-use crate::math::predict_probability;
 use crate::math::statistics::mean;
-use crate::model::Model;
 use crate::opts::TrainerOpts;
-use crate::sample_point::SamplePoint;
 use crate::tankopedia::remap_tank_id;
+use crate::trainer::dataset::Dataset;
 use crate::trainer::math::make_gradient_descent_step;
+use crate::trainer::math::predict_probability;
+use crate::trainer::model::Model;
+use crate::trainer::sample_point::SamplePoint;
 
 mod dataset;
 mod error;
