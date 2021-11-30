@@ -294,8 +294,11 @@ impl Crawler {
     }
 }
 
+/// This key contains a mapping from account ID to MessagePack-serialized timestamp in
+/// milliseconds. The value is empty string, if the account has never been crawled.
 const LAST_BATTLE_TIME_KEY: &str = "last_battle_time::ru";
 
+/// Add the account with empty last battle time, if the account doesn't exist yet.
 pub async fn touch_account_if_not_exists(
     redis: &mut MultiplexedConnection,
     account_id: i32,
@@ -316,6 +319,7 @@ pub async fn touch_account_if_not_exists(
     }
 }
 
+/// Overwrite the account's last battle time.
 async fn set_account_last_battle_time(
     redis: &MultiplexedConnection,
     account: &BaseAccountInfo,
