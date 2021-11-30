@@ -102,7 +102,7 @@ pub async fn retrieve_tank_battle_count(
 
 pub async fn replace_account(
     connection: &mut PgConnection,
-    account: BaseAccountInfo,
+    account: &BaseAccountInfo,
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "

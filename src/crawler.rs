@@ -4,9 +4,10 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use chrono::{DateTime, Utc};
+use chrono::{TimeZone, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
+use redis::{pipe, AsyncCommands};
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
@@ -22,6 +23,7 @@ use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::push_sample_points;
 use crate::trainer::sample_point::SamplePoint;
 use crate::wargaming::WargamingApi;
+use crate::DateTime;
 
 mod batch_stream;
 mod metrics;
@@ -207,11 +209,12 @@ impl Crawler {
             tracing::trace!(account_id = account.id, "no updated tanks");
         }
 
-        replace_account(&mut transaction, new_info.base).await?;
+        replace_account(&mut transaction, &new_info.base).await?;
         transaction
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
+        set_account_last_battle_time(&self.redis, &new_info.base).await?;
         Ok(())
     }
 
@@ -219,7 +222,7 @@ impl Crawler {
     async fn get_updated_tanks_statistics(
         &self,
         account_id: i32,
-        since: DateTime<Utc>,
+        since: DateTime,
     ) -> crate::Result<Vec<TankStatistics>> {
         Ok(self
             .api
@@ -232,7 +235,7 @@ impl Crawler {
 
     async fn update_tank_metrics(
         &self,
-        last_battle_time: DateTime<Utc>,
+        last_battle_time: DateTime,
         n_tanks: usize,
     ) -> crate::Result {
         let mut metrics = self.metrics.lock().await;
@@ -284,10 +287,48 @@ impl Crawler {
         }
 
         if !points.is_empty() {
-            let mut redis = MultiplexedConnection::clone(&self.redis);
-            push_sample_points(&mut redis, &points, opts.training_stream_size).await?;
+            push_sample_points(&mut self.redis.clone(), &points, opts.training_stream_size).await?;
         }
 
         Ok(())
     }
+}
+
+const LAST_BATTLE_TIME_KEY: &str = "last_battle_time::ru";
+
+pub async fn touch_account_if_not_exists(
+    redis: &mut MultiplexedConnection,
+    account_id: i32,
+) -> crate::Result<Option<DateTime>> {
+    let (value,): (Option<Vec<u8>>,) = pipe()
+        .atomic()
+        .hget(LAST_BATTLE_TIME_KEY, account_id)
+        .hset_nx(LAST_BATTLE_TIME_KEY, account_id, b"")
+        .ignore()
+        .query_async(redis)
+        .await
+        .with_context(|| format!("failed to touch account #{}", account_id))?;
+    match value {
+        Some(value) if !value.is_empty() => Ok(Some(
+            Utc.timestamp_millis(rmp_serde::from_read_ref(&value)?),
+        )),
+        _ => Ok(None),
+    }
+}
+
+async fn set_account_last_battle_time(
+    redis: &MultiplexedConnection,
+    account: &BaseAccountInfo,
+) -> crate::Result {
+    let value = rmp_serde::to_vec(&account.last_battle_time.timestamp_millis())?;
+    redis
+        .clone()
+        .hset(LAST_BATTLE_TIME_KEY, account.id, value)
+        .await
+        .with_context(|| {
+            format!(
+                "failed to set account #{} last battle time ({:?})",
+                account.id, account.last_battle_time,
+            )
+        })
 }

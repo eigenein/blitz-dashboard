@@ -10,6 +10,7 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::task::spawn_blocking;
 
+use crate::crawler::touch_account_if_not_exists;
 use partials::*;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
@@ -41,6 +42,8 @@ pub async fn get(
     account_tanks_cache: &State<AccountTanksCache>,
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<CustomResponse> {
+    let mut redis = (*redis).clone();
+
     let start_instant = Instant::now();
     let period = match period {
         Some(period) => match parse_duration(&period) {
@@ -65,6 +68,7 @@ pub async fn get(
     };
     set_user(&current_info.nickname);
     let old_info = insert_account_if_not_exists(database, account_id).await?;
+    touch_account_if_not_exists(&mut redis, account_id).await?;
 
     let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
@@ -77,7 +81,6 @@ pub async fn get(
         current_info.statistics.n_wins(),
     );
 
-    let mut redis = (*redis).clone();
     let account_factors = get_account_factors(&mut redis, account_id).await?;
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
