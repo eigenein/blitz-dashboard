@@ -57,7 +57,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![r#static::get_fr_svg])
         .mount("/", routes![r#static::get_gb_svg])
         .mount("/", routes![r#static::get_jp_svg])
-        .mount("/", routes![r#static::get_ru_svg])
+        .mount("/", routes![r#static::get_su_svg])
         .mount("/", routes![r#static::get_us_svg])
         .mount("/", routes![r#static::get_xx_svg])
         .mount("/", routes![routes::index::get])

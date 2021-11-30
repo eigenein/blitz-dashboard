@@ -95,9 +95,9 @@ pub async fn get_jp_svg() -> CustomResponse {
     CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/jp.svg"))
 }
 
-#[get("/static/flags/ru.svg")]
-pub async fn get_ru_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/ru.svg"))
+#[get("/static/flags/su.svg")]
+pub async fn get_su_svg() -> CustomResponse {
+    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/su.svg"))
 }
 
 #[get("/static/flags/us.svg")]

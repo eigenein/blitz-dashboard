@@ -200,7 +200,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
         Nation::Other => "flag-icon-xx",
         Nation::Uk => "flag-icon-gb",
         Nation::Usa => "flag-icon-us",
-        Nation::Ussr => "flag-icon-ru",
+        Nation::Ussr => "flag-icon-su",
     };
     let name_class = if vehicle.is_premium {
         "has-text-warning-dark"
@@ -212,7 +212,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
 
     html! {
         span.icon-text.is-flex-wrap-nowrap {
-            span.icon { span.flag-icon.(flag) {} }
+            span.flag-icon.(flag) {}
             span {
                 @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {
                     strong."mx-1" { (tier) }
