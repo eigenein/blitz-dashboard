@@ -2,6 +2,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
+use arc_swap::ArcSwap;
 use humantime::format_duration;
 use tokio::sync::Mutex;
 
@@ -54,6 +55,7 @@ pub async fn log_metrics(
     request_counter: Arc<AtomicU32>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     interval: StdDuration,
+    min_offset: Option<Arc<ArcSwap<StdDuration>>>,
 ) -> crate::Result {
     loop {
         let start_instant = Instant::now();
@@ -76,5 +78,9 @@ pub async fn log_metrics(
             metrics.last_account_id,
         );
         metrics.reset();
+
+        if let Some(min_offset) = &min_offset {
+            min_offset.store(Arc::new(lag_p50));
+        }
     }
 }

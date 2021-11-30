@@ -82,6 +82,10 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "6hours", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 
+    /// Turn on the automatic minimum last battle offset adjustment (experimental)
+    #[structopt(long)]
+    pub auto_min_offset: bool,
+
     /// Number of concurrent tasks
     #[structopt(
         long,
@@ -90,7 +94,7 @@ pub struct CrawlerOpts {
     )]
     pub n_tasks: usize,
 
-    /// Metrics logging interval
+    /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
 

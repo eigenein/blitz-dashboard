@@ -1,6 +1,8 @@
+use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
+use arc_swap::ArcSwap;
 use futures::{stream, Stream};
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
@@ -13,13 +15,14 @@ pub type Batch = Vec<BaseAccountInfo>;
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub fn get_batch_stream(
     connection: PgPool,
-    min_offset: StdDuration,
+    min_offset: Arc<ArcSwap<StdDuration>>,
 ) -> impl Stream<Item = crate::Result<Batch>> {
     stream::try_unfold((0, Instant::now()), move |(mut pointer, mut start_time)| {
         let connection = connection.clone();
+        let min_offset = Arc::clone(&min_offset);
         async move {
             loop {
-                let batch = retrieve_batch(&connection, pointer, min_offset).await?;
+                let batch = retrieve_batch(&connection, pointer, **min_offset.load()).await?;
                 match batch.last() {
                     Some(last_item) => {
                         let pointer = last_item.id;

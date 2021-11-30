@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
+use arc_swap::ArcSwap;
 use chrono::{TimeZone, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
@@ -76,13 +77,20 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
+    // TODO: just use `AtomicU64` instead to store the offset in seconds.
+    let min_offset = Arc::new(ArcSwap::new(Arc::new(opts.min_offset)));
     tokio::spawn(log_metrics(
         request_counter,
         crawler.metrics.clone(),
         opts.log_interval,
+        if opts.auto_min_offset {
+            Some(Arc::clone(&min_offset))
+        } else {
+            None
+        },
     ));
     crawler
-        .run(get_batch_stream(database.clone(), opts.min_offset))
+        .run(get_batch_stream(database.clone(), min_offset))
         .await?;
 
     Ok(())
@@ -113,6 +121,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         api.request_counter.clone(),
         crawler.metrics.clone(),
         StdDuration::from_secs(60),
+        None,
     ));
     crawler.run(stream).await?;
     Ok(())
