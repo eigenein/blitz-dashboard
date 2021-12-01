@@ -310,23 +310,23 @@ impl Crawler {
 /// milliseconds. The value is empty string, if the account has never been crawled.
 const LAST_BATTLE_TIME_KEY: &str = "last_battle_time::ru";
 
+const LAST_BATTLE_TIME_UNKNOWN: i64 = -1;
+
 /// Add the account with empty last battle time, if the account doesn't exist yet.
 pub async fn touch_account_if_not_exists(
     redis: &mut MultiplexedConnection,
     account_id: i32,
 ) -> crate::Result<Option<DateTime>> {
-    let (value,): (Option<Vec<u8>>,) = pipe()
+    let (value,): (Option<i64>,) = pipe()
         .atomic()
         .hget(LAST_BATTLE_TIME_KEY, account_id)
-        .hset_nx(LAST_BATTLE_TIME_KEY, account_id, b"")
+        .hset_nx(LAST_BATTLE_TIME_KEY, account_id, LAST_BATTLE_TIME_UNKNOWN)
         .ignore()
         .query_async(redis)
         .await
         .with_context(|| format!("failed to touch account #{}", account_id))?;
     match value {
-        Some(value) if !value.is_empty() => Ok(Some(
-            Utc.timestamp_millis(rmp_serde::from_read_ref(&value)?),
-        )),
+        Some(secs) if secs != LAST_BATTLE_TIME_UNKNOWN => Ok(Some(Utc.timestamp(secs, 0))),
         _ => Ok(None),
     }
 }
@@ -336,10 +336,13 @@ async fn set_account_last_battle_time(
     redis: &MultiplexedConnection,
     account: &BaseAccountInfo,
 ) -> crate::Result {
-    let value = rmp_serde::to_vec(&account.last_battle_time.timestamp_millis())?;
     redis
         .clone()
-        .hset(LAST_BATTLE_TIME_KEY, account.id, value)
+        .hset(
+            LAST_BATTLE_TIME_KEY,
+            account.id,
+            account.last_battle_time.timestamp(),
+        )
         .await
         .with_context(|| {
             format!(
