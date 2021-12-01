@@ -286,9 +286,9 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        div.tile.is-ancestor {
-                            div.tile."is-4".is-parent {
-                                div.tile.is-child.card {
+                        div.columns.is-multiline {
+                            div.column."is-6-tablet"."is-4-desktop" {
+                                div.card {
                                     header.card-header {
                                         p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
                                     }
@@ -318,8 +318,8 @@ pub async fn get(
                             }
 
                             @if stats_delta.battles != 0 {
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
+                                div.column."is-6-tablet"."is-4-desktop" {
+                                    div.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
                                         }
@@ -344,8 +344,8 @@ pub async fn get(
                             }
 
                             @if stats_delta.battles != 0 {
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
+                                div.column."is-12-tablet"."is-4-desktop" {
+                                    div.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
                                         }
@@ -376,11 +376,11 @@ pub async fn get(
                             }
                         }
 
-                        div.tile.is-ancestor {
+                        div.columns.is-multiline {
                             @if stats_delta.battles != 0 {
-                                div.tile."is-4".is-parent {
+                                div.column."is-8-tablet"."is-4-desktop" {
                                     @let period_win_rate = stats_delta.true_win_rate();
-                                    div.tile.is-child.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
+                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
                                         }
@@ -408,8 +408,8 @@ pub async fn get(
                             }
 
                             @if stats_delta.battles != 0 {
-                                div.tile."is-2".is-parent {
-                                    div.tile.is-child.card {
+                                div.column."is-4-tablet"."is-2-desktop" {
+                                    div.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-check", "Победы")) }
                                         }
@@ -428,8 +428,8 @@ pub async fn get(
                             }
 
                             @if stats_delta.battles != 0 {
-                                div.tile."is-4".is-parent {
-                                    div.tile.is-child.card {
+                                div.column."is-8-tablet"."is-4-desktop" {
+                                    div.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
                                         }
@@ -458,8 +458,8 @@ pub async fn get(
                             }
 
                             @if stats_delta.shots != 0 {
-                                div.tile."is-2".is-parent {
-                                    div.tile.is-child.card {
+                                div.column."is-4-tablet"."is-2-desktop" {
+                                    div.card {
                                         header.card-header {
                                             p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
                                         }
