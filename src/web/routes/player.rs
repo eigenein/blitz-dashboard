@@ -287,7 +287,7 @@ pub async fn get(
                                         p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
                                     }
                                     div.card-content {
-                                        div.level {
+                                        div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Всего" }
@@ -318,7 +318,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
@@ -344,7 +344,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
@@ -379,7 +379,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средний" }
@@ -408,7 +408,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-check", "Победы")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
@@ -428,7 +428,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средняя" }
@@ -458,7 +458,7 @@ pub async fn get(
                                             p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
                                         }
                                         div.card-content {
-                                            div.level {
+                                            div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В среднем" }
