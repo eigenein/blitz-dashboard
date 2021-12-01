@@ -86,6 +86,7 @@ pub async fn get(
             div.container {
                 div.navbar-brand {
                     (home_button())
+
                     div.navbar-item title="Последний бой" {
                         span.icon-text.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" }) {
                             span.icon { i.fas.fa-bullseye {} }
@@ -96,28 +97,28 @@ pub async fn get(
                                 }
                         }
                     }
-                }
-                div.navbar-menu {
-                    div.navbar-start {
-                        div.navbar-item title="Боев" {
-                            span.icon-text {
-                                span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                                span { (current_info.statistics.n_battles()) }
-                            }
+
+                    div.navbar-item title="Боев" {
+                        span.icon-text {
+                            span.icon { i.fas.fa-sort-numeric-up-alt {} }
+                            span { (current_info.statistics.n_battles()) }
                         }
-                        div.navbar-item title="Возраст аккаунта" {
-                            span.icon-text {
-                                @if current_info.is_account_birthday() {
-                                    span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
-                                } @else {
-                                    span.icon { i.far.fa-calendar-alt {} }
-                                }
-                                span title=(current_info.created_at) {
-                                    (datetime(current_info.created_at, Tense::Present))
-                                }
+                    }
+
+                    div.navbar-item title="Возраст аккаунта" {
+                        span.icon-text {
+                            @if current_info.is_account_birthday() {
+                                span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
+                            } @else {
+                                span.icon { i.far.fa-calendar-alt {} }
+                            }
+                            span title=(current_info.created_at) {
+                                (datetime(current_info.created_at, Tense::Present))
                             }
                         }
                     }
+                }
+                div.navbar-menu.is-active {
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
                             (account_search("", &current_info.nickname, false, current_info.is_prerelease_account()))
@@ -276,13 +277,6 @@ pub async fn get(
                 (navbar)
 
                 section.section {
-                    h1.title.is-hidden-desktop."is-4" {
-                        span.icon-text {
-                            span.icon { i.icon { i.fas.fa-user {} } }
-                            span { (current_info.nickname) }
-                        }
-                    }
-
                     (tabs)
 
                     div.container {
