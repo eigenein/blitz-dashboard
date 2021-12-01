@@ -115,7 +115,7 @@ pub fn render_tank_tr(
                                 i.fas.fa-hourglass-half {}
                             }
                         }
-                        strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
+                        strong title=(predicted_win_rate) { (format!("{:.1}%", predicted_win_rate * 100.0)) }
                     }
                 }
             } @else {
