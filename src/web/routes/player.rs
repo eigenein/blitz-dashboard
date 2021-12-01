@@ -280,38 +280,38 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        div.columns.is-multiline {
-                            div.column."is-6-tablet"."is-4-desktop" {
-                                div.card {
-                                    header.card-header {
-                                        p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
-                                    }
-                                    div.card-content {
-                                        div.level.is-mobile {
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Всего" }
-                                                    p.title { (stats_delta.battles) }
+                        @if stats_delta.battles != 0 {
+                            div.columns.is-multiline {
+                                div.column."is-6-tablet"."is-4-desktop" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Всего" }
+                                                        p.title { (stats_delta.battles) }
+                                                    }
                                                 }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Победы" }
-                                                    p.title { (stats_delta.wins) }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Победы" }
+                                                        p.title { (stats_delta.wins) }
+                                                    }
                                                 }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { "Выжил" }
-                                                    p.title { (stats_delta.survived_battles) }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Выжил" }
+                                                        p.title { (stats_delta.survived_battles) }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            @if stats_delta.battles != 0 {
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
@@ -335,9 +335,7 @@ pub async fn get(
                                         }
                                     }
                                 }
-                            }
 
-                            @if stats_delta.battles != 0 {
                                 div.column."is-12-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
@@ -368,10 +366,8 @@ pub async fn get(
                                     }
                                 }
                             }
-                        }
 
-                        div.columns.is-multiline {
-                            @if stats_delta.battles != 0 {
+                            div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-4-desktop" {
                                     @let period_win_rate = stats_delta.true_win_rate();
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
@@ -399,9 +395,7 @@ pub async fn get(
                                         }
                                     }
                                 }
-                            }
 
-                            @if stats_delta.battles != 0 {
                                 div.column."is-4-tablet"."is-2-desktop" {
                                     div.card {
                                         header.card-header {
@@ -419,9 +413,7 @@ pub async fn get(
                                         }
                                     }
                                 }
-                            }
 
-                            @if stats_delta.battles != 0 {
                                 div.column."is-8-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
@@ -449,25 +441,32 @@ pub async fn get(
                                         }
                                     }
                                 }
-                            }
 
-                            @if stats_delta.shots != 0 {
-                                div.column."is-4-tablet"."is-2-desktop" {
-                                    div.card {
-                                        header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
-                                        }
-                                        div.card-content {
-                                            div.level.is-mobile {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "В среднем" }
-                                                        p.title { (render_percentage(stats_delta.hit_rate())) }
+                                @if stats_delta.shots != 0 {
+                                    div.column."is-4-tablet"."is-2-desktop" {
+                                        div.card {
+                                            header.card-header {
+                                                p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
+                                            }
+                                            div.card-content {
+                                                div.level.is-mobile {
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "В среднем" }
+                                                            p.title { (render_percentage(stats_delta.hit_rate())) }
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                }
+                            }
+                        } @else {
+                            article.message.is-warning {
+                                div.message-body {
+                                    p { "Пользователь не играл в случайных боях за этот период времени." }
+                                    p { "Последний бой закончился " strong { (datetime(current_info.base.last_battle_time, Tense::Present)) } " назад." }
                                 }
                             }
                         }
