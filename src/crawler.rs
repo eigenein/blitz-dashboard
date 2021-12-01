@@ -185,6 +185,7 @@ impl Crawler {
         new_info: AccountInfo,
     ) -> crate::Result {
         let _stopwatch = Stopwatch::new(format!("account #{} crawled", account.id));
+        set_account_last_battle_time(&self.redis, &new_info.base).await?;
 
         if new_info.base.last_battle_time == account.last_battle_time {
             tracing::trace!(account_id = account.id, "last battle time unchanged");
@@ -223,7 +224,7 @@ impl Crawler {
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        set_account_last_battle_time(&self.redis, &new_info.base).await?;
+        // TODO: set_account_last_battle_time(&self.redis, &new_info.base).await?;
         Ok(())
     }
 
