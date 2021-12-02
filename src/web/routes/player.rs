@@ -238,7 +238,7 @@ pub async fn get(
                     }
                 }
             }
-            th {
+            th.is-white-space-nowrap {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Урон за бой" }
