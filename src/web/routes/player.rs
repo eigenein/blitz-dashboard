@@ -234,14 +234,14 @@ pub async fn get(
             th {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Общий ущерб" }
+                        span { "Общий урон" }
                     }
                 }
             }
             th {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Ущерб за бой" }
+                        span { "Урон за бой" }
                     }
                 }
             }
@@ -313,7 +313,7 @@ pub async fn get(
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный ущерб")) }
+                                            p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный урон")) }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
