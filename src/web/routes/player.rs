@@ -10,7 +10,6 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::task::spawn_blocking;
 
-use crate::crawler::touch_account_if_not_exists;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -65,7 +64,6 @@ pub async fn get(
     };
     set_user(&current_info.nickname);
     let old_info = insert_account_if_not_exists(database, account_id).await?;
-    touch_account_if_not_exists(&mut redis, account_id).await?;
 
     let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();

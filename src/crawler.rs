@@ -5,10 +5,9 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use arc_swap::ArcSwap;
-use chrono::{TimeZone, Utc};
+use chrono::Utc;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
-use redis::{pipe, AsyncCommands};
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
@@ -187,9 +186,6 @@ impl Crawler {
         let _stopwatch = Stopwatch::new(format!("account #{} crawled", account.id));
 
         if new_info.base.last_battle_time == account.last_battle_time {
-            // TODO: only if non-incremental.
-            set_account_last_battle_time(&self.redis, &new_info.base).await?;
-
             tracing::trace!(account_id = account.id, "last battle time unchanged");
             return Ok(());
         }
@@ -226,7 +222,6 @@ impl Crawler {
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        set_account_last_battle_time(&self.redis, &new_info.base).await?;
         Ok(())
     }
 
@@ -304,50 +299,4 @@ impl Crawler {
 
         Ok(())
     }
-}
-
-/// This key contains a mapping from account ID to MessagePack-serialized timestamp in
-/// milliseconds. The value is empty string, if the account has never been crawled.
-const LAST_BATTLE_TIME_KEY: &str = "last_battle_time::ru";
-
-const LAST_BATTLE_TIME_UNKNOWN: i64 = -1;
-
-/// Add the account with empty last battle time, if the account doesn't exist yet.
-pub async fn touch_account_if_not_exists(
-    redis: &mut MultiplexedConnection,
-    account_id: i32,
-) -> crate::Result<Option<DateTime>> {
-    let (value,): (Option<i64>,) = pipe()
-        .atomic()
-        .hget(LAST_BATTLE_TIME_KEY, account_id)
-        .hset_nx(LAST_BATTLE_TIME_KEY, account_id, LAST_BATTLE_TIME_UNKNOWN)
-        .ignore()
-        .query_async(redis)
-        .await
-        .with_context(|| format!("failed to touch account #{}", account_id))?;
-    match value {
-        Some(secs) if secs != LAST_BATTLE_TIME_UNKNOWN => Ok(Some(Utc.timestamp(secs, 0))),
-        _ => Ok(None),
-    }
-}
-
-/// Overwrite the account's last battle time.
-async fn set_account_last_battle_time(
-    redis: &MultiplexedConnection,
-    account: &BaseAccountInfo,
-) -> crate::Result {
-    redis
-        .clone()
-        .hset(
-            LAST_BATTLE_TIME_KEY,
-            account.id,
-            account.last_battle_time.timestamp(),
-        )
-        .await
-        .with_context(|| {
-            format!(
-                "failed to set account #{} last battle time ({:?})",
-                account.id, account.last_battle_time,
-            )
-        })
 }
