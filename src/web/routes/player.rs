@@ -16,7 +16,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::{subtract_tanks, Statistics, Tank};
+use crate::models::{subtract_tanks, Statistics, Tank, TankType};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
@@ -552,4 +552,13 @@ async fn make_predictions(
         .collect();
     predictions.sort_by(|_, left, _, right| right.partial_cmp(left).unwrap_or(Ordering::Equal));
     Ok(predictions)
+}
+
+fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: TankType) -> Vec<(i32, f64)> {
+    predictions
+        .iter()
+        .filter(|(tank_id, _)| true) // TODO: filter by type.
+        .take(3)
+        .map(|(tank_id, prediction)| (*tank_id, *prediction)) // FIXME
+        .collect()
 }
