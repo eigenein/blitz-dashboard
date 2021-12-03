@@ -1,9 +1,11 @@
+use std::cmp::Ordering;
 use std::time::Instant;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use futures::future::try_join3;
 use humantime::parse_duration;
+use indexmap::IndexMap;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use rocket::{uri, State};
@@ -14,7 +16,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::{subtract_tanks, Statistics};
+use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
@@ -65,6 +67,7 @@ pub async fn get(
     set_user(&current_info.nickname);
     let old_info = insert_account_if_not_exists(database, account_id).await?;
 
+    let predictions = make_predictions(&mut redis, account_id, &tanks).await?;
     let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
@@ -75,9 +78,6 @@ pub async fn get(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
     );
-
-    let account_factors = get_account_factors(&mut redis, account_id).await?;
-    let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -476,12 +476,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let predicted_win_rate = account_factors.as_ref().and_then(|account_factors| {
-                                                    let tank_id = remap_tank_id(tank.statistics.base.tank_id);
-                                                    vehicles_factors.get(&tank_id).map(|vehicle_factors| {
-                                                        predict_probability(vehicle_factors, account_factors).clamp(0.0, 1.0)
-                                                    })
-                                                });
+                                                @let predicted_win_rate = predictions.get(&tank.statistics.base.tank_id).copied();
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate, old_info.last_battle_time)?)
                                             }
                                         }
@@ -511,10 +506,6 @@ pub async fn get(
                         })();
                     """#))
                 }
-
-                (PreEscaped("<!-- Account factors: "))
-                (format!("{:?}", account_factors))
-                (PreEscaped(" -->"))
             }
         }
     };
@@ -529,4 +520,36 @@ pub async fn get(
         "finished",
     );
     result
+}
+
+/// Generate win rate predictions for the account's tanks.
+///
+/// Returns an ordered map of the win rates by tank ID's.
+/// The entries are sorted by the predicted win rate in the descending order.
+/// That way I'm able to quickly select top N tanks by the predicted win rate.
+async fn make_predictions(
+    redis: &mut MultiplexedConnection,
+    account_id: i32,
+    tanks: &[Tank],
+) -> crate::Result<IndexMap<i32, f64>> {
+    let account_factors = match get_account_factors(redis, account_id).await? {
+        Some(factors) => factors,
+        None => return Ok(IndexMap::new()),
+    };
+    let vehicles_factors = get_all_vehicle_factors(redis).await?;
+
+    let mut predictions: IndexMap<i32, f64> = tanks
+        .iter()
+        .map(|tank| remap_tank_id(tank.statistics.base.tank_id))
+        .filter_map(|tank_id| {
+            vehicles_factors.get(&tank_id).map(|vehicle_factors| {
+                (
+                    tank_id,
+                    predict_probability(vehicle_factors, &account_factors),
+                )
+            })
+        })
+        .collect();
+    predictions.sort_by(|_, left, _, right| right.partial_cmp(left).unwrap_or(Ordering::Equal));
+    Ok(predictions)
 }

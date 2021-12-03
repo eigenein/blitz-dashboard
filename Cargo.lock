@@ -215,6 +215,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "humantime",
+ "indexmap",
  "itertools",
  "jemallocator",
  "log",
