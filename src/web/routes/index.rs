@@ -17,7 +17,7 @@ pub async fn get(
         html lang="en" {
             head {
                 (headers())
-                title { "Я статист!" }
+                title { "Я – статист в World of Tanks Blitz!" }
             }
             body {
                 (tracking_code.0)

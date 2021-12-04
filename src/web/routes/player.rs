@@ -267,7 +267,7 @@ pub async fn get(
             head {
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
-                title { (current_info.nickname) " – Я статист!" }
+                title { (current_info.nickname) " – Я – статист в World of Tanks Blitz!" }
             }
             body {
                 (tracking_code.0)
