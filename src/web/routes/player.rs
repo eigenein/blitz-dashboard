@@ -488,11 +488,18 @@ pub async fn get(
                             }
                         }
 
-                        div.columns {
-                            (top_tanks_column(&predictions, TankType::Light, "ЛТ"))
-                            (top_tanks_column(&predictions, TankType::Medium, "СТ"))
-                            (top_tanks_column(&predictions, TankType::Heavy, "ТТ"))
-                            (top_tanks_column(&predictions, TankType::AT, "ПТ"))
+                        @if !predictions.is_empty() {
+                            article.message.is-success {
+                                div.message-body {
+                                    p { "Это персональные рекомендации для игрока, построенные на основе результатов прошлых боев." }
+                                }
+                            }
+                            div.columns {
+                                (top_tanks_column(&predictions, TankType::Light, "ЛТ"))
+                                (top_tanks_column(&predictions, TankType::Medium, "СТ"))
+                                (top_tanks_column(&predictions, TankType::Heavy, "ТТ"))
+                                (top_tanks_column(&predictions, TankType::AT, "ПТ"))
+                            }
                         }
                     }
                 }
