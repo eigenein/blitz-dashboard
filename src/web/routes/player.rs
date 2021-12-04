@@ -6,7 +6,7 @@ use chrono_humanize::Tense;
 use futures::future::try_join3;
 use humantime::parse_duration;
 use indexmap::IndexMap;
-use maud::{html, PreEscaped, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use rocket::{uri, State};
 use sqlx::PgPool;
@@ -17,7 +17,7 @@ use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics, Tank, TankType};
-use crate::tankopedia::remap_tank_id;
+use crate::tankopedia::{get_vehicle, remap_tank_id};
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
@@ -487,6 +487,13 @@ pub async fn get(
                                 }
                             }
                         }
+
+                        div.columns {
+                            (top_tanks_column(&predictions, TankType::Light, "ЛТ"))
+                            (top_tanks_column(&predictions, TankType::Medium, "СТ"))
+                            (top_tanks_column(&predictions, TankType::Heavy, "ТТ"))
+                            (top_tanks_column(&predictions, TankType::AT, "ПТ"))
+                        }
                     }
                 }
 
@@ -557,8 +564,39 @@ async fn make_predictions(
 fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: TankType) -> Vec<(i32, f64)> {
     predictions
         .iter()
-        .filter(|(tank_id, _)| true) // TODO: filter by type.
-        .take(3)
+        .filter(|(tank_id, _)| get_vehicle(**tank_id).type_ == type_)
+        .take(5)
         .map(|(tank_id, prediction)| (*tank_id, *prediction)) // FIXME
         .collect()
+}
+
+fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &str) -> Markup {
+    let tanks = select_top_tanks(predictions, type_);
+    if !tanks.is_empty() {
+        html! {
+            div.column {
+                div.card {
+                    header.card-header {
+                        p.card-header-title {
+                            sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
+                            span { "Рекомендуемые " (title) }
+                        }
+                    }
+                    div.card-content {
+                        div.table-container {
+                            table.table.is-hoverable.is-striped.is-fullwidth {
+                                @for (tank_id, _) in &tanks {
+                                    tr {
+                                        (vehicle_th(&get_vehicle(*tank_id)))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        PreEscaped(String::new())
+    }
 }
