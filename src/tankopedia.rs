@@ -11,11 +11,11 @@ use crate::wargaming::{Tankopedia, WargamingApi};
 mod generated;
 
 /// Retrieves a vehicle from the Tankopedia.
-pub fn get_vehicle(tank_id: i32) -> Vehicle {
+pub fn get_vehicle(tank_id: i32) -> Cow<'static, Vehicle> {
     generated::GENERATED
         .get(&tank_id)
-        .cloned() // FIXME: avoid `cloned()`.
-        .unwrap_or_else(|| new_hardcoded_vehicle(tank_id))
+        .map(Cow::Borrowed)
+        .unwrap_or_else(|| Cow::Owned(new_hardcoded_vehicle(tank_id)))
 }
 
 /// Some vehicles are just copies of another vehicles.
