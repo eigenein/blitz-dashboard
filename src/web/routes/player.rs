@@ -489,16 +489,11 @@ pub async fn get(
                         }
 
                         @if !predictions.is_empty() {
-                            article.message.is-success {
-                                div.message-body {
-                                    p { "Это персональные рекомендации для игрока, построенные на основе результатов прошлых боев." }
-                                }
-                            }
                             div.columns.is-multiline {
-                                (top_tanks_column(&predictions, TankType::Light, r#"<span class="has-text-success">Легкие</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::Medium, r#"<span class="has-text-warning">Средние</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::Heavy, r#"<span class="has-text-danger">Тяжелые</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::AT, r#"<span class="has-text-info">ПТ-САУ</span>"#))
+                                (top_tanks_column(&predictions, TankType::Light, r#"Рекомендованные&nbsp;<span class="has-text-success">легкие</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::Medium, r#"Рекомендованные&nbsp;<span class="has-text-warning">средние</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::Heavy, r#"Рекомендованные&nbsp;<span class="has-text-danger">тяжелые</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::AT, r#"Рекомендованные&nbsp;<span class="has-text-info">ПТ-САУ</span>"#))
                             }
                         }
                     }
