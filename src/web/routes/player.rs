@@ -495,10 +495,10 @@ pub async fn get(
                                 }
                             }
                             div.columns.is-multiline {
-                                (top_tanks_column(&predictions, TankType::Light, "ЛТ"))
-                                (top_tanks_column(&predictions, TankType::Medium, "СТ"))
-                                (top_tanks_column(&predictions, TankType::Heavy, "ТТ"))
-                                (top_tanks_column(&predictions, TankType::AT, "ПТ"))
+                                (top_tanks_column(&predictions, TankType::Light, r#"<span class="has-text-success">Легкие</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::Medium, r#"<span class="has-text-warning">Средние</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::Heavy, r#"<span class="has-text-danger">Тяжелые</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, TankType::AT, r#"<span class="has-text-info">ПТ-САУ</span>"#))
                             }
                         }
                     }
@@ -584,17 +584,15 @@ fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &s
             div.column.is-half {
                 div.card {
                     header.card-header {
-                        p.card-header-title {
-                            sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                            span { "Рекомендуемые " (title) }
-                        }
+                        p.card-header-title { (PreEscaped(title)) }
                     }
                     div.card-content {
                         div.table-container {
                             table.table.is-hoverable.is-striped.is-fullwidth {
-                                @for (tank_id, _) in &tanks {
+                                @for (tank_id, predicted_win_rate) in &tanks {
                                     tr {
                                         (vehicle_th(&get_vehicle(*tank_id)))
+                                        td { strong title=(predicted_win_rate) { (format!("{:.1}%", predicted_win_rate * 100.0)) } }
                                     }
                                 }
                             }
