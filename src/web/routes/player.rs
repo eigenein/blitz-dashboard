@@ -494,7 +494,7 @@ pub async fn get(
                                     p { "Это персональные рекомендации для игрока, построенные на основе результатов прошлых боев." }
                                 }
                             }
-                            div.columns {
+                            div.columns.is-multiline {
                                 (top_tanks_column(&predictions, TankType::Light, "ЛТ"))
                                 (top_tanks_column(&predictions, TankType::Medium, "СТ"))
                                 (top_tanks_column(&predictions, TankType::Heavy, "ТТ"))
@@ -581,7 +581,7 @@ fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &s
     let tanks = select_top_tanks(predictions, type_);
     if !tanks.is_empty() {
         html! {
-            div.column {
+            div.column.is-half {
                 div.card {
                     header.card-header {
                         p.card-header-title {
