@@ -284,13 +284,13 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
 
         if !point.is_test {
             for _ in 0..point.n_battles {
+                train_error.push(prediction, label, 1.0);
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
                     factors.vehicle,
                     learning_rate * (label - prediction),
                     regularization_multiplier,
                 ));
-                train_error.push(prediction, label, 1.0);
             }
             model.touch_account(point.account_id);
         } else {
