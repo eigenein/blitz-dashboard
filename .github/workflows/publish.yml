@@ -24,13 +24,12 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Install Cross
-        uses: actions-rs/install@v0.1.2
-        with:
-          crate: cross
-          version: latest
+        run: |
+          wget https://github.com/rust-embedded/cross/releases/download/v0.2.1/cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvzf cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
 
       - name: Build for ARMv7 (Raspberry Pi 2/3/4)
-        run: cross build --target armv7-unknown-linux-gnueabihf --release
+        run: ./cross build --target armv7-unknown-linux-gnueabihf --release
 
       - name: Build Changelog
         id: changelog
