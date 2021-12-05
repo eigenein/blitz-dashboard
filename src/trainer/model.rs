@@ -1,10 +1,8 @@
 use std::cmp::Ordering;
+use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use anyhow::Context;
-use hashbrown::hash_map::Entry;
-use hashbrown::{HashMap, HashSet};
-use lru::LruCache;
 use rand::prelude::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
@@ -16,6 +14,10 @@ use crate::opts::TrainerModelOpts;
 use crate::Vector;
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
+
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
+type HashSet<V> = std::collections::HashSet<V, ahash::RandomState>;
+type LruCache<K, V> = lru::LruCache<K, V, ahash::RandomState>;
 
 pub async fn get_account_factors(
     redis: &mut MultiplexedConnection,
@@ -72,9 +74,9 @@ impl Model {
         Self {
             redis,
             opts,
-            vehicle_cache: HashMap::new(),
-            account_cache: LruCache::unbounded(),
-            modified_account_ids: HashSet::new(),
+            vehicle_cache: HashMap::default(),
+            account_cache: LruCache::unbounded_with_hasher(ahash::RandomState::default()),
+            modified_account_ids: HashSet::default(),
             last_flush_instant: Instant::now(),
             n_new_accounts: 0,
             n_initialized_accounts: 0,
