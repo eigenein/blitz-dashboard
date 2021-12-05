@@ -10,7 +10,7 @@ pub fn predict_probability(x: &[f64], y: &[f64]) -> f64 {
     logistic(dot(x, y))
 }
 
-/// Adjusts the latent factors.
+/// Adjusts the latent factors and returns the updated dot product.
 ///
 /// See also: https://sifter.org/~simon/journal/20061211.html.
 #[inline]
@@ -19,13 +19,14 @@ pub fn make_gradient_descent_step(
     y: &mut [f64],
     residual_multiplier: f64,
     regularization_multiplier: f64,
-) -> crate::Result {
+) -> f64 {
+    let mut dot = 0.0;
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
         *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
+        dot += *xi * *yi;
     }
-
-    Ok(())
+    dot
 }
 
 #[cfg(test)]

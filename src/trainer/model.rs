@@ -127,7 +127,7 @@ impl Model {
     }
 
     /// Marks the account factors as modified.
-    pub fn touch(&mut self, account_id: i32) {
+    pub fn touch_account(&mut self, account_id: i32) {
         self.modified_account_ids.insert(account_id);
     }
 

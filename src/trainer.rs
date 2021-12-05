@@ -16,6 +16,7 @@ use redis::streams::StreamMaxlen;
 use tokio::task::JoinHandle;
 
 use crate::helpers::{format_duration, format_elapsed};
+use crate::math::logistic;
 use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
@@ -278,21 +279,22 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
             .get_factors_mut(point.account_id, remap_tank_id(point.tank_id))
             .await?;
 
-        let prediction = predict_probability(factors.vehicle, factors.account);
+        let mut prediction = predict_probability(factors.vehicle, factors.account);
         let label = point.n_wins as f64 / point.n_battles as f64;
-        let weight = point.n_battles as f64;
 
         if !point.is_test {
-            make_gradient_descent_step(
-                factors.account,
-                factors.vehicle,
-                learning_rate * (label - prediction) * weight,
-                regularization_multiplier * weight,
-            )?;
-            model.touch(point.account_id);
-            train_error.push(prediction, label, weight);
+            for _ in 0..point.n_battles {
+                prediction = logistic(make_gradient_descent_step(
+                    factors.account,
+                    factors.vehicle,
+                    learning_rate * (label - prediction),
+                    regularization_multiplier,
+                ));
+                train_error.push(prediction, label, 1.0);
+            }
+            model.touch_account(point.account_id);
         } else {
-            test_error.push(prediction, label, weight);
+            test_error.push(prediction, label, point.n_battles as f64);
         }
     }
 
