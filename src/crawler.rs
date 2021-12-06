@@ -12,7 +12,7 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
-use crate::crawler::metrics::{log_metrics, CrawlerMetrics};
+use crate::crawler::metrics::{log_metrics, AutoMinOffset, CrawlerMetrics};
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
     retrieve_tank_battle_count, retrieve_tank_ids,
@@ -76,16 +76,17 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    // TODO: just use `AtomicU64` instead to store the offset in seconds.
     let min_offset = Arc::new(ArcSwap::new(Arc::new(opts.min_offset)));
     tokio::spawn(log_metrics(
         request_counter,
         crawler.metrics.clone(),
         opts.log_interval,
-        if opts.auto_min_offset {
-            Some(Arc::clone(&min_offset))
+        if opts.auto_min_offset_l50 {
+            AutoMinOffset::L50(Arc::clone(&min_offset))
+        } else if opts.auto_min_offset_l90 {
+            AutoMinOffset::L90(Arc::clone(&min_offset))
         } else {
-            None
+            AutoMinOffset::None
         },
     ));
     crawler
@@ -120,7 +121,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         api.request_counter.clone(),
         crawler.metrics.clone(),
         StdDuration::from_secs(60),
-        None,
+        AutoMinOffset::None,
     ));
     crawler.run(stream).await?;
     Ok(())

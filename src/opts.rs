@@ -79,12 +79,16 @@ pub struct CrawlerOpts {
     pub connections: ConnectionOpts,
 
     /// Minimum last battle time offset
-    #[structopt(long, default_value = "6hours", parse(try_from_str = humantime::parse_duration))]
+    #[structopt(long, default_value = "0s", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 
-    /// Turn on the automatic minimum last battle offset adjustment (experimental)
-    #[structopt(long)]
-    pub auto_min_offset: bool,
+    /// Turn on the automatic minimum last battle offset adjustment based on 50%-lag (experimental)
+    #[structopt(long, conflicts_with = "auto_min_offset_l90")]
+    pub auto_min_offset_l50: bool,
+
+    /// Turn on the automatic minimum last battle offset adjustment based on 90%-lag (experimental)
+    #[structopt(long, conflicts_with = "auto_min_offset_l50")]
+    pub auto_min_offset_l90: bool,
 
     /// Number of concurrent tasks
     #[structopt(
