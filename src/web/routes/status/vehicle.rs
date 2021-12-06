@@ -4,6 +4,7 @@ use itertools::Itertools;
 use maud::{html, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
+use rocket::http::Status;
 use rocket::{uri, State};
 
 use crate::logging::clear_user;
@@ -30,14 +31,14 @@ pub async fn get(
     let cache_key = format!("html::status::vehicle::{}", tank_id);
     if !disable_caches.0 {
         if let Some(cached_response) = redis.get(&cache_key).await? {
-            return Ok(CustomResponse::RawHtml(cached_response));
+            return Ok(CustomResponse::Html(cached_response));
         }
     }
 
     let vehicles_factors = get_all_vehicle_factors(&mut redis).await?;
     let vehicle_factors = match vehicles_factors.get(&tank_id) {
         Some(factors) => factors,
-        None => return Ok(CustomResponse::NotFound),
+        None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
 
     let vehicle = get_vehicle(tank_id);
@@ -141,5 +142,5 @@ pub async fn get(
 
     let response = markup.into_string();
     redis.set_ex(&cache_key, &response, 60).await?;
-    Ok(CustomResponse::RawHtml(response))
+    Ok(CustomResponse::Html(response))
 }

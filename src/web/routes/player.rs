@@ -8,6 +8,7 @@ use humantime::parse_duration;
 use indexmap::IndexMap;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
+use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::task::spawn_blocking;
@@ -46,7 +47,7 @@ pub async fn get(
     let period = match period {
         Some(period) => match parse_duration(&period) {
             Ok(period) => period,
-            Err(_) => return Ok(CustomResponse::BadRequest),
+            Err(_) => return Ok(CustomResponse::Status(Status::BadRequest)),
         },
         None => from_days(1),
     };
@@ -62,7 +63,7 @@ pub async fn get(
     };
     let current_info = match current_info {
         Some(info) => info,
-        None => return Ok(CustomResponse::NotFound),
+        None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&current_info.nickname);
     let old_info = insert_account_if_not_exists(database, account_id).await?;

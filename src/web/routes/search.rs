@@ -2,6 +2,7 @@ use std::ops::Range;
 
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
+use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{uri, State};
 
@@ -28,7 +29,7 @@ pub async fn get(
     clear_user();
 
     if !SEARCH_QUERY_LENGTH.contains(&query.len()) {
-        return Ok(CustomResponse::BadRequest);
+        return Ok(CustomResponse::Status(Status::BadRequest));
     }
 
     let account_ids: Vec<i32> = api
@@ -119,7 +120,7 @@ pub async fn get(
         }
     };
 
-    Ok(CustomResponse::Html(markup))
+    Ok(CustomResponse::Html(markup.into()))
 }
 
 fn account_card(account_info: &AccountInfo) -> Markup {
