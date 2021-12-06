@@ -587,7 +587,7 @@ fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &s
                                 @for (tank_id, predicted_win_rate) in &tanks {
                                     tr {
                                         (vehicle_th(&get_vehicle(*tank_id)))
-                                        td { strong title=(predicted_win_rate) { (format!("{:.1}%", predicted_win_rate * 100.0)) } }
+                                        td { strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) } }
                                     }
                                 }
                             }
