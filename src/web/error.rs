@@ -1,5 +1,3 @@
-use std::fmt::Formatter;
-
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::{response, Request, Response};
@@ -12,12 +10,6 @@ pub struct Error(anyhow::Error);
 impl<E: Into<anyhow::Error>> From<E> for Error {
     fn from(error: E) -> Self {
         Self(error.into())
-    }
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(&format!("{:#}", self))
     }
 }
 
