@@ -83,4 +83,4 @@ features = ["aio", "tokio-comp", "streams"]
 serde_json = "1.0.69"
 
 [build-dependencies]
-rustversion = "1.0.5"
+rustversion = "1.0.6"
