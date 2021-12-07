@@ -184,7 +184,7 @@ pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
 
 pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
     html! {
-        th.is-white-space-nowrap title=(vehicle.tank_id) {
+        th.is-white-space-nowrap {
             (vehicle_title(vehicle))
         }
     }
@@ -211,7 +211,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     };
 
     html! {
-        span.icon-text.is-flex-wrap-nowrap {
+        span.icon-text.is-flex-wrap-nowrap title=(vehicle.tank_id) {
             span.flag-icon.(flag) {}
             span {
                 @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {

@@ -568,7 +568,7 @@ fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: TankType) -> Vec<(i
     predictions
         .iter()
         .filter(|(tank_id, _)| get_vehicle(**tank_id).type_ == type_)
-        .take(5)
+        .take(10)
         .map(|(tank_id, prediction)| (*tank_id, *prediction)) // FIXME
         .collect()
 }
@@ -577,7 +577,7 @@ fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &s
     let tanks = select_top_tanks(predictions, type_);
     if !tanks.is_empty() {
         html! {
-            div.column.is-half {
+            div.column."is-4" {
                 div.card {
                     header.card-header {
                         p.card-header-title { (PreEscaped(title)) }
@@ -586,9 +586,8 @@ fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &s
                         div.table-container {
                             table.table.is-hoverable.is-striped.is-fullwidth {
                                 @for (tank_id, predicted_win_rate) in &tanks {
-                                    tr {
+                                    tr title=(predicted_win_rate) {
                                         (vehicle_th(&get_vehicle(*tank_id)))
-                                        td { strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) } }
                                     }
                                 }
                             }
