@@ -183,12 +183,12 @@ impl Crawler {
         &self,
         account: BaseAccountInfo,
         new_info: AccountInfo,
-    ) -> crate::Result {
+    ) -> crate::Result<bool> {
         let _stopwatch = Stopwatch::new(format!("account #{} crawled", account.id));
 
         if new_info.base.last_battle_time == account.last_battle_time {
             tracing::trace!(account_id = account.id, "last battle time unchanged");
-            return Ok(());
+            return Ok(false);
         }
 
         tracing::debug!(account_id = account.id, "crawling…");
@@ -223,7 +223,7 @@ impl Crawler {
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        Ok(())
+        Ok(true)
     }
 
     /// Gets account tanks which have their last battle time updated since the specified timestamp.
