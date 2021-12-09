@@ -73,7 +73,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
             .join("tankopedia")
             .join("generated.rs"),
     )?;
-    writeln!(&mut file, "//! Generated tankopedia.")?;
+    writeln!(&mut file, "//! @generated")?;
     writeln!(&mut file)?;
     writeln!(&mut file, "use std::borrow::Cow;")?;
     writeln!(&mut file)?;
@@ -181,14 +181,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             type_: TankType::AT,
         },
         Vehicle {
-            tank_id: 22305,
-            name: Cow::Borrowed("AE Phase I"),
-            tier: 9,
-            is_premium: true,
-            nation: Nation::Usa,
-            type_: TankType::Heavy,
-        },
-        Vehicle {
             tank_id: 23297,
             name: Cow::Borrowed("Объект 244"),
             tier: 6,
@@ -240,22 +232,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             tank_id: 15617,
             name: Cow::Borrowed("Объект 907"),
             tier: 10,
-            is_premium: true,
-            nation: Nation::Ussr,
-            type_: TankType::Medium,
-        },
-        Vehicle {
-            tank_id: 18753,
-            name: Cow::Borrowed("AMX CDA 105"),
-            tier: 8,
-            is_premium: true,
-            nation: Nation::France,
-            type_: TankType::AT,
-        },
-        Vehicle {
-            tank_id: 23041,
-            name: Cow::Borrowed("Т-34 экр."),
-            tier: 5,
             is_premium: true,
             nation: Nation::Ussr,
             type_: TankType::Medium,

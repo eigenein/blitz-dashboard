@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -23716,6 +23716,155 @@
     ],
     "type": "lightTank"
   },
+  "18753": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 90,
+          "rear": 40,
+          "sides": 50
+        },
+        "turret": {
+          "front": 0,
+          "rear": 0,
+          "sides": 0
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "SOFAM 12 58",
+        "power": 720,
+        "tier": 8,
+        "weight": 550
+      },
+      "engine_id": 20805,
+      "firepower": 58,
+      "gun": {
+        "aim_time": 3.77,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.34,
+        "fire_rate": 6.32,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "105 mm CN 105",
+        "reload_time": 9.5,
+        "tier": 10,
+        "traverse_speed": 20.0,
+        "weight": 2600
+      },
+      "gun_id": 21572,
+      "hp": 1150,
+      "hull_hp": 950,
+      "hull_weight": 20175,
+      "is_default": true,
+      "maneuverability": 65,
+      "max_ammo": 40,
+      "max_weight": 32000,
+      "profile_id": "20805-21572-31810",
+      "protection": 40,
+      "shells": [
+        {
+          "damage": 350,
+          "penetration": 260,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 300,
+          "penetration": 310,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 440,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 88,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 50,
+      "suspension": {
+        "load_limit": 32000,
+        "name": "AMX Canon d'assaut de 105",
+        "tier": 8,
+        "traverse_speed": 37,
+        "weight": 5200
+      },
+      "suspension_id": 31810,
+      "turret": {
+        "hp": 200,
+        "name": "AMX Canon d'assaut de 105",
+        "tier": 8,
+        "traverse_left_arc": 10,
+        "traverse_right_arc": 10,
+        "traverse_speed": 26,
+        "view_range": 240,
+        "weight": 100
+      },
+      "turret_id": null,
+      "weight": 28900
+    },
+    "description": "ПТ-САУ Canon d'assaut de 105 представляет собой проект боевой машины, разработанный компанией AMX в 1958 году. Согласно архивным данным, проектируемая ПТ-САУ должна была обладать высокой подвижностью и манёвренностью, при этом иметь хорошее бронирование (до 100 мм в лобовой проекции) и мощное 105-мм орудие. Однако дальнейшая разработка была свёрнута, и проект остался на бумаге.",
+    "engines": [
+      20805
+    ],
+    "guns": [
+      21572
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/F89_Canon_dassaut_105.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/F89_Canon_dassaut_105.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "20805": {
+        "is_default": true,
+        "module_id": 20805,
+        "name": "SOFAM 12 58",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "21572": {
+        "is_default": true,
+        "module_id": 21572,
+        "name": "105 mm CN 105",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "31810": {
+        "is_default": true,
+        "module_id": 31810,
+        "name": "AMX Canon d'assaut de 105",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "AMX Canon d'assaut 105",
+    "nation": "france",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      31810
+    ],
+    "tank_id": 18753,
+    "tier": 8,
+    "turrets": [],
+    "type": "AT-SPG"
+  },
   "18769": {
     "cost": null,
     "default_profile": {
@@ -24662,6 +24811,167 @@
     ],
     "type": "heavyTank"
   },
+  "19009": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 50,
+          "rear": 15,
+          "sides": 20
+        },
+        "turret": {
+          "front": 40,
+          "rear": 15,
+          "sides": 20
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "AMXmas B 270",
+        "power": 280,
+        "tier": 6,
+        "weight": 400
+      },
+      "engine_id": 21061,
+      "firepower": 31,
+      "gun": {
+        "aim_time": 4.67,
+        "caliber": 75,
+        "clip_capacity": 3,
+        "clip_reload_time": 2.0,
+        "dispersion": 0.38,
+        "fire_rate": 8.18,
+        "move_down_arc": 7,
+        "move_up_arc": 11,
+        "name": "75 mm SA50B2",
+        "reload_time": 18.0,
+        "tier": 6,
+        "traverse_speed": 35.0,
+        "weight": 1740
+      },
+      "gun_id": 21828,
+      "hp": 900,
+      "hull_hp": 720,
+      "hull_weight": 5000,
+      "is_default": true,
+      "maneuverability": 77,
+      "max_ammo": 48,
+      "max_weight": 13500,
+      "profile_id": "21061-21828-26179-32066",
+      "protection": 19,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 144,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 135,
+          "penetration": 202,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 175,
+          "penetration": 38,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 55,
+      "signal_range": null,
+      "speed_backward": 23,
+      "speed_forward": 65,
+      "suspension": {
+        "load_limit": 13500,
+        "name": "AMXmas",
+        "tier": 6,
+        "traverse_speed": 50,
+        "weight": 3200
+      },
+      "suspension_id": 32066,
+      "turret": {
+        "hp": 180,
+        "name": "AMXmas",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 44,
+        "view_range": 250,
+        "weight": 1500
+      },
+      "turret_id": 26179,
+      "weight": 12090
+    },
+    "description": "AMXmas — праздничная версия лёгкого танка AMX 12 t. Машина получила ускоренную перезарядку выстрелов в магазине и улучшенные углы вертикальной наводки орудия. ",
+    "engines": [
+      21061
+    ],
+    "guns": [
+      21828
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/F_AMX-12BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/F_AMX-12BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "21061": {
+        "is_default": true,
+        "module_id": 21061,
+        "name": "AMXmas B 270",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "21828": {
+        "is_default": true,
+        "module_id": 21828,
+        "name": "75 mm SA50B2",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "26179": {
+        "is_default": true,
+        "module_id": 26179,
+        "name": "AMXmas",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "32066": {
+        "is_default": true,
+        "module_id": 32066,
+        "name": "AMXmas",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "AMXmas",
+    "nation": "france",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      32066
+    ],
+    "tank_id": 19009,
+    "tier": 6,
+    "turrets": [
+      26179
+    ],
+    "type": "lightTank"
+  },
   "19025": {
     "cost": null,
     "default_profile": {
@@ -25116,9 +25426,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          8065,
           1409,
-          3713,
-          8065
+          3713
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -32988,6 +33298,167 @@
     ],
     "type": "heavyTank"
   },
+  "22305": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 190,
+          "rear": 40,
+          "sides": 65
+        },
+        "turret": {
+          "front": 180,
+          "rear": 60,
+          "sides": 70
+        }
+      },
+      "battle_level_range_max": 10,
+      "battle_level_range_min": 9,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Continental AOSI-1195-5",
+        "power": 850,
+        "tier": 10,
+        "weight": 569
+      },
+      "engine_id": 23333,
+      "firepower": 54,
+      "gun": {
+        "aim_time": 5.6,
+        "caliber": 120,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.39,
+        "fire_rate": 5.22,
+        "move_down_arc": 10,
+        "move_up_arc": 20,
+        "name": "120 mm Gun M58A",
+        "reload_time": 11.5,
+        "tier": 10,
+        "traverse_speed": 26.25,
+        "weight": 3100
+      },
+      "gun_id": 262436,
+      "hp": 2050,
+      "hull_hp": 1536,
+      "hull_weight": 31000,
+      "is_default": true,
+      "maneuverability": 37,
+      "max_ammo": 90,
+      "max_weight": 62500,
+      "profile_id": "23333-260386-260387-262436",
+      "protection": 75,
+      "shells": [
+        {
+          "damage": 400,
+          "penetration": 250,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 340,
+          "penetration": 330,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 515,
+          "penetration": 60,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 78,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 40,
+      "suspension": {
+        "load_limit": 62500,
+        "name": "Associated Engineers Phase I",
+        "tier": 9,
+        "traverse_speed": 28,
+        "weight": 8000
+      },
+      "suspension_id": 260386,
+      "turret": {
+        "hp": 514,
+        "name": "Associated Engineers Phase I",
+        "tier": 9,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 20,
+        "view_range": 250,
+        "weight": 13600
+      },
+      "turret_id": 260387,
+      "weight": 56519
+    },
+    "description": "Разрабатывался с 1951 года. Преимуществами четырёхгусеничного танка являлись возможность продолжения движения и маневрирования при повреждении двух гусениц, а также использование башенного погона большого диаметра. После анализа проекта фирме Associated Engineers Inc. была заказана проработка второго варианта с побортным приводом гусениц. В металле не изготавливался.",
+    "engines": [
+      23333
+    ],
+    "guns": [
+      262436
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/A125_AEP_1.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/A125_AEP_1.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "23333": {
+        "is_default": true,
+        "module_id": 23333,
+        "name": "Continental AOSI-1195-5",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "260386": {
+        "is_default": true,
+        "module_id": 260386,
+        "name": "Associated Engineers Phase I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "260387": {
+        "is_default": true,
+        "module_id": 260387,
+        "name": "Associated Engineers Phase I",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262436": {
+        "is_default": true,
+        "module_id": 262436,
+        "name": "120 mm Gun M58A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      }
+    },
+    "name": "AE Phase I",
+    "nation": "usa",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      260386
+    ],
+    "tank_id": 22305,
+    "tier": 9,
+    "turrets": [
+      260387
+    ],
+    "type": "heavyTank"
+  },
   "22545": {
     "cost": null,
     "default_profile": {
@@ -33787,6 +34258,167 @@
     ],
     "type": "heavyTank"
   },
+  "23041": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 55,
+          "rear": 40,
+          "sides": 40
+        },
+        "turret": {
+          "front": 55,
+          "rear": 45,
+          "sides": 45
+        }
+      },
+      "battle_level_range_max": 6,
+      "battle_level_range_min": 5,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "В-2-34Э",
+        "power": 470,
+        "tier": 6,
+        "weight": 750
+      },
+      "engine_id": 69125,
+      "firepower": 28,
+      "gun": {
+        "aim_time": 4.77,
+        "caliber": 76,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 7.69,
+        "move_down_arc": 8,
+        "move_up_arc": 17,
+        "name": "76 мм Ф-34 (1943)",
+        "reload_time": 7.8,
+        "tier": 5,
+        "traverse_speed": 39.38,
+        "weight": 1390
+      },
+      "gun_id": 263172,
+      "hp": 720,
+      "hull_hp": 568,
+      "hull_weight": 17180,
+      "is_default": true,
+      "maneuverability": 53,
+      "max_ammo": 90,
+      "max_weight": 34000,
+      "profile_id": "69125-260354-260355-263172",
+      "protection": 23,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 110,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 120,
+          "penetration": 156,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 200,
+          "penetration": 40,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 47,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 45,
+      "suspension": {
+        "load_limit": 34000,
+        "name": "Т-34 экранированный (112)",
+        "tier": 5,
+        "traverse_speed": 45,
+        "weight": 8000
+      },
+      "suspension_id": 260354,
+      "turret": {
+        "hp": 152,
+        "name": "Т-34 экранированный (112)",
+        "tier": 5,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 36,
+        "view_range": 230,
+        "weight": 3535
+      },
+      "turret_id": 260355,
+      "weight": 31130
+    },
+    "description": "Один из проектов по усилению бронезащиты серийных танков Т-34. Этот вариант экранировки разработан сотрудниками НИИ-48 и завода № 112 под общим руководством И. Бурцева. Опытные образцы отправили на фронт, где они и были потеряны в боях. Буквенно-цифровое сочетание «Т-34» используется компанией Wargaming.net в общеупотребимом значении для указания на реальные танки и прототипы Второй мировой войны и послевоенного времени. Компания Wargaming.net не использует буквенно-цифровое сочетание «Т-34» в качестве товарного знака для индивидуализации каких-либо конкретных товаров, работ или услуг, не является его лицензиатом и не связана договорными или иными отношениями с его правообладателями (АО «Научно-производственная корпорация «Уралвагонзавод», Баженский Михаил Юрьевич). Подробнее здесь: https://legal.ru.wargaming.net/ru/t34-t72-info/",
+    "engines": [
+      69125
+    ],
+    "guns": [
+      263172
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/R154_T-34E-43.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/R154_T-34E-43.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "260354": {
+        "is_default": true,
+        "module_id": 260354,
+        "name": "Т-34 экранированный (112)",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "260355": {
+        "is_default": true,
+        "module_id": 260355,
+        "name": "Т-34 экранированный (112)",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "263172": {
+        "is_default": true,
+        "module_id": 263172,
+        "name": "76 мм Ф-34 (1943)",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "69125": {
+        "is_default": true,
+        "module_id": 69125,
+        "name": "В-2-34Э",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Т-34 экранированный",
+    "nation": "ussr",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      260354
+    ],
+    "tank_id": 23041,
+    "tier": 5,
+    "turrets": [
+      260355
+    ],
+    "type": "mediumTank"
+  },
   "2305": {
     "cost": {
       "price_credit": 1305000,
@@ -34100,9 +34732,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34181,8 +34813,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -38188,8 +38820,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -40828,8 +41460,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -82510,8 +83142,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2324,
-          2068
+          2068,
+          2324
         ],
         "next_tanks": [
           10257
@@ -87925,8 +88557,8 @@
         "module_id": 21252,
         "name": "100 мм Д-10С обр. 1944 г.",
         "next_modules": [
-          21508,
-          8708
+          8708,
+          21508
         ],
         "next_tanks": null,
         "price_credit": 0,

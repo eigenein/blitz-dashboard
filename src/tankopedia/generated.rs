@@ -1,4 +1,4 @@
-//! Generated tankopedia.
+//! @generated
 
 use std::borrow::Cow;
 
@@ -991,7 +991,7 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
     },
     18753_i32 => Vehicle {
         tank_id: 18753,
-        name: Cow::Borrowed("AMX CDA 105"),
+        name: Cow::Borrowed("AMX Canon d'assaut 105"),
         tier: 8,
         is_premium: true,
         nation: Nation::France,
@@ -1036,6 +1036,14 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Usa,
         type_: TankType::Heavy,
+    },
+    19009_i32 => Vehicle {
+        tank_id: 19009,
+        name: Cow::Borrowed("AMXmas"),
+        tier: 6,
+        is_premium: true,
+        nation: Nation::France,
+        type_: TankType::Light,
     },
     19025_i32 => Vehicle {
         tank_id: 19025,
@@ -1487,7 +1495,7 @@ pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {
     },
     23041_i32 => Vehicle {
         tank_id: 23041,
-        name: Cow::Borrowed("Т-34 экр."),
+        name: Cow::Borrowed("Т-34 экранированный"),
         tier: 5,
         is_premium: true,
         nation: Nation::Ussr,
