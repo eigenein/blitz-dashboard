@@ -491,10 +491,11 @@ pub async fn get(
 
                         @if !predictions.is_empty() {
                             div.columns.is-multiline {
-                                (top_tanks_column(&predictions, TankType::Light, r#"Рекомендованные&nbsp;<span class="has-text-success">легкие</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::Medium, r#"Рекомендованные&nbsp;<span class="has-text-warning-dark">средние</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::Heavy, r#"Рекомендованные&nbsp;<span class="has-text-danger">тяжелые</span>&nbsp;танки"#))
-                                (top_tanks_column(&predictions, TankType::AT, r#"Рекомендованные&nbsp;<span class="has-text-info">ПТ-САУ</span>"#))
+                                (top_tanks_column(select_top_tanks(&predictions, None), r#"Топ рекомендаций"#))
+                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Light)), r#"Рекомендованные&nbsp;<span class="has-text-success">легкие</span>&nbsp;танки"#))
+                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Medium)), r#"Рекомендованные&nbsp;<span class="has-text-warning-dark">средние</span>&nbsp;танки"#))
+                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Heavy)), r#"Рекомендованные&nbsp;<span class="has-text-danger">тяжелые</span>&nbsp;танки"#))
+                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::AT)), r#"Рекомендованные&nbsp;<span class="has-text-info">ПТ-САУ</span>"#))
                             }
                         }
                     }
@@ -564,17 +565,20 @@ async fn make_predictions(
     Ok(predictions)
 }
 
-fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: TankType) -> Vec<(i32, f64)> {
+fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: Option<TankType>) -> Vec<(i32, f64)> {
     predictions
         .iter()
-        .filter(|(tank_id, _)| get_vehicle(**tank_id).type_ == type_)
+        .filter(|(tank_id, _)| {
+            type_
+                .map(|type_| get_vehicle(**tank_id).type_ == type_)
+                .unwrap_or(true)
+        })
         .take(10)
         .map(|(tank_id, prediction)| (*tank_id, *prediction)) // FIXME
         .collect()
 }
 
-fn top_tanks_column(predictions: &IndexMap<i32, f64>, type_: TankType, title: &str) -> Markup {
-    let tanks = select_top_tanks(predictions, type_);
+fn top_tanks_column(tanks: Vec<(i32, f64)>, title: &str) -> Markup {
     if !tanks.is_empty() {
         html! {
             div.column."is-4" {
