@@ -17,7 +17,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
-use crate::models::{subtract_tanks, Statistics, Tank, TankType};
+use crate::models::{subtract_tanks, Statistics, Tank, TankType, Vehicle};
 use crate::tankopedia::{get_vehicle, remap_tank_id};
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
@@ -491,11 +491,13 @@ pub async fn get(
 
                         @if !predictions.is_empty() {
                             div.columns.is-multiline {
-                                (top_tanks_column(select_top_tanks(&predictions, None), r#"Топ рекомендаций"#))
-                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Light)), r#"Рекомендованные&nbsp;<span class="has-text-success">легкие</span>&nbsp;танки"#))
-                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Medium)), r#"Рекомендованные&nbsp;<span class="has-text-warning-dark">средние</span>&nbsp;танки"#))
-                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::Heavy)), r#"Рекомендованные&nbsp;<span class="has-text-danger">тяжелые</span>&nbsp;танки"#))
-                                (top_tanks_column(select_top_tanks(&predictions, Some(TankType::AT)), r#"Рекомендованные&nbsp;<span class="has-text-info">ПТ-САУ</span>"#))
+                                (top_tanks_column(&predictions, |_| true, r#"Топ рекомендаций"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.tier >= 4, r#"Уровень Ⅳ и выше"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.tier >= 5, r#"Уровень Ⅴ и выше"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.type_ == TankType::Light, r#"Рекомендованные&nbsp;<span class="has-text-success">легкие</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.type_ == TankType::Medium, r#"Рекомендованные&nbsp;<span class="has-text-warning-dark">средние</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.type_ == TankType::Heavy, r#"Рекомендованные&nbsp;<span class="has-text-danger">тяжелые</span>&nbsp;танки"#))
+                                (top_tanks_column(&predictions, |vehicle| vehicle.type_ == TankType::AT, r#"Рекомендованные&nbsp;<span class="has-text-info">ПТ-САУ</span>"#))
                             }
                         }
                     }
@@ -565,21 +567,18 @@ async fn make_predictions(
     Ok(predictions)
 }
 
-fn select_top_tanks(predictions: &IndexMap<i32, f64>, type_: Option<TankType>) -> Vec<(i32, f64)> {
-    predictions
+fn top_tanks_column(
+    predictions: &IndexMap<i32, f64>,
+    predicate: fn(&Vehicle) -> bool,
+    title: &str,
+) -> Markup {
+    let entries: Vec<(&i32, &f64)> = predictions
         .iter()
-        .filter(|(tank_id, _)| {
-            type_
-                .map(|type_| get_vehicle(**tank_id).type_ == type_)
-                .unwrap_or(true)
-        })
-        .take(10)
-        .map(|(tank_id, prediction)| (*tank_id, *prediction)) // FIXME
-        .collect()
-}
+        .filter(|(tank_id, _)| predicate(&get_vehicle(**tank_id)))
+        .take(5)
+        .collect();
 
-fn top_tanks_column(tanks: Vec<(i32, f64)>, title: &str) -> Markup {
-    if !tanks.is_empty() {
+    if !entries.is_empty() {
         html! {
             div.column."is-4" {
                 div.card {
@@ -589,7 +588,7 @@ fn top_tanks_column(tanks: Vec<(i32, f64)>, title: &str) -> Markup {
                     div.card-content {
                         div.table-container {
                             table.table.is-hoverable.is-striped.is-fullwidth {
-                                @for (tank_id, predicted_win_rate) in &tanks {
+                                @for (tank_id, predicted_win_rate) in entries.into_iter() {
                                     tr title=(predicted_win_rate) {
                                         (vehicle_th(&get_vehicle(*tank_id)))
                                     }
