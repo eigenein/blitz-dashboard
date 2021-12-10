@@ -96,29 +96,28 @@ async fn run_epochs(
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
-    let mut last_train_error = None;
-    let mut last_test_error = None;
+    let mut last_train_error = f64::INFINITY;
+    let mut last_test_error = f64::INFINITY;
     let mut model = Model::new(redis, opts.model);
+    let mut auto_r_counter = 0;
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
     for i in 1..=range {
         let start_instant = Instant::now();
         let (train_error, test_error) = run_epoch(&mut dataset, &mut model).await?;
         if let Some(auto_r) = opts.auto_r {
-            if i % auto_r == 0 {
-                adjust_regularization(
-                    last_train_error,
-                    train_error,
-                    last_test_error,
-                    test_error,
-                    &mut model.opts.regularization,
-                );
-                last_train_error = Some(train_error);
-                last_test_error = Some(test_error);
-            }
-        } else if i == range {
-            last_test_error = Some(test_error);
+            adjust_regularization(
+                last_train_error,
+                train_error,
+                last_test_error,
+                test_error,
+                auto_r,
+                &mut auto_r_counter,
+                &mut model.opts.regularization,
+            );
         }
+        last_train_error = train_error;
+        last_test_error = test_error;
 
         if i % opts.log_epochs == 0 {
             log::info!(
@@ -143,28 +142,27 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    Ok(last_test_error.unwrap())
+    Ok(last_test_error)
 }
 
 fn adjust_regularization(
-    last_train_error: Option<f64>,
+    last_train_error: f64,
     train_error: f64,
-    last_test_error: Option<f64>,
+    last_test_error: f64,
     test_error: f64,
+    auto_r: usize,
+    counter: &mut usize,
     regularization: &mut f64,
 ) {
-    if let Some(last_train_error) = last_train_error {
-        if let Some(last_test_error) = last_test_error {
-            if test_error > last_test_error {
-                if train_error < last_train_error {
-                    *regularization += 0.001;
-                    tracing::warn!(regularization = regularization, "increased");
-                } else {
-                    *regularization = (*regularization - 0.001).max(0.001);
-                    tracing::warn!(regularization = regularization, "decreased");
-                }
-            }
+    if test_error > last_test_error && train_error < last_train_error {
+        *counter += 1;
+        if *counter >= auto_r {
+            *regularization += 0.001;
+            tracing::warn!(regularization = regularization, "increased");
+            *counter = 0;
         }
+    } else {
+        *counter = 0;
     }
 }
 
