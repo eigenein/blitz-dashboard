@@ -71,11 +71,9 @@ impl Dataset {
 fn calculate_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
     let mut error = Error::default();
     for (_, point) in sample {
-        error.push(
-            0.5,
-            point.n_wins as f64 / point.n_battles as f64,
-            point.n_battles as f64,
-        );
+        if point.is_test {
+            error.push(0.5, point.n_wins as f64 / point.n_battles as f64);
+        }
     }
     error.average()
 }

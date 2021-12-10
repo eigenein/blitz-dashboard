@@ -253,11 +253,15 @@ async fn run_grid_search_on_parameters(
         .await?
         .into_iter()
         .collect::<crate::Result<Vec<f64>>>()?;
-    let error = mean(&errors);
+    let error = errors
+        .iter()
+        .copied()
+        .min_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
+        .unwrap_or(0.0);
     tracing::info!(
         n_factors = opts.model.n_factors,
         regularization = opts.model.regularization,
-        mean_error = error,
+        min_error = error,
         elapsed = format_elapsed(&start_instant).as_str(),
         "✔ tested",
     );
@@ -283,8 +287,8 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
         let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
+            train_error.push(prediction, label);
             for _ in 0..point.n_battles {
-                train_error.push(prediction, label, 1.0);
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
                     factors.vehicle,
@@ -294,7 +298,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
             }
             model.touch_account(point.account_id);
         } else {
-            test_error.push(prediction, label, point.n_battles as f64);
+            test_error.push(prediction, label);
         }
     }
 
