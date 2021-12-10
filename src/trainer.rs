@@ -17,7 +17,6 @@ use tokio::task::JoinHandle;
 
 use crate::helpers::{format_duration, format_elapsed};
 use crate::math::logistic;
-use crate::math::statistics::mean;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::dataset::Dataset;
