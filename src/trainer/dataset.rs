@@ -7,7 +7,7 @@ use redis::streams::StreamReadOptions;
 use redis::{AsyncCommands, Value};
 
 use crate::helpers::format_duration;
-use crate::trainer::error::Error;
+use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::DateTime;
 
@@ -69,10 +69,10 @@ impl Dataset {
 /// Calculate the error on the constant model that always predicts `0.5`.
 #[tracing::instrument(skip_all)]
 fn calculate_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
-    let mut error = Error::default();
+    let mut error = BCELoss::default();
     for (_, point) in sample {
         if point.is_test {
-            error.push(0.5, point.n_wins as f64 / point.n_battles as f64);
+            error.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
         }
     }
     error.average()

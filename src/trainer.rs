@@ -26,7 +26,7 @@ use crate::trainer::model::Model;
 use crate::trainer::sample_point::SamplePoint;
 
 mod dataset;
-mod error;
+mod loss;
 pub mod math;
 pub mod model;
 pub mod sample_point;
@@ -268,8 +268,8 @@ async fn run_grid_search_on_parameters(
 /// Run one SGD epoch on the entire dataset.
 #[tracing::instrument(skip_all)]
 async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f64, f64)> {
-    let mut train_error = error::Error::default();
-    let mut test_error = error::Error::default();
+    let mut train_error = loss::BCELoss::default();
+    let mut test_error = loss::BCELoss::default();
 
     fastrand::shuffle(&mut dataset.sample);
     let learning_rate = model.opts.learning_rate;
@@ -284,7 +284,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
         let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
-            train_error.push(prediction, label);
+            train_error.push_sample(prediction, label);
             for _ in 0..point.n_battles {
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
@@ -295,7 +295,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
             }
             model.touch_account(point.account_id);
         } else {
-            test_error.push(prediction, label);
+            test_error.push_sample(prediction, label);
         }
     }
 
