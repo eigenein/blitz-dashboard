@@ -14,6 +14,7 @@ use crate::opts::TrainerModelOpts;
 use crate::Vector;
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
+const REGULARIZATION_KEY: &str = "trainer::r";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 type HashSet<V> = std::collections::HashSet<V, ahash::RandomState>;
@@ -56,6 +57,7 @@ pub struct Model {
     pub n_new_accounts: usize,
     pub n_initialized_accounts: usize,
     pub opts: TrainerModelOpts,
+    pub regularization: f64,
 
     redis: MultiplexedConnection,
     vehicle_cache: HashMap<i32, Vector>,
@@ -70,17 +72,22 @@ pub struct Factors<'a> {
 }
 
 impl Model {
-    pub fn new(redis: MultiplexedConnection, opts: TrainerModelOpts) -> Self {
-        Self {
+    pub async fn new(
+        mut redis: MultiplexedConnection,
+        opts: TrainerModelOpts,
+    ) -> crate::Result<Self> {
+        let regularization = get_regularization(&mut redis).await?;
+        Ok(Self {
             redis,
             opts,
+            regularization,
             vehicle_cache: HashMap::default(),
             account_cache: LruCache::unbounded_with_hasher(ahash::RandomState::default()),
             modified_account_ids: HashSet::default(),
             last_flush_instant: Instant::now(),
             n_new_accounts: 0,
             n_initialized_accounts: 0,
-        }
+        })
     }
 
     pub fn n_modified_accounts(&self) -> usize {
@@ -161,6 +168,7 @@ impl Model {
             elapsed = format_elapsed(&start_instant).as_str(),
             "factors flushed",
         );
+        set_regularization(&mut self.redis, self.regularization).await?;
 
         Ok(())
     }
@@ -179,4 +187,22 @@ fn initialize_factors(x: &mut Vector, n: usize, factor_std: f64) -> bool {
             true
         }
     }
+}
+
+async fn get_regularization(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
+    Ok(redis
+        .get::<_, Option<f64>>(REGULARIZATION_KEY)
+        .await
+        .context("failed to retrieve the model's regularization")?
+        .unwrap_or(0.0))
+}
+
+async fn set_regularization(
+    redis: &mut MultiplexedConnection,
+    regularization: f64,
+) -> crate::Result {
+    redis
+        .set(REGULARIZATION_KEY, regularization)
+        .await
+        .context("failed to update the model's regularization")
 }

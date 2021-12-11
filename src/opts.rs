@@ -184,10 +184,6 @@ pub struct TrainerModelOpts {
     #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
 
-    /// Regularization. Ignored for the grid search
-    #[structopt(short = "r", long = "regularization", default_value = "0.001")]
-    pub regularization: f64,
-
     /// Number of latent factors.
     /// Ignored for the grid search.
     #[structopt(short = "f", long = "factors", default_value = "8")]

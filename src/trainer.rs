@@ -76,7 +76,6 @@ pub async fn push_sample_points(
     fields(
         n_factors = opts.model.n_factors,
         learning_rate = opts.model.learning_rate,
-        regularization = opts.model.regularization,
         factor_std = opts.model.factor_std,
         commit_period = format_duration(opts.model.flush_period).as_str(),
     ),
@@ -88,17 +87,17 @@ async fn run_epochs(
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
     let mut last_losses = LossPair::infinity();
-    let mut model = Model::new(redis, opts.model);
+    let mut model = Model::new(redis, opts.model).await?;
 
     for nr_epoch in 1.. {
         let start_instant = Instant::now();
         let losses = run_epoch(&mut dataset, &mut model).await?;
         if opts.auto_r {
-            adjust_regularization(
+            model.regularization = adjust_regularization(
                 nr_epoch,
                 &last_losses,
                 &losses,
-                &mut model.opts.regularization,
+                model.regularization,
                 opts.auto_r_bump_chance,
             );
         }
@@ -110,7 +109,7 @@ async fn run_epochs(
                 nr_epoch,
                 losses.train,
                 losses.test,
-                model.opts.regularization,
+                model.regularization,
                 dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
                 dataset.sample.len() as f64 / 1000.0,
                 model.n_modified_accounts() as f64 / 1000.0,
@@ -135,21 +134,25 @@ fn adjust_regularization(
     nr_epoch: usize,
     last_losses: &LossPair,
     losses: &LossPair,
-    regularization: &mut f64,
+    regularization: f64,
     auto_r_bump_chance: Option<f64>,
-) {
+) -> f64 {
     if losses.test > last_losses.test {
-        if losses.train < last_losses.train {
-            *regularization += 0.001;
+        return if losses.train < last_losses.train {
+            regularization + 0.001
         } else {
-            *regularization = (*regularization - 0.001).max(0.0);
-        }
-    } else if let Some(auto_r_bump_chance) = auto_r_bump_chance {
+            (regularization - 0.001).max(0.0)
+        };
+    }
+
+    if let Some(auto_r_bump_chance) = auto_r_bump_chance {
         if fastrand::f64() < auto_r_bump_chance {
             tracing::warn!("#{} random regularization bump", nr_epoch);
-            *regularization += 0.001;
+            return regularization + 0.001;
         }
     }
+
+    regularization
 }
 
 /// Run one SGD epoch on the entire dataset.
@@ -159,7 +162,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
 
     fastrand::shuffle(&mut dataset.sample);
     let learning_rate = model.opts.learning_rate;
-    let regularization_multiplier = learning_rate * model.opts.regularization;
+    let regularization_multiplier = learning_rate * model.regularization;
 
     for (_, point) in dataset.sample.iter() {
         let factors = model
