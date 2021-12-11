@@ -17,7 +17,7 @@ const REFRESH_POINTS_LIMIT: usize = 100000;
 #[derive(Clone)]
 pub struct Dataset {
     pub sample: Vec<(DateTime, SamplePoint)>,
-    pub baseline_error: f64,
+    pub baseline_loss: f64,
     pub redis: Option<MultiplexedConnection>,
 
     /// Last read entry ID of the Redis stream.
@@ -37,18 +37,18 @@ impl Dataset {
         is_online: bool,
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
-        let baseline_error = calculate_baseline_error(&sample);
+        let baseline_loss = calculate_baseline_loss(&sample);
         tracing::info!(
             n_points = sample.len(),
             pointer = pointer.as_str(),
-            baseline_error = baseline_error,
+            baseline_loss = baseline_loss,
             "loaded",
         );
         Ok(Self {
             redis: if is_online { Some(redis) } else { None },
             sample,
             pointer,
-            baseline_error,
+            baseline_loss,
             time_span,
         })
     }
@@ -66,16 +66,16 @@ impl Dataset {
     }
 }
 
-/// Calculate the error on the constant model that always predicts `0.5`.
+/// Calculate the loss on the constant model that always predicts `0.5`.
 #[tracing::instrument(skip_all)]
-fn calculate_baseline_error(sample: &[(DateTime, SamplePoint)]) -> f64 {
-    let mut error = BCELoss::default();
+fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
+    let mut loss = BCELoss::default();
     for (_, point) in sample {
         if point.is_test {
-            error.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
+            loss.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
         }
     }
-    error.average()
+    loss.average()
 }
 
 /// Load sample points from the stream within the specified time span.

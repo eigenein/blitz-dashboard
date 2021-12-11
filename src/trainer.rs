@@ -96,32 +96,32 @@ async fn run_epochs(
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
-    let mut last_train_error = f64::INFINITY;
-    let mut last_test_error = f64::INFINITY;
+    let mut last_train_loss = f64::INFINITY;
+    let mut last_test_loss = f64::INFINITY;
     let mut model = Model::new(redis, opts.model);
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
     for i in 1..=range {
         let start_instant = Instant::now();
-        let (train_error, test_error) = run_epoch(&mut dataset, &mut model).await?;
+        let (train_loss, test_loss) = run_epoch(&mut dataset, &mut model).await?;
         if opts.auto_r {
             adjust_regularization(
-                last_train_error,
-                train_error,
-                last_test_error,
-                test_error,
+                last_train_loss,
+                train_loss,
+                last_test_loss,
+                test_loss,
                 &mut model.opts.regularization,
             );
         }
-        last_train_error = train_error;
-        last_test_error = test_error;
+        last_train_loss = train_loss;
+        last_test_loss = test_loss;
 
         if i % opts.log_epochs == 0 {
             log::info!(
                 "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
                 i,
-                train_error,
-                test_error,
+                train_loss,
+                test_loss,
                 model.opts.regularization,
                 dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
                 dataset.sample.len() as f64 / 1000.0,
@@ -140,18 +140,18 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    Ok(last_test_error)
+    Ok(last_test_loss)
 }
 
 fn adjust_regularization(
-    last_train_error: f64,
-    train_error: f64,
-    last_test_error: f64,
-    test_error: f64,
+    last_train_loss: f64,
+    train_loss: f64,
+    last_test_loss: f64,
+    test_loss: f64,
     regularization: &mut f64,
 ) {
-    if test_error > last_test_error {
-        if train_error < last_train_error {
+    if test_loss > last_test_loss {
+        if train_loss < last_train_loss {
             *regularization += 0.001;
         } else {
             *regularization = (*regularization - 0.001).max(0.0);
@@ -170,7 +170,7 @@ fn adjust_regularization(
 )]
 async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::Result {
     let mut best_opts = None;
-    let mut best_error = f64::INFINITY;
+    let mut best_loss = f64::INFINITY;
 
     let should_stop = Arc::new(AtomicBool::default());
     {
@@ -196,24 +196,24 @@ async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::
         opts.model.regularization = *regularization;
 
         should_stop.store(false, Ordering::Relaxed);
-        let error = run_grid_search_on_parameters(&opts, &mut dataset, &should_stop).await?;
-        if error < best_error {
+        let loss = run_grid_search_on_parameters(&opts, &mut dataset, &should_stop).await?;
+        if loss < best_loss {
             tracing::info!(
-                error = error,
-                was = best_error,
-                by = best_error - error,
+                loss = loss,
+                was = best_loss,
+                by = best_loss - loss,
                 "↓ improved",
             );
-            best_error = error;
+            best_loss = loss;
             best_opts = Some(opts.model);
         } else {
-            tracing::info!(worse_by = error - best_error, "⨯ no improvement");
+            tracing::info!(worse_by = loss - best_loss, "⨯ no improvement");
         };
         tracing::info!(
             n_factors = best_opts.unwrap().n_factors,
             regularization = best_opts.unwrap().regularization,
-            error = best_error,
-            over_baseline = best_error - dataset.baseline_error,
+            loss = best_loss,
+            over_baseline = best_loss - dataset.baseline_loss,
             "= best so far",
         );
     }
@@ -239,11 +239,11 @@ async fn run_grid_search_on_parameters(
             ))
         })
         .collect();
-    let errors = futures::future::try_join_all(tasks)
+    let losses = futures::future::try_join_all(tasks)
         .await?
         .into_iter()
         .collect::<crate::Result<Vec<f64>>>()?;
-    let error = errors
+    let loss = losses
         .iter()
         .copied()
         .min_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
@@ -251,18 +251,18 @@ async fn run_grid_search_on_parameters(
     tracing::info!(
         n_factors = opts.model.n_factors,
         regularization = opts.model.regularization,
-        min_error = error,
+        min_loss = loss,
         elapsed = format_elapsed(&start_instant).as_str(),
         "✔ tested",
     );
-    Ok(error)
+    Ok(loss)
 }
 
 /// Run one SGD epoch on the entire dataset.
 #[tracing::instrument(skip_all)]
 async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f64, f64)> {
-    let mut train_error = loss::BCELoss::default();
-    let mut test_error = loss::BCELoss::default();
+    let mut train_loss = loss::BCELoss::default();
+    let mut test_loss = loss::BCELoss::default();
 
     fastrand::shuffle(&mut dataset.sample);
     let learning_rate = model.opts.learning_rate;
@@ -277,7 +277,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
         let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
-            train_error.push_sample(prediction, label);
+            train_loss.push_sample(prediction, label);
             for _ in 0..point.n_battles {
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
@@ -288,22 +288,22 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
             }
             model.touch_account(point.account_id);
         } else {
-            test_error.push_sample(prediction, label);
+            test_loss.push_sample(prediction, label);
         }
     }
 
-    let train_error = train_error.average();
-    let test_error = test_error.average();
+    let train_loss = train_loss.average();
+    let test_loss = test_loss.average();
 
     dataset.refresh().await?;
 
-    if train_error.is_finite() && test_error.is_finite() {
-        Ok((train_error, test_error))
+    if train_loss.is_finite() && test_loss.is_finite() {
+        Ok((train_loss, test_loss))
     } else {
         Err(anyhow!(
-            "the learning rate is too big, train error = {}, test_error = {}",
-            train_error,
-            test_error,
+            "the learning rate is too big, train loss = {}, test loss = {}",
+            train_loss,
+            test_loss,
         ))
     }
 }
