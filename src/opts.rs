@@ -192,6 +192,11 @@ pub struct TrainerOpts {
     /// Enable automatic regularization adjustment (experimental)
     #[structopt(long)]
     pub auto_r: bool,
+
+    /// If enabled, unconditionally increases regularization for next epoch by `0.001`
+    /// with the specified probability
+    #[structopt(long)]
+    pub auto_r_bump_chance: Option<f64>,
 }
 
 #[derive(Copy, Clone, StructOpt)]

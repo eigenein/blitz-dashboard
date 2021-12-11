@@ -85,6 +85,7 @@ pub async fn push_sample_points(
     skip_all,
     fields(
         n_factors = opts.model.n_factors,
+        learning_rate = opts.model.learning_rate,
         regularization = opts.model.regularization,
         factor_std = opts.model.factor_std,
         commit_period = format_duration(opts.model.flush_period).as_str(),
@@ -101,25 +102,27 @@ async fn run_epochs(
     let mut model = Model::new(redis, opts.model);
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
-    for i in 1..=range {
+    for nr_epoch in 1..=range {
         let start_instant = Instant::now();
         let (train_loss, test_loss) = run_epoch(&mut dataset, &mut model).await?;
         if opts.auto_r {
             adjust_regularization(
+                nr_epoch,
                 last_train_loss,
                 train_loss,
                 last_test_loss,
                 test_loss,
                 &mut model.opts.regularization,
+                opts.auto_r_bump_chance,
             );
         }
         last_train_loss = train_loss;
         last_test_loss = test_loss;
 
-        if i % opts.log_epochs == 0 {
+        if nr_epoch % opts.log_epochs == 0 {
             log::info!(
                 "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
-                i,
+                nr_epoch,
                 train_loss,
                 test_loss,
                 model.opts.regularization,
@@ -144,17 +147,24 @@ async fn run_epochs(
 }
 
 fn adjust_regularization(
+    nr_epoch: usize,
     last_train_loss: f64,
     train_loss: f64,
     last_test_loss: f64,
     test_loss: f64,
     regularization: &mut f64,
+    auto_r_bump_chance: Option<f64>,
 ) {
     if test_loss > last_test_loss {
         if train_loss < last_train_loss {
             *regularization += 0.001;
         } else {
             *regularization = (*regularization - 0.001).max(0.0);
+        }
+    } else if let Some(auto_r_bump_chance) = auto_r_bump_chance {
+        if fastrand::f64() < auto_r_bump_chance {
+            tracing::warn!("#{} random regularization bump", nr_epoch);
+            *regularization += 0.001;
         }
     }
 }
