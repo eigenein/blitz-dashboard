@@ -48,11 +48,6 @@ pub async fn get(
                                             }
                                         }
                                         (account_search("is-medium", "", true, false))
-                                        div.field.is-grouped.is-grouped-centered {
-                                            p.control {
-                                                a.button.is-link.is-rounded.is-medium href="/random" { "Мне повезет!" }
-                                            }
-                                        }
                                     }
                                 }
                             }
