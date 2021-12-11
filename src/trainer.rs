@@ -99,20 +99,17 @@ async fn run_epochs(
     let mut last_train_error = f64::INFINITY;
     let mut last_test_error = f64::INFINITY;
     let mut model = Model::new(redis, opts.model);
-    let mut auto_r_counter = 0;
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
     for i in 1..=range {
         let start_instant = Instant::now();
         let (train_error, test_error) = run_epoch(&mut dataset, &mut model).await?;
-        if let Some(auto_r) = opts.auto_r {
+        if opts.auto_r {
             adjust_regularization(
                 last_train_error,
                 train_error,
                 last_test_error,
                 test_error,
-                auto_r,
-                &mut auto_r_counter,
                 &mut model.opts.regularization,
             );
         }
@@ -121,10 +118,11 @@ async fn run_epochs(
 
         if i % opts.log_epochs == 0 {
             log::info!(
-                "#{} | train: {:>8.6} | test: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+                "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
                 i,
                 train_error,
                 test_error,
+                model.opts.regularization,
                 dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
                 dataset.sample.len() as f64 / 1000.0,
                 model.n_modified_accounts() as f64 / 1000.0,
@@ -150,19 +148,14 @@ fn adjust_regularization(
     train_error: f64,
     last_test_error: f64,
     test_error: f64,
-    auto_r: usize,
-    counter: &mut usize,
     regularization: &mut f64,
 ) {
-    if test_error > last_test_error && train_error < last_train_error {
-        *counter += 1;
-        if *counter >= auto_r {
+    if test_error > last_test_error {
+        if train_error < last_train_error {
             *regularization += 0.001;
-            tracing::warn!(regularization = regularization, "increased");
-            *counter = 0;
+        } else {
+            *regularization = (*regularization - 0.001).max(0.0);
         }
-    } else {
-        *counter = 0;
     }
 }
 

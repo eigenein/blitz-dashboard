@@ -189,9 +189,9 @@ pub struct TrainerOpts {
     #[structopt(long = "gsr")]
     pub grid_search_regularizations: Vec<f64>,
 
-    /// Enable automatic regularization adjustment and specify its frequency in epochs
-    #[structopt(long, parse(try_from_str = parsers::non_zero_usize))]
-    pub auto_r: Option<usize>,
+    /// Enable automatic regularization adjustment (experimental)
+    #[structopt(long)]
+    pub auto_r: bool,
 }
 
 #[derive(Copy, Clone, StructOpt)]
