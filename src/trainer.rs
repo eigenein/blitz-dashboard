@@ -9,13 +9,11 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
-use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use redis::streams::StreamMaxlen;
-use tokio::task::JoinHandle;
 
-use crate::helpers::{format_duration, format_elapsed};
+use crate::helpers::format_duration;
 use crate::math::logistic;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
@@ -45,18 +43,9 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let redis = redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let dataset = Dataset::load(
-        redis.clone(),
-        opts.time_span,
-        opts.n_grid_search_epochs.is_none(),
-    )
-    .await?;
+    let dataset = Dataset::load(redis.clone(), opts.time_span).await?;
+    run_epochs(redis, opts, dataset, Arc::new(AtomicBool::new(false))).await?;
 
-    if opts.n_grid_search_epochs.is_none() {
-        run_epochs(Some(redis), opts, dataset, Arc::new(AtomicBool::new(false))).await?;
-    } else {
-        run_grid_search(opts, dataset).await?;
-    }
     Ok(())
 }
 
@@ -93,7 +82,7 @@ pub async fn push_sample_points(
     ),
 )]
 async fn run_epochs(
-    redis: Option<MultiplexedConnection>,
+    redis: MultiplexedConnection,
     opts: TrainerOpts,
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
@@ -101,8 +90,7 @@ async fn run_epochs(
     let mut last_losses = LossPair::infinity();
     let mut model = Model::new(redis, opts.model);
 
-    let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
-    for nr_epoch in 1..=range {
+    for nr_epoch in 1.. {
         let start_instant = Instant::now();
         let losses = run_epoch(&mut dataset, &mut model).await?;
         if opts.auto_r {
@@ -162,105 +150,6 @@ fn adjust_regularization(
             *regularization += 0.001;
         }
     }
-}
-
-/// Run the grid search on all the specified parameter sets.
-#[tracing::instrument(
-    skip_all,
-    fields(
-        n_iterations = opts.grid_search_iterations,
-        n_epochs = opts.n_grid_search_epochs.unwrap(),
-        n_parameter_sets = opts.grid_search_factors.len() * opts.grid_search_regularizations.len(),
-    ),
-)]
-async fn run_grid_search(mut opts: TrainerOpts, mut dataset: Dataset) -> crate::Result {
-    let mut best_opts = None;
-    let mut best_loss = f64::INFINITY;
-
-    let should_stop = Arc::new(AtomicBool::default());
-    {
-        let should_stop = should_stop.clone();
-        ctrlc::set_handler(move || {
-            if should_stop.swap(true, Ordering::Relaxed) {
-                tracing::warn!("repeated Ctrl+C – exiting");
-                std::process::exit(1);
-            }
-            tracing::warn!("interrupting… Ctrl+C again to exit");
-        })?;
-    }
-
-    for (i, (n_factors, regularization)) in opts
-        .grid_search_factors
-        .iter()
-        .cartesian_product(&opts.grid_search_regularizations)
-        .enumerate()
-    {
-        tracing::info!(run = i + 1, "starting");
-
-        opts.model.n_factors = *n_factors;
-        opts.model.regularization = *regularization;
-
-        should_stop.store(false, Ordering::Relaxed);
-        let loss = run_grid_search_on_parameters(&opts, &mut dataset, &should_stop).await?;
-        if loss < best_loss {
-            tracing::info!(
-                loss = loss,
-                was = best_loss,
-                by = best_loss - loss,
-                "↓ improved",
-            );
-            best_loss = loss;
-            best_opts = Some(opts.model);
-        } else {
-            tracing::info!(worse_by = loss - best_loss, "⨯ no improvement");
-        };
-        tracing::info!(
-            n_factors = best_opts.unwrap().n_factors,
-            regularization = best_opts.unwrap().regularization,
-            loss = best_loss,
-            over_baseline = best_loss - dataset.baseline_loss,
-            "= best so far",
-        );
-    }
-
-    Ok(())
-}
-
-/// Run the grid search with the specified parameters.
-#[tracing::instrument(skip_all)]
-async fn run_grid_search_on_parameters(
-    opts: &TrainerOpts,
-    dataset: &mut Dataset,
-    should_stop: &Arc<AtomicBool>,
-) -> crate::Result<f64> {
-    let start_instant = Instant::now();
-    let tasks: Vec<JoinHandle<crate::Result<f64>>> = (1..=opts.grid_search_iterations)
-        .map(|_| {
-            tokio::spawn(run_epochs(
-                None,
-                opts.clone(),
-                dataset.clone(),
-                should_stop.clone(),
-            ))
-        })
-        .collect();
-    let losses = futures::future::try_join_all(tasks)
-        .await?
-        .into_iter()
-        .collect::<crate::Result<Vec<f64>>>()?;
-    let loss = losses
-        .iter()
-        .copied()
-        .min_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
-        .unwrap_or(0.0);
-    tracing::info!(
-        n_factors = opts.model.n_factors,
-        regularization = opts.model.regularization,
-        min_loss = loss,
-        elapsed = format_elapsed(&start_instant).as_str(),
-        "✔ tested",
-    );
-    Ok(loss)
 }
 
 /// Run one SGD epoch on the entire dataset.

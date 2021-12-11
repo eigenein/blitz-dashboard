@@ -18,7 +18,7 @@ const REFRESH_POINTS_LIMIT: usize = 100000;
 pub struct Dataset {
     pub sample: Vec<(DateTime, SamplePoint)>,
     pub baseline_loss: f64,
-    pub redis: Option<MultiplexedConnection>,
+    pub redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
     pointer: String,
@@ -29,12 +29,11 @@ pub struct Dataset {
 impl Dataset {
     #[tracing::instrument(
         skip_all,
-        fields(time_span = format_duration(time_span.to_std()?).as_str(), is_online = is_online),
+        fields(time_span = format_duration(time_span.to_std()?).as_str()),
     )]
     pub async fn load(
         mut redis: MultiplexedConnection,
         time_span: Duration,
-        is_online: bool,
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
         let baseline_loss = calculate_baseline_loss(&sample);
@@ -45,7 +44,7 @@ impl Dataset {
             "loaded",
         );
         Ok(Self {
-            redis: if is_online { Some(redis) } else { None },
+            redis,
             sample,
             pointer,
             baseline_loss,
@@ -55,12 +54,15 @@ impl Dataset {
 
     #[tracing::instrument(skip_all)]
     pub async fn refresh(&mut self) -> crate::Result {
-        if let Some(redis) = &mut self.redis {
-            if let Some((_, new_pointer)) =
-                refresh_sample(redis, &self.pointer, &mut self.sample, self.time_span).await?
-            {
-                self.pointer = new_pointer;
-            }
+        if let Some((_, new_pointer)) = refresh_sample(
+            &mut self.redis,
+            &self.pointer,
+            &mut self.sample,
+            self.time_span,
+        )
+        .await?
+        {
+            self.pointer = new_pointer;
         }
         Ok(())
     }

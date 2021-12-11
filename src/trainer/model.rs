@@ -57,7 +57,7 @@ pub struct Model {
     pub n_initialized_accounts: usize,
     pub opts: TrainerModelOpts,
 
-    redis: Option<MultiplexedConnection>,
+    redis: MultiplexedConnection,
     vehicle_cache: HashMap<i32, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
@@ -70,7 +70,7 @@ pub struct Factors<'a> {
 }
 
 impl Model {
-    pub fn new(redis: Option<MultiplexedConnection>, opts: TrainerModelOpts) -> Self {
+    pub fn new(redis: MultiplexedConnection, opts: TrainerModelOpts) -> Self {
         Self {
             redis,
             opts,
@@ -93,11 +93,7 @@ impl Model {
         tank_id: i32,
     ) -> crate::Result<Factors<'_>> {
         if !self.account_cache.contains(&account_id) {
-            let factors = if let Some(redis) = &mut self.redis {
-                get_account_factors(redis, account_id).await?
-            } else {
-                None
-            };
+            let factors = get_account_factors(&mut self.redis, account_id).await?;
             let mut factors = factors.unwrap_or_else(|| {
                 self.n_new_accounts += 1;
                 Vector::new()
@@ -112,11 +108,7 @@ impl Model {
         let vehicle = match self.vehicle_cache.entry(tank_id) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
-                let factors = if let Some(redis) = &mut self.redis {
-                    get_vehicle_factors(redis, tank_id).await?
-                } else {
-                    None
-                };
+                let factors = get_vehicle_factors(&mut self.redis, tank_id).await?;
                 let mut factors = factors.unwrap_or_else(Vector::new);
                 initialize_factors(&mut factors, self.opts.n_factors, self.opts.factor_std);
                 entry.insert(factors)
@@ -143,34 +135,32 @@ impl Model {
     /// Store all the account and vehicle factors to Redis and shrink the caches.
     #[tracing::instrument(skip_all)]
     async fn force_flush(&mut self) -> crate::Result {
-        if let Some(redis) = &mut self.redis {
-            tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
-            let start_instant = Instant::now();
-            let mut pipeline = pipe();
-            for account_id in self.modified_account_ids.drain() {
-                let bytes = rmp_serde::to_vec(self.account_cache.peek(&account_id).unwrap())?;
-                let key = format!("f::ru::{}", account_id);
-                pipeline
-                    .set_ex(key, bytes, self.opts.account_ttl_secs)
-                    .ignore();
-            }
-            self.account_cache.resize(self.opts.account_cache_size);
-            let vehicles: crate::Result<Vec<(i32, Vec<u8>)>> = self
-                .vehicle_cache
-                .iter()
-                .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
-                .collect();
+        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
+        let start_instant = Instant::now();
+        let mut pipeline = pipe();
+        for account_id in self.modified_account_ids.drain() {
+            let bytes = rmp_serde::to_vec(self.account_cache.peek(&account_id).unwrap())?;
+            let key = format!("f::ru::{}", account_id);
             pipeline
-                .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles?)
-                .ignore()
-                .query_async(redis)
-                .await
-                .context("failed to flush the factors")?;
-            tracing::info!(
-                elapsed = format_elapsed(&start_instant).as_str(),
-                "factors flushed",
-            );
+                .set_ex(key, bytes, self.opts.account_ttl_secs)
+                .ignore();
         }
+        self.account_cache.resize(self.opts.account_cache_size);
+        let vehicles: crate::Result<Vec<(i32, Vec<u8>)>> = self
+            .vehicle_cache
+            .iter()
+            .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
+            .collect();
+        pipeline
+            .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles?)
+            .ignore()
+            .query_async(&mut self.redis)
+            .await
+            .context("failed to flush the factors")?;
+        tracing::info!(
+            elapsed = format_elapsed(&start_instant).as_str(),
+            "factors flushed",
+        );
 
         Ok(())
     }

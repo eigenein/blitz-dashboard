@@ -168,23 +168,6 @@ pub struct TrainerOpts {
     #[structopt(flatten)]
     pub model: TrainerModelOpts,
 
-    /// Run the grid search, perform the specified number of epochs for each set of parameters
-    #[structopt(long = "gse")]
-    pub n_grid_search_epochs: Option<usize>,
-
-    /// Perform the specified number of iterations for each set of parameters.
-    /// The test error is then averaged over the iterations
-    #[structopt(long = "gsi", default_value = "3")]
-    pub grid_search_iterations: usize,
-
-    /// Add the specified number of latent factors to the grid search
-    #[structopt(long = "gsf")]
-    pub grid_search_factors: Vec<usize>,
-
-    /// Add the specified regularization to the grid search
-    #[structopt(long = "gsr")]
-    pub grid_search_regularizations: Vec<f64>,
-
     /// Enable automatic regularization adjustment (experimental)
     #[structopt(long)]
     pub auto_r: bool,
