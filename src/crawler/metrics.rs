@@ -51,17 +51,11 @@ impl CrawlerMetrics {
     }
 }
 
-pub enum AutoMinOffset {
-    None,
-    L50(Arc<ArcSwap<StdDuration>>),
-    L90(Arc<ArcSwap<StdDuration>>),
-}
-
 pub async fn log_metrics(
     request_counter: Arc<AtomicU32>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     interval: StdDuration,
-    auto_min_offset: AutoMinOffset,
+    auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
 ) -> crate::Result {
     loop {
         let start_instant = Instant::now();
@@ -85,14 +79,8 @@ pub async fn log_metrics(
         );
         metrics.reset();
 
-        match &auto_min_offset {
-            AutoMinOffset::L50(min_offset) => {
-                min_offset.store(Arc::new(lag_p50));
-            }
-            AutoMinOffset::L90(min_offset) => {
-                min_offset.store(Arc::new(lag_p90));
-            }
-            _ => {}
+        if let Some(min_offset) = &auto_min_offset {
+            min_offset.store(Arc::new(lag_p50));
         }
     }
 }
