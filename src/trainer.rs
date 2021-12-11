@@ -20,6 +20,7 @@ use crate::math::logistic;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::dataset::Dataset;
+use crate::trainer::loss::LossPair;
 use crate::trainer::math::make_gradient_descent_step;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::Model;
@@ -97,34 +98,30 @@ async fn run_epochs(
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
-    let mut last_train_loss = f64::INFINITY;
-    let mut last_test_loss = f64::INFINITY;
+    let mut last_losses = LossPair::infinity();
     let mut model = Model::new(redis, opts.model);
 
     let range = opts.n_grid_search_epochs.unwrap_or(usize::MAX); // FIXME
     for nr_epoch in 1..=range {
         let start_instant = Instant::now();
-        let (train_loss, test_loss) = run_epoch(&mut dataset, &mut model).await?;
+        let losses = run_epoch(&mut dataset, &mut model).await?;
         if opts.auto_r {
             adjust_regularization(
                 nr_epoch,
-                last_train_loss,
-                train_loss,
-                last_test_loss,
-                test_loss,
+                &last_losses,
+                &losses,
                 &mut model.opts.regularization,
                 opts.auto_r_bump_chance,
             );
         }
-        last_train_loss = train_loss;
-        last_test_loss = test_loss;
+        last_losses = losses;
 
         if nr_epoch % opts.log_epochs == 0 {
             log::info!(
                 "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
                 nr_epoch,
-                train_loss,
-                test_loss,
+                losses.train,
+                losses.test,
                 model.opts.regularization,
                 dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
                 dataset.sample.len() as f64 / 1000.0,
@@ -143,20 +140,18 @@ async fn run_epochs(
         model.flush().await?;
     }
 
-    Ok(last_test_loss)
+    Ok(last_losses.test)
 }
 
 fn adjust_regularization(
     nr_epoch: usize,
-    last_train_loss: f64,
-    train_loss: f64,
-    last_test_loss: f64,
-    test_loss: f64,
+    last_losses: &LossPair,
+    losses: &LossPair,
     regularization: &mut f64,
     auto_r_bump_chance: Option<f64>,
 ) {
-    if test_loss > last_test_loss {
-        if train_loss < last_train_loss {
+    if losses.test > last_losses.test {
+        if losses.train < last_losses.train {
             *regularization += 0.001;
         } else {
             *regularization = (*regularization - 0.001).max(0.0);
@@ -270,9 +265,8 @@ async fn run_grid_search_on_parameters(
 
 /// Run one SGD epoch on the entire dataset.
 #[tracing::instrument(skip_all)]
-async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f64, f64)> {
-    let mut train_loss = loss::BCELoss::default();
-    let mut test_loss = loss::BCELoss::default();
+async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<LossPair> {
+    let mut losses_builder = LossPair::builder();
 
     fastrand::shuffle(&mut dataset.sample);
     let learning_rate = model.opts.learning_rate;
@@ -287,7 +281,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
         let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
-            train_loss.push_sample(prediction, label);
+            losses_builder.train.push_sample(prediction, label);
             for _ in 0..point.n_battles {
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
@@ -298,22 +292,21 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<(f
             }
             model.touch_account(point.account_id);
         } else {
-            test_loss.push_sample(prediction, label);
+            losses_builder.test.push_sample(prediction, label);
         }
     }
 
-    let train_loss = train_loss.average();
-    let test_loss = test_loss.average();
+    let losses = losses_builder.finalise();
 
     dataset.refresh().await?;
 
-    if train_loss.is_finite() && test_loss.is_finite() {
-        Ok((train_loss, test_loss))
+    if losses.is_finite() {
+        Ok(losses)
     } else {
         Err(anyhow!(
             "the learning rate is too big, train loss = {}, test loss = {}",
-            train_loss,
-            test_loss,
+            losses.train,
+            losses.test,
         ))
     }
 }

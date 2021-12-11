@@ -75,7 +75,7 @@ fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
             loss.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
         }
     }
-    loss.average()
+    loss.finalise()
 }
 
 /// Load sample points from the stream within the specified time span.
