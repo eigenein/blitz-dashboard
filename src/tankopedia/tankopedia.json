@@ -396,8 +396,8 @@
         "module_id": 19475,
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          5908,
-          1300
+          1300,
+          5908
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -2347,8 +2347,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          25124,
-          24868
+          24868,
+          25124
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -25426,9 +25426,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          8065,
           1409,
-          3713
+          3713,
+          8065
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -34732,9 +34732,9 @@
       24101
     ],
     "guns": [
-      264484,
+      264996,
       263204,
-      264996
+      264484
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34813,8 +34813,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264484,
-          264996
+          264996,
+          264484
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -44521,8 +44521,8 @@
           7188
         ],
         "next_tanks": [
-          11537,
-          7697
+          7697,
+          11537
         ],
         "price_credit": 0,
         "price_xp": 16500,
@@ -74557,8 +74557,8 @@
         "name": "76 mm AT Gun M1A2",
         "next_modules": null,
         "next_tanks": [
-          7201,
-          11553
+          11553,
+          7201
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -83142,8 +83142,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -88557,8 +88557,8 @@
         "module_id": 21252,
         "name": "100 мм Д-10С обр. 1944 г.",
         "next_modules": [
-          8708,
-          21508
+          21508,
+          8708
         ],
         "next_tanks": null,
         "price_credit": 0,
