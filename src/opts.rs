@@ -181,7 +181,7 @@ pub struct TrainerOpts {
 #[derive(Copy, Clone, StructOpt)]
 pub struct TrainerModelOpts {
     /// Learning rate
-    #[structopt(long = "lr", default_value = "0.01")]
+    #[structopt(long = "lr", default_value = "0.001")]
     pub learning_rate: f64,
 
     /// Number of latent factors.
