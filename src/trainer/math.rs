@@ -19,13 +19,12 @@ pub fn make_gradient_descent_step(
     y: &mut [f64],
     residual_error: f64,
     regularization: f64,
-    x_learning_rate: f64,
-    y_learning_rate: f64,
+    learning_rate: f64,
 ) -> f64 {
     let mut dot = 0.0;
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
-        *xi += x_learning_rate * (residual_error * *yi - regularization * *xi);
-        *yi += y_learning_rate * (residual_error * *xi - regularization * *yi);
+        *xi += learning_rate * (residual_error * *yi - regularization * *xi);
+        *yi += learning_rate * (residual_error * *xi - regularization * *yi);
         dot += *xi * *yi;
     }
     dot

@@ -172,10 +172,6 @@ impl Model {
 
         Ok(())
     }
-
-    pub fn get_vehicle_learning_rate(&self) -> f64 {
-        self.opts.learning_rate * self.vehicle_cache.len() as f64 / self.account_cache.len() as f64
-    }
 }
 
 fn initialize_factors(x: &mut Vector, n: usize, factor_std: f64) -> bool {
