@@ -88,10 +88,11 @@ async fn run_epochs(
 ) -> crate::Result<f64> {
     let mut last_losses = LossPair::infinity();
     let mut model = Model::new(redis, opts.model).await?;
+    let mut vehicle_learning_rate = model.opts.learning_rate;
 
     for nr_epoch in 1.. {
         let start_instant = Instant::now();
-        let losses = run_epoch(&mut dataset, &mut model).await?;
+        let losses = run_epoch(&mut dataset, &mut model, vehicle_learning_rate).await?;
         if opts.auto_r {
             model.regularization = adjust_regularization(
                 nr_epoch,
@@ -101,15 +102,18 @@ async fn run_epochs(
                 opts.auto_r_bump_chance,
             );
         }
+
         last_losses = losses;
+        vehicle_learning_rate = model.get_vehicle_learning_rate();
 
         if nr_epoch % opts.log_epochs == 0 {
             log::info!(
-                "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
+                "#{} | train: {:>8.6} | test: {:>8.6} | R: {:>5.3} | VLR: {:>8.6} | SPPS: {:>3.0}k | SP: {:>4.0}k | A: {:>3.0}k | I: {:>2} | N: {:>2}",
                 nr_epoch,
                 losses.train,
                 losses.test,
                 model.regularization,
+                vehicle_learning_rate,
                 dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
                 dataset.sample.len() as f64 / 1000.0,
                 model.n_modified_accounts() as f64 / 1000.0,
@@ -157,12 +161,16 @@ fn adjust_regularization(
 
 /// Run one SGD epoch on the entire dataset.
 #[tracing::instrument(skip_all)]
-async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<LossPair> {
+async fn run_epoch(
+    dataset: &mut Dataset,
+    model: &mut Model,
+    vehicle_learning_rate: f64,
+) -> crate::Result<LossPair> {
     let mut losses_builder = LossPair::builder();
 
     fastrand::shuffle(&mut dataset.sample);
-    let learning_rate = model.opts.learning_rate;
-    let regularization_multiplier = learning_rate * model.regularization;
+    let regularization = model.regularization;
+    let base_learning_rate = model.opts.learning_rate;
 
     for (_, point) in dataset.sample.iter() {
         let factors = model
@@ -178,8 +186,10 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
                 prediction = logistic(make_gradient_descent_step(
                     factors.account,
                     factors.vehicle,
-                    learning_rate * (label - prediction),
-                    regularization_multiplier,
+                    label - prediction,
+                    regularization,
+                    base_learning_rate,
+                    vehicle_learning_rate,
                 ));
             }
             model.touch_account(point.account_id);

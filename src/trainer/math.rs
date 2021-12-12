@@ -17,13 +17,15 @@ pub fn predict_probability(x: &[f64], y: &[f64]) -> f64 {
 pub fn make_gradient_descent_step(
     x: &mut [f64],
     y: &mut [f64],
-    residual_multiplier: f64,
-    regularization_multiplier: f64,
+    residual_error: f64,
+    regularization: f64,
+    x_learning_rate: f64,
+    y_learning_rate: f64,
 ) -> f64 {
     let mut dot = 0.0;
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
-        *xi += residual_multiplier * *yi - regularization_multiplier * *xi;
-        *yi += residual_multiplier * *xi - regularization_multiplier * *yi;
+        *xi += x_learning_rate * (residual_error * *yi - regularization * *xi);
+        *yi += y_learning_rate * (residual_error * *xi - regularization * *yi);
         dot += *xi * *yi;
     }
     dot
@@ -37,21 +39,6 @@ mod benches {
     use test::{black_box, Bencher};
 
     use super::*;
-
-    #[bench]
-    fn bench_sgd_3d(bencher: &mut Bencher) {
-        let mut x = vec![0.1, 0.2, 0.3];
-        let mut y = vec![-0.1, -0.2, -0.3];
-
-        bencher.iter(|| {
-            black_box(make_gradient_descent_step(
-                black_box(&mut x),
-                black_box(&mut y),
-                black_box(0.00001 * 0.5),
-                black_box(0.00001 * 0.1),
-            ))
-        });
-    }
 
     #[bench]
     fn bench_predict_win_rate_8d(bencher: &mut Bencher) {
