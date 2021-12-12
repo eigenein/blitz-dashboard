@@ -288,6 +288,7 @@ impl Crawler {
                     n_battles,
                     n_wins,
                     is_test: fastrand::usize(0..100) < opts.test_percentage,
+                    timestamp: tank.statistics.base.last_battle_time,
                 });
             }
         }
