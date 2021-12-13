@@ -20,14 +20,11 @@ pub fn make_gradient_descent_step(
     residual_error: f64,
     regularization: f64,
     learning_rate: f64,
-) -> f64 {
-    let mut dot = 0.0;
+) {
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         *xi += learning_rate * (residual_error * *yi - regularization * *xi);
         *yi += learning_rate * (residual_error * *xi - regularization * *yi);
-        dot += *xi * *yi;
     }
-    dot
 }
 
 #[cfg(test)]

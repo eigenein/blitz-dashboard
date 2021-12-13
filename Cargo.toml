@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.118.0"
+version = "0.119.0"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
@@ -22,7 +22,6 @@ ahash = "0.7.6"
 anyhow = "1.0.51"
 arc-swap = "1.5.0"
 chrono-humanize = "0.2.1"
-ctrlc = "3.2.1"
 fastrand = "1.5.0"
 humantime = "2.1.0"
 itertools = "0.10.3"
