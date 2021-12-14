@@ -11,30 +11,45 @@ use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::{DateTime, StdResult};
 
-const TRAIN_STREAM_KEY: &str = "streams::battles";
-const TRAIN_STREAM_V2_KEY: &str = "streams::battles::v2";
-const REFRESH_POINTS_LIMIT: usize = 100000;
+const STREAM_KEY: &str = "streams::battles";
+const STREAM_V2_KEY: &str = "streams::battles::v2";
+const PAGE_SIZE: usize = 100000;
 
 pub async fn push_sample_points(
     redis: &mut MultiplexedConnection,
     points: &[SamplePoint],
     stream_size: usize,
 ) -> crate::Result {
+    let mut pipeline = pipe();
+    let maxlen = StreamMaxlen::Approx(stream_size);
+
+    for point in points.iter() {
+        let items = &[
+            ("account_id", point.account_id as i64),
+            ("tank_id", point.tank_id as i64),
+            ("n_battles", point.n_battles as i64),
+            ("n_wins", point.n_wins as i64),
+            ("timestamp", point.timestamp.timestamp()),
+        ];
+        pipeline
+            .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", items)
+            .ignore();
+    }
+
+    // The following part is deprecated:
     let points: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
         points.iter().map(rmp_serde::to_vec).collect();
     let points = points.context("failed to serialize the battles")?;
-    let maxlen = StreamMaxlen::Approx(stream_size);
-    let mut pipeline = pipe();
     for point in points {
         pipeline
-            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
+            .xadd_maxlen(STREAM_KEY, maxlen, "*", &[("b", point)])
             .ignore();
     }
+
     pipeline
         .query_async(redis)
         .await
-        .context("failed to add the sample points to the stream")?;
-    Ok(())
+        .context("failed to add the sample points to the stream")
 }
 
 #[derive(Clone)]
@@ -116,7 +131,7 @@ async fn load_sample(
         Some((n_points, new_pointer)) => {
             tracing::info!(n_points = sample.len(), pointer = new_pointer.as_str());
             pointer = new_pointer;
-            n_points >= REFRESH_POINTS_LIMIT
+            n_points >= PAGE_SIZE
         }
         None => false,
     } {}
@@ -140,9 +155,9 @@ async fn refresh_sample(
     sample.retain(|(timestamp, _)| timestamp > &expire_time);
 
     // Fetch new points.
-    let options = StreamReadOptions::default().count(REFRESH_POINTS_LIMIT);
+    let options = StreamReadOptions::default().count(PAGE_SIZE);
     let reply: Value = redis
-        .xread_options(&[TRAIN_STREAM_KEY], &[&last_id], &options)
+        .xread_options(&[STREAM_KEY], &[&last_id], &options)
         .await?;
     let entries = parse_multiple_streams(reply)?;
     let result = entries.last().map(|(id, _)| (entries.len(), id.clone()));
