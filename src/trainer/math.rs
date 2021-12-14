@@ -22,8 +22,9 @@ pub fn make_gradient_descent_step(
     learning_rate: f64,
 ) {
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
+        let old_xi = *xi;
         *xi += learning_rate * (residual_error * *yi - regularization * *xi);
-        *yi += learning_rate * (residual_error * *xi - regularization * *yi);
+        *yi += learning_rate * (residual_error * old_xi - regularization * *yi);
     }
 }
 
