@@ -9,6 +9,8 @@ use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
+use crate::Float;
+
 #[derive(StructOpt)]
 #[structopt(
     rename_all = "kebab-case",
@@ -175,14 +177,14 @@ pub struct TrainerOpts {
     /// If enabled, unconditionally increases regularization for next epoch by `0.001`
     /// with the specified probability
     #[structopt(long)]
-    pub auto_r_bump_chance: Option<f64>,
+    pub auto_r_bump_chance: Option<Float>,
 }
 
 #[derive(Copy, Clone, StructOpt)]
 pub struct TrainerModelOpts {
     /// Learning rate
     #[structopt(long = "lr", default_value = "0.001")]
-    pub learning_rate: f64,
+    pub learning_rate: Float,
 
     /// Number of latent factors.
     /// Ignored for the grid search.
@@ -191,7 +193,7 @@ pub struct TrainerModelOpts {
 
     /// Standard deviation of newly initialised latent factors
     #[structopt(long, default_value = "0.01")]
-    pub factor_std: f64,
+    pub factor_std: Float,
 
     /// Maximum account idle time after which the account factors expire
     #[structopt(long = "account-ttl", default_value = "1month", parse(try_from_str = parsers::duration_as_secs))]

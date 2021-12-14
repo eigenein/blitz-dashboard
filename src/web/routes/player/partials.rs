@@ -7,8 +7,8 @@ use maud::{html, Markup};
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{Tank, TankType};
 use crate::tankopedia::get_vehicle;
-use crate::web::partials::{margin_class, render_f64, vehicle_th};
-use crate::DateTime;
+use crate::web::partials::{margin_class, render_float, vehicle_th};
+use crate::{DateTime, Float};
 
 pub fn render_period_li(
     period: StdDuration,
@@ -46,14 +46,14 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-pub fn render_percentage(value: f64) -> String {
+pub fn render_percentage(value: Float) -> String {
     format!("{:.1}%", value * 100.0)
 }
 
 pub fn render_tank_tr(
     tank: &Tank,
     account_win_rate: &ConfidenceInterval,
-    predicted_win_rate: Option<f64>,
+    predicted_win_rate: Option<Float>,
     last_account_battle_time: DateTime,
 ) -> crate::Result<Markup> {
     let markup = html! {
@@ -98,7 +98,7 @@ pub fn render_tank_tr(
                     span {
                         strong { span { (render_percentage(true_win_rate.mean)) } }
                         span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
-                            " ±" (render_f64(100.0 * true_win_rate.margin, 1))
+                            " ±" (render_float(100.0 * true_win_rate.margin, 1))
                         }
                     }
                     (partial_cmp_icon(win_rate_ordering))
@@ -128,7 +128,7 @@ pub fn render_tank_tr(
             td data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
-                    span { (render_f64(frags_per_battle, 1)) }
+                    span { (render_float(frags_per_battle, 1)) }
                 }
             }
 
@@ -136,7 +136,7 @@ pub fn render_tank_tr(
             td data-sort="wins-per-hour" data-value=(wins_per_hour) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
-                    span { (render_f64(wins_per_hour, 1)) }
+                    span { (render_float(wins_per_hour, 1)) }
                 }
             }
 
@@ -145,7 +145,7 @@ pub fn render_tank_tr(
                 data-sort="expected-wins-per-hour"
                 data-value=(expected_wins_per_hour.mean)
             {
-                strong { (render_f64(expected_wins_per_hour.mean, 1)) }
+                strong { (render_float(expected_wins_per_hour.mean, 1)) }
                 span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
                     (format!(" ±{:.1}", expected_wins_per_hour.margin))
                 }
@@ -159,12 +159,12 @@ pub fn render_tank_tr(
                 }
             }
 
-            @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
+            @let expected_gold = 10.0 + vehicle.tier as Float * true_win_rate;
             td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                     span {
-                        strong { (render_f64(expected_gold.mean, 1)) }
+                        strong { (render_float(expected_gold.mean, 1)) }
                         span.(margin_class(expected_gold.margin, 2.0, 3.0)) {
                             (format!(" ±{:.1}", expected_gold.margin))
                         }
@@ -176,7 +176,7 @@ pub fn render_tank_tr(
                 (tank.statistics.all.damage_dealt)
             }
 
-            @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
+            @let damage_per_battle = tank.statistics.all.damage_dealt as Float / tank.statistics.all.battles as Float;
             td data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }
@@ -185,7 +185,7 @@ pub fn render_tank_tr(
                 (tank.statistics.all.survived_battles)
             }
 
-            @let survival_rate = tank.statistics.all.survived_battles as f64 / tank.statistics.all.battles as f64;
+            @let survival_rate = tank.statistics.all.survived_battles as Float / tank.statistics.all.battles as Float;
             td data-sort="survival-rate" data-value=(survival_rate) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-heart.has-text-danger {} }

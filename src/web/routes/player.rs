@@ -27,6 +27,7 @@ use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::routes::player::partials::*;
 use crate::web::TrackingCode;
+use crate::Float;
 
 pub mod partials;
 
@@ -327,7 +328,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(stats_delta.damage_per_battle(), 0)) }
+                                                        p.title { (render_float(stats_delta.damage_per_battle(), 0)) }
                                                     }
                                                 }
                                             }
@@ -351,13 +352,13 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_f64(stats_delta.frags_per_battle(), 1)) }
+                                                        p.title { (render_float(stats_delta.frags_per_battle(), 1)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_f64(stats_delta.frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.frags as Float / battle_life_time as Float * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -386,7 +387,7 @@ pub async fn get(
                                                         p.heading { "Истинный" }
                                                         p.title.is-white-space-nowrap {
                                                             (render_percentage(period_win_rate.mean))
-                                                            span.has-text-grey-light { " ±" (render_f64(100.0 * period_win_rate.margin, 1)) }
+                                                            span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin, 1)) }
                                                         }
                                                     }
                                                 }
@@ -405,7 +406,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_f64(stats_delta.wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.wins as Float / battle_life_time as Float * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -544,14 +545,14 @@ async fn make_predictions(
     redis: &mut MultiplexedConnection,
     account_id: i32,
     tanks: &[Tank],
-) -> crate::Result<IndexMap<i32, f64>> {
+) -> crate::Result<IndexMap<i32, Float>> {
     let account_factors = match get_account_factors(redis, account_id).await? {
         Some(factors) => factors,
         None => return Ok(IndexMap::new()),
     };
     let vehicles_factors = get_all_vehicle_factors(redis).await?;
 
-    let mut predictions: IndexMap<i32, f64> = tanks
+    let mut predictions: IndexMap<i32, Float> = tanks
         .iter()
         .map(|tank| remap_tank_id(tank.statistics.base.tank_id))
         .filter_map(|tank_id| {
@@ -568,11 +569,11 @@ async fn make_predictions(
 }
 
 fn top_tanks_column(
-    predictions: &IndexMap<i32, f64>,
+    predictions: &IndexMap<i32, Float>,
     predicate: fn(&Vehicle) -> bool,
     title: &str,
 ) -> Markup {
-    let entries: Vec<(&i32, &f64)> = predictions
+    let entries: Vec<(&i32, &Float)> = predictions
         .iter()
         .filter(|(tank_id, _)| predicate(&get_vehicle(**tank_id)))
         .take(5)

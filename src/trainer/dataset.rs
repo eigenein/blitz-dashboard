@@ -9,7 +9,7 @@ use redis::{pipe, AsyncCommands, Value};
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
-use crate::{DateTime, StdResult};
+use crate::{DateTime, Float, StdResult};
 
 const STREAM_KEY: &str = "streams::battles";
 const STREAM_V2_KEY: &str = "streams::battles::v2";
@@ -55,7 +55,7 @@ pub async fn push_sample_points(
 #[derive(Clone)]
 pub struct Dataset {
     pub sample: Vec<(DateTime, SamplePoint)>,
-    pub baseline_loss: f64,
+    pub baseline_loss: Float,
     pub redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
@@ -108,11 +108,11 @@ impl Dataset {
 
 /// Calculate the loss on the constant model that always predicts `0.5`.
 #[tracing::instrument(skip_all)]
-fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
+fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> Float {
     let mut loss = BCELoss::default();
     for (_, point) in sample {
         if point.is_test {
-            loss.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
+            loss.push_sample(0.5, point.n_wins as Float / point.n_battles as Float);
         }
     }
     loss.finalise()

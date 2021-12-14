@@ -17,6 +17,7 @@ use crate::web::partials::{
 use crate::web::response::CustomResponse;
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::{DisableCaches, TrackingCode};
+use crate::Float;
 
 #[rocket::get("/status/vehicle/<tank_id>")]
 pub async fn get(
@@ -42,7 +43,7 @@ pub async fn get(
     };
 
     let vehicle = get_vehicle(tank_id);
-    let table: Vec<(i32, f64)> = vehicles_factors
+    let table: Vec<(i32, Float)> = vehicles_factors
         .iter()
         .filter(|(other_tank_id, _)| **other_tank_id != tank_id)
         .map(|(tank_id, other_factors)| {

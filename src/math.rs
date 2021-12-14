@@ -1,9 +1,11 @@
+use crate::Float;
+
 pub mod statistics;
 pub mod vector;
 
 #[must_use]
 #[inline]
-pub fn logistic(x: f64) -> f64 {
+pub fn logistic(x: Float) -> Float {
     1.0 / (1.0 + (-x).exp())
 }
 

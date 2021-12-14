@@ -1,33 +1,35 @@
+use crate::Float;
+
 /// Binary cross-entropy loss.
 #[derive(Default, Copy, Clone)]
 pub struct BCELoss {
-    loss: f64,
+    loss: Float,
     n: i32,
 }
 
 impl BCELoss {
     #[inline]
-    pub fn push_sample(&mut self, prediction: f64, label: f64) {
-        if label.abs() > f64::EPSILON {
+    pub fn push_sample(&mut self, prediction: Float, label: Float) {
+        if label.abs() > Float::EPSILON {
             self.loss -= label * prediction.ln();
         }
         let inverse_label = 1.0 - label;
-        if inverse_label.abs() > f64::EPSILON {
+        if inverse_label.abs() > Float::EPSILON {
             self.loss -= inverse_label * (1.0 - prediction).ln();
         }
         self.n += 1;
     }
 
     #[must_use]
-    pub fn finalise(&self) -> f64 {
-        (self.loss / self.n.max(1) as f64).sqrt()
+    pub fn finalise(&self) -> Float {
+        (self.loss / self.n.max(1) as Float).sqrt()
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct LossPair {
-    pub train: f64,
-    pub test: f64,
+    pub train: Float,
+    pub test: Float,
 }
 
 impl LossPair {
@@ -39,8 +41,8 @@ impl LossPair {
     #[must_use]
     pub fn infinity() -> Self {
         Self {
-            train: f64::INFINITY,
-            test: f64::INFINITY,
+            train: Float::INFINITY,
+            test: Float::INFINITY,
         }
     }
 
