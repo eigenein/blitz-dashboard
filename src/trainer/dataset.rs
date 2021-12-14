@@ -1,18 +1,41 @@
 use std::str::FromStr;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
-use redis::streams::StreamReadOptions;
-use redis::{AsyncCommands, Value};
+use redis::streams::{StreamMaxlen, StreamReadOptions};
+use redis::{pipe, AsyncCommands, Value};
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
-use crate::DateTime;
+use crate::{DateTime, StdResult};
 
-pub const TRAIN_STREAM_KEY: &str = "streams::battles";
+const TRAIN_STREAM_KEY: &str = "streams::battles";
+const TRAIN_STREAM_V2_KEY: &str = "streams::battles::v2";
 const REFRESH_POINTS_LIMIT: usize = 100000;
+
+pub async fn push_sample_points(
+    redis: &mut MultiplexedConnection,
+    points: &[SamplePoint],
+    stream_size: usize,
+) -> crate::Result {
+    let points: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
+        points.iter().map(rmp_serde::to_vec).collect();
+    let points = points.context("failed to serialize the battles")?;
+    let maxlen = StreamMaxlen::Approx(stream_size);
+    let mut pipeline = pipe();
+    for point in points {
+        pipeline
+            .xadd_maxlen(TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
+            .ignore();
+    }
+    pipeline
+        .query_async(redis)
+        .await
+        .context("failed to add the sample points to the stream")?;
+    Ok(())
+}
 
 #[derive(Clone)]
 pub struct Dataset {

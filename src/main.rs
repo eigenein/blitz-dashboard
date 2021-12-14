@@ -1,6 +1,7 @@
 #![warn(clippy::all)]
 #![cfg_attr(nightly, feature(test))]
 
+pub use std::result::Result as StdResult;
 pub use std::time::Duration as StdDuration;
 use std::time::Instant;
 

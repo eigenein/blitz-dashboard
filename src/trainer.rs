@@ -3,15 +3,12 @@
 //!
 //! https://blog.insightdatascience.com/explicit-matrix-factorization-als-sgd-and-all-that-jazz-b00e4d9b21ea
 
-use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use redis::aio::MultiplexedConnection;
-use redis::pipe;
-use redis::streams::StreamMaxlen;
 
 use crate::helpers::format_duration;
 use crate::opts::TrainerOpts;
@@ -21,9 +18,8 @@ use crate::trainer::loss::LossPair;
 use crate::trainer::math::make_gradient_descent_step;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::Model;
-use crate::trainer::sample_point::SamplePoint;
 
-mod dataset;
+pub mod dataset;
 mod loss;
 pub mod math;
 pub mod model;
@@ -45,28 +41,6 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
     let dataset = Dataset::load(redis.clone(), opts.time_span).await?;
     run_epochs(redis, opts, dataset, Arc::new(AtomicBool::new(false))).await?;
 
-    Ok(())
-}
-
-pub async fn push_sample_points(
-    redis: &mut MultiplexedConnection,
-    points: &[SamplePoint],
-    stream_size: usize,
-) -> crate::Result {
-    let points: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
-        points.iter().map(rmp_serde::to_vec).collect();
-    let points = points.context("failed to serialize the battles")?;
-    let maxlen = StreamMaxlen::Approx(stream_size);
-    let mut pipeline = pipe();
-    for point in points {
-        pipeline
-            .xadd_maxlen(dataset::TRAIN_STREAM_KEY, maxlen, "*", &[("b", point)])
-            .ignore();
-    }
-    pipeline
-        .query_async(redis)
-        .await
-        .context("failed to add the sample points to the stream")?;
     Ok(())
 }
 

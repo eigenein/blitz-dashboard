@@ -20,7 +20,7 @@ use crate::database::{
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::push_sample_points;
+use crate::trainer::dataset::push_sample_points;
 use crate::trainer::sample_point::SamplePoint;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
