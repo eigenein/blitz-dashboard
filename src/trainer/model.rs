@@ -3,6 +3,7 @@ use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use anyhow::Context;
+use itertools::Itertools;
 use rand::prelude::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
@@ -144,32 +145,50 @@ impl Model {
     async fn force_flush(&mut self) -> crate::Result {
         tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         let start_instant = Instant::now();
-        let mut pipeline = pipe();
-        for account_id in self.modified_account_ids.drain() {
-            let bytes = rmp_serde::to_vec(self.account_cache.peek(&account_id).unwrap())?;
-            let key = format!("f::ru::{}", account_id);
+        self.force_flush_accounts().await?;
+        self.force_flush_vehicles().await?;
+        set_regularization(&mut self.redis, self.regularization).await?;
+        tracing::info!(
+            elapsed = format_elapsed(&start_instant).as_str(),
+            "model flushed",
+        );
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn force_flush_accounts(&mut self) -> crate::Result {
+        for batch in self.modified_account_ids.drain().chunks(100000).into_iter() {
+            tracing::info!("flushing the batch…");
+            let mut pipeline = pipe();
+            for account_id in batch {
+                let bytes = rmp_serde::to_vec(self.account_cache.peek(&account_id).unwrap())?;
+                let key = format!("f::ru::{}", account_id);
+                pipeline
+                    .set_ex(key, bytes, self.opts.account_ttl_secs)
+                    .ignore();
+            }
             pipeline
-                .set_ex(key, bytes, self.opts.account_ttl_secs)
-                .ignore();
+                .query_async(&mut self.redis)
+                .await
+                .context("failed to flush the accounts factors")?;
         }
         self.account_cache.resize(self.opts.account_cache_size);
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn force_flush_vehicles(&mut self) -> crate::Result {
         let vehicles: crate::Result<Vec<(i32, Vec<u8>)>> = self
             .vehicle_cache
             .iter()
             .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
             .collect();
-        pipeline
+        pipe()
             .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles?)
             .ignore()
             .query_async(&mut self.redis)
             .await
-            .context("failed to flush the factors")?;
-        tracing::info!(
-            elapsed = format_elapsed(&start_instant).as_str(),
-            "factors flushed",
-        );
-        set_regularization(&mut self.redis, self.regularization).await?;
-
+            .context("failed to flush the vehicles factors")?;
         Ok(())
     }
 }
