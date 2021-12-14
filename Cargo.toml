@@ -31,7 +31,7 @@ log = "0.4.14"
 lru = { version = "0.7.0", default_features = false }
 maud = "0.23.0"
 miniz_oxide = "0.5.0"
-phf = { version = "0.10.0", features = ["macros"] }
+phf = { version = "0.10.1", features = ["macros"] }
 rand = "0.8.4"
 rand_distr = "0.4.2"
 rmp-serde = "0.15.5"
