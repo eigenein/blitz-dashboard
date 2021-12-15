@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
-use redis::{pipe, AsyncCommands, Value};
+use redis::{pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult, Value};
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
@@ -156,16 +156,59 @@ async fn refresh_sample(
 
     // Fetch new points.
     let options = StreamReadOptions::default().count(PAGE_SIZE);
-    let reply: Value = redis
+    #[allow(clippy::type_complexity)]
+    let mut reply: Vec<Option<((), Vec<Option<(String, SamplePoint)>>)>> = redis
         .xread_options(&[STREAM_KEY], &[&last_id], &options)
         .await?;
-    let entries = parse_multiple_streams(reply)?;
-    let result = entries.last().map(|(id, _)| (entries.len(), id.clone()));
-    for (id, battle) in entries {
-        sample.push((parse_entry_id(&id)?, battle));
+    let (_, entries) = reply
+        .pop()
+        .unwrap_or_else(|| Some(((), Vec::new())))
+        .expect("wrapping `Option` is always `Some`");
+    let result = entries
+        .last()
+        .map(|entry| entry.as_ref().unwrap())
+        .map(|(id, _)| (entries.len(), id.clone()));
+    for entry in entries.into_iter() {
+        let (id, point) = entry.expect("wrapping `Option` is always `Some`");
+        sample.push((parse_entry_id(&id)?, point));
     }
     tracing::debug!(n_points = result.as_ref().map(|result| result.0));
     Ok(result)
+}
+
+impl FromRedisValue for SamplePoint {
+    fn from_redis_value(value: &Value) -> RedisResult<Self> {
+        let mut map = value.as_map_iter().ok_or_else(|| {
+            RedisError::from((
+                ErrorKind::TypeError,
+                "expected a map-compatible type",
+                format!("{:?}", value),
+            ))
+        })?;
+        let (_, value) = map.next().ok_or_else(|| {
+            RedisError::from((
+                ErrorKind::TypeError,
+                "expected a non-empty map",
+                format!("{:?}", value),
+            ))
+        })?;
+        let value = if let Value::Data(value) = value {
+            value
+        } else {
+            return Err(RedisError::from((
+                ErrorKind::TypeError,
+                "expected a binary data",
+                format!("{:?}", value),
+            )));
+        };
+        rmp_serde::from_read_ref(value).map_err(|error| {
+            RedisError::from((
+                ErrorKind::TypeError,
+                "failed to deserialize",
+                format!("{:?}", error),
+            ))
+        })
+    }
 }
 
 /// Parse Redis stream entry ID.
@@ -175,48 +218,4 @@ fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
         .ok_or_else(|| anyhow!("unexpected stream entry ID"))?
         .0;
     Ok(Utc.timestamp_millis(i64::from_str(millis)?))
-}
-
-fn parse_multiple_streams(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
-    match reply {
-        Value::Nil => Ok(Vec::new()),
-        Value::Bulk(mut streams) => match streams.pop() {
-            Some(Value::Bulk(mut stream)) => match stream.pop() {
-                Some(value) => parse_stream(value),
-                other => Err(anyhow!("expected entries, got: {:?}", other)),
-            },
-            other => Err(anyhow!("expected (name, entries), got: {:?}", other)),
-        },
-        other => Err(anyhow!("expected a bulk of streams, got: {:?}", other)),
-    }
-}
-
-fn parse_stream(reply: Value) -> crate::Result<Vec<(String, SamplePoint)>> {
-    match reply {
-        Value::Nil => Ok(Vec::new()),
-        Value::Bulk(entries) => entries.into_iter().map(parse_stream_entry).collect(),
-        other => Err(anyhow!("expected a bulk of entries, got: {:?}", other)),
-    }
-}
-
-fn parse_stream_entry(reply: Value) -> crate::Result<(String, SamplePoint)> {
-    match reply {
-        Value::Bulk(mut entry) => {
-            let fields = entry.pop();
-            let id = entry.pop();
-            match (id, fields) {
-                (Some(Value::Data(id)), Some(Value::Bulk(mut fields))) => {
-                    let value = fields.pop();
-                    match value {
-                        Some(Value::Data(data)) => {
-                            Ok((String::from_utf8(id)?, rmp_serde::from_read_ref(&data)?))
-                        }
-                        other => Err(anyhow!("expected a binary data, got: {:?}", other)),
-                    }
-                }
-                other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
-            }
-        }
-        other => Err(anyhow!("expected (ID, fields), got: {:?}", other)),
-    }
 }
