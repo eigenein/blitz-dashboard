@@ -10,7 +10,6 @@ use crate::trainer::model::get_all_vehicle_factors;
 use crate::web::partials::{footer, headers, home_button, sign_class, tier_td, vehicle_th};
 use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
 use crate::web::{DisableCaches, TrackingCode};
-use crate::Float;
 
 pub mod vehicle;
 
@@ -121,7 +120,7 @@ pub fn thead(n_factors: usize) -> Markup {
     }
 }
 
-pub fn tr(tank_id: i32, factors: &[Float], n_factors: usize) -> Markup {
+pub fn tr(tank_id: i32, factors: &[f64], n_factors: usize) -> Markup {
     html! {
         tr {
             @let vehicle = get_vehicle(tank_id);

@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::helpers::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::math::statistics::ConfidenceInterval;
-use crate::Float;
 
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
@@ -102,24 +101,24 @@ pub struct Statistics {
 }
 
 impl Statistics {
-    pub fn damage_per_battle(&self) -> Float {
-        self.damage_dealt as Float / self.battles as Float
+    pub fn damage_per_battle(&self) -> f64 {
+        self.damage_dealt as f64 / self.battles as f64
     }
 
-    pub fn current_win_rate(&self) -> Float {
-        self.wins as Float / self.battles as Float
+    pub fn current_win_rate(&self) -> f64 {
+        self.wins as f64 / self.battles as f64
     }
 
-    pub fn survival_rate(&self) -> Float {
-        self.survived_battles as Float / self.battles as Float
+    pub fn survival_rate(&self) -> f64 {
+        self.survived_battles as f64 / self.battles as f64
     }
 
-    pub fn hit_rate(&self) -> Float {
-        self.hits as Float / self.shots as Float
+    pub fn hit_rate(&self) -> f64 {
+        self.hits as f64 / self.shots as f64
     }
 
-    pub fn frags_per_battle(&self) -> Float {
-        self.frags as Float / self.battles as Float
+    pub fn frags_per_battle(&self) -> f64 {
+        self.frags as f64 / self.battles as f64
     }
 
     pub fn true_win_rate(&self) -> ConfidenceInterval {
@@ -248,14 +247,13 @@ pub struct Tank {
 }
 
 impl Tank {
-    pub fn wins_per_hour(&self) -> Float {
-        self.statistics.all.wins as Float / self.statistics.battle_life_time.num_seconds() as Float
+    pub fn wins_per_hour(&self) -> f64 {
+        self.statistics.all.wins as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0
     }
 
-    pub fn battles_per_hour(&self) -> Float {
-        self.statistics.all.battles as Float
-            / self.statistics.battle_life_time.num_seconds() as Float
+    pub fn battles_per_hour(&self) -> f64 {
+        self.statistics.all.battles as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0
     }
 }

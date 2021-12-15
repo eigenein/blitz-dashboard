@@ -1,26 +1,24 @@
 use std::cmp::Ordering;
 use std::ops::{Add, Mul};
 
-use crate::Float;
-
 #[allow(dead_code)]
 #[must_use]
-pub fn mean(values: &[Float]) -> Float {
-    values.iter().sum::<Float>() / values.len().max(1) as Float
+pub fn mean(values: &[f64]) -> f64 {
+    values.iter().sum::<f64>() / values.len().max(1) as f64
 }
 
 #[derive(Copy, Clone)]
 pub struct ConfidenceInterval {
-    pub mean: Float,
-    pub margin: Float,
+    pub mean: f64,
+    pub margin: f64,
 }
 
 impl ConfidenceInterval {
     /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
     #[must_use]
-    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: Float) -> Self {
-        let n_trials = n_trials as Float;
-        let n_successes = n_successes as Float;
+    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> Self {
+        let n_trials = n_trials as f64;
+        let n_successes = n_successes as f64;
 
         let p_hat = n_successes / n_trials;
 
@@ -39,21 +37,21 @@ impl ConfidenceInterval {
     }
 
     #[must_use]
-    pub fn lower(&self) -> Float {
+    pub fn lower(&self) -> f64 {
         self.mean - self.margin
     }
 
     #[must_use]
-    pub fn upper(&self) -> Float {
+    pub fn upper(&self) -> f64 {
         self.mean + self.margin
     }
 }
 
-impl Mul<Float> for ConfidenceInterval {
+impl Mul<f64> for ConfidenceInterval {
     type Output = Self;
 
     #[must_use]
-    fn mul(self, rhs: Float) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Self::Output {
             mean: self.mean * rhs,
             margin: self.margin * rhs,
@@ -61,7 +59,7 @@ impl Mul<Float> for ConfidenceInterval {
     }
 }
 
-impl Mul<ConfidenceInterval> for Float {
+impl Mul<ConfidenceInterval> for f64 {
     type Output = ConfidenceInterval;
 
     #[must_use]
@@ -70,11 +68,11 @@ impl Mul<ConfidenceInterval> for Float {
     }
 }
 
-impl Add<Float> for ConfidenceInterval {
+impl Add<f64> for ConfidenceInterval {
     type Output = Self;
 
     #[must_use]
-    fn add(self, rhs: Float) -> Self::Output {
+    fn add(self, rhs: f64) -> Self::Output {
         Self::Output {
             mean: self.mean + rhs,
             margin: self.margin,
@@ -82,7 +80,7 @@ impl Add<Float> for ConfidenceInterval {
     }
 }
 
-impl Add<ConfidenceInterval> for Float {
+impl Add<ConfidenceInterval> for f64 {
     type Output = ConfidenceInterval;
 
     #[must_use]
@@ -112,22 +110,22 @@ impl PartialOrd for ConfidenceInterval {
 }
 
 #[allow(dead_code)]
-pub const Z_95: Float = 1.96;
+pub const Z_95: f64 = 1.96;
 
 #[allow(dead_code)]
-pub const Z_90: Float = 1.645;
+pub const Z_90: f64 = 1.645;
 
 #[allow(dead_code)]
-pub const Z_89: Float = 1.598;
+pub const Z_89: f64 = 1.598;
 
 #[allow(dead_code)]
-pub const Z_88: Float = 1.5548;
+pub const Z_88: f64 = 1.5548;
 
 #[allow(dead_code)]
-pub const Z_87: Float = 1.51;
+pub const Z_87: f64 = 1.51;
 
 #[allow(dead_code)]
-pub const Z_85: Float = 1.44;
+pub const Z_85: f64 = 1.44;
 
 #[allow(dead_code)]
-pub const Z_80: Float = 1.28;
+pub const Z_80: f64 = 1.28;

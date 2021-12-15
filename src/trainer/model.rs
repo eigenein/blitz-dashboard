@@ -11,8 +11,8 @@ use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 
 use crate::helpers::format_elapsed;
+use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
-use crate::{Float, Vector};
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const REGULARIZATION_KEY: &str = "trainer::r";
@@ -58,7 +58,7 @@ pub struct Model {
     pub n_new_accounts: usize,
     pub n_initialized_accounts: usize,
     pub opts: TrainerModelOpts,
-    pub regularization: Float,
+    pub regularization: f64,
 
     redis: MultiplexedConnection,
     vehicle_cache: HashMap<i32, Vector>,
@@ -193,7 +193,7 @@ impl Model {
     }
 }
 
-fn initialize_factors(x: &mut Vector, n: usize, factor_std: Float) -> bool {
+fn initialize_factors(x: &mut Vector, n: usize, factor_std: f64) -> bool {
     match x.len().cmp(&n) {
         Ordering::Equal => false,
         _ => {
@@ -208,9 +208,9 @@ fn initialize_factors(x: &mut Vector, n: usize, factor_std: Float) -> bool {
     }
 }
 
-async fn get_regularization(redis: &mut MultiplexedConnection) -> crate::Result<Float> {
+async fn get_regularization(redis: &mut MultiplexedConnection) -> crate::Result<f64> {
     Ok(redis
-        .get::<_, Option<Float>>(REGULARIZATION_KEY)
+        .get::<_, Option<f64>>(REGULARIZATION_KEY)
         .await
         .context("failed to retrieve the model's regularization")?
         .unwrap_or(0.0))
@@ -218,7 +218,7 @@ async fn get_regularization(redis: &mut MultiplexedConnection) -> crate::Result<
 
 async fn set_regularization(
     redis: &mut MultiplexedConnection,
-    regularization: Float,
+    regularization: f64,
 ) -> crate::Result {
     redis
         .set(REGULARIZATION_KEY, regularization)

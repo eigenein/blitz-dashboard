@@ -7,7 +7,6 @@ use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
-use crate::Float;
 
 pub fn account_search(
     class: &str,
@@ -236,7 +235,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     }
 }
 
-pub fn render_float(value: Float, precision: usize) -> Markup {
+pub fn render_float(value: f64, precision: usize) -> Markup {
     html! {
         span title=(value) {
             (format!("{:.1$}", value, precision))
@@ -244,7 +243,7 @@ pub fn render_float(value: Float, precision: usize) -> Markup {
     }
 }
 
-pub fn margin_class(value: Float, level_success: Float, level_warning: Float) -> &'static str {
+pub fn margin_class(value: f64, level_success: f64, level_warning: f64) -> &'static str {
     match value {
         _ if value < level_success => "",
         _ if value < level_warning => "has-text-warning-dark",
@@ -252,7 +251,7 @@ pub fn margin_class(value: Float, level_success: Float, level_warning: Float) ->
     }
 }
 
-pub fn sign_class(value: Float) -> &'static str {
+pub fn sign_class(value: f64) -> &'static str {
     if value > 0.0 {
         "has-background-success-light"
     } else if value < 0.0 {
@@ -285,7 +284,7 @@ pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
     }
 }
 
-pub fn factors_table(factors: &[Float]) -> Markup {
+pub fn factors_table(factors: &[f64]) -> Markup {
     html! {
         div.table-container {
             table.table.is-hoverable.is-striped.is-fullwidth {

@@ -18,7 +18,6 @@ use crate::trainer::loss::LossPair;
 use crate::trainer::math::make_gradient_descent_step;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::Model;
-use crate::Float;
 
 pub mod dataset;
 mod loss;
@@ -59,7 +58,7 @@ async fn run_epochs(
     opts: TrainerOpts,
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
-) -> crate::Result<Float> {
+) -> crate::Result<f64> {
     let mut last_losses = LossPair::infinity();
     let mut model = Model::new(redis, opts.model).await?;
 
@@ -85,9 +84,9 @@ async fn run_epochs(
                 losses.train,
                 losses.test,
                 model.regularization,
-                dataset.sample.len() as Float / 1000.0 / start_instant.elapsed().as_secs_f64(),
-                dataset.sample.len() as Float / 1000.0,
-                model.n_modified_accounts() as Float / 1000.0,
+                dataset.sample.len() as f64 / 1000.0 / start_instant.elapsed().as_secs_f64(),
+                dataset.sample.len() as f64 / 1000.0,
+                model.n_modified_accounts() as f64 / 1000.0,
                 model.n_initialized_accounts,
                 model.n_new_accounts,
             );
@@ -109,9 +108,9 @@ fn adjust_regularization(
     nr_epoch: usize,
     last_losses: &LossPair,
     losses: &LossPair,
-    regularization: Float,
-    auto_r_bump_chance: Option<Float>,
-) -> Float {
+    regularization: f64,
+    auto_r_bump_chance: Option<f64>,
+) -> f64 {
     if losses.test > last_losses.test {
         return if losses.train < last_losses.train {
             regularization + 0.001
@@ -145,7 +144,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
             .await?;
 
         let prediction = predict_probability(factors.vehicle, factors.account);
-        let label = point.n_wins as Float / point.n_battles as Float;
+        let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
             losses_builder.train.push_sample(prediction, label);

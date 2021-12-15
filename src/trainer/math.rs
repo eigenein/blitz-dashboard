@@ -2,12 +2,11 @@
 
 use crate::math::logistic;
 use crate::math::vector::dot;
-use crate::Float;
 
 /// Predict a probability based on the user and item latent vectors.
 #[must_use]
 #[inline]
-pub fn predict_probability(x: &[Float], y: &[Float]) -> Float {
+pub fn predict_probability(x: &[f64], y: &[f64]) -> f64 {
     logistic(dot(x, y))
 }
 
@@ -16,11 +15,11 @@ pub fn predict_probability(x: &[Float], y: &[Float]) -> Float {
 /// See also: https://sifter.org/~simon/journal/20061211.html.
 #[inline]
 pub fn make_gradient_descent_step(
-    x: &mut [Float],
-    y: &mut [Float],
-    residual_error: Float,
-    regularization: Float,
-    learning_rate: Float,
+    x: &mut [f64],
+    y: &mut [f64],
+    residual_error: f64,
+    regularization: f64,
+    learning_rate: f64,
 ) {
     for (xi, yi) in x.iter_mut().zip(y.iter_mut()) {
         let old_xi = *xi;

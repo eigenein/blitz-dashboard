@@ -6,8 +6,6 @@ use arc_swap::ArcSwap;
 use humantime::format_duration;
 use tokio::sync::Mutex;
 
-use crate::Float;
-
 #[derive(Default)]
 pub struct CrawlerMetrics {
     /// Scanned account count.
@@ -71,12 +69,12 @@ pub async fn log_metrics(
         let (lag_p50, lag_p90) = metrics.lags();
         log::info!(
             "RPS: {:>4.1} | battles: {:>4.0} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
-            n_requests as Float / elapsed_secs,
+            n_requests as f64 / elapsed_secs,
             metrics.n_battles,
             format_duration(lag_p50).to_string(),
             format_duration(lag_p90).to_string(),
-            metrics.n_accounts as Float / elapsed_secs,
-            metrics.n_tanks as Float / elapsed_secs,
+            metrics.n_accounts as f64 / elapsed_secs,
+            metrics.n_tanks as f64 / elapsed_secs,
             metrics.last_account_id,
         );
         metrics.reset();

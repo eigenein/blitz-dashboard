@@ -8,7 +8,7 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::models::{Tank, TankType};
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{margin_class, render_float, vehicle_th};
-use crate::{DateTime, Float};
+use crate::DateTime;
 
 pub fn render_period_li(
     period: StdDuration,
@@ -46,14 +46,14 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-pub fn render_percentage(value: Float) -> String {
+pub fn render_percentage(value: f64) -> String {
     format!("{:.1}%", value * 100.0)
 }
 
 pub fn render_tank_tr(
     tank: &Tank,
     account_win_rate: &ConfidenceInterval,
-    predicted_win_rate: Option<Float>,
+    predicted_win_rate: Option<f64>,
     last_account_battle_time: DateTime,
 ) -> crate::Result<Markup> {
     let markup = html! {
@@ -159,7 +159,7 @@ pub fn render_tank_tr(
                 }
             }
 
-            @let expected_gold = 10.0 + vehicle.tier as Float * true_win_rate;
+            @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
             td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-warning-dark { i.fas.fa-coins {} }
@@ -176,7 +176,7 @@ pub fn render_tank_tr(
                 (tank.statistics.all.damage_dealt)
             }
 
-            @let damage_per_battle = tank.statistics.all.damage_dealt as Float / tank.statistics.all.battles as Float;
+            @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
             td data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }
@@ -185,7 +185,7 @@ pub fn render_tank_tr(
                 (tank.statistics.all.survived_battles)
             }
 
-            @let survival_rate = tank.statistics.all.survived_battles as Float / tank.statistics.all.battles as Float;
+            @let survival_rate = tank.statistics.all.survived_battles as f64 / tank.statistics.all.battles as f64;
             td data-sort="survival-rate" data-value=(survival_rate) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-heart.has-text-danger {} }
