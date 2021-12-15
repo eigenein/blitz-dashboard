@@ -200,7 +200,7 @@ pub struct TrainerModelOpts {
     /// Maximum number of cached account latent vectors
     #[structopt(
         long,
-        default_value = "500000",
+        default_value = "750000",
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub account_cache_size: usize,

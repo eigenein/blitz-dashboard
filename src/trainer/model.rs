@@ -161,7 +161,11 @@ impl Model {
             tracing::info!("flushing the batch…");
             let mut pipeline = pipe();
             for account_id in batch {
-                let bytes = rmp_serde::to_vec(self.account_cache.peek(&account_id).unwrap())?;
+                let bytes = rmp_serde::to_vec(
+                    self.account_cache
+                        .peek(&account_id)
+                        .expect("the account must be present in the cache"),
+                )?;
                 let key = format!("f::ru::{}", account_id);
                 pipeline
                     .set_ex(key, bytes, self.opts.account_ttl_secs)
