@@ -6,6 +6,7 @@ use std::path::Path;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
+use crate::wargaming::tank_id::get_nation;
 use crate::wargaming::{Tankopedia, WargamingApi};
 
 mod generated;
@@ -39,7 +40,7 @@ fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
         tier: 0,
         is_premium: false,
         type_: TankType::Unknown,
-        nation: Nation::Other,
+        nation: get_nation(tank_id).unwrap_or(Nation::Other),
     }
 }
 
