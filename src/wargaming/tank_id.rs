@@ -1,28 +1,44 @@
 use anyhow::anyhow;
-use phf::{phf_map, Map};
 
-pub fn to_client_id(tank_id: i32) -> crate::Result<i32> {
+use crate::models::Nation;
+
+pub fn get_nation(tank_id: i32) -> crate::Result<Nation> {
+    const NATIONS: &[Nation] = &[
+        Nation::Ussr,
+        Nation::Germany,
+        Nation::Usa,
+        Nation::China,
+        Nation::France,
+        Nation::Uk,
+        Nation::Japan,
+        Nation::Other,
+        Nation::Europe,
+    ];
+
     const COMPONENT_VEHICLE: i32 = 1;
     debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
 
-    let nation = (tank_id >> 4) & 0xF;
-    match NATION_IDS.get(&nation) {
-        Some(nation_id) => Ok(nation_id + (tank_id >> 8)),
-        None => Err(anyhow!("unexpected nation {} for tank {}", nation, tank_id)),
-    }
+    let nation = ((tank_id >> 4) & 0xF) as usize;
+    NATIONS
+        .get(nation)
+        .copied()
+        .ok_or_else(|| anyhow!("unexpected nation {} for tank {}", nation, tank_id))
 }
 
-static NATION_IDS: Map<i32, i32> = phf_map! {
-    0_i32 => 20000, // USSR
-    1_i32 => 30000, // Germany
-    2_i32 => 10000, // USA
-    3_i32 => 60000, // China
-    4_i32 => 70000, // France
-    5_i32 => 40000, // UK
-    6_i32 => 50000, // Japan
-    7_i32 => 100000, // Other
-    8_i32 => 80000, // Europe
-};
+pub fn to_client_id(tank_id: i32) -> crate::Result<i32> {
+    let nation_id = match get_nation(tank_id)? {
+        Nation::Ussr => 20000,
+        Nation::Germany => 30000,
+        Nation::Usa => 10000,
+        Nation::China => 60000,
+        Nation::France => 70000,
+        Nation::Uk => 40000,
+        Nation::Japan => 50000,
+        Nation::Other => 100000,
+        Nation::Europe => 80000,
+    };
+    Ok(nation_id + (tank_id >> 8))
+}
 
 #[cfg(test)]
 mod tests {
