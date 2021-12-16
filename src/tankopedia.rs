@@ -6,7 +6,6 @@ use std::path::Path;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
-use crate::wargaming::tank_id::get_nation;
 use crate::wargaming::{Tankopedia, WargamingApi};
 
 mod generated;
@@ -16,7 +15,7 @@ pub fn get_vehicle(tank_id: i32) -> Cow<'static, Vehicle> {
     generated::GENERATED
         .get(&tank_id)
         .map(Cow::Borrowed)
-        .unwrap_or_else(|| Cow::Owned(new_hardcoded_vehicle(tank_id)))
+        .unwrap_or_else(|| Cow::Owned(Vehicle::new_hardcoded(tank_id)))
 }
 
 /// Some vehicles are just copies of another vehicles.
@@ -29,18 +28,6 @@ pub fn remap_tank_id(tank_id: i32) -> i32 {
         64769 => 9217,  // ИС-6 Бесстрашный
         64801 => 2849,  // T34 Independence
         _ => tank_id,
-    }
-}
-
-/// Creates a fake vehicle instance with the specified ID.
-fn new_hardcoded_vehicle(tank_id: i32) -> Vehicle {
-    Vehicle {
-        tank_id,
-        name: Cow::Owned(format!("#{}", tank_id)),
-        tier: 0,
-        is_premium: false,
-        type_: TankType::Unknown,
-        nation: get_nation(tank_id).unwrap_or(Nation::Other),
     }
 }
 

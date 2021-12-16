@@ -1,43 +1,8 @@
-use anyhow::anyhow;
-
 use crate::models::Nation;
 
-pub fn get_nation(tank_id: i32) -> crate::Result<Nation> {
-    const NATIONS: &[Nation] = &[
-        Nation::Ussr,
-        Nation::Germany,
-        Nation::Usa,
-        Nation::China,
-        Nation::France,
-        Nation::Uk,
-        Nation::Japan,
-        Nation::Other,
-        Nation::Europe,
-    ];
-
-    const COMPONENT_VEHICLE: i32 = 1;
-    debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
-
-    let nation = ((tank_id >> 4) & 0xF) as usize;
-    NATIONS
-        .get(nation)
-        .copied()
-        .ok_or_else(|| anyhow!("unexpected nation {} for tank {}", nation, tank_id))
-}
-
+/// Converts the API tank ID to the client tank ID.
 pub fn to_client_id(tank_id: i32) -> crate::Result<i32> {
-    let nation_id = match get_nation(tank_id)? {
-        Nation::Ussr => 20000,
-        Nation::Germany => 30000,
-        Nation::Usa => 10000,
-        Nation::China => 60000,
-        Nation::France => 70000,
-        Nation::Uk => 40000,
-        Nation::Japan => 50000,
-        Nation::Other => 100000,
-        Nation::Europe => 80000,
-    };
-    Ok(nation_id + (tank_id >> 8))
+    Ok(Nation::from_tank_id(tank_id)?.get_id() + (tank_id >> 8))
 }
 
 #[cfg(test)]

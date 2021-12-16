@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::iter::Sum;
@@ -190,6 +191,20 @@ pub struct Vehicle {
     pub type_: TankType,
 }
 
+impl Vehicle {
+    /// Creates a fake vehicle instance with the specified ID.
+    pub fn new_hardcoded(tank_id: i32) -> Self {
+        Self {
+            tank_id,
+            name: Cow::Owned(format!("#{}", tank_id)),
+            tier: 0,
+            is_premium: false,
+            type_: TankType::Unknown,
+            nation: Nation::from_tank_id(tank_id).unwrap_or(Nation::Other),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
 pub enum Nation {
     #[serde(rename = "ussr")]
@@ -218,6 +233,47 @@ pub enum Nation {
 
     #[serde(other, rename = "other")]
     Other,
+}
+
+impl Nation {
+    /// Construct `Nation` from the API tank ID.
+    pub fn from_tank_id(tank_id: i32) -> crate::Result<Nation> {
+        const NATIONS: &[Nation] = &[
+            Nation::Ussr,
+            Nation::Germany,
+            Nation::Usa,
+            Nation::China,
+            Nation::France,
+            Nation::Uk,
+            Nation::Japan,
+            Nation::Other,
+            Nation::Europe,
+        ];
+
+        const COMPONENT_VEHICLE: i32 = 1;
+        debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
+
+        let nation = ((tank_id >> 4) & 0xF) as usize;
+        NATIONS
+            .get(nation)
+            .copied()
+            .ok_or_else(|| anyhow!("unexpected nation {} for tank {}", nation, tank_id))
+    }
+
+    /// Get the client nation ID.
+    pub fn get_id(&self) -> i32 {
+        match self {
+            Nation::Ussr => 20000,
+            Nation::Germany => 30000,
+            Nation::Usa => 10000,
+            Nation::China => 60000,
+            Nation::France => 70000,
+            Nation::Uk => 40000,
+            Nation::Japan => 50000,
+            Nation::Other => 100000,
+            Nation::Europe => 80000,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
