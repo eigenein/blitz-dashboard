@@ -43,7 +43,7 @@ tracing = { version = "0.1.29", features = ["log-always"] }
 tracing-futures = "0.2.5"
 
 [dependencies.tokio]
-version = "1.13.0"
+version = "1.15.0"
 features = ["rt-multi-thread", "time"]
 
 [dependencies.futures]
