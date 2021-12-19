@@ -138,7 +138,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
     let regularization = model.regularization;
     let learning_rate = model.opts.learning_rate;
 
-    for (_, point) in dataset.sample.iter() {
+    for point in dataset.sample.iter() {
         let factors = model
             .get_factors_mut(point.account_id, remap_tank_id(point.tank_id))
             .await?;

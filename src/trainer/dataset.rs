@@ -1,17 +1,15 @@
-use std::str::FromStr;
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
-use redis::{pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult, Value};
+use redis::{pipe, AsyncCommands};
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
-use crate::{DateTime, StdResult};
 
-const STREAM_KEY: &str = "streams::battles";
 const STREAM_V2_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
 
@@ -30,19 +28,10 @@ pub async fn push_sample_points(
             ("n_battles", point.n_battles as i64),
             ("n_wins", point.n_wins as i64),
             ("timestamp", point.timestamp.timestamp()),
+            ("is_test", if point.is_test { 1 } else { 0 }),
         ];
         pipeline
             .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", items)
-            .ignore();
-    }
-
-    // The following part is deprecated:
-    let points: StdResult<Vec<Vec<u8>>, rmp_serde::encode::Error> =
-        points.iter().map(rmp_serde::to_vec).collect();
-    let points = points.context("failed to serialize the battles")?;
-    for point in points {
-        pipeline
-            .xadd_maxlen(STREAM_KEY, maxlen, "*", &[("b", point)])
             .ignore();
     }
 
@@ -54,7 +43,7 @@ pub async fn push_sample_points(
 
 #[derive(Clone)]
 pub struct Dataset {
-    pub sample: Vec<(DateTime, SamplePoint)>,
+    pub sample: Vec<SamplePoint>,
     pub baseline_loss: f64,
     pub redis: MultiplexedConnection,
 
@@ -108,9 +97,9 @@ impl Dataset {
 
 /// Calculate the loss on the constant model that always predicts `0.5`.
 #[tracing::instrument(skip_all)]
-fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
+fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
     let mut loss = BCELoss::default();
-    for (_, point) in sample {
+    for point in sample {
         if point.is_test {
             loss.push_sample(
                 0.5,
@@ -127,7 +116,7 @@ fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
 async fn load_sample(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
-) -> crate::Result<(String, Vec<(DateTime, SamplePoint)>)> {
+) -> crate::Result<(String, Vec<SamplePoint>)> {
     let mut sample = Vec::new();
     let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
 
@@ -151,18 +140,18 @@ async fn load_sample(
 async fn refresh_sample(
     redis: &mut MultiplexedConnection,
     last_id: &str,
-    sample: &mut Vec<(DateTime, SamplePoint)>,
+    sample: &mut Vec<SamplePoint>,
     time_span: Duration,
 ) -> crate::Result<Option<(usize, String)>> {
     // Remove the expired points.
     let expire_time = Utc::now() - time_span;
-    sample.retain(|(timestamp, _)| timestamp > &expire_time);
+    sample.retain(|point| point.timestamp > expire_time);
 
     // Fetch new points.
     let options = StreamReadOptions::default().count(PAGE_SIZE);
     #[allow(clippy::type_complexity)]
-    let mut reply: Vec<Option<((), Vec<Option<(String, SamplePoint)>>)>> = redis
-        .xread_options(&[STREAM_KEY], &[&last_id], &options)
+    let mut reply: Vec<Option<((), Vec<Option<(String, HashMap<String, i64>)>>)>> = redis
+        .xread_options(&[STREAM_V2_KEY], &[&last_id], &options)
         .await?;
     let (_, entries) = reply
         .pop()
@@ -173,53 +162,41 @@ async fn refresh_sample(
         .map(|entry| entry.as_ref().unwrap())
         .map(|(id, _)| (entries.len(), id.clone()));
     for entry in entries.into_iter() {
-        let (id, point) = entry.expect("wrapping `Option` is always `Some`");
-        sample.push((parse_entry_id(&id)?, point));
+        let (_, point) = entry.expect("wrapping `Option` is always `Some`");
+        sample.push(point.try_into()?);
     }
     tracing::debug!(n_points = result.as_ref().map(|result| result.0));
     Ok(result)
 }
 
-impl FromRedisValue for SamplePoint {
-    fn from_redis_value(value: &Value) -> RedisResult<Self> {
-        let mut map = value.as_map_iter().ok_or_else(|| {
-            RedisError::from((
-                ErrorKind::TypeError,
-                "expected a map-compatible type",
-                format!("{:?}", value),
-            ))
-        })?;
-        let (_, value) = map.next().ok_or_else(|| {
-            RedisError::from((
-                ErrorKind::TypeError,
-                "expected a non-empty map",
-                format!("{:?}", value),
-            ))
-        })?;
-        let value = if let Value::Data(value) = value {
-            value
-        } else {
-            return Err(RedisError::from((
-                ErrorKind::TypeError,
-                "expected a binary data",
-                format!("{:?}", value),
-            )));
-        };
-        rmp_serde::from_read_ref(value).map_err(|error| {
-            RedisError::from((
-                ErrorKind::TypeError,
-                "failed to deserialize",
-                format!("{:?}", error),
-            ))
-        })
-    }
-}
+impl TryFrom<HashMap<String, i64>> for SamplePoint {
+    type Error = anyhow::Error;
 
-/// Parse Redis stream entry ID.
-fn parse_entry_id(id: &str) -> crate::Result<DateTime> {
-    let millis = id
-        .split_once("-")
-        .ok_or_else(|| anyhow!("unexpected stream entry ID"))?
-        .0;
-    Ok(Utc.timestamp_millis(i64::from_str(millis)?))
+    fn try_from(mut map: HashMap<String, i64>) -> crate::Result<Self> {
+        let point = Self {
+            account_id: map
+                .remove("account_id")
+                .ok_or_else(|| anyhow!("missing `account_id`"))?
+                .try_into()?,
+            tank_id: map
+                .remove("tank_id")
+                .ok_or_else(|| anyhow!("missing `tank_id`"))?
+                .try_into()?,
+            is_test: map.remove("is_test").unwrap_or(0) != 0,
+            n_battles: map
+                .remove("n_battles")
+                .ok_or_else(|| anyhow!("missing `n_battles`"))?
+                .try_into()?,
+            n_wins: map
+                .remove("n_wins")
+                .ok_or_else(|| anyhow!("missing `n_wins`"))?
+                .try_into()?,
+            timestamp: Utc.timestamp(
+                map.remove("timestamp")
+                    .ok_or_else(|| anyhow!("missing `timestamp`"))?,
+                0,
+            ),
+        };
+        Ok(point)
+    }
 }
