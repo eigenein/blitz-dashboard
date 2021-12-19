@@ -112,7 +112,11 @@ fn calculate_baseline_loss(sample: &[(DateTime, SamplePoint)]) -> f64 {
     let mut loss = BCELoss::default();
     for (_, point) in sample {
         if point.is_test {
-            loss.push_sample(0.5, point.n_wins as f64 / point.n_battles as f64);
+            loss.push_sample(
+                0.5,
+                point.n_wins as f64 / point.n_battles as f64,
+                point.n_battles,
+            );
         }
     }
     loss.finalise()

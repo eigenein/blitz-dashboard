@@ -147,7 +147,9 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
         let label = point.n_wins as f64 / point.n_battles as f64;
 
         if !point.is_test {
-            losses_builder.train.push_sample(prediction, label);
+            losses_builder
+                .train
+                .push_sample(prediction, label, point.n_battles);
             make_gradient_descent_step(
                 factors.account,
                 factors.vehicle,
@@ -157,7 +159,9 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
             );
             model.touch_account(point.account_id);
         } else {
-            losses_builder.test.push_sample(prediction, label);
+            losses_builder
+                .test
+                .push_sample(prediction, label, point.n_battles);
         }
     }
 
