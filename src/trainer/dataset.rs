@@ -22,16 +22,18 @@ pub async fn push_sample_points(
     let maxlen = StreamMaxlen::Approx(stream_size);
 
     for point in points.iter() {
-        let items = &[
+        let mut items = vec![
             ("account_id", point.account_id as i64),
             ("tank_id", point.tank_id as i64),
             ("n_battles", point.n_battles as i64),
-            ("n_wins", point.n_wins as i64),
+            ("n_wins", point.n_wins as i64), // TODO: only insert `is_win = true`.
             ("timestamp", point.timestamp.timestamp()),
-            ("is_test", if point.is_test { 1 } else { 0 }),
         ];
+        if point.is_test {
+            items.push(("is_test", 1));
+        }
         pipeline
-            .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", items)
+            .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", &items)
             .ignore();
     }
 
