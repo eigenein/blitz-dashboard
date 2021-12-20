@@ -282,14 +282,20 @@ impl Crawler {
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
                 self.metrics.lock().await.n_battles += n_battles;
-                points.push(SamplePoint {
-                    account_id,
-                    tank_id,
-                    n_battles,
-                    n_wins,
-                    is_test: fastrand::usize(0..100) < opts.test_percentage,
-                    timestamp: tank.statistics.base.last_battle_time,
-                });
+                let is_test = fastrand::usize(0..100) < opts.test_percentage;
+                let timestamp = tank.statistics.base.last_battle_time;
+                for i in 0..n_battles {
+                    let is_win = i < n_wins;
+                    points.push(SamplePoint {
+                        account_id,
+                        tank_id,
+                        n_battles: 1,
+                        n_wins: if is_win { 1 } else { 0 },
+                        is_test,
+                        is_win,
+                        timestamp,
+                    });
+                }
             }
         }
 

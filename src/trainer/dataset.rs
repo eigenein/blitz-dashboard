@@ -22,13 +22,22 @@ pub async fn push_sample_points(
     let maxlen = StreamMaxlen::Approx(stream_size);
 
     for point in points.iter() {
+        debug_assert!(point.n_battles > 0);
+        debug_assert!(point.n_wins >= 0);
         let mut items = vec![
             ("account_id", point.account_id as i64),
             ("tank_id", point.tank_id as i64),
-            ("n_battles", point.n_battles as i64),
-            ("n_wins", point.n_wins as i64), // TODO: only insert `is_win = true`.
             ("timestamp", point.timestamp.timestamp()),
         ];
+        if point.n_battles > 1 {
+            items.push(("n_battles", point.n_battles as i64));
+        }
+        if point.n_wins > 0 {
+            items.push(("n_wins", point.n_wins as i64));
+        }
+        if point.is_win {
+            items.push(("is_win", 1));
+        }
         if point.is_test {
             items.push(("is_test", 1));
         }
@@ -184,15 +193,16 @@ impl TryFrom<HashMap<String, i64>> for SamplePoint {
                 .remove("tank_id")
                 .ok_or_else(|| anyhow!("missing `tank_id`"))?
                 .try_into()?,
+            is_win: map.remove("is_win").unwrap_or(0) != 0,
             is_test: map.remove("is_test").unwrap_or(0) != 0,
-            n_battles: map
-                .remove("n_battles")
-                .ok_or_else(|| anyhow!("missing `n_battles`"))?
-                .try_into()?,
-            n_wins: map
-                .remove("n_wins")
-                .ok_or_else(|| anyhow!("missing `n_wins`"))?
-                .try_into()?,
+            n_battles: match map.remove("n_battles") {
+                Some(n_battles) => n_battles.try_into()?,
+                None => 1,
+            },
+            n_wins: match map.remove("n_wins") {
+                Some(n_wins) => n_wins.try_into()?,
+                None => 0,
+            },
             timestamp: Utc.timestamp(
                 map.remove("timestamp")
                     .ok_or_else(|| anyhow!("missing `timestamp`"))?,
