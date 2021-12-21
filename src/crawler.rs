@@ -286,17 +286,20 @@ impl Crawler {
                 let timestamp = tank.statistics.base.last_battle_time;
                 for i in 0..n_battles {
                     let is_win = i < n_wins;
-                    points.push(
-                        SamplePointBuilder::default()
-                            .timestamp(timestamp)
-                            .account_id(account_id)
-                            .tank_id(tank_id)
-                            .n_battles(1)
-                            .n_wins(if is_win { 1 } else { 0 })
-                            .set_win(is_win)
-                            .set_test(is_test)
-                            .build()?,
-                    );
+                    let mut builder = SamplePointBuilder::default();
+                    builder
+                        .timestamp(timestamp)
+                        .account_id(account_id)
+                        .tank_id(tank_id)
+                        .n_battles(1)
+                        .n_wins(if is_win { 1 } else { 0 });
+                    if is_win {
+                        builder.win();
+                    }
+                    if is_test {
+                        builder.test();
+                    }
+                    points.push(builder.build()?);
                 }
             }
         }

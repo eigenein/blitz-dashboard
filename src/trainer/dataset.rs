@@ -1,10 +1,12 @@
-use std::collections::HashMap;
-
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
-use redis::{pipe, AsyncCommands};
+use redis::{
+    from_redis_value, pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult,
+    Value,
+};
+use std::any::type_name;
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
@@ -163,56 +165,103 @@ async fn refresh_sample(
     sample.retain(|point| point.timestamp > expire_time);
 
     // Fetch new points.
-    let options = StreamReadOptions::default().count(PAGE_SIZE);
-    #[allow(clippy::type_complexity)]
-    let mut reply: Vec<Option<((), Vec<Option<(String, HashMap<String, i64>)>>)>> = redis
-        .xread_options(&[STREAM_V2_KEY], &[&last_id], &options)
+    type Fields = KeyValueVec<String, i64>;
+    type Entry = TwoTuple<String, Fields>;
+    type StreamResponse = TwoTuple<(), Vec<Entry>>;
+    type XReadResponse = Vec<StreamResponse>;
+    let mut response: XReadResponse = redis
+        .xread_options(
+            &[STREAM_V2_KEY],
+            &[&last_id],
+            &StreamReadOptions::default().count(1),
+        )
         .await?;
-    let (_, entries) = reply
-        .pop()
-        .unwrap_or_else(|| Some(((), Vec::new())))
-        .expect("wrapping `Option` is always `Some`");
-    let result = entries
-        .last()
-        .map(|entry| entry.as_ref().unwrap())
-        .map(|(id, _)| (entries.len(), id.clone()));
-    for entry in entries.into_iter() {
-        let (_, point) = entry.expect("wrapping `Option` is always `Some`");
-        sample.push(point.try_into()?);
+    match response.pop() {
+        Some(TwoTuple(_, entries)) => {
+            let result = entries
+                .last()
+                .map(|TwoTuple(id, _)| (entries.len(), id.clone()));
+            for TwoTuple(_, point) in entries.into_iter() {
+                sample.push(point.try_into()?);
+            }
+            Ok(result)
+        }
+        None => Ok(None),
     }
-    tracing::debug!(n_points = result.as_ref().map(|result| result.0));
-    Ok(result)
 }
 
-impl TryFrom<HashMap<String, i64>> for SamplePoint {
+impl TryFrom<KeyValueVec<String, i64>> for SamplePoint {
     type Error = anyhow::Error;
 
-    fn try_from(mut map: HashMap<String, i64>) -> crate::Result<Self> {
+    fn try_from(map: KeyValueVec<String, i64>) -> crate::Result<Self> {
         let mut builder = SamplePointBuilder::default();
-        builder.timestamp_secs(
-            map.remove("timestamp")
-                .ok_or_else(|| anyhow!("missing `timestamp`"))?,
-        );
-        builder.account_id(
-            map.remove("account_id")
-                .ok_or_else(|| anyhow!("missing `account_id`"))?
-                .try_into()?,
-        );
-        builder.tank_id(
-            map.remove("tank_id")
-                .ok_or_else(|| anyhow!("missing `tank_id`"))?
-                .try_into()?,
-        );
-        builder.set_win(map.remove("is_win") == Some(1));
-        builder.set_test(map.remove("is_test") == Some(1));
-        builder.n_battles(match map.remove("n_battles") {
-            Some(n_battles) => n_battles.try_into()?,
-            None => 1,
-        });
-        builder.n_wins(match map.remove("n_wins") {
-            Some(n_wins) => n_wins.try_into()?,
-            None => 0,
-        });
+        for (key, value) in map.0.into_iter() {
+            match key.as_str() {
+                "timestamp" => {
+                    builder.timestamp_secs(value);
+                }
+                "account_id" => {
+                    builder.account_id(value.try_into()?);
+                }
+                "tank_id" => {
+                    builder.tank_id(value.try_into()?);
+                }
+                "is_win" if value == 1 => {
+                    builder.win();
+                }
+                "is_test" if value == 1 => {
+                    builder.test();
+                }
+                "n_battles" => {
+                    builder.n_battles(value.try_into()?);
+                }
+                "n_wins" => {
+                    builder.n_wins(value.try_into()?);
+                }
+                _ => {}
+            }
+        }
         builder.build()
+    }
+}
+
+struct KeyValueVec<K, V>(pub Vec<(K, V)>);
+
+impl<K: FromRedisValue, V: FromRedisValue> FromRedisValue for KeyValueVec<K, V> {
+    #[tracing::instrument(skip_all)]
+    fn from_redis_value(value: &Value) -> RedisResult<Self> {
+        let inner = value
+            .as_map_iter()
+            .ok_or_else(|| {
+                RedisError::from((
+                    ErrorKind::TypeError,
+                    "Response was of incompatible type",
+                    format!("{:?} (response was {:?})", "Not hashmap compatible", value),
+                ))
+            })?
+            .map(|(key, value)| Ok((from_redis_value(key)?, from_redis_value(value)?)))
+            .collect::<RedisResult<Vec<(K, V)>>>()?;
+        tracing::debug!(n_items = inner.len(), type_ = type_name::<Self>());
+        Ok(Self(inner))
+    }
+}
+
+/// Work around the bug in the `redis` crate.
+/// https://github.com/mitsuhiko/redis-rs/issues/334
+struct TwoTuple<T1, T2>(pub T1, pub T2);
+
+impl<T1: FromRedisValue, T2: FromRedisValue> FromRedisValue for TwoTuple<T1, T2> {
+    fn from_redis_value(value: &Value) -> RedisResult<Self> {
+        match value {
+            Value::Bulk(entries) if entries.len() == 2 => Ok(Self(
+                from_redis_value(&entries[0])?,
+                from_redis_value(&entries[1])?,
+            )),
+            _ => Err(RedisError::from((
+                ErrorKind::TypeError,
+                "Response was of incompatible type",
+                format!("{:?} (response was {:?})", "Not a 2-tuple", value),
+            ))),
+        }
     }
 }

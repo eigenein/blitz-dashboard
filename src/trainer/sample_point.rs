@@ -86,21 +86,13 @@ impl SamplePointBuilder {
         self
     }
 
-    pub fn set_win(&mut self, is_win: bool) -> &mut Self {
-        if is_win {
-            self.flags.insert(SamplePointFlags::Win);
-        } else {
-            self.flags.remove(SamplePointFlags::Win);
-        }
+    pub fn win(&mut self) -> &mut Self {
+        self.flags.insert(SamplePointFlags::Win);
         self
     }
 
-    pub fn set_test(&mut self, is_test: bool) -> &mut Self {
-        if is_test {
-            self.flags.insert(SamplePointFlags::Test);
-        } else {
-            self.flags.remove(SamplePointFlags::Test);
-        }
+    pub fn test(&mut self) -> &mut Self {
+        self.flags.insert(SamplePointFlags::Test);
         self
     }
 
@@ -114,12 +106,8 @@ impl SamplePointBuilder {
                 .ok_or_else(|| anyhow!("account ID is missing"))?,
             tank_id: self.tank_id.ok_or_else(|| anyhow!("tank ID is missing"))?,
             flags: self.flags,
-            n_battles: self
-                .n_battles
-                .ok_or_else(|| anyhow!("number of battles is missing"))?,
-            n_wins: self
-                .n_wins
-                .ok_or_else(|| anyhow!("number of wins is missing"))?,
+            n_battles: self.n_battles.unwrap_or(1),
+            n_wins: self.n_wins.unwrap_or(0),
         };
         Ok(point)
     }
