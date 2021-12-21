@@ -146,7 +146,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
         let prediction = predict_probability(factors.vehicle, factors.account);
         let label = point.n_wins as f64 / point.n_battles as f64;
 
-        if !point.is_test {
+        if !point.is_test() {
             losses_builder
                 .train
                 .push_sample(prediction, label, point.n_battles);

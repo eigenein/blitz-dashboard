@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Context};
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{Duration, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{pipe, AsyncCommands};
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
-use crate::trainer::sample_point::SamplePoint;
+use crate::trainer::sample_point::{SamplePoint, SamplePointBuilder};
 
 const STREAM_V2_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
@@ -35,10 +35,10 @@ pub async fn push_sample_points(
         if point.n_wins > 0 {
             items.push(("n_wins", point.n_wins as i64));
         }
-        if point.is_win {
+        if point.is_win() {
             items.push(("is_win", 1));
         }
-        if point.is_test {
+        if point.is_test() {
             items.push(("is_test", 1));
         }
         pipeline
@@ -111,7 +111,7 @@ impl Dataset {
 fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
     let mut loss = BCELoss::default();
     for point in sample {
-        if point.is_test {
+        if point.is_test() {
             loss.push_sample(
                 0.5,
                 point.n_wins as f64 / point.n_battles as f64,
@@ -188,31 +188,31 @@ impl TryFrom<HashMap<String, i64>> for SamplePoint {
     type Error = anyhow::Error;
 
     fn try_from(mut map: HashMap<String, i64>) -> crate::Result<Self> {
-        let point = Self {
-            account_id: map
-                .remove("account_id")
+        let mut builder = SamplePointBuilder::default();
+        builder.timestamp_secs(
+            map.remove("timestamp")
+                .ok_or_else(|| anyhow!("missing `timestamp`"))?,
+        );
+        builder.account_id(
+            map.remove("account_id")
                 .ok_or_else(|| anyhow!("missing `account_id`"))?
                 .try_into()?,
-            tank_id: map
-                .remove("tank_id")
+        );
+        builder.tank_id(
+            map.remove("tank_id")
                 .ok_or_else(|| anyhow!("missing `tank_id`"))?
                 .try_into()?,
-            is_win: map.remove("is_win").unwrap_or(0) != 0,
-            is_test: map.remove("is_test").unwrap_or(0) != 0,
-            n_battles: match map.remove("n_battles") {
-                Some(n_battles) => n_battles.try_into()?,
-                None => 1,
-            },
-            n_wins: match map.remove("n_wins") {
-                Some(n_wins) => n_wins.try_into()?,
-                None => 0,
-            },
-            timestamp: Utc.timestamp(
-                map.remove("timestamp")
-                    .ok_or_else(|| anyhow!("missing `timestamp`"))?,
-                0,
-            ),
-        };
-        Ok(point)
+        );
+        builder.set_win(map.remove("is_win") == Some(1));
+        builder.set_test(map.remove("is_test") == Some(1));
+        builder.n_battles(match map.remove("n_battles") {
+            Some(n_battles) => n_battles.try_into()?,
+            None => 1,
+        });
+        builder.n_wins(match map.remove("n_wins") {
+            Some(n_wins) => n_wins.try_into()?,
+            None => 0,
+        });
+        builder.build()
     }
 }

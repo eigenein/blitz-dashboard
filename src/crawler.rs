@@ -21,7 +21,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::dataset::push_sample_points;
-use crate::trainer::sample_point::SamplePoint;
+use crate::trainer::sample_point::SamplePointBuilder;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -286,15 +286,17 @@ impl Crawler {
                 let timestamp = tank.statistics.base.last_battle_time;
                 for i in 0..n_battles {
                     let is_win = i < n_wins;
-                    points.push(SamplePoint {
-                        account_id,
-                        tank_id,
-                        n_battles: 1,
-                        n_wins: if is_win { 1 } else { 0 },
-                        is_test,
-                        is_win,
-                        timestamp,
-                    });
+                    points.push(
+                        SamplePointBuilder::default()
+                            .timestamp(timestamp)
+                            .account_id(account_id)
+                            .tank_id(tank_id)
+                            .n_battles(1)
+                            .n_wins(if is_win { 1 } else { 0 })
+                            .set_win(is_win)
+                            .set_test(is_test)
+                            .build()?,
+                    );
                 }
             }
         }
