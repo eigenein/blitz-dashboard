@@ -396,8 +396,8 @@
         "module_id": 19475,
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          1300,
-          5908
+          5908,
+          1300
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -10236,7 +10236,7 @@
       "speed_forward": 48,
       "suspension": {
         "load_limit": 34500,
-        "name": "NVSS T66",
+        "name": "HVSS T66",
         "tier": 5,
         "traverse_speed": 37,
         "weight": 8300
@@ -10296,7 +10296,7 @@
       "2594": {
         "is_default": true,
         "module_id": 2594,
-        "name": "NVSS T66",
+        "name": "HVSS T66",
         "next_modules": [
           2850
         ],
@@ -10318,7 +10318,7 @@
       "2850": {
         "is_default": false,
         "module_id": 2850,
-        "name": "NVSS T80",
+        "name": "HVSS T80",
         "next_modules": null,
         "next_tanks": null,
         "price_credit": 0,
@@ -18663,8 +18663,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -22655,7 +22655,7 @@
       "shells": [
         {
           "damage": 200,
-          "penetration": 126,
+          "penetration": 128,
           "type": "ARMOR_PIERCING"
         },
         {
@@ -25426,9 +25426,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          1409,
           3713,
-          8065
+          8065,
+          1409
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -34732,9 +34732,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34813,8 +34813,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -37019,6 +37019,167 @@
     ],
     "type": "mediumTank"
   },
+  "24609": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 155,
+          "rear": 45,
+          "sides": 90
+        },
+        "turret": {
+          "front": 250,
+          "rear": 50,
+          "sides": 110
+        }
+      },
+      "battle_level_range_max": 11,
+      "battle_level_range_min": 10,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "PLT-27",
+        "power": 675,
+        "tier": 9,
+        "weight": 1145
+      },
+      "engine_id": 26661,
+      "firepower": 64,
+      "gun": {
+        "aim_time": 4.12,
+        "caliber": 110,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "fire_rate": 6.32,
+        "move_down_arc": 10,
+        "move_up_arc": 20,
+        "name": "110 mm EXP-7",
+        "reload_time": 9.5,
+        "tier": 10,
+        "traverse_speed": 35.0,
+        "weight": 1630
+      },
+      "gun_id": 265252,
+      "hp": 2350,
+      "hull_hp": 1750,
+      "hull_weight": 20455,
+      "is_default": true,
+      "maneuverability": 40,
+      "max_ammo": 40,
+      "max_weight": 47000,
+      "profile_id": "26661-263203-263458-265252",
+      "protection": 75,
+      "shells": [
+        {
+          "damage": 380,
+          "penetration": 258,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 330,
+          "penetration": 310,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 500,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 85,
+      "signal_range": null,
+      "speed_backward": 18,
+      "speed_forward": 45,
+      "suspension": {
+        "load_limit": 47000,
+        "name": "XHM-1500-2",
+        "tier": 9,
+        "traverse_speed": 29,
+        "weight": 11000
+      },
+      "suspension_id": 263458,
+      "turret": {
+        "hp": 600,
+        "name": "Concept 1B",
+        "tier": 9,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 27,
+        "view_range": 250,
+        "weight": 9000
+      },
+      "turret_id": 263203,
+      "weight": 43530
+    },
+    "description": "В конце 1960-х — начале 1970-х годов в рамках программы по разработке нового основного боевого танка прорабатывались различные компоновочные решения. Одним из них был вариант с низкопрофильной башней и ручным заряжанием 110-мм нарезной пушки c высокой баллистикой, известный как Concept № 1B. В металле не изготавливался.",
+    "engines": [
+      26661
+    ],
+    "guns": [
+      265252
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/A128_Concept_1b.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/A128_Concept_1b.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "263203": {
+        "is_default": true,
+        "module_id": 263203,
+        "name": "Concept 1B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "263458": {
+        "is_default": true,
+        "module_id": 263458,
+        "name": "XHM-1500-2",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "265252": {
+        "is_default": true,
+        "module_id": 265252,
+        "name": "110 mm EXP-7",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "26661": {
+        "is_default": true,
+        "module_id": 26661,
+        "name": "PLT-27",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Concept 1B",
+    "nation": "usa",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      263458
+    ],
+    "tank_id": 24609,
+    "tier": 10,
+    "turrets": [
+      263203
+    ],
+    "type": "heavyTank"
+  },
   "2561": {
     "cost": {
       "price_credit": 915000,
@@ -38820,8 +38981,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -41460,8 +41621,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -44521,8 +44682,8 @@
           7188
         ],
         "next_tanks": [
-          7697,
-          11537
+          11537,
+          7697
         ],
         "price_credit": 0,
         "price_xp": 16500,
@@ -52406,8 +52567,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -61081,7 +61242,7 @@
         "fire_rate": 12.24,
         "move_down_arc": 7,
         "move_up_arc": 15,
-        "name": "8,8 cm Pak 43 L/71",
+        "name": "8,8 cm Pak 43 L/71 A",
         "reload_time": 4.9,
         "tier": 8,
         "traverse_speed": 30.63,
@@ -61166,7 +61327,7 @@
       "14868": {
         "is_default": true,
         "module_id": 14868,
-        "name": "8,8 cm Pak 43 L/71",
+        "name": "8,8 cm Pak 43 L/71 A",
         "next_modules": [
           15892
         ],
@@ -70481,7 +70642,7 @@
         "fire_rate": 12.24,
         "move_down_arc": 7,
         "move_up_arc": 15,
-        "name": "8,8 cm Pak 43 L/71",
+        "name": "8,8 cm Pak 43 L/71 A",
         "reload_time": 4.9,
         "tier": 8,
         "traverse_speed": 30.63,
@@ -70566,7 +70727,7 @@
       "14868": {
         "is_default": true,
         "module_id": 14868,
-        "name": "8,8 cm Pak 43 L/71",
+        "name": "8,8 cm Pak 43 L/71 A",
         "next_modules": [
           15892
         ],
@@ -73023,7 +73184,7 @@
       "shells": [
         {
           "damage": 200,
-          "penetration": 126,
+          "penetration": 128,
           "type": "ARMOR_PIERCING"
         },
         {
@@ -74557,8 +74718,8 @@
         "name": "76 mm AT Gun M1A2",
         "next_modules": null,
         "next_tanks": [
-          11553,
-          7201
+          7201,
+          11553
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -86828,7 +86989,7 @@
       "battle_level_range_min": 10,
       "engine": {
         "fire_chance": 0.2,
-        "name": "Rolls-Royce Meteor Mk. 12",
+        "name": "Rolls-Royce Meteor Mk. 12",
         "power": 800,
         "tier": 10,
         "weight": 744
@@ -86859,7 +87020,7 @@
       "max_ammo": 15,
       "max_weight": 64000,
       "profile_id": "13908-16213-17747-20306",
-      "protection": 53,
+      "protection": 48,
       "shells": [
         {
           "damage": 930,
@@ -86928,7 +87089,7 @@
       "16213": {
         "is_default": true,
         "module_id": 16213,
-        "name": "Rolls-Royce Meteor Mk. 12",
+        "name": "Rolls-Royce Meteor Mk. 12",
         "next_modules": null,
         "next_tanks": null,
         "price_credit": 0,
@@ -86971,6 +87132,167 @@
       17747
     ],
     "type": "AT-SPG"
+  },
+  "9345": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 70,
+          "rear": 30,
+          "sides": 40
+        },
+        "turret": {
+          "front": 110,
+          "rear": 35,
+          "sides": 45
+        }
+      },
+      "battle_level_range_max": 8,
+      "battle_level_range_min": 7,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "DB 605 A",
+        "power": 500,
+        "tier": 7,
+        "weight": 756
+      },
+      "engine_id": 14213,
+      "firepower": 47,
+      "gun": {
+        "aim_time": 3.08,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.42,
+        "fire_rate": 6.32,
+        "move_down_arc": 10,
+        "move_up_arc": 15,
+        "name": "10,5 cm kan m/34 A",
+        "reload_time": 9.5,
+        "tier": 7,
+        "traverse_speed": 33.25,
+        "weight": 1245
+      },
+      "gun_id": 13444,
+      "hp": 1200,
+      "hull_hp": 880,
+      "hull_weight": 11815,
+      "is_default": true,
+      "maneuverability": 61,
+      "max_ammo": 35,
+      "max_weight": 30000,
+      "profile_id": "13444-13955-14210-14213",
+      "protection": 33,
+      "shells": [
+        {
+          "damage": 290,
+          "penetration": 155,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 250,
+          "penetration": 194,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 380,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 52,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 55,
+      "suspension": {
+        "load_limit": 30000,
+        "name": "Свей",
+        "tier": 7,
+        "traverse_speed": 42,
+        "weight": 6000
+      },
+      "suspension_id": 14210,
+      "turret": {
+        "hp": 320,
+        "name": "Свей",
+        "tier": 7,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 38,
+        "view_range": 240,
+        "weight": 5200
+      },
+      "turret_id": 13955,
+      "weight": 25266
+    },
+    "description": "В предках у этого бойца — кусачий «швед» Leo. От него Свей унаследовал лучшие качества: достойную манёвренность и высокий разовый урон. ",
+    "engines": [
+      14213
+    ],
+    "guns": [
+      13444
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/S13_Leo_NY.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/S13_Leo_NY.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "13444": {
+        "is_default": true,
+        "module_id": 13444,
+        "name": "10,5 cm kan m/34 A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "13955": {
+        "is_default": true,
+        "module_id": 13955,
+        "name": "Свей",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "14210": {
+        "is_default": true,
+        "module_id": 14210,
+        "name": "Свей",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "14213": {
+        "is_default": true,
+        "module_id": 14213,
+        "name": "DB 605 A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Свей",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      14210
+    ],
+    "tank_id": 9345,
+    "tier": 7,
+    "turrets": [
+      13955
+    ],
+    "type": "mediumTank"
   },
   "9489": {
     "cost": {
@@ -87871,7 +88193,7 @@
         },
         "turret": {
           "front": 32,
-          "rear": 25,
+          "rear": 32,
           "sides": 25
         }
       },
