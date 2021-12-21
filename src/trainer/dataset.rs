@@ -133,7 +133,11 @@ async fn load_sample(
 
     while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
         Some((n_points, new_pointer)) => {
-            tracing::info!(n_points = sample.len(), pointer = new_pointer.as_str());
+            tracing::info!(
+                n_points = sample.len(),
+                pointer = new_pointer.as_str(),
+                "loading…",
+            );
             pointer = new_pointer;
             n_points >= PAGE_SIZE
         }
