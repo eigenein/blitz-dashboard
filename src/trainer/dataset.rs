@@ -136,7 +136,8 @@ async fn load_sample(
     while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
         Some((n_points, new_pointer)) => {
             tracing::info!(
-                n_points = sample.len(),
+                n_points_read = n_points,
+                n_points_total = sample.len(),
                 pointer = new_pointer.as_str(),
                 "loading…",
             );
