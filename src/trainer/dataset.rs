@@ -173,7 +173,7 @@ async fn refresh_sample(
         .xread_options(
             &[STREAM_V2_KEY],
             &[&last_id],
-            &StreamReadOptions::default().count(1),
+            &StreamReadOptions::default().count(PAGE_SIZE),
         )
         .await?;
     match response.pop() {
