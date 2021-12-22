@@ -24,6 +24,7 @@ mod loss;
 pub mod math;
 pub mod model;
 pub mod sample_point;
+pub mod stream_entry;
 
 #[tracing::instrument(
     skip_all,
