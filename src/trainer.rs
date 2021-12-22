@@ -144,24 +144,25 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
             .await?;
 
         let prediction = predict_probability(factors.vehicle, factors.account);
-        let label = point.n_wins as f64 / point.n_battles as f64;
+        let is_win = point.is_win();
 
         if !point.is_test() {
-            losses_builder
-                .train
-                .push_sample(prediction, label, point.n_battles);
+            losses_builder.train.push_sample(prediction, is_win);
+            let residual_error = if is_win {
+                1.0 - prediction
+            } else {
+                -prediction
+            };
             make_gradient_descent_step(
                 factors.account,
                 factors.vehicle,
-                label - prediction,
+                residual_error,
                 regularization,
                 learning_rate,
             );
             model.touch_account(point.account_id);
         } else {
-            losses_builder
-                .test
-                .push_sample(prediction, label, point.n_battles);
+            losses_builder.test.push_sample(prediction, is_win);
         }
     }
 

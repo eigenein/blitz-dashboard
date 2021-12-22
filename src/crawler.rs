@@ -290,9 +290,7 @@ impl Crawler {
                     builder
                         .timestamp(timestamp)
                         .account_id(account_id)
-                        .tank_id(tank_id)
-                        .n_battles(1)
-                        .n_wins(if is_win { 1 } else { 0 });
+                        .tank_id(tank_id);
                     if is_win {
                         builder.win();
                     }

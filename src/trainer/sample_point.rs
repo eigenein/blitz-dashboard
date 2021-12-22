@@ -11,12 +11,6 @@ pub struct SamplePoint {
     pub tank_id: i32,
     pub flags: BitFlags<SamplePointFlags>,
     pub timestamp: DateTime,
-
-    /// Being phased out.
-    pub n_battles: i32,
-
-    /// Being phased out.
-    pub n_wins: i32,
 }
 
 impl SamplePoint {
@@ -48,12 +42,6 @@ pub struct SamplePointBuilder {
     account_id: Option<i32>,
     tank_id: Option<i32>,
     flags: BitFlags<SamplePointFlags>,
-
-    /// Being phased out.
-    n_battles: Option<i32>,
-
-    /// Being phased out.
-    n_wins: Option<i32>,
 }
 
 impl SamplePointBuilder {
@@ -73,16 +61,6 @@ impl SamplePointBuilder {
 
     pub fn tank_id(&mut self, tank_id: i32) -> &mut Self {
         self.tank_id = Some(tank_id);
-        self
-    }
-
-    pub fn n_battles(&mut self, n_battles: i32) -> &mut Self {
-        self.n_battles = Some(n_battles);
-        self
-    }
-
-    pub fn n_wins(&mut self, n_wins: i32) -> &mut Self {
-        self.n_wins = Some(n_wins);
         self
     }
 
@@ -106,8 +84,6 @@ impl SamplePointBuilder {
                 .ok_or_else(|| anyhow!("account ID is missing"))?,
             tank_id: self.tank_id.ok_or_else(|| anyhow!("tank ID is missing"))?,
             flags: self.flags,
-            n_battles: self.n_battles.unwrap_or(1),
-            n_wins: self.n_wins.unwrap_or(0),
         };
         Ok(point)
     }

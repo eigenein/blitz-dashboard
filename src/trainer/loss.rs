@@ -7,15 +7,12 @@ pub struct BCELoss {
 
 impl BCELoss {
     #[inline]
-    pub fn push_sample(&mut self, prediction: f64, label: f64, weight: i32) {
-        self.n += weight;
-        let weight = weight as f64;
-        if label.abs() > f64::EPSILON {
-            self.loss -= weight * label * prediction.ln();
-        }
-        let inverse_label = 1.0 - label;
-        if inverse_label.abs() > f64::EPSILON {
-            self.loss -= weight * inverse_label * (1.0 - prediction).ln();
+    pub fn push_sample(&mut self, prediction: f64, is_win: bool) {
+        self.n += 1;
+        if is_win {
+            self.loss -= prediction.ln();
+        } else {
+            self.loss -= (1.0 - prediction).ln();
         }
     }
 

@@ -24,19 +24,11 @@ pub async fn push_sample_points(
     let maxlen = StreamMaxlen::Approx(stream_size);
 
     for point in points.iter() {
-        debug_assert!(point.n_battles > 0);
-        debug_assert!(point.n_wins >= 0);
         let mut items = vec![
             ("account_id", point.account_id as i64),
             ("tank_id", point.tank_id as i64),
             ("timestamp", point.timestamp.timestamp()),
         ];
-        if point.n_battles > 1 {
-            items.push(("n_battles", point.n_battles as i64));
-        }
-        if point.n_wins > 0 {
-            items.push(("n_wins", point.n_wins as i64));
-        }
         if point.is_win() {
             items.push(("is_win", 1));
         }
@@ -114,11 +106,7 @@ fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
     let mut loss = BCELoss::default();
     for point in sample {
         if point.is_test() {
-            loss.push_sample(
-                0.5,
-                point.n_wins as f64 / point.n_battles as f64,
-                point.n_battles,
-            );
+            loss.push_sample(0.5, point.is_win());
         }
     }
     loss.finalise()
@@ -183,7 +171,9 @@ async fn refresh_sample(
                 .last()
                 .map(|TwoTuple(id, _)| (entries.len(), id.clone()));
             for TwoTuple(_, point) in entries.into_iter() {
-                sample.push(point.try_into()?);
+                if let Some(point) = point.try_into()? {
+                    sample.push(point);
+                }
             }
             Ok(result)
         }
@@ -191,7 +181,7 @@ async fn refresh_sample(
     }
 }
 
-impl TryFrom<KeyValueVec<String, i64>> for SamplePoint {
+impl TryFrom<KeyValueVec<String, i64>> for Option<SamplePoint> {
     type Error = anyhow::Error;
 
     fn try_from(map: KeyValueVec<String, i64>) -> crate::Result<Self> {
@@ -213,16 +203,16 @@ impl TryFrom<KeyValueVec<String, i64>> for SamplePoint {
                 "is_test" if value == 1 => {
                     builder.test();
                 }
-                "n_battles" => {
-                    builder.n_battles(value.try_into()?);
+                "n_battles" if value != 0 && value != 1 => {
+                    return Ok(None);
                 }
-                "n_wins" => {
-                    builder.n_wins(value.try_into()?);
+                "n_wins" if value != 0 && value != 1 => {
+                    return Ok(None);
                 }
                 _ => {}
             }
         }
-        builder.build()
+        Ok(Some(builder.build()?))
     }
 }
 
