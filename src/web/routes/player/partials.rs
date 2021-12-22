@@ -151,6 +151,20 @@ pub fn render_tank_tr(
                 }
             }
 
+            @if let Some(predicted_win_rate) = predicted_win_rate {
+                @let predicted_wins_per_hour = predicted_win_rate * tank.battles_per_hour();
+                td.is-white-space-nowrap
+                    data-sort="predicted-wins-per-hour"
+                    data-value=(predicted_wins_per_hour)
+                {
+                    strong { (format!("{:.1}", predicted_wins_per_hour)) }
+                }
+            } @else {
+                td.has-text-centered data-sort="predicted-wins-per-hour" data-value="-1" {
+                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
+                }
+            }
+
             @let gold = 10 * tank.statistics.all.battles + vehicle.tier * tank.statistics.all.wins;
             td data-sort="gold" data-value=(gold) {
                 span.icon-text.is-flex-wrap-nowrap {

@@ -193,7 +193,7 @@ pub async fn get(
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="predicted-win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Предсказываемая вероятность победы этого игрока на этом танке прямо сейчас" { "PWP" } }
+                        span { abbr title="Предсказанная вероятность победы этого игрока на этом танке" { "WP" } }
                     }
                 }
             }
@@ -215,6 +215,14 @@ pub async fn get(
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Число побед в час, скорректированное на число проведенных боев" { "TWPH" } }
+                    }
+                }
+            }
+            th.is-white-space-nowrap {
+                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
+                a data-sort="predicted-wins-per-hour" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Предсказанное число побед в час этого игрока на этом танке" { "PWPH" } }
                     }
                 }
             }
