@@ -115,7 +115,9 @@ pub fn render_tank_tr(
                                 i.fas.fa-hourglass-half {}
                             }
                         }
-                        strong title=(predicted_win_rate) { (format!("{:.0}%", predicted_win_rate * 100.0)) }
+                        strong title=(predicted_win_rate) {
+                            (format!("{:.0}%", predicted_win_rate * 100.0))
+                        }
                     }
                 }
             } @else {
@@ -153,11 +155,19 @@ pub fn render_tank_tr(
 
             @if let Some(predicted_win_rate) = predicted_win_rate {
                 @let predicted_wins_per_hour = predicted_win_rate * tank.battles_per_hour();
-                td.is-white-space-nowrap
-                    data-sort="predicted-wins-per-hour"
-                    data-value=(predicted_wins_per_hour)
-                {
-                    strong { (format!("{:.1}", predicted_wins_per_hour)) }
+                td data-sort="predicted-wins-per-hour" data-value=(predicted_wins_per_hour) {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        @if tank.statistics.base.last_battle_time <= last_account_battle_time {
+                            span.icon.has-text-link { i.fas.fa-dice-d20 {} }
+                        } @else {
+                            span.icon.has-text-grey-light title="Робот еще не просканировал последние бои на этом танке" {
+                                i.fas.fa-hourglass-half {}
+                            }
+                        }
+                        strong title=(predicted_wins_per_hour) {
+                            (format!("{:.0}", predicted_wins_per_hour))
+                        }
+                    }
                 }
             } @else {
                 td.has-text-centered data-sort="predicted-wins-per-hour" data-value="-1" {
