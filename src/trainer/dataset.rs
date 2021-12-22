@@ -16,7 +16,7 @@ const STREAM_V2_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
 
 #[tracing::instrument(skip_all)]
-pub async fn push_sample_points(
+pub async fn push_stream_entries(
     redis: &mut MultiplexedConnection,
     points: &[SamplePoint],
     stream_size: usize,
@@ -36,13 +36,6 @@ pub async fn push_sample_points(
         if point.is_test() {
             items.push(("is_test", 1));
         }
-        tracing::trace!(
-            account_id = point.account_id,
-            tank_id = point.tank_id,
-            timestamp = point.timestamp.timestamp(),
-            flags = point.flags.bits(),
-            "xadd",
-        );
         pipeline
             .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", &items)
             .ignore();

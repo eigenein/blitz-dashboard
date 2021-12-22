@@ -20,7 +20,7 @@ use crate::database::{
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
-use crate::trainer::dataset::push_sample_points;
+use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::sample_point::SamplePointBuilder;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
@@ -244,7 +244,7 @@ impl Crawler {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_sample_points(account.id, &tanks, opts).await?;
+                    self.push_stream_entries(account.id, &tanks, opts).await?;
                 }
             }
         } else {
@@ -302,13 +302,13 @@ impl Crawler {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(n_tanks = tanks.len()))]
-    async fn push_sample_points(
+    async fn push_stream_entries(
         &self,
         account_id: i32,
         tanks: &[Tank],
         opts: &IncrementalOpts,
     ) -> crate::Result {
-        let mut points = Vec::new();
+        let mut entries = Vec::new();
 
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
@@ -333,13 +333,14 @@ impl Crawler {
                     if is_test {
                         builder.test();
                     }
-                    points.push(builder.build()?);
+                    entries.push(builder.build()?);
                 }
             }
         }
 
-        if !points.is_empty() {
-            push_sample_points(&mut self.redis.clone(), &points, opts.training_stream_size).await?;
+        if !entries.is_empty() {
+            push_stream_entries(&mut self.redis.clone(), &entries, opts.training_stream_size)
+                .await?;
         }
 
         Ok(())
