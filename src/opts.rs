@@ -144,6 +144,10 @@ pub struct CrawlAccountsOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_tasks: usize,
+
+    /// Crawl incrementally (experimental)
+    #[structopt(long)]
+    pub incremental: bool,
 }
 
 /// Trains the collaborative filtering model

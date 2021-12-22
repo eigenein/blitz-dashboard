@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use arc_swap::ArcSwap;
 use chrono::Utc;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
@@ -15,7 +15,7 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, CrawlerMetrics};
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
-    retrieve_tank_battle_count, retrieve_tank_ids,
+    retrieve_account, retrieve_tank_battle_count, retrieve_tank_ids,
 };
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
@@ -48,6 +48,16 @@ pub struct Crawler {
 pub struct IncrementalOpts {
     training_stream_size: usize,
     test_percentage: usize,
+}
+
+impl IncrementalOpts {
+    /// FIXME
+    pub fn hardcoded() -> Self {
+        Self {
+            test_percentage: 5,
+            training_stream_size: 1_000_000_000,
+        }
+    }
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -110,11 +120,32 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
-    let stream = stream::iter(opts.start_id..opts.end_id)
-        .map(BaseAccountInfo::empty)
-        .chunks(100)
-        .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None).await?;
+    let is_incremental = opts.incremental;
+    let stream = {
+        let database = database.clone();
+        stream::iter(opts.start_id..opts.end_id)
+            .map(Ok)
+            .try_filter_map(move |account_id| {
+                let database = database.clone();
+                async move {
+                    if !is_incremental {
+                        Ok(Some(BaseAccountInfo::empty(account_id)))
+                    } else {
+                        retrieve_account(&database, account_id).await
+                    }
+                }
+            })
+            .try_chunks(100)
+            .map_err(|error| anyhow!(error))
+    };
+    let crawler = Crawler::new(
+        api.clone(),
+        database,
+        redis,
+        opts.n_tasks,
+        is_incremental.then(IncrementalOpts::hardcoded),
+    )
+    .await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         crawler.metrics.clone(),
@@ -189,7 +220,11 @@ impl Crawler {
             return Ok(false);
         }
 
-        tracing::debug!(account_id = account.id, "crawling…");
+        tracing::debug!(
+            account_id = account.id,
+            since = account.last_battle_time.to_rfc3339().as_str(),
+            "crawling…",
+        );
         let statistics = self
             .get_updated_tanks_statistics(account.id, account.last_battle_time)
             .await?;
@@ -266,6 +301,7 @@ impl Crawler {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(n_tanks = tanks.len()))]
     async fn push_sample_points(
         &self,
         account_id: i32,
