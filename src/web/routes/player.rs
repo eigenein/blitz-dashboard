@@ -485,7 +485,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let predicted_win_rate = predictions.get(&tank.statistics.base.tank_id).copied();
+                                                @let predicted_win_rate = predictions.get(&remap_tank_id(tank.statistics.base.tank_id)).copied();
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate, old_info.last_battle_time)?)
                                             }
                                         }
