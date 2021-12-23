@@ -145,11 +145,10 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
             .await?;
 
         let prediction = predict_probability(factors.vehicle, factors.account);
-        let is_win = point.is_win();
 
-        if !point.is_test() {
-            losses_builder.train.push_sample(prediction, is_win);
-            let residual_error = if is_win {
+        if !point.is_test {
+            losses_builder.train.push_sample(prediction, point.is_win);
+            let residual_error = if point.is_win {
                 1.0 - prediction
             } else {
                 -prediction
@@ -163,7 +162,7 @@ async fn run_epoch(dataset: &mut Dataset, model: &mut Model) -> crate::Result<Lo
             );
             model.touch_account(point.account_id);
         } else {
-            losses_builder.test.push_sample(prediction, is_win);
+            losses_builder.test.push_sample(prediction, point.is_win);
         }
     }
 

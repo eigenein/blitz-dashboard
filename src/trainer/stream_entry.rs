@@ -9,21 +9,21 @@ pub struct StreamEntry {
     pub account_id: i32,
     pub tank_id: i32,
     pub timestamp: DateTime,
-    pub n_battles: u32,
-    pub n_wins: u32,
+    pub n_battles: i32,
+    pub n_wins: i32,
     pub is_test: bool,
 }
 
-pub struct SamplePointBuilder {
+pub struct StreamEntryBuilder {
     timestamp: Option<DateTime>,
     account_id: Option<i32>,
     tank_id: Option<i32>,
-    n_battles: u32,
-    n_wins: u32,
+    n_battles: i32,
+    n_wins: i32,
     is_test: bool,
 }
 
-impl Default for SamplePointBuilder {
+impl Default for StreamEntryBuilder {
     fn default() -> Self {
         Self {
             timestamp: None,
@@ -36,7 +36,7 @@ impl Default for SamplePointBuilder {
     }
 }
 
-impl SamplePointBuilder {
+impl StreamEntryBuilder {
     pub fn timestamp(&mut self, timestamp: DateTime) -> &mut Self {
         self.timestamp = Some(timestamp);
         self
@@ -56,13 +56,18 @@ impl SamplePointBuilder {
         self
     }
 
-    pub fn n_wins(&mut self, n_wins: u32) -> &mut Self {
+    pub fn n_wins(&mut self, n_wins: i32) -> &mut Self {
         self.n_wins = n_wins;
         self
     }
 
-    pub fn n_battles(&mut self, n_battles: u32) -> &mut Self {
+    pub fn n_battles(&mut self, n_battles: i32) -> &mut Self {
         self.n_battles = n_battles;
+        self
+    }
+
+    pub fn set_test(&mut self, is_test: bool) -> &mut Self {
+        self.is_test = is_test;
         self
     }
 

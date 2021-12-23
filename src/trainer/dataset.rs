@@ -10,7 +10,8 @@ use std::any::type_name;
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
-use crate::trainer::sample_point::{SamplePoint, SamplePointBuilder};
+use crate::trainer::sample_point::SamplePoint;
+use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 
 const STREAM_V2_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
@@ -18,22 +19,25 @@ const PAGE_SIZE: usize = 100000;
 #[tracing::instrument(skip_all)]
 pub async fn push_stream_entries(
     redis: &mut MultiplexedConnection,
-    points: &[SamplePoint],
+    entries: &[StreamEntry],
     stream_size: usize,
 ) -> crate::Result {
     let mut pipeline = pipe();
     let maxlen = StreamMaxlen::Approx(stream_size);
 
-    for point in points.iter() {
+    for entry in entries.iter() {
         let mut items = vec![
-            ("account_id", point.account_id as i64),
-            ("tank_id", point.tank_id as i64),
-            ("timestamp", point.timestamp.timestamp()),
+            ("account_id", entry.account_id as i64),
+            ("tank_id", entry.tank_id as i64),
+            ("timestamp", entry.timestamp.timestamp()),
         ];
-        if point.is_win() {
-            items.push(("is_win", 1));
+        if entry.n_battles != 1 {
+            items.push(("n_battles", entry.n_battles as i64));
         }
-        if point.is_test() {
+        if entry.n_wins != 0 {
+            items.push(("n_wins", entry.n_wins as i64));
+        }
+        if entry.is_test {
             items.push(("is_test", 1));
         }
         pipeline
@@ -106,8 +110,8 @@ impl Dataset {
 fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
     let mut loss = BCELoss::default();
     for point in sample {
-        if point.is_test() {
-            loss.push_sample(0.5, point.is_win());
+        if point.is_test {
+            loss.push_sample(0.5, point.is_win);
         }
     }
     loss.finalise()
@@ -123,15 +127,15 @@ async fn load_sample(
     let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
 
     while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
-        Some((n_points, new_pointer)) => {
+        Some((n_entries, new_pointer)) => {
             tracing::info!(
-                n_points_read = n_points,
+                n_entries_read = n_entries,
                 n_points_total = sample.len(),
                 pointer = new_pointer.as_str(),
                 "loading…",
             );
             pointer = new_pointer;
-            n_points >= PAGE_SIZE
+            n_entries >= PAGE_SIZE
         }
         None => false,
     } {}
@@ -171,10 +175,9 @@ async fn refresh_sample(
             let result = entries
                 .last()
                 .map(|TwoTuple(id, _)| (entries.len(), id.clone()));
-            for TwoTuple(_, point) in entries.into_iter() {
-                if let Some(point) = point.try_into()? {
-                    sample.push(point);
-                }
+            for TwoTuple(_, entry) in entries.into_iter() {
+                let points: Vec<SamplePoint> = StreamEntry::try_from(entry)?.into();
+                sample.extend(points.into_iter());
             }
             Ok(result)
         }
@@ -182,11 +185,11 @@ async fn refresh_sample(
     }
 }
 
-impl TryFrom<KeyValueVec<String, i64>> for Option<SamplePoint> {
+impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
     type Error = anyhow::Error;
 
     fn try_from(map: KeyValueVec<String, i64>) -> crate::Result<Self> {
-        let mut builder = SamplePointBuilder::default();
+        let mut builder = StreamEntryBuilder::default();
         for (key, value) in map.0.into_iter() {
             match key.as_str() {
                 "timestamp" => {
@@ -198,22 +201,22 @@ impl TryFrom<KeyValueVec<String, i64>> for Option<SamplePoint> {
                 "tank_id" => {
                     builder.tank_id(value.try_into()?);
                 }
-                "is_win" if value == 1 => {
-                    builder.win();
+                "n_battles" => {
+                    builder.n_battles(value.try_into()?);
+                }
+                "n_wins" => {
+                    builder.n_wins(value.try_into()?);
                 }
                 "is_test" if value == 1 => {
-                    builder.test();
+                    builder.set_test(true);
                 }
-                "n_battles" if value != 0 && value != 1 => {
-                    return Ok(None);
-                }
-                "n_wins" if value != 0 && value != 1 => {
-                    return Ok(None);
+                "is_win" => {
+                    builder.n_wins(value.try_into()?);
                 }
                 _ => {}
             }
         }
-        Ok(Some(builder.build()?))
+        builder.build()
     }
 }
 
