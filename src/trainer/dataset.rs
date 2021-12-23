@@ -16,6 +16,12 @@ use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 
 const STREAM_V2_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
+const ACCOUNT_ID_KEY: &str = "a";
+const TANK_ID_KEY: &str = "t";
+const TIMESTAMP_KEY: &str = "ts";
+const N_BATTLES_KEY: &str = "b";
+const N_WINS_KEY: &str = "w";
+const IS_TEST_KEY: &str = "tt";
 
 #[tracing::instrument(skip_all)]
 pub async fn push_stream_entries(
@@ -28,18 +34,18 @@ pub async fn push_stream_entries(
 
     for entry in entries.iter() {
         let mut items = vec![
-            ("account_id", entry.account_id as i64),
-            ("tank_id", entry.tank_id as i64),
-            ("timestamp", entry.timestamp.timestamp()),
+            (ACCOUNT_ID_KEY, entry.account_id as i64),
+            (TANK_ID_KEY, entry.tank_id as i64),
+            (TIMESTAMP_KEY, entry.timestamp.timestamp()),
         ];
         if entry.n_battles != 1 {
-            items.push(("n_battles", entry.n_battles as i64));
+            items.push((N_BATTLES_KEY, entry.n_battles as i64));
         }
         if entry.n_wins != 0 {
-            items.push(("n_wins", entry.n_wins as i64));
+            items.push((N_WINS_KEY, entry.n_wins as i64));
         }
         if entry.is_test {
-            items.push(("is_test", 1));
+            items.push((IS_TEST_KEY, 1));
         }
         pipeline
             .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", &items)
@@ -193,22 +199,22 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
         let mut builder = StreamEntryBuilder::default();
         for (key, value) in map.0.into_iter() {
             match key.as_str() {
-                "timestamp" => {
+                "timestamp" | TIMESTAMP_KEY => {
                     builder.timestamp_secs(value);
                 }
-                "account_id" => {
+                "account_id" | ACCOUNT_ID_KEY => {
                     builder.account_id(value.try_into()?);
                 }
-                "tank_id" => {
+                "tank_id" | TANK_ID_KEY => {
                     builder.tank_id(value.try_into()?);
                 }
-                "n_battles" => {
+                "n_battles" | N_BATTLES_KEY => {
                     builder.n_battles(value.try_into()?);
                 }
-                "n_wins" => {
+                "n_wins" | N_WINS_KEY => {
                     builder.n_wins(value.try_into()?);
                 }
-                "is_test" if value == 1 => {
+                "is_test" | IS_TEST_KEY if value == 1 => {
                     builder.set_test(true);
                 }
                 "is_win" => {
