@@ -51,9 +51,9 @@ pub struct IncrementalOpts {
     test_percentage: usize,
 }
 
-impl IncrementalOpts {
+impl Default for IncrementalOpts {
     /// FIXME
-    pub fn hardcoded() -> Self {
+    fn default() -> Self {
         Self {
             test_percentage: 5,
             training_stream_size: 1_000_000_000,
@@ -72,12 +72,14 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let request_counter = api.request_counter.clone();
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
-    let redis = redis::Client::open(internal.redis_uri.as_str())?;
+    let redis = redis::Client::open(internal.redis_uri.as_str())?
+        .get_multiplexed_async_connection()
+        .await?;
 
     let crawler = Crawler::new(
         api,
         database.clone(),
-        redis.get_multiplexed_async_connection().await?,
+        redis.clone(),
         opts.n_tasks,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
@@ -99,7 +101,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         },
     ));
     crawler
-        .run(get_batch_stream(database.clone(), min_offset))
+        .run(get_batch_stream(database.clone(), redis, min_offset).await)
         .await?;
 
     Ok(())
@@ -144,7 +146,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         database,
         redis,
         opts.n_tasks,
-        is_incremental.then(IncrementalOpts::hardcoded),
+        is_incremental.then(IncrementalOpts::default),
     )
     .await?;
     tokio::spawn(log_metrics(
