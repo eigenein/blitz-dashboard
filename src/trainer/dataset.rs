@@ -36,7 +36,7 @@ pub async fn push_stream_entries(
         let mut items = vec![
             (ACCOUNT_ID_KEY, entry.account_id as i64),
             (TANK_ID_KEY, entry.tank_id as i64),
-            (TIMESTAMP_KEY, entry.timestamp.timestamp()),
+            (TIMESTAMP_KEY, entry.timestamp),
         ];
         if entry.n_battles != 1 {
             items.push((N_BATTLES_KEY, entry.n_battles as i64));
@@ -162,8 +162,8 @@ async fn refresh_sample(
     time_span: Duration,
 ) -> crate::Result<Option<(usize, String)>> {
     // Remove the expired points.
-    let expire_time = Utc::now() - time_span;
-    sample.retain(|point| point.timestamp > expire_time);
+    let expiry_timestamp = (Utc::now() - time_span).timestamp();
+    sample.retain(|point| point.timestamp > expiry_timestamp);
 
     // Fetch new points.
     type Fields = KeyValueVec<String, i64>;
@@ -200,7 +200,7 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
         for (key, value) in map.0.into_iter() {
             match key.as_str() {
                 "timestamp" | TIMESTAMP_KEY => {
-                    builder.timestamp_secs(value);
+                    builder.timestamp(value);
                 }
                 "account_id" | ACCOUNT_ID_KEY => {
                     builder.account_id(value.try_into()?);

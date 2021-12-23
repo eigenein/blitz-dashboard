@@ -1,11 +1,10 @@
 use crate::trainer::stream_entry::StreamEntry;
 use crate::wargaming::tank_id::TankId;
-use crate::DateTime;
 
 /// Single sample point of a dataset.
 #[derive(Debug, Copy, Clone)]
 pub struct SamplePoint {
-    pub timestamp: DateTime, // FIXME: `DateTime` takes 12 bytes.
+    pub timestamp: i64,
     pub account_id: i32,
     pub tank_id: TankId,
     pub is_win: bool,

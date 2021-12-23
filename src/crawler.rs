@@ -324,7 +324,7 @@ impl Crawler {
                 entries.push(StreamEntry {
                     account_id,
                     tank_id,
-                    timestamp: tank.statistics.base.last_battle_time,
+                    timestamp: tank.statistics.base.last_battle_time.timestamp(),
                     n_battles,
                     n_wins,
                     is_test: fastrand::usize(0..100) < opts.test_percentage,
