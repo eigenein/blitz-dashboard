@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use anyhow::Context;
@@ -61,7 +62,7 @@ pub struct Model {
     pub regularization: f64,
 
     redis: MultiplexedConnection,
-    vehicle_cache: Vec<Option<Vector>>,
+    vehicle_cache: HashMap<u16, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
     last_flush_instant: Instant,
@@ -82,7 +83,7 @@ impl Model {
             redis,
             opts,
             regularization,
-            vehicle_cache: (0..u16::MAX).into_iter().map(|_| None).collect(),
+            vehicle_cache: HashMap::default(),
             account_cache: LruCache::unbounded_with_hasher(ahash::RandomState::default()),
             modified_account_ids: HashSet::default(),
             last_flush_instant: Instant::now(),
@@ -113,14 +114,15 @@ impl Model {
         };
         let account = self.account_cache.get_mut(&account_id).unwrap();
 
-        if self.vehicle_cache[tank_id as usize].is_none() {
-            let mut factors = get_vehicle_factors(&mut self.redis, tank_id)
-                .await?
-                .unwrap_or_else(Vector::new);
-            initialize_factors(&mut factors, self.opts.n_factors, self.opts.factor_std);
-            self.vehicle_cache[tank_id as usize] = Some(factors);
+        let vehicle = match self.vehicle_cache.entry(tank_id) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let factors = get_vehicle_factors(&mut self.redis, tank_id).await?;
+                let mut factors = factors.unwrap_or_else(Vector::new);
+                initialize_factors(&mut factors, self.opts.n_factors, self.opts.factor_std);
+                entry.insert(factors)
+            }
         };
-        let vehicle = self.vehicle_cache[tank_id as usize].as_mut().unwrap();
 
         Ok(Factors { account, vehicle })
     }
@@ -142,6 +144,7 @@ impl Model {
     /// Store all the account and vehicle factors to Redis and shrink the caches.
     #[tracing::instrument(skip_all)]
     async fn force_flush(&mut self) -> crate::Result {
+        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         let start_instant = Instant::now();
         self.force_flush_accounts().await?;
         self.force_flush_vehicles().await?;
@@ -155,9 +158,8 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_accounts(&mut self) -> crate::Result {
-        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         for batch in self.modified_account_ids.drain().chunks(100000).into_iter() {
-            tracing::info!("flushing the batch of accounts…");
+            tracing::info!("flushing the batch…");
             let mut pipeline = pipe();
             for account_id in batch {
                 let bytes = rmp_serde::to_vec(
@@ -181,17 +183,13 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_vehicles(&mut self) -> crate::Result {
-        let vehicles: crate::Result<Vec<(usize, Vec<u8>)>> = self
+        let vehicles: crate::Result<Vec<(u16, Vec<u8>)>> = self
             .vehicle_cache
             .iter()
-            .enumerate()
-            .filter_map(|(tank_id, factors)| factors.as_ref().map(|factors| (tank_id, factors)))
-            .map(|(tank_id, factors)| Ok((tank_id, rmp_serde::to_vec(factors)?)))
+            .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
             .collect();
-        let vehicles = vehicles?;
-        tracing::info!(n_vehicles = vehicles.len(), "flushing…");
         pipe()
-            .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles)
+            .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles?)
             .ignore()
             .query_async(&mut self.redis)
             .await

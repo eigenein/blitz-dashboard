@@ -33,6 +33,6 @@ mod tests {
 
     #[test]
     fn size_ok() {
-        assert_eq!(size_of::<SamplePoint>(), 16);
+        assert_eq!(size_of::<SamplePoint>(), 20);
     }
 }
