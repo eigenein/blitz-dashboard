@@ -6,12 +6,13 @@ use std::path::Path;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
+use crate::wargaming::tank_id::TankId;
 use crate::wargaming::{Tankopedia, WargamingApi};
 
 mod generated;
 
 /// Retrieves a vehicle from the Tankopedia.
-pub fn get_vehicle(tank_id: i32) -> Cow<'static, Vehicle> {
+pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
     generated::GENERATED
         .get(&tank_id)
         .map(Cow::Borrowed)
@@ -22,7 +23,7 @@ pub fn get_vehicle(tank_id: i32) -> Cow<'static, Vehicle> {
 /// Maps a tank ID to its original vehicle.
 #[must_use]
 #[inline]
-pub fn remap_tank_id(tank_id: i32) -> i32 {
+pub fn remap_tank_id(tank_id: TankId) -> TankId {
     match tank_id {
         64273 => 55313, // 8,8 cm Pak 43 Jagdtiger
         64769 => 9217,  // ИС-6 Бесстрашный
@@ -72,10 +73,10 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     writeln!(&mut file)?;
     writeln!(
         &mut file,
-        "pub static GENERATED: phf::Map<i32, Vehicle> = phf::phf_map! {{"
+        "pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {{"
     )?;
     for (_, vehicle) in vehicles.into_iter() {
-        writeln!(&mut file, "    {}_i32 => Vehicle {{", vehicle.tank_id)?;
+        writeln!(&mut file, "    {}_u16 => Vehicle {{", vehicle.tank_id)?;
         writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
         writeln!(
             &mut file,

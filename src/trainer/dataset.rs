@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use redis::aio::MultiplexedConnection;
@@ -6,7 +8,6 @@ use redis::{
     from_redis_value, pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult,
     Value,
 };
-use std::any::type_name;
 
 use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;

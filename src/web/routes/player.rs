@@ -23,6 +23,7 @@ use crate::trainer::math::predict_probability;
 use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
+use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::routes::player::partials::*;
@@ -552,14 +553,14 @@ async fn make_predictions(
     redis: &mut MultiplexedConnection,
     account_id: i32,
     tanks: &[Tank],
-) -> crate::Result<IndexMap<i32, f64>> {
+) -> crate::Result<IndexMap<TankId, f64>> {
     let account_factors = match get_account_factors(redis, account_id).await? {
         Some(factors) => factors,
         None => return Ok(IndexMap::new()),
     };
     let vehicles_factors = get_all_vehicle_factors(redis).await?;
 
-    let mut predictions: IndexMap<i32, f64> = tanks
+    let mut predictions: IndexMap<TankId, f64> = tanks
         .iter()
         .map(|tank| remap_tank_id(tank.statistics.base.tank_id))
         .filter_map(|tank_id| {
@@ -576,11 +577,11 @@ async fn make_predictions(
 }
 
 fn top_tanks_column(
-    predictions: &IndexMap<i32, f64>,
+    predictions: &IndexMap<TankId, f64>,
     predicate: fn(&Vehicle) -> bool,
     title: &str,
 ) -> Markup {
-    let entries: Vec<(&i32, &f64)> = predictions
+    let entries: Vec<(&TankId, &f64)> = predictions
         .iter()
         .filter(|(tank_id, _)| predicate(&get_vehicle(**tank_id)))
         .take(5)

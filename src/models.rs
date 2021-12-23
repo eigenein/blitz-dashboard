@@ -1,15 +1,16 @@
-use anyhow::anyhow;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::iter::Sum;
 use std::ops::Sub;
 
+use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
 use crate::helpers::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::math::statistics::ConfidenceInterval;
+use crate::wargaming::tank_id::TankId;
 
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
@@ -148,7 +149,7 @@ impl Sum for Statistics {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct BaseTankStatistics {
-    pub tank_id: i32,
+    pub tank_id: TankId,
 
     /// The moment in time when the related state is actual.
     /// Every new timestamp produces a new tank snapshot in the database.
@@ -173,7 +174,7 @@ pub struct TankStatistics {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct TankAchievements {
-    pub tank_id: i32,
+    pub tank_id: TankId,
     pub achievements: HashMap<String, i32>,
     pub max_series: HashMap<String, i32>,
 }
@@ -181,7 +182,7 @@ pub struct TankAchievements {
 /// Represents a generic vehicle from the tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
-    pub tank_id: i32,
+    pub tank_id: u16,
     pub name: Cow<'static, str>,
     pub tier: i32,
     pub is_premium: bool,
@@ -193,7 +194,7 @@ pub struct Vehicle {
 
 impl Vehicle {
     /// Creates a fake vehicle instance with the specified ID.
-    pub fn new_hardcoded(tank_id: i32) -> Self {
+    pub fn new_hardcoded(tank_id: TankId) -> Self {
         Self {
             tank_id,
             name: Cow::Owned(format!("#{}", tank_id)),
@@ -237,7 +238,8 @@ pub enum Nation {
 
 impl Nation {
     /// Construct `Nation` from the API tank ID.
-    pub fn from_tank_id(tank_id: i32) -> crate::Result<Nation> {
+    pub fn from_tank_id(tank_id: TankId) -> crate::Result<Nation> {
+        let tank_id = tank_id;
         const NATIONS: &[Nation] = &[
             Nation::Ussr,
             Nation::Germany,
@@ -250,7 +252,7 @@ impl Nation {
             Nation::Europe,
         ];
 
-        const COMPONENT_VEHICLE: i32 = 1;
+        const COMPONENT_VEHICLE: u16 = 1;
         debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
 
         let nation = ((tank_id >> 4) & 0xF) as usize;
@@ -261,7 +263,7 @@ impl Nation {
     }
 
     /// Get the client nation ID.
-    pub fn get_id(&self) -> i32 {
+    pub fn get_id(&self) -> u32 {
         match self {
             Nation::Ussr => 20000,
             Nation::Germany => 30000,
@@ -394,7 +396,7 @@ pub fn merge_tanks(
     .collect()
 }
 
-pub fn subtract_tanks(left: Vec<Tank>, mut right: HashMap<i32, Tank>) -> Vec<Tank> {
+pub fn subtract_tanks(left: Vec<Tank>, mut right: HashMap<TankId, Tank>) -> Vec<Tank> {
     left.into_iter()
         .filter_map(
             |left_tank| match right.remove(&left_tank.statistics.base.tank_id) {

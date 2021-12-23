@@ -22,6 +22,7 @@ use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatist
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
+use crate::wargaming::tank_id::TankId;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -42,7 +43,7 @@ pub struct Crawler {
 
     /// Used to maintain the vehicle table in the database.
     /// The cache contains tank IDs which are for sure existing at the moment in the database.
-    vehicle_cache: Arc<RwLock<HashSet<i32>>>,
+    vehicle_cache: Arc<RwLock<HashSet<TankId>>>,
 }
 
 pub struct IncrementalOpts {
@@ -164,7 +165,7 @@ impl Crawler {
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
     ) -> crate::Result<Self> {
-        let tank_ids: HashSet<i32> = retrieve_tank_ids(&database).await?.into_iter().collect();
+        let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             api,
             database,

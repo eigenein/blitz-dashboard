@@ -1,12 +1,13 @@
 use crate::trainer::stream_entry::StreamEntry;
+use crate::wargaming::tank_id::TankId;
 use crate::DateTime;
 
 /// Single sample point of a dataset.
 #[derive(Debug, Copy, Clone)]
 pub struct SamplePoint {
+    pub timestamp: DateTime, // FIXME: `DateTime` takes 12 bytes.
     pub account_id: i32,
-    pub tank_id: i32,
-    pub timestamp: DateTime,
+    pub tank_id: TankId,
     pub is_win: bool,
     pub is_test: bool,
 }
@@ -22,5 +23,17 @@ impl From<StreamEntry> for Vec<SamplePoint> {
                 is_test: entry.is_test,
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::mem::size_of;
+
+    use super::*;
+
+    #[test]
+    fn size_ok() {
+        assert_eq!(size_of::<SamplePoint>(), 20);
     }
 }

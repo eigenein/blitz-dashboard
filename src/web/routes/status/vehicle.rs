@@ -11,6 +11,7 @@ use crate::logging::clear_user;
 use crate::math::vector::cosine_similarity;
 use crate::tankopedia::get_vehicle;
 use crate::trainer::model::get_all_vehicle_factors;
+use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
@@ -20,7 +21,7 @@ use crate::web::{DisableCaches, TrackingCode};
 
 #[rocket::get("/status/vehicle/<tank_id>")]
 pub async fn get(
-    tank_id: i32,
+    tank_id: TankId,
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
     disable_caches: &State<DisableCaches>,
@@ -42,7 +43,7 @@ pub async fn get(
     };
 
     let vehicle = get_vehicle(tank_id);
-    let table: Vec<(i32, f64)> = vehicles_factors
+    let table: Vec<(u16, f64)> = vehicles_factors
         .iter()
         .filter(|(other_tank_id, _)| **other_tank_id != tank_id)
         .map(|(tank_id, other_factors)| {

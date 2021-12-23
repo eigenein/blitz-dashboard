@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::num::TryFromIntError;
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
@@ -14,6 +15,7 @@ use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
+use crate::wargaming::tank_id::TankId;
 
 /// Open and initialize the database.
 #[tracing::instrument(skip(uri))]
@@ -43,7 +45,7 @@ pub async fn retrieve_latest_tank_snapshots(
     connection: &PgPool,
     account_id: i32,
     before: &DateTime<Utc>,
-) -> crate::Result<HashMap<i32, Tank>> {
+) -> crate::Result<HashMap<TankId, Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT snapshot.*
@@ -71,9 +73,9 @@ pub async fn retrieve_latest_tank_snapshots(
         .fetch(connection)
         .map(|row| {
             let row = row?;
-            sqlx::Result::Ok((row.try_get("tank_id")?, Tank::from_row(&row)?))
+            sqlx::Result::Ok((try_get::<i32, _>(&row, "tank_id")?, Tank::from_row(&row)?))
         })
-        .try_collect::<HashMap<i32, Tank>>()
+        .try_collect::<HashMap<TankId, Tank>>()
         .await
         .context("failed to retrieve the latest tank snapshots")
 }
@@ -81,7 +83,7 @@ pub async fn retrieve_latest_tank_snapshots(
 pub async fn retrieve_tank_battle_count(
     connection: &PgPool,
     account_id: i32,
-    tank_id: i32,
+    tank_id: TankId,
 ) -> crate::Result<(i32, i32)> {
     // language=SQL
     const QUERY: &str = "
@@ -93,7 +95,7 @@ pub async fn retrieve_tank_battle_count(
     ";
     Ok(sqlx::query_as(QUERY)
         .bind(account_id)
-        .bind(tank_id)
+        .bind(tank_id as i32)
         .fetch_optional(connection)
         .await
         .context("failed to retrieve tank battle count")?
@@ -187,7 +189,7 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
         );
         sqlx::query(QUERY)
             .bind(snapshot.account_id)
-            .bind(snapshot.statistics.base.tank_id)
+            .bind(snapshot.statistics.base.tank_id as i32)
             .bind(snapshot.statistics.base.last_battle_time)
             .bind(snapshot.statistics.battle_life_time.num_seconds())
             .bind(snapshot.statistics.all.battles)
@@ -209,7 +211,7 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
 
 pub async fn insert_vehicle_or_ignore(
     connection: &mut PgConnection,
-    tank_id: i32,
+    tank_id: TankId,
 ) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
@@ -218,20 +220,23 @@ pub async fn insert_vehicle_or_ignore(
         ON CONFLICT (tank_id) DO NOTHING
     ";
     sqlx::query(QUERY)
-        .bind(tank_id)
+        .bind(tank_id as i32)
         .execute(connection)
         .await
         .context("failed to insert the vehicle or ignore")?;
     Ok(())
 }
 
-pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<i32>> {
+pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<TankId>> {
     // language=SQL
     const QUERY: &str = "SELECT tank_id FROM vehicles";
     Ok(sqlx::query_scalar(QUERY)
         .fetch_all(connection)
         .await
-        .context("failed to retrieve all tank IDs")?)
+        .context("failed to retrieve all tank IDs")?
+        .into_iter()
+        .map(i32::try_into)
+        .collect::<Result<Vec<TankId>, TryFromIntError>>()?)
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {
@@ -258,7 +263,7 @@ impl<'r> FromRow<'r, PgRow> for TankStatistics {
 impl<'r> FromRow<'r, PgRow> for BaseTankStatistics {
     fn from_row(row: &'r PgRow) -> Result<Self, Error> {
         Ok(Self {
-            tank_id: row.try_get("tank_id")?,
+            tank_id: try_convert::<i32, _>(row.try_get("tank_id")?)?,
             last_battle_time: row.try_get("last_battle_time")?,
         })
     }
@@ -267,7 +272,7 @@ impl<'r> FromRow<'r, PgRow> for BaseTankStatistics {
 impl<'r> FromRow<'r, PgRow> for TankAchievements {
     fn from_row(row: &'r PgRow) -> Result<Self, Error> {
         Ok(Self {
-            tank_id: row.try_get("tank_id")?,
+            tank_id: try_convert::<i32, _>(row.try_get("tank_id")?)?,
             achievements: Default::default(), // TODO
             max_series: Default::default(),   // TODO
         })
@@ -298,4 +303,23 @@ impl<'r> FromRow<'r, PgRow> for Statistics {
             xp: row.try_get("xp")?,
         })
     }
+}
+
+fn try_convert<F, T>(value: F) -> Result<T, sqlx::Error>
+where
+    T: TryFrom<F>,
+    <T as TryFrom<F>>::Error: 'static + Send + Sync + std::error::Error,
+{
+    value
+        .try_into()
+        .map_err(|error| sqlx::Error::Decode(Box::new(error)))
+}
+
+fn try_get<'r, F, T>(row: &'r PgRow, index: &str) -> Result<T, sqlx::Error>
+where
+    T: TryFrom<F>,
+    <T as TryFrom<F>>::Error: 'static + Send + Sync + std::error::Error,
+    F: sqlx::Decode<'r, sqlx::Postgres> + sqlx::Type<sqlx::Postgres>,
+{
+    try_convert::<F, T>(row.try_get(index)?)
 }

@@ -1,13 +1,14 @@
 use anyhow::anyhow;
 use chrono::{TimeZone, Utc};
 
+use crate::wargaming::tank_id::TankId;
 use crate::DateTime;
 
 /// Single sample point of a dataset.
 #[derive(Debug, Copy, Clone)]
 pub struct StreamEntry {
     pub account_id: i32,
-    pub tank_id: i32,
+    pub tank_id: TankId,
     pub timestamp: DateTime,
     pub n_battles: i32,
     pub n_wins: i32,
@@ -17,7 +18,7 @@ pub struct StreamEntry {
 pub struct StreamEntryBuilder {
     timestamp: Option<DateTime>,
     account_id: Option<i32>,
-    tank_id: Option<i32>,
+    tank_id: Option<TankId>,
     n_battles: i32,
     n_wins: i32,
     is_test: bool,
@@ -51,7 +52,7 @@ impl StreamEntryBuilder {
         self
     }
 
-    pub fn tank_id(&mut self, tank_id: i32) -> &mut Self {
+    pub fn tank_id(&mut self, tank_id: TankId) -> &mut Self {
         self.tank_id = Some(tank_id);
         self
     }

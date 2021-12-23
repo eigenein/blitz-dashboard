@@ -13,6 +13,7 @@ use redis::{pipe, AsyncCommands};
 use crate::helpers::format_elapsed;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
+use crate::wargaming::tank_id::TankId;
 
 const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
 const REGULARIZATION_KEY: &str = "trainer::r";
@@ -34,7 +35,7 @@ pub async fn get_account_factors(
 
 pub async fn get_vehicle_factors(
     redis: &mut MultiplexedConnection,
-    tank_id: i32,
+    tank_id: u16,
 ) -> crate::Result<Option<Vector>> {
     let bytes: Option<Vec<u8>> = redis.hget(VEHICLE_FACTORS_KEY, tank_id).await?;
     match bytes {
@@ -45,8 +46,8 @@ pub async fn get_vehicle_factors(
 
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
-) -> crate::Result<HashMap<i32, Vector>> {
-    let hash_map: std::collections::HashMap<i32, Vec<u8>> =
+) -> crate::Result<HashMap<TankId, Vector>> {
+    let hash_map: std::collections::HashMap<u16, Vec<u8>> =
         redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
@@ -61,7 +62,7 @@ pub struct Model {
     pub regularization: f64,
 
     redis: MultiplexedConnection,
-    vehicle_cache: HashMap<i32, Vector>,
+    vehicle_cache: HashMap<u16, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
     last_flush_instant: Instant,
@@ -98,7 +99,7 @@ impl Model {
     pub async fn get_factors_mut(
         &mut self,
         account_id: i32,
-        tank_id: i32,
+        tank_id: u16,
     ) -> crate::Result<Factors<'_>> {
         if !self.account_cache.contains(&account_id) {
             let factors = get_account_factors(&mut self.redis, account_id).await?;
@@ -182,7 +183,7 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_vehicles(&mut self) -> crate::Result {
-        let vehicles: crate::Result<Vec<(i32, Vec<u8>)>> = self
+        let vehicles: crate::Result<Vec<(u16, Vec<u8>)>> = self
             .vehicle_cache
             .iter()
             .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
