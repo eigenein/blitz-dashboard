@@ -81,7 +81,12 @@ impl Dataset {
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
         let baseline_loss = calculate_baseline_loss(&sample);
+        let first_timestamp = sample
+            .first()
+            .map(|point| point.timestamp)
+            .unwrap_or_default();
         tracing::info!(
+            first_timestamp = Utc.timestamp(first_timestamp, 0).to_string().as_str(),
             n_points = sample.len(),
             pointer = pointer.as_str(),
             baseline_loss = baseline_loss,
@@ -143,7 +148,7 @@ async fn load_sample(
                 n_entries_read = n_entries,
                 n_points_total = sample.len(),
                 pointer = new_pointer.as_str(),
-                last_battle_time = Utc.timestamp(last_timestamp, 0).to_string().as_str(),
+                last_timestamp = Utc.timestamp(last_timestamp, 0).to_string().as_str(),
                 "loading…",
             );
             pointer = new_pointer;
