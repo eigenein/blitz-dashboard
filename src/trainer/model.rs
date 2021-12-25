@@ -144,7 +144,6 @@ impl Model {
     /// Store all the account and vehicle factors to Redis and shrink the caches.
     #[tracing::instrument(skip_all)]
     async fn force_flush(&mut self) -> crate::Result {
-        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         let start_instant = Instant::now();
         self.force_flush_accounts().await?;
         self.force_flush_vehicles().await?;
@@ -158,6 +157,7 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_accounts(&mut self) -> crate::Result {
+        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         for batch in self.modified_account_ids.drain().chunks(100000).into_iter() {
             tracing::info!("flushing the batch…");
             let mut pipeline = pipe();

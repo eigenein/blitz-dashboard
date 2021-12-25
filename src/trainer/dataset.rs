@@ -1,7 +1,7 @@
 use std::any::type_name;
 
 use anyhow::{anyhow, Context};
-use chrono::{Duration, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{
@@ -135,10 +135,15 @@ async fn load_sample(
 
     while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
         Some((n_entries, new_pointer)) => {
+            let last_timestamp = sample
+                .last()
+                .map(|point| point.timestamp)
+                .unwrap_or_default();
             tracing::info!(
                 n_entries_read = n_entries,
                 n_points_total = sample.len(),
                 pointer = new_pointer.as_str(),
+                last_battle_time = Utc.timestamp(last_timestamp, 0).to_string().as_str(),
                 "loading…",
             );
             pointer = new_pointer;
