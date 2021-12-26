@@ -103,14 +103,10 @@ impl Dataset {
 
     #[tracing::instrument(skip_all)]
     pub async fn refresh(&mut self) -> crate::Result {
-        if let Some((_, new_pointer)) = refresh_sample(
-            &mut self.redis,
-            &self.pointer,
-            &mut self.sample,
-            self.time_span,
-        )
-        .await?
+        if let Some((_, new_pointer)) =
+            refresh_sample(&mut self.redis, &self.pointer, &mut self.sample).await?
         {
+            expire(&mut self.sample, self.time_span);
             self.pointer = new_pointer;
         }
         Ok(())
@@ -136,9 +132,9 @@ async fn load_sample(
     time_span: Duration,
 ) -> crate::Result<(String, Vec<SamplePoint>)> {
     let mut sample = Vec::new();
-    let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
+    let mut pointer = "0".to_string();
 
-    while match refresh_sample(redis, &pointer, &mut sample, time_span).await? {
+    while match refresh_sample(redis, &pointer, &mut sample).await? {
         Some((n_entries, new_pointer)) => {
             let last_timestamp = sample
                 .last()
@@ -157,6 +153,12 @@ async fn load_sample(
         None => false,
     } {}
 
+    tracing::info!(
+        time_span = format_duration(time_span.to_std()?).as_str(),
+        "removing expired points…",
+    );
+    expire(&mut sample, time_span);
+
     match sample.is_empty() {
         false => Ok((pointer, sample)),
         true => Err(anyhow!("training set is empty, try a longer time span")),
@@ -164,17 +166,12 @@ async fn load_sample(
 }
 
 /// Remove outdated sample points and append new ones.
-#[tracing::instrument(level = "debug", skip(redis, sample, time_span))]
+#[tracing::instrument(level = "debug", skip(redis, sample))]
 async fn refresh_sample(
     redis: &mut MultiplexedConnection,
     last_id: &str,
     sample: &mut Vec<SamplePoint>,
-    time_span: Duration,
 ) -> crate::Result<Option<(usize, String)>> {
-    // Remove the expired points.
-    let expiry_timestamp = (Utc::now() - time_span).timestamp();
-    sample.retain(|point| point.timestamp > expiry_timestamp);
-
     // Fetch new points.
     type Fields = KeyValueVec<String, i64>;
     type Entry = TwoTuple<String, Fields>;
@@ -200,6 +197,13 @@ async fn refresh_sample(
         }
         None => Ok(None),
     }
+}
+
+/// Removes expired sample points.
+#[tracing::instrument(level = "debug", skip_all)]
+fn expire(sample: &mut Vec<SamplePoint>, time_span: Duration) {
+    let expiry_timestamp = (Utc::now() - time_span).timestamp();
+    sample.retain(|point| point.timestamp > expiry_timestamp);
 }
 
 impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
