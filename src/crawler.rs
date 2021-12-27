@@ -5,7 +5,7 @@ use std::time::Duration as StdDuration;
 
 use anyhow::{anyhow, Context};
 use arc_swap::ArcSwap;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
@@ -48,6 +48,7 @@ pub struct Crawler {
 
 pub struct IncrementalOpts {
     training_stream_size: usize,
+    training_stream_duration: Duration,
     test_percentage: usize,
 }
 
@@ -56,6 +57,7 @@ impl Default for IncrementalOpts {
     fn default() -> Self {
         Self {
             test_percentage: 5,
+            training_stream_duration: Duration::days(365),
             training_stream_size: 1_000_000_000,
         }
     }
@@ -83,6 +85,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.n_tasks,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
+            training_stream_duration: opts.training_stream_duration,
             test_percentage: opts.test_percentage,
         }),
     )
@@ -247,11 +250,12 @@ impl Crawler {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_stream_entries(account.id, &tanks, opts).await?;
+                    self.push_incremental_updates(opts, account.id, &tanks)
+                        .await?;
                 }
             }
         } else {
-            tracing::trace!(account_id = account.id, "no updated tanks");
+            tracing::debug!(account_id = account.id, "no updated tanks");
         }
 
         replace_account(&mut transaction, &new_info.base).await?;
@@ -259,6 +263,8 @@ impl Crawler {
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
+
+        tracing::debug!(account_id = account.id, "done");
         Ok(true)
     }
 
@@ -304,16 +310,26 @@ impl Crawler {
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(n_tanks = tanks.len()))]
-    async fn push_stream_entries(
+    #[tracing::instrument(
+        level = "debug",
+        skip_all,
+        fields(account_id = account_id, n_tanks = tanks.len()),
+    )]
+    async fn prepare_stream_entries(
         &self,
         account_id: i32,
         tanks: &[Tank],
         opts: &IncrementalOpts,
-    ) -> crate::Result {
+    ) -> crate::Result<Vec<StreamEntry>> {
+        let now = Utc::now();
         let mut entries = Vec::new();
 
         for tank in tanks {
+            let last_battle_time = tank.statistics.base.last_battle_time;
+            if now - last_battle_time > opts.training_stream_duration {
+                tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
+                continue;
+            }
             let tank_id = tank.statistics.base.tank_id;
             let (n_battles, n_wins) =
                 retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
@@ -324,7 +340,7 @@ impl Crawler {
                 entries.push(StreamEntry {
                     account_id,
                     tank_id,
-                    timestamp: tank.statistics.base.last_battle_time.timestamp(),
+                    timestamp: last_battle_time.timestamp(),
                     n_battles,
                     n_wins,
                     is_test: fastrand::usize(0..100) < opts.test_percentage,
@@ -332,11 +348,26 @@ impl Crawler {
             }
         }
 
-        if !entries.is_empty() {
-            push_stream_entries(&mut self.redis.clone(), &entries, opts.training_stream_size)
-                .await?;
-        }
+        Ok(entries)
+    }
 
+    #[tracing::instrument(level = "debug", skip_all)]
+    async fn push_incremental_updates(
+        &self,
+        opts: &IncrementalOpts,
+        account_id: i32,
+        tanks: &[Tank],
+    ) -> crate::Result {
+        let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
+        if !entries.is_empty() {
+            push_stream_entries(
+                &mut self.redis.clone(),
+                &entries,
+                opts.training_stream_size,
+                opts.training_stream_duration,
+            )
+            .await?;
+        }
         Ok(())
     }
 }

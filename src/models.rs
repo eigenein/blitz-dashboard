@@ -305,11 +305,18 @@ pub struct Tank {
 }
 
 impl Tank {
+    #[must_use]
+    pub fn tank_id(&self) -> u16 {
+        self.statistics.base.tank_id
+    }
+
+    #[must_use]
     pub fn wins_per_hour(&self) -> f64 {
         self.statistics.all.wins as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0
     }
 
+    #[must_use]
     pub fn battles_per_hour(&self) -> f64 {
         self.statistics.all.battles as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0

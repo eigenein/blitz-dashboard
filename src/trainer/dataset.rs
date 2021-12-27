@@ -14,7 +14,7 @@ use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 
-const STREAM_V2_KEY: &str = "streams::battles::v2";
+const STREAM_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
 const ACCOUNT_ID_KEY: &str = "a";
 const TANK_ID_KEY: &str = "t";
@@ -23,11 +23,12 @@ const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
 const IS_TEST_KEY: &str = "tt";
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
 pub async fn push_stream_entries(
     redis: &mut MultiplexedConnection,
     entries: &[StreamEntry],
     stream_size: usize,
+    stream_duration: Duration,
 ) -> crate::Result {
     let mut pipeline = pipe();
     let maxlen = StreamMaxlen::Approx(stream_size);
@@ -48,10 +49,19 @@ pub async fn push_stream_entries(
             items.push((IS_TEST_KEY, 1));
         }
         pipeline
-            .xadd_maxlen(STREAM_V2_KEY, maxlen, "*", &items)
+            .xadd_maxlen(STREAM_KEY, maxlen, "*", &items)
             .ignore();
     }
 
+    let minimum_id = (Utc::now() - stream_duration).timestamp_millis();
+    tracing::debug!(minimum_id = minimum_id, "adding the stream entries…");
+    pipeline
+        .cmd("XTRIM")
+        .arg(STREAM_KEY)
+        .arg("MINID")
+        .arg("~")
+        .arg(minimum_id)
+        .ignore();
     pipeline
         .query_async(redis)
         .await
@@ -179,7 +189,7 @@ async fn refresh_sample(
     type XReadResponse = Vec<StreamResponse>;
     let mut response: XReadResponse = redis
         .xread_options(
-            &[STREAM_V2_KEY],
+            &[STREAM_KEY],
             &[&last_id],
             &StreamReadOptions::default().count(PAGE_SIZE),
         )
