@@ -197,10 +197,6 @@ pub struct TrainerModelOpts {
     #[structopt(long, default_value = "0.01")]
     pub factor_std: f64,
 
-    /// Maximum account idle time after which the account factors expire
-    #[structopt(long = "account-ttl", default_value = "1month", parse(try_from_str = parsers::duration_as_secs))]
-    pub account_ttl_secs: usize,
-
     /// Maximum number of cached account latent vectors
     #[structopt(
         long,

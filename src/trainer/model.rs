@@ -8,14 +8,15 @@ use rand::prelude::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
 use redis::aio::MultiplexedConnection;
-use redis::{pipe, AsyncCommands};
+use redis::AsyncCommands;
 
 use crate::helpers::format_elapsed;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
 use crate::wargaming::tank_id::TankId;
 
-const VEHICLE_FACTORS_KEY: &str = "cf::vehicles";
+const VEHICLE_FACTORS_KEY: &str = "trainer::vehicles";
+const ACCOUNT_FACTORS_KEY: &str = "trainer::accounts::ru";
 const REGULARIZATION_KEY: &str = "trainer::r";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
@@ -160,20 +161,17 @@ impl Model {
         tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
         for batch in self.modified_account_ids.drain().chunks(100000).into_iter() {
             tracing::info!("flushing the batch…");
-            let mut pipeline = pipe();
-            for account_id in batch {
-                let bytes = rmp_serde::to_vec(
-                    self.account_cache
+            let accounts: crate::Result<Vec<(i32, Vec<u8>)>> = batch
+                .map(|account_id| {
+                    let factors = self
+                        .account_cache
                         .peek(&account_id)
-                        .expect("the account must be present in the cache"),
-                )?;
-                let key = format!("f::ru::{}", account_id);
-                pipeline
-                    .set_ex(key, bytes, self.opts.account_ttl_secs)
-                    .ignore();
-            }
-            pipeline
-                .query_async(&mut self.redis)
+                        .expect("the account must be present in the cache");
+                    Ok((account_id, rmp_serde::to_vec(factors)?))
+                })
+                .collect();
+            self.redis
+                .hset_multiple(ACCOUNT_FACTORS_KEY, &accounts?)
                 .await
                 .context("failed to flush the accounts factors")?;
         }
@@ -188,10 +186,8 @@ impl Model {
             .iter()
             .map(|(tank_id, factors)| Ok((*tank_id, rmp_serde::to_vec(factors)?)))
             .collect();
-        pipe()
+        self.redis
             .hset_multiple(VEHICLE_FACTORS_KEY, &vehicles?)
-            .ignore()
-            .query_async(&mut self.redis)
             .await
             .context("failed to flush the vehicles factors")?;
         Ok(())

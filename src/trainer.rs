@@ -29,7 +29,6 @@ pub mod stream_entry;
 #[tracing::instrument(
     skip_all,
     fields(
-        account_ttl_secs = opts.model.account_ttl_secs,
         time_span = opts.time_span.to_string().as_str(),
     ),
 )]

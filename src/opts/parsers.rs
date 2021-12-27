@@ -27,6 +27,7 @@ pub fn non_zero_usize(value: &str) -> crate::Result<usize> {
     }
 }
 
+#[allow(dead_code)]
 pub fn duration_as_secs<T>(value: &str) -> crate::Result<T>
 where
     T: TryFrom<u64>,
