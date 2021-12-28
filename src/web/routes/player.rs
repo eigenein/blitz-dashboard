@@ -98,14 +98,11 @@ pub async fn get(
                     (home_button())
 
                     div.navbar-item title="Последний бой" {
-                        span.icon-text.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" }) {
-                            span.icon { i.fas.fa-bullseye {} }
-                            time
-                                datetime=(current_info.base.last_battle_time.to_rfc3339())
-                                title=(current_info.base.last_battle_time) {
-                                    (datetime(current_info.base.last_battle_time, Tense::Past))
-                                }
-                        }
+                        time.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" })
+                            datetime=(current_info.base.last_battle_time.to_rfc3339())
+                            title=(current_info.base.last_battle_time) {
+                                (datetime(current_info.base.last_battle_time, Tense::Past))
+                            }
                     }
 
                     div.navbar-item title="Боев" {
