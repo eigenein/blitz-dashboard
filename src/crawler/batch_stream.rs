@@ -17,6 +17,9 @@ pub type Batch = Vec<BaseAccountInfo>;
 
 const POINTER_KEY: &str = "crawler::pointer";
 
+/// Comes from the Wargaming.net API limitation.
+const MAX_BATCH_SIZE: usize = 100;
+
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub async fn get_batch_stream(
     database: PgPool,
@@ -38,7 +41,9 @@ pub async fn get_batch_stream(
             let min_offset = Arc::clone(&min_offset);
             async move {
                 loop {
-                    let batch = retrieve_batch(&database, pointer, **min_offset.load()).await?;
+                    let batch =
+                        retrieve_batch(&database, pointer, **min_offset.load(), MAX_BATCH_SIZE)
+                            .await?;
                     match batch.last() {
                         Some(last_item) => {
                             let pointer = last_item.id;
@@ -67,14 +72,18 @@ async fn retrieve_batch(
     connection: &PgPool,
     starting_at: i32,
     min_offset: StdDuration,
+    count: usize,
 ) -> crate::Result<Batch> {
     // language=SQL
     const QUERY: &str = "
         SELECT account_id, last_battle_time FROM accounts
         WHERE account_id > $1 AND last_battle_time < now() - $2
-        ORDER BY account_id LIMIT 100
+        ORDER BY account_id LIMIT $3
     ";
-    let query = sqlx::query_as(QUERY).bind(starting_at).bind(min_offset);
+    let query = sqlx::query_as(QUERY)
+        .bind(starting_at)
+        .bind(min_offset)
+        .bind(i32::try_from(count)?);
     timeout(StdDuration::from_secs(60), query.fetch_all(connection))
         .await
         .context("the `retrieve_batch` query has timed out")?
