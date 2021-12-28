@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
+use phf::phf_set;
 use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
@@ -203,7 +204,11 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
         Nation::Ussr => "flag-icon-su",
     };
     let name_class = if vehicle.is_premium {
-        "has-text-warning-dark"
+        if COLLECTIBLE_VEHICLE_IDS.contains(&vehicle.tank_id) {
+            "has-text-info-dark"
+        } else {
+            "has-text-warning-dark"
+        }
     } else if vehicle.type_ == TankType::Unknown {
         "has-text-grey"
     } else {
@@ -302,3 +307,7 @@ pub fn factors_table(factors: &[f64]) -> Markup {
         }
     }
 }
+
+static COLLECTIBLE_VEHICLE_IDS: phf::Set<u16> = phf_set! {
+    9345_u16,
+};
