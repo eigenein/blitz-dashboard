@@ -309,5 +309,8 @@ pub fn factors_table(factors: &[f64]) -> Markup {
 }
 
 static COLLECTIBLE_VEHICLE_IDS: phf::Set<u16> = phf_set! {
+    3201_u16,
     9345_u16,
+    17745_u16,
+    24609_u16,
 };
