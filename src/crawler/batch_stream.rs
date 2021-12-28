@@ -19,7 +19,7 @@ pub type Batch = Vec<BaseAccountInfo>;
 /// Account IDs from this list get crawled as soon as possible.
 pub const PRIORITY_QUEUE_KEY: &str = "crawler::priority";
 
-pub const PRIORITY_QUEUE_SIZE: usize = 50;
+pub const PRIORITY_QUEUE_LIMIT: usize = 50;
 
 const POINTER_KEY: &str = "crawler::pointer";
 
@@ -105,8 +105,10 @@ async fn retrieve_priority_queue(
     database: &PgPool,
     redis: &mut MultiplexedConnection,
 ) -> crate::Result<Batch> {
-    let account_ids: Vec<i32> = redis
-        .lpop(PRIORITY_QUEUE_KEY, Some(PRIORITY_QUEUE_SIZE.try_into()?))
+    let account_ids: Vec<i32> = redis::cmd("SPOP")
+        .arg(PRIORITY_QUEUE_KEY)
+        .arg(PRIORITY_QUEUE_LIMIT)
+        .query_async(redis)
         .await?;
     let accounts = if !account_ids.is_empty() {
         retrieve_accounts(database, &account_ids).await?

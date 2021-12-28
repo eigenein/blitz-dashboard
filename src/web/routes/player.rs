@@ -13,13 +13,13 @@ use humantime::parse_duration;
 use indexmap::IndexMap;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
-use redis::pipe;
+use redis::AsyncCommands;
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::task::spawn_blocking;
 
-use crate::crawler::batch_stream::{PRIORITY_QUEUE_KEY, PRIORITY_QUEUE_SIZE};
+use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -627,12 +627,8 @@ async fn push_account_to_priority_queue(
     redis: &mut MultiplexedConnection,
     account_id: i32,
 ) -> crate::Result {
-    pipe()
-        .rpush(PRIORITY_QUEUE_KEY, account_id)
-        .ignore()
-        .ltrim(PRIORITY_QUEUE_KEY, 0, (PRIORITY_QUEUE_SIZE - 1) as isize)
-        .ignore()
-        .query_async(redis)
+    redis
+        .sadd(PRIORITY_QUEUE_KEY, account_id)
         .await
         .with_context(|| {
             format!(
