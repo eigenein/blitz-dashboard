@@ -52,17 +52,6 @@ pub struct IncrementalOpts {
     test_percentage: usize,
 }
 
-impl Default for IncrementalOpts {
-    /// FIXME
-    fn default() -> Self {
-        Self {
-            test_percentage: 5,
-            training_stream_duration: Duration::days(365),
-            training_stream_size: 1_000_000_000,
-        }
-    }
-}
-
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
 /// in the database.
 ///
