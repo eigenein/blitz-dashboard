@@ -52,7 +52,7 @@ pub async fn get_batch_stream(
                         }
                         None => {
                             tracing::info!(
-                                elapsed = format_elapsed(&start_time).as_str(),
+                                elapsed = %format_elapsed(&start_time),
                                 "restarting",
                             );
                             sleep(StdDuration::from_secs(1)).await;

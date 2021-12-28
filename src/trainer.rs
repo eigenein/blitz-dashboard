@@ -8,9 +8,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::anyhow;
+use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
 
-use crate::helpers::format_duration;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::dataset::Dataset;
@@ -50,7 +50,7 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         n_factors = opts.model.n_factors,
         learning_rate = opts.model.learning_rate,
         factor_std = opts.model.factor_std,
-        commit_period = format_duration(opts.model.flush_period).as_str(),
+        commit_period = %format_duration(opts.model.flush_interval),
     ),
 )]
 async fn run_epochs(

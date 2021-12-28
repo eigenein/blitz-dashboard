@@ -538,7 +538,7 @@ pub async fn get(
     ));
     tracing::info!(
         account_id = account_id,
-        elapsed = format_elapsed(&start_instant).as_str(),
+        elapsed = %format_elapsed(&start_instant),
         "finished",
     );
     result

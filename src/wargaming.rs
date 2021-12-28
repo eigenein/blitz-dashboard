@@ -7,14 +7,16 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
+use humantime::format_duration;
 use itertools::Itertools;
 use reqwest::header;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
+use tracing::warn;
 
 use crate::backoff::Backoff;
-use crate::helpers::{format_duration, format_elapsed};
+use crate::helpers::format_elapsed;
 use crate::models;
 use crate::wargaming::response::Response;
 use crate::StdDuration;
@@ -197,8 +199,8 @@ impl WargamingApi {
                 }
             };
             let sleep_duration = backoff.next();
-            tracing::warn!(
-                sleep_duration = format_duration(sleep_duration).as_str(),
+            warn!(
+                sleep_duration = %format_duration(sleep_duration),
                 n_attempts = backoff.n_attempts(),
                 "retrying…",
             );
@@ -218,7 +220,7 @@ impl WargamingApi {
         let result = self.client.get(url).send().await;
         tracing::debug!(
             request_id = request_id,
-            elapsed = format_elapsed(&start_instant).as_str(),
+            elapsed = %format_elapsed(&start_instant),
             "done",
         );
 

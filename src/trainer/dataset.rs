@@ -2,14 +2,15 @@ use std::any::type_name;
 
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
+use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
 use redis::streams::{StreamMaxlen, StreamReadOptions};
 use redis::{
     from_redis_value, pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult,
     Value,
 };
+use tracing::instrument;
 
-use crate::helpers::format_duration;
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
@@ -81,10 +82,7 @@ pub struct Dataset {
 }
 
 impl Dataset {
-    #[tracing::instrument(
-        skip_all,
-        fields(time_span = format_duration(time_span.to_std()?).as_str()),
-    )]
+    #[instrument(skip_all, fields(time_span = %format_duration(time_span.to_std()?)))]
     pub async fn load(
         mut redis: MultiplexedConnection,
         time_span: Duration,
@@ -136,7 +134,7 @@ fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
 }
 
 /// Load sample points from the stream within the specified time span.
-#[tracing::instrument(skip_all, fields(time_span = format_duration(time_span.to_std()?).as_str()))]
+#[instrument(skip_all, fields(time_span = %format_duration(time_span.to_std()?)))]
 async fn load_sample(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
@@ -164,7 +162,7 @@ async fn load_sample(
     } {}
 
     tracing::info!(
-        time_span = format_duration(time_span.to_std()?).as_str(),
+        time_span = %format_duration(time_span.to_std()?),
         "removing expired points…",
     );
     expire(&mut sample, time_span);

@@ -1,7 +1,10 @@
+pub mod periodic;
+
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::anyhow;
 use chrono::Duration;
+use humantime::{format_duration, FormattedDuration};
 use serde::{Deserialize, Serializer};
 use tokio::task::spawn_blocking;
 
@@ -49,10 +52,6 @@ pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
 }
 
-pub fn format_duration(duration: StdDuration) -> String {
-    humantime::format_duration(duration).to_string()
-}
-
-pub fn format_elapsed(instant: &Instant) -> String {
+pub fn format_elapsed(instant: &Instant) -> FormattedDuration {
     format_duration(instant.elapsed())
 }

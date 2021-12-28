@@ -63,7 +63,7 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
         Subcommand::Web(opts) => web::run(opts).await,
     };
     tracing::info!(
-        elapsed = format_elapsed(&start_instant).as_str(),
+        elapsed = %format_elapsed(&start_instant),
         "finished",
     );
     result

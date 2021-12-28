@@ -208,11 +208,11 @@ pub struct TrainerModelOpts {
     /// Store the latent vectors with the specified period
     #[structopt(
         long,
-        alias = "flush-interval",
+        alias = "flush-period",
         default_value = "1minute",
         parse(try_from_str = humantime::parse_duration),
     )]
-    pub flush_period: StdDuration,
+    pub flush_interval: StdDuration,
 }
 
 #[derive(StructOpt)]

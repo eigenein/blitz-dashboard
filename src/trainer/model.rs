@@ -12,6 +12,7 @@ use redis::AsyncCommands;
 use tracing::{info, instrument};
 
 use crate::helpers::format_elapsed;
+use crate::helpers::periodic::Periodic;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
 use crate::wargaming::tank_id::TankId;
@@ -67,7 +68,7 @@ pub struct Model {
     vehicle_cache: HashMap<u16, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
-    last_flush_instant: Instant,
+    periodic_flush: Periodic,
 }
 
 pub struct Factors<'a> {
@@ -88,9 +89,9 @@ impl Model {
             vehicle_cache: HashMap::default(),
             account_cache: LruCache::unbounded_with_hasher(ahash::RandomState::default()),
             modified_account_ids: HashSet::default(),
-            last_flush_instant: Instant::now(),
             n_new_accounts: 0,
             n_initialized_accounts: 0,
+            periodic_flush: Periodic::new(opts.flush_interval),
         })
     }
 
@@ -134,11 +135,10 @@ impl Model {
         self.modified_account_ids.insert(account_id);
     }
 
-    #[tracing::instrument(skip_all)]
+    #[instrument(skip_all)]
     pub async fn flush(&mut self) -> crate::Result {
-        if self.last_flush_instant.elapsed() >= self.opts.flush_period {
+        if self.periodic_flush.should_trigger() {
             self.force_flush().await?;
-            self.last_flush_instant = Instant::now();
         }
         Ok(())
     }
@@ -151,7 +151,7 @@ impl Model {
         self.force_flush_vehicles().await?;
         set_regularization(&mut self.redis, self.regularization).await?;
         info!(
-            elapsed = format_elapsed(&start_instant).as_str(),
+            elapsed = %format_elapsed(&start_instant),
             "model flushed",
         );
         Ok(())
