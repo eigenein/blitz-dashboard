@@ -117,7 +117,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         redis,
         opts.n_tasks,
         None,
-        StdDuration::from_secs(60),
+        opts.log_interval,
         None,
     )
     .await?;

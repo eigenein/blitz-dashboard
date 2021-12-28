@@ -148,6 +148,10 @@ pub struct CrawlAccountsOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_tasks: usize,
+
+    /// Metrics logging interval
+    #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
+    pub log_interval: StdDuration,
 }
 
 /// Trains the collaborative filtering model
