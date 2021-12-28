@@ -27,7 +27,7 @@ pub async fn get_account_factors(
     redis: &mut MultiplexedConnection,
     account_id: i32,
 ) -> crate::Result<Option<Vector>> {
-    let bytes: Option<Vec<u8>> = redis.get(format!("f::ru::{}", account_id)).await?;
+    let bytes: Option<Vec<u8>> = redis.hget(ACCOUNT_FACTORS_KEY, account_id).await?;
     match bytes {
         Some(bytes) => Ok(rmp_serde::from_read_ref(&bytes)?),
         None => Ok(None),
