@@ -10,6 +10,7 @@ use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
+use tracing::instrument;
 
 use crate::metrics::Stopwatch;
 use crate::models::{
@@ -157,6 +158,20 @@ pub async fn retrieve_account(
         .fetch_optional(connection)
         .await
         .with_context(|| format!("failed to retrieve account #{}", account_id))
+}
+
+#[instrument(level = "debug", skip_all, fields(n_accounts = account_ids.len()))]
+pub async fn retrieve_accounts(
+    connection: &PgPool,
+    account_ids: &[i32],
+) -> crate::Result<Vec<BaseAccountInfo>> {
+    // language=SQL
+    const QUERY: &str = "SELECT * FROM accounts WHERE account_id IN (SELECT * FROM UNNEST($1))";
+    sqlx::query_as(QUERY)
+        .bind(account_ids)
+        .fetch_all(connection)
+        .await
+        .context("failed to retrieve the accounts")
 }
 
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {

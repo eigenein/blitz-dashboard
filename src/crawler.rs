@@ -27,7 +27,7 @@ use crate::wargaming::tank_id::TankId;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
-mod batch_stream;
+pub mod batch_stream;
 mod metrics;
 
 pub struct Crawler {

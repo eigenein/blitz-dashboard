@@ -1,6 +1,11 @@
+//! Player view.
+//!
+//! «Abandon hope, all ye who enter here».
+
 use std::cmp::Ordering;
 use std::time::Instant;
 
+use anyhow::Context;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use futures::future::try_join3;
@@ -8,11 +13,13 @@ use humantime::parse_duration;
 use indexmap::IndexMap;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
+use redis::pipe;
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
 use tokio::task::spawn_blocking;
 
+use crate::crawler::batch_stream::{PRIORITY_QUEUE_KEY, PRIORITY_QUEUE_SIZE};
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -68,6 +75,9 @@ pub async fn get(
     };
     set_user(&current_info.nickname);
     let old_info = insert_account_if_not_exists(database, account_id).await?;
+    if old_info.last_battle_time < current_info.base.last_battle_time {
+        push_account_to_priority_queue(&mut redis, account_id).await?;
+    }
 
     let predictions = make_predictions(&mut redis, account_id, &tanks).await?;
     let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
@@ -611,4 +621,23 @@ fn top_tanks_column(
     } else {
         PreEscaped(String::new())
     }
+}
+
+async fn push_account_to_priority_queue(
+    redis: &mut MultiplexedConnection,
+    account_id: i32,
+) -> crate::Result {
+    pipe()
+        .rpush(PRIORITY_QUEUE_KEY, account_id)
+        .ignore()
+        .ltrim(PRIORITY_QUEUE_KEY, 0, (PRIORITY_QUEUE_SIZE - 1) as isize)
+        .ignore()
+        .query_async(redis)
+        .await
+        .with_context(|| {
+            format!(
+                "failed to push account #{} to the priority queue",
+                account_id
+            )
+        })
 }
