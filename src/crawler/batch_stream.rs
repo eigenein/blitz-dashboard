@@ -42,12 +42,7 @@ pub async fn get_batch_stream(
                     match batch.last() {
                         Some(last_item) => {
                             let pointer = last_item.id;
-                            if let Err::<(), _>(error) = redis.set(POINTER_KEY, pointer).await {
-                                error!(
-                                    pointer = pointer,
-                                    "failed to store the pointer {:#}", error,
-                                );
-                            }
+                            redis.set(POINTER_KEY, pointer).await?;
                             break Ok(Some((batch, (pointer, start_time))));
                         }
                         None => {
