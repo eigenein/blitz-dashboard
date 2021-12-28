@@ -8,6 +8,7 @@ use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
+use tracing::{error, info, instrument};
 
 use crate::helpers::format_elapsed;
 use crate::models::BaseAccountInfo;
@@ -25,7 +26,7 @@ pub async fn get_batch_stream(
     let start_account_id = match redis.get::<_, Option<i32>>(POINTER_KEY).await {
         Ok(pointer) => pointer.unwrap_or(0),
         Err(error) => {
-            tracing::error!("failed to retrieve the pointer: {:#}", error);
+            error!("failed to retrieve the pointer: {:#}", error);
             0
         }
     };
@@ -42,16 +43,15 @@ pub async fn get_batch_stream(
                         Some(last_item) => {
                             let pointer = last_item.id;
                             if let Err::<(), _>(error) = redis.set(POINTER_KEY, pointer).await {
-                                tracing::error!(
+                                error!(
                                     pointer = pointer,
-                                    "failed to store the pointer {:#}",
-                                    error,
+                                    "failed to store the pointer {:#}", error,
                                 );
                             }
                             break Ok(Some((batch, (pointer, start_time))));
                         }
                         None => {
-                            tracing::info!(
+                            info!(
                                 elapsed = %format_elapsed(&start_time),
                                 "restarting",
                             );
@@ -67,7 +67,7 @@ pub async fn get_batch_stream(
 }
 
 /// Retrieves a single account batch from the database.
-#[tracing::instrument(skip_all, level = "debug", fields(starting_at = starting_at))]
+#[instrument(skip_all, level = "debug", fields(starting_at = starting_at))]
 async fn retrieve_batch(
     connection: &PgPool,
     starting_at: i32,

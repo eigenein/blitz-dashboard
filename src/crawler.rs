@@ -12,11 +12,12 @@ use sqlx::{PgConnection, PgPool};
 use tokio::sync::{Mutex, RwLock};
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
-use crate::crawler::metrics::{log_metrics, CrawlerMetrics};
+use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
     retrieve_tank_battle_count, retrieve_tank_ids,
 };
+use crate::helpers::periodic::Periodic;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -36,6 +37,8 @@ pub struct Crawler {
 
     n_tasks: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
+    periodic_log: Arc<Mutex<Periodic>>,
+    auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
@@ -60,13 +63,13 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let api = WargamingApi::new(&opts.connections.application_id)?;
-    let request_counter = api.request_counter.clone();
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
     let redis = redis::Client::open(internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
 
+    let min_offset = Arc::new(ArcSwap::new(Arc::new(opts.min_offset)));
     let crawler = Crawler::new(
         api,
         database.clone(),
@@ -77,26 +80,15 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
             training_stream_duration: opts.training_stream_duration,
             test_percentage: opts.test_percentage,
         }),
+        opts.log_interval,
+        opts.auto_min_offset.then(|| min_offset.clone()),
     )
     .await?;
 
     tracing::info!("running…");
-    let min_offset = Arc::new(ArcSwap::new(Arc::new(opts.min_offset)));
-    tokio::spawn(log_metrics(
-        request_counter,
-        crawler.metrics.clone(),
-        opts.log_interval,
-        if opts.auto_min_offset {
-            Some(Arc::clone(&min_offset))
-        } else {
-            None
-        },
-    ));
     crawler
         .run(get_batch_stream(database.clone(), redis, min_offset).await)
-        .await?;
-
-    Ok(())
+        .await
 }
 
 /// Performs a very slow one-time account scan.
@@ -119,15 +111,17 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None).await?;
-    tokio::spawn(log_metrics(
-        api.request_counter.clone(),
-        crawler.metrics.clone(),
+    let crawler = Crawler::new(
+        api.clone(),
+        database,
+        redis,
+        opts.n_tasks,
+        None,
         StdDuration::from_secs(60),
         None,
-    ));
-    crawler.run(stream).await?;
-    Ok(())
+    )
+    .await?;
+    crawler.run(stream).await
 }
 
 impl Crawler {
@@ -137,15 +131,19 @@ impl Crawler {
         redis: MultiplexedConnection,
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
+        log_interval: StdDuration,
+        auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
+            metrics: Arc::new(Mutex::new(CrawlerMetrics::new(api.request_counter.clone()))),
             api,
             database,
             redis,
             n_tasks,
             incremental,
-            metrics: Arc::new(Mutex::new(CrawlerMetrics::default())),
+            auto_min_offset,
+            periodic_log: Arc::new(Mutex::new(Periodic::new(log_interval))),
             vehicle_cache: Arc::new(RwLock::new(tank_ids)),
         };
         Ok(this)
@@ -172,6 +170,12 @@ impl Crawler {
             self.update_account_metrics(account_id).await;
         }
 
+        if self.periodic_log.lock().await.should_trigger() {
+            let lag_50 = self.metrics.lock().await.log();
+            if let Some(min_offset) = &self.auto_min_offset {
+                min_offset.swap(Arc::new(lag_50));
+            }
+        }
         Ok(())
     }
 

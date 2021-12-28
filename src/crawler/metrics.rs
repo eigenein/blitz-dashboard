@@ -2,11 +2,8 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-use arc_swap::ArcSwap;
 use humantime::format_duration;
-use tokio::sync::Mutex;
 
-#[derive(Default)]
 pub struct CrawlerMetrics {
     /// Scanned account count.
     pub n_accounts: u32,
@@ -19,15 +16,38 @@ pub struct CrawlerMetrics {
 
     pub n_battles: i32,
 
+    /// Request count from the last `log()` call.
+    last_request_count: u32,
+
+    reset_instant: Instant,
+
+    /// API request counter.
+    request_counter: Arc<AtomicU32>,
+
     lags: Vec<u64>,
 }
 
 impl CrawlerMetrics {
+    pub fn new(request_counter: Arc<AtomicU32>) -> Self {
+        Self {
+            last_request_count: request_counter.load(Ordering::Relaxed),
+            request_counter,
+            n_accounts: 0,
+            n_tanks: 0,
+            last_account_id: 0,
+            n_battles: 0,
+            reset_instant: Instant::now(),
+            lags: Vec::new(),
+        }
+    }
+
     pub fn reset(&mut self) {
         self.n_accounts = 0;
         self.n_tanks = 0;
         self.n_battles = 0;
         self.lags.clear();
+        self.reset_instant = Instant::now();
+        self.last_request_count = self.request_counter.load(Ordering::Relaxed);
     }
 
     pub fn push_lag(&mut self, secs: u64) {
@@ -49,38 +69,24 @@ impl CrawlerMetrics {
 
         (lag_p50, lag_p90)
     }
-}
 
-pub async fn log_metrics(
-    request_counter: Arc<AtomicU32>,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
-    interval: StdDuration,
-    auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
-) -> crate::Result {
-    loop {
-        let start_instant = Instant::now();
-        let n_requests_start = request_counter.load(Ordering::Relaxed);
-        tokio::time::sleep(interval).await;
+    pub fn log(&mut self) -> StdDuration {
+        let elapsed_secs = self.reset_instant.elapsed().as_secs_f64();
+        let n_requests = self.request_counter.load(Ordering::Relaxed) - self.last_request_count;
 
-        let elapsed_secs = start_instant.elapsed().as_secs_f64();
-        let n_requests = request_counter.load(Ordering::Relaxed) - n_requests_start;
-
-        let mut metrics = metrics.lock().await;
-        let (lag_p50, lag_p90) = metrics.lags();
+        let (lag_p50, lag_p90) = self.lags();
         log::info!(
             "RPS: {:>4.1} | battles: {:>4.0} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
             n_requests as f64 / elapsed_secs,
-            metrics.n_battles,
+            self.n_battles,
             format_duration(lag_p50).to_string(),
             format_duration(lag_p90).to_string(),
-            metrics.n_accounts as f64 / elapsed_secs,
-            metrics.n_tanks as f64 / elapsed_secs,
-            metrics.last_account_id,
+            self.n_accounts as f64 / elapsed_secs,
+            self.n_tanks as f64 / elapsed_secs,
+            self.last_account_id,
         );
-        metrics.reset();
 
-        if let Some(min_offset) = &auto_min_offset {
-            min_offset.store(Arc::new(lag_p50));
-        }
+        self.reset();
+        lag_p50
     }
 }
