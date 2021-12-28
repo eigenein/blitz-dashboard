@@ -9,6 +9,7 @@ use rand::thread_rng;
 use rand_distr::Normal;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
+use tracing::{info, instrument};
 
 use crate::helpers::format_elapsed;
 use crate::math::vector::Vector;
@@ -143,13 +144,13 @@ impl Model {
     }
 
     /// Store all the account and vehicle factors to Redis and shrink the caches.
-    #[tracing::instrument(skip_all)]
+    #[instrument(skip_all)]
     async fn force_flush(&mut self) -> crate::Result {
         let start_instant = Instant::now();
         self.force_flush_accounts().await?;
         self.force_flush_vehicles().await?;
         set_regularization(&mut self.redis, self.regularization).await?;
-        tracing::info!(
+        info!(
             elapsed = format_elapsed(&start_instant).as_str(),
             "model flushed",
         );
@@ -158,9 +159,19 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_accounts(&mut self) -> crate::Result {
-        tracing::info!(n_accounts = self.modified_account_ids.len(), "flushing…");
-        for batch in self.modified_account_ids.drain().chunks(100000).into_iter() {
-            tracing::info!("flushing the batch…");
+        const BATCH_SIZE: usize = 1_000_000;
+        info!(
+            n_accounts = self.modified_account_ids.len(),
+            batch_size = BATCH_SIZE,
+            "flushing accounts…",
+        );
+        for batch in self
+            .modified_account_ids
+            .drain()
+            .chunks(BATCH_SIZE)
+            .into_iter()
+        {
+            info!("flushing the batch…");
             let accounts: crate::Result<Vec<(i32, Vec<u8>)>> = batch
                 .map(|account_id| {
                     let factors = self
