@@ -396,8 +396,8 @@
         "module_id": 19475,
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          5908,
-          1300
+          1300,
+          5908
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17118,8 +17118,8 @@
     ],
     "guns": [
       6500,
-      3684,
-      3428
+      3428,
+      3684
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Chi_He.png",
@@ -17176,8 +17176,8 @@
         "module_id": 3171,
         "name": "Type 2 Ho-I",
         "next_modules": [
-          3428,
-          3684
+          3684,
+          3428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -24541,8 +24541,8 @@
         "name": "90 mm Mecar mit Mehrladeeinrichtung",
         "next_modules": null,
         "next_tanks": [
-          18449,
-          13841
+          13841,
+          18449
         ],
         "price_credit": 0,
         "price_xp": 12500,
@@ -41621,8 +41621,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -80126,8 +80126,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
