@@ -9,7 +9,7 @@ use rand::thread_rng;
 use rand_distr::Normal;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument};
 
 use crate::helpers::format_elapsed;
 use crate::helpers::periodic::Periodic;
@@ -159,7 +159,7 @@ impl Model {
 
     #[tracing::instrument(skip_all)]
     async fn force_flush_accounts(&mut self) -> crate::Result {
-        const BATCH_SIZE: usize = 1_000_000;
+        const BATCH_SIZE: usize = 100000;
         info!(
             n_accounts = self.modified_account_ids.len(),
             batch_size = BATCH_SIZE,
@@ -171,7 +171,7 @@ impl Model {
             .chunks(BATCH_SIZE)
             .into_iter()
         {
-            info!("flushing the batch…");
+            debug!("flushing the batch…");
             let accounts: crate::Result<Vec<(i32, Vec<u8>)>> = batch
                 .map(|account_id| {
                     let factors = self
