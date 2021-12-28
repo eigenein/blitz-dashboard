@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use arc_swap::ArcSwap;
 use chrono::{Duration, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
@@ -15,7 +15,7 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::{log_metrics, CrawlerMetrics};
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
-    retrieve_account, retrieve_tank_battle_count, retrieve_tank_ids,
+    retrieve_tank_battle_count, retrieve_tank_ids,
 };
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
@@ -126,32 +126,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
-    let is_incremental = opts.incremental;
-    let stream = {
-        let database = database.clone();
-        stream::iter(opts.start_id..opts.end_id)
-            .map(Ok)
-            .try_filter_map(move |account_id| {
-                let database = database.clone();
-                async move {
-                    if !is_incremental {
-                        Ok(Some(BaseAccountInfo::empty(account_id)))
-                    } else {
-                        retrieve_account(&database, account_id).await
-                    }
-                }
-            })
-            .try_chunks(100)
-            .map_err(|error| anyhow!(error))
-    };
-    let crawler = Crawler::new(
-        api.clone(),
-        database,
-        redis,
-        opts.n_tasks,
-        is_incremental.then(IncrementalOpts::default),
-    )
-    .await?;
+    let stream = stream::iter(opts.start_id..opts.end_id)
+        .map(BaseAccountInfo::empty)
+        .chunks(100)
+        .map(Ok);
+    let crawler = Crawler::new(api.clone(), database, redis, opts.n_tasks, None).await?;
     tokio::spawn(log_metrics(
         api.request_counter.clone(),
         crawler.metrics.clone(),

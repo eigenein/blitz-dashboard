@@ -145,6 +145,7 @@ pub async fn insert_account_if_not_exists(
         .context("failed to insert the account if not exists")
 }
 
+#[allow(dead_code)]
 pub async fn retrieve_account(
     connection: &PgPool,
     account_id: i32,
