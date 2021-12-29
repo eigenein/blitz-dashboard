@@ -86,7 +86,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    let accounts = Box::pin(get_batch_stream(database.clone(), redis, min_offset).await);
+    let accounts = Box::pin(get_batch_stream(database, redis, min_offset).await);
     crawler.run(accounts).await
 }
 
@@ -111,7 +111,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .chunks(100)
         .map(Ok);
     let crawler = Crawler::new(
-        api.clone(),
+        api,
         database,
         redis,
         opts.n_tasks,
