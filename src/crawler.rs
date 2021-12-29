@@ -9,7 +9,6 @@ use chrono::{Duration, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
-use tokio::sync::{Mutex, RwLock};
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
@@ -36,8 +35,8 @@ pub struct Crawler {
     redis: MultiplexedConnection,
 
     n_tasks: usize,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
-    periodic_log: Arc<Mutex<Periodic>>,
+    metrics: CrawlerMetrics,
+    periodic_log: Periodic,
     auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
@@ -46,9 +45,10 @@ pub struct Crawler {
 
     /// Used to maintain the vehicle table in the database.
     /// The cache contains tank IDs which are for sure existing at the moment in the database.
-    vehicle_cache: Arc<RwLock<HashSet<TankId>>>,
+    vehicle_cache: HashSet<TankId>,
 }
 
+#[derive(Copy, Clone)]
 pub struct IncrementalOpts {
     training_stream_size: usize,
     training_stream_duration: Duration,
@@ -86,9 +86,8 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    crawler
-        .run(get_batch_stream(database.clone(), redis, min_offset).await)
-        .await
+    let accounts = Box::pin(get_batch_stream(database.clone(), redis, min_offset).await);
+    crawler.run(accounts).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -136,34 +135,40 @@ impl Crawler {
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
-            metrics: Arc::new(Mutex::new(CrawlerMetrics::new(api.request_counter.clone()))),
+            metrics: CrawlerMetrics::new(api.request_counter.clone()),
             api,
             database,
             redis,
             n_tasks,
             incremental,
             auto_min_offset,
-            periodic_log: Arc::new(Mutex::new(Periodic::new(log_interval))),
-            vehicle_cache: Arc::new(RwLock::new(tank_ids)),
+            periodic_log: Periodic::new(log_interval),
+            vehicle_cache: tank_ids,
         };
         Ok(this)
     }
 
     /// Runs the crawler on the stream of batches.
-    pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
-        stream
+    pub async fn run(
+        mut self,
+        accounts: impl Stream<Item = crate::Result<Batch>> + Unpin,
+    ) -> crate::Result {
+        let api = self.api.clone();
+        let mut batches = accounts
             .map_ok(|batch| async {
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
-                let new_infos = self.api.get_account_info(&account_ids).await?;
+                let new_infos = api.get_account_info(&account_ids).await?;
                 Ok((batch, new_infos))
             })
-            .try_buffer_unordered(self.n_tasks)
-            .try_for_each(|(batch, new_infos)| async { self.crawl_batch(batch, new_infos).await })
-            .await
+            .try_buffer_unordered(self.n_tasks);
+        while let Some((batch, new_infos)) = batches.try_next().await? {
+            self.crawl_batch(batch, new_infos).await?;
+        }
+        Ok(())
     }
 
     async fn crawl_batch(
-        &self,
+        &mut self,
         batch: Batch,
         mut new_infos: HashMap<String, Option<AccountInfo>>,
     ) -> crate::Result {
@@ -175,8 +180,8 @@ impl Crawler {
             self.update_account_metrics(account_id).await;
         }
 
-        if self.periodic_log.lock().await.should_trigger() {
-            let lag_50 = self.metrics.lock().await.log();
+        if self.periodic_log.should_trigger() {
+            let lag_50 = self.metrics.log();
             if let Some(min_offset) = &self.auto_min_offset {
                 min_offset.swap(Arc::new(lag_50));
             }
@@ -184,15 +189,14 @@ impl Crawler {
         Ok(())
     }
 
-    async fn update_account_metrics(&self, account_id: i32) {
-        let mut metrics = self.metrics.lock().await;
-        metrics.last_account_id = account_id;
-        metrics.n_accounts += 1;
+    async fn update_account_metrics(&mut self, account_id: i32) {
+        self.metrics.last_account_id = account_id;
+        self.metrics.n_accounts += 1;
     }
 
     #[tracing::instrument(skip_all)]
     async fn crawl_account(
-        &self,
+        &mut self,
         account: BaseAccountInfo,
         new_info: AccountInfo,
     ) -> crate::Result<bool> {
@@ -223,11 +227,11 @@ impl Crawler {
             self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
                 .await?;
 
-            if let Some(opts) = &self.incremental {
+            if let Some(opts) = self.incremental {
                 // Zero timestamp means that the account has never played or been crawled before.
                 // FIXME: make the `last_battle_time` nullable instead.
                 if account.last_battle_time.timestamp() != 0 {
-                    self.push_incremental_updates(opts, account.id, &tanks)
+                    self.push_incremental_updates(&opts, account.id, &tanks)
                         .await?;
                 }
             }
@@ -261,26 +265,26 @@ impl Crawler {
     }
 
     async fn update_tank_metrics(
-        &self,
+        &mut self,
         last_battle_time: DateTime,
         n_tanks: usize,
     ) -> crate::Result {
-        let mut metrics = self.metrics.lock().await;
-        metrics.push_lag((Utc::now() - last_battle_time).num_seconds().try_into()?);
-        metrics.n_tanks += n_tanks;
+        self.metrics
+            .push_lag((Utc::now() - last_battle_time).num_seconds().try_into()?);
+        self.metrics.n_tanks += n_tanks;
         Ok(())
     }
 
     /// Inserts missing tank IDs into the database.
     async fn insert_missing_vehicles(
-        &self,
+        &mut self,
         connection: &mut PgConnection,
         tanks: &[Tank],
     ) -> crate::Result {
         for tank in tanks {
             let tank_id = tank.statistics.base.tank_id;
-            if !self.vehicle_cache.read().await.contains(&tank_id) {
-                self.vehicle_cache.write().await.insert(tank_id);
+            if !self.vehicle_cache.contains(&tank_id) {
+                self.vehicle_cache.insert(tank_id);
                 insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
             }
         }
@@ -293,7 +297,7 @@ impl Crawler {
         fields(account_id = account_id, n_tanks = tanks.len()),
     )]
     async fn prepare_stream_entries(
-        &self,
+        &mut self,
         account_id: i32,
         tanks: &[Tank],
         opts: &IncrementalOpts,
@@ -313,7 +317,7 @@ impl Crawler {
             let n_battles = tank.statistics.all.battles - n_battles;
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
-                self.metrics.lock().await.n_battles += n_battles;
+                self.metrics.n_battles += n_battles;
                 entries.push(StreamEntry {
                     account_id,
                     tank_id,
@@ -330,7 +334,7 @@ impl Crawler {
 
     #[tracing::instrument(level = "debug", skip_all)]
     async fn push_incremental_updates(
-        &self,
+        &mut self,
         opts: &IncrementalOpts,
         account_id: i32,
         tanks: &[Tank],
