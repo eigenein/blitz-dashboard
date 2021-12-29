@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
@@ -152,16 +152,21 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(&self, stream: impl Stream<Item = crate::Result<Batch>>) -> crate::Result {
         stream
-            .map(|batch| async move { self.crawl_batch(batch?).await })
-            .buffer_unordered(self.n_tasks)
-            .try_collect()
+            .map_ok(|batch| async {
+                let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
+                let new_infos = self.api.get_account_info(&account_ids).await?;
+                Ok((batch, new_infos))
+            })
+            .try_buffer_unordered(self.n_tasks)
+            .try_for_each(|(batch, new_infos)| async { self.crawl_batch(batch, new_infos).await })
             .await
     }
 
-    async fn crawl_batch(&self, batch: Batch) -> crate::Result {
-        let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
-        let mut new_infos = self.api.get_account_info(&account_ids).await?;
-
+    async fn crawl_batch(
+        &self,
+        batch: Batch,
+        mut new_infos: HashMap<String, Option<AccountInfo>>,
+    ) -> crate::Result {
         for account in batch.into_iter() {
             let account_id = account.id;
             if let Some(new_info) = new_infos.remove(&account.id.to_string()).flatten() {
