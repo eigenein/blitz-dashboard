@@ -2,11 +2,11 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use arc_swap::ArcSwap;
 use futures::{stream, Stream};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use sqlx::PgPool;
+use tokio::sync::RwLock;
 use tokio::time::{sleep, timeout};
 use tracing::{error, info, instrument};
 
@@ -30,7 +30,7 @@ const MAX_BATCH_SIZE: usize = 100;
 pub async fn get_batch_stream(
     database: PgPool,
     mut redis: MultiplexedConnection,
-    min_offset: Arc<ArcSwap<StdDuration>>,
+    min_offset: Arc<RwLock<StdDuration>>,
 ) -> impl Stream<Item = crate::Result<Batch>> {
     let start_account_id = match redis.get::<_, Option<i32>>(POINTER_KEY).await {
         Ok(pointer) => pointer.unwrap_or(0),
@@ -49,8 +49,8 @@ pub async fn get_batch_stream(
                 loop {
                     let priority_batch = retrieve_priority_queue(&database, &mut redis).await?;
                     let batch_size = MAX_BATCH_SIZE - priority_batch.len();
-                    let batch =
-                        retrieve_batch(&database, pointer, **min_offset.load(), batch_size).await?;
+                    let min_offset = *min_offset.read().await;
+                    let batch = retrieve_batch(&database, pointer, min_offset, batch_size).await?;
                     match batch.last() {
                         Some(last_item) => {
                             pointer = last_item.id;

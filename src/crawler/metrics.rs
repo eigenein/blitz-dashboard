@@ -2,9 +2,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-use arc_swap::ArcSwap;
 use chrono::Utc;
 use humantime::format_duration;
+use tokio::sync::RwLock;
 
 use crate::helpers::periodic::Periodic;
 use crate::DateTime;
@@ -65,11 +65,11 @@ impl CrawlerMetrics {
         self.n_battles += n_battles;
     }
 
-    pub fn check(&mut self, auto_min_offset: &Option<Arc<ArcSwap<StdDuration>>>) {
+    pub async fn check(&mut self, auto_min_offset: &Option<Arc<RwLock<StdDuration>>>) {
         if self.log_trigger.should_trigger() {
             let lag_50 = self.aggregate_and_log();
             if let Some(min_offset) = auto_min_offset {
-                min_offset.swap(Arc::new(lag_50));
+                *min_offset.write().await = lag_50;
             }
             self.reset();
         }

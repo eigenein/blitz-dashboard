@@ -20,7 +20,6 @@ split-debuginfo = "unpacked"
 [dependencies]
 ahash = "0.7.6"
 anyhow = "1.0.52"
-arc-swap = "1.5.0"
 chrono-humanize = "0.2.1"
 fastrand = "1.6.0"
 humantime = "2.1.0"

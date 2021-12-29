@@ -3,11 +3,11 @@ use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
-use arc_swap::ArcSwap;
 use chrono::{Duration, Utc};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
+use tokio::sync::RwLock;
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
@@ -34,7 +34,7 @@ pub struct Crawler {
 
     n_tasks: usize,
     metrics: CrawlerMetrics,
-    auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
+    auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
@@ -66,7 +66,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
-    let min_offset = Arc::new(ArcSwap::new(Arc::new(opts.min_offset)));
+    let min_offset = Arc::new(RwLock::new(opts.min_offset));
     let crawler = Crawler::new(
         api,
         database.clone(),
@@ -128,7 +128,7 @@ impl Crawler {
         n_tasks: usize,
         incremental: Option<IncrementalOpts>,
         log_interval: StdDuration,
-        auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
+        auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -168,7 +168,7 @@ impl Crawler {
         while let Some((account, new_info)) = accounts.try_next().await? {
             self.metrics.add_account(account.id);
             self.crawl_account(account, new_info).await?;
-            self.metrics.check(&self.auto_min_offset);
+            self.metrics.check(&self.auto_min_offset).await;
         }
         Ok(())
     }
