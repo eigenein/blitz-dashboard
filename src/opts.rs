@@ -117,6 +117,10 @@ pub struct CrawlerOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub test_percentage: usize,
+
+    /// Don't write anything to the database
+    #[structopt(long = "dry-run")]
+    pub is_dry_run: bool,
 }
 
 /// Updates the bundled Tankopedia module

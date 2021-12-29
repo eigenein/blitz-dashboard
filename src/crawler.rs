@@ -37,6 +37,7 @@ pub struct Crawler {
     n_buffered_accounts: usize,
     metrics: CrawlerMetrics,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
+    is_dry_run: bool,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
@@ -81,6 +82,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         }),
         opts.log_interval,
         opts.auto_min_offset.then(|| min_offset.clone()),
+        opts.is_dry_run,
     )
     .await?;
 
@@ -117,12 +119,14 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         None,
         opts.log_interval,
         None,
+        false,
     )
     .await?;
     crawler.run(batches).await
 }
 
 impl Crawler {
+    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
@@ -131,6 +135,7 @@ impl Crawler {
         incremental: Option<IncrementalOpts>,
         log_interval: StdDuration,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
+        is_dry_run: bool,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -141,6 +146,7 @@ impl Crawler {
             n_buffered_accounts,
             incremental,
             auto_min_offset,
+            is_dry_run,
             vehicle_cache: tank_ids,
         };
         Ok(this)
@@ -173,7 +179,12 @@ impl Crawler {
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
         while let Some((account, new_info, tanks)) = accounts.try_next().await? {
-            self.update_account(account, new_info, tanks).await?;
+            self.metrics.add_account(account.id);
+            self.metrics
+                .add_tanks(new_info.base.last_battle_time, tanks.len())?;
+            if !self.is_dry_run {
+                self.update_account(account, new_info, tanks).await?;
+            }
             self.metrics.check(&self.auto_min_offset).await;
         }
 
@@ -212,9 +223,6 @@ impl Crawler {
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
         tracing::debug!(account_id = account.id, "updated");
-        self.metrics.add_account(account.id);
-        self.metrics
-            .add_tanks(new_info.base.last_battle_time, tanks.len())?;
         Ok(true)
     }
 
@@ -341,7 +349,7 @@ async fn crawl_account(
         return Ok(None);
     }
     let statistics =
-        get_updated_tanks_statistics(&api, account.id, account.last_battle_time).await?;
+        get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
         tracing::debug!(account_id = account.id, n_updated_tanks = statistics.len());
         let achievements = api.get_tanks_achievements(account.id).await?;
