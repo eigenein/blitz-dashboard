@@ -28,7 +28,7 @@ itertools = "0.10.3"
 indexmap = "1.7.0"
 jemallocator = "0.3.2"
 log = "0.4.14"
-lru = { version = "0.7.1", default_features = false }
+lru = { version = "0.7.2", default_features = false }
 maud = "0.23.0"
 miniz_oxide = "0.5.0"
 phf = { version = "0.10.1", features = ["macros"] }
