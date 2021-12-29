@@ -88,13 +88,17 @@ pub async fn retrieve_tank_battle_count(
     tank_id: TankId,
 ) -> crate::Result<(i32, i32)> {
     // language=SQL
-    const QUERY: &str = "
+    const QUERY: &str = r#"
+        WITH "snapshots" AS (
+            SELECT last_battle_time, battles, wins
+            FROM tank_snapshots
+            WHERE account_id = $1 AND tank_id = $2
+        )
         SELECT battles, wins
-        FROM tank_snapshots
-        WHERE account_id = $1 AND tank_id = $2
-        ORDER BY last_battle_time DESC 
+        FROM "snapshots"
+        ORDER BY last_battle_time DESC
         LIMIT 1
-    ";
+    "#;
     Ok(sqlx::query_as(QUERY)
         .bind(account_id)
         .bind(tank_id as i32)
