@@ -35,10 +35,11 @@ pub struct Crawler {
     database: PgPool,
     redis: MultiplexedConnection,
 
+    n_buffered_batches: usize,
     n_buffered_accounts: usize,
+
     metrics: CrawlerMetrics,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
-    is_dry_run: bool,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
@@ -75,6 +76,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         api,
         database.clone(),
         redis.clone(),
+        opts.n_buffered_batches,
         opts.n_buffered_accounts,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
@@ -83,7 +85,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         }),
         opts.log_interval,
         opts.auto_min_offset.then(|| min_offset.clone()),
-        opts.is_dry_run,
     )
     .await?;
 
@@ -116,11 +117,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         api,
         database,
         redis,
+        opts.n_buffered_batches,
         opts.n_buffered_accounts,
         None,
         opts.log_interval,
         None,
-        false,
     )
     .await?;
     crawler.run(batches).await
@@ -132,11 +133,11 @@ impl Crawler {
         api: WargamingApi,
         database: PgPool,
         redis: MultiplexedConnection,
+        n_buffered_batches: usize,
         n_buffered_accounts: usize,
         incremental: Option<IncrementalOpts>,
         log_interval: StdDuration,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
-        is_dry_run: bool,
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
@@ -144,10 +145,10 @@ impl Crawler {
             api,
             database,
             redis,
+            n_buffered_batches,
             n_buffered_accounts,
             incremental,
             auto_min_offset,
-            is_dry_run,
             vehicle_cache: tank_ids,
         };
         Ok(this)
@@ -162,17 +163,20 @@ impl Crawler {
 
         let accounts = batches
             // Get account info for all accounts in the batch.
-            .and_then(|batch| async {
+            .map_ok(|batch| async {
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
-                // Match the retrieved infos against the accounts from the batch.
-                Ok(zip_account_infos(batch, new_infos))
+                Ok((batch, new_infos))
             })
-            // Make it a stream of accounts instead of the stream of batches.
+            // Parallelize `get_account_info`.
+            .try_buffer_unordered(self.n_buffered_batches)
+            // Match the retrieved infos against the accounts from the batch.
+            .and_then(|(batch, new_infos)| async { Ok(zip_account_infos(batch, new_infos)) })
+            // Convert them to the stream of account infos.
             .try_flatten()
             // Crawl the accounts.
             .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
-            // Parallelize the crawling.
+            // Parallelize `crawl_account`.
             .try_buffer_unordered(self.n_buffered_accounts)
             // Filter out unchanged accounts.
             .try_filter_map(|item| future::ready(Ok(item)));
@@ -183,9 +187,7 @@ impl Crawler {
             self.metrics.add_account(account.id);
             self.metrics
                 .add_tanks(new_info.base.last_battle_time, tanks.len())?;
-            if !self.is_dry_run {
-                self.update_account(account, new_info, tanks).await?;
-            }
+            self.update_account(account, new_info, tanks).await?;
             self.metrics.check(&self.auto_min_offset).await;
         }
 

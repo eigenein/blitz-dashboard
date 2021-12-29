@@ -86,13 +86,21 @@ pub struct CrawlerOpts {
     #[structopt(long)]
     pub auto_min_offset: bool,
 
-    /// Number of buffered accounts used to parallelize the crawling process
+    /// Number of buffered accounts in the stream
     #[structopt(
         long,
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_buffered_accounts: usize,
+
+    /// Number of buffered batches in the stream
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub n_buffered_batches: usize,
 
     /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
@@ -117,10 +125,6 @@ pub struct CrawlerOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub test_percentage: usize,
-
-    /// Don't write anything to the database
-    #[structopt(long = "dry-run")]
-    pub is_dry_run: bool,
 }
 
 /// Updates the bundled Tankopedia module
@@ -145,14 +149,21 @@ pub struct CrawlAccountsOpts {
     #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub end_id: i32,
 
-    /// Number of buffered accounts used to parallelize the crawling process
+    /// Number of buffered accounts in the stream
     #[structopt(
         long,
-        alias = "n-tasks",
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_buffered_accounts: usize,
+
+    /// Number of buffered batches in the stream
+    #[structopt(
+        long,
+        default_value = "1",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub n_buffered_batches: usize,
 
     /// Metrics logging interval
     #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
