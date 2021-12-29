@@ -85,8 +85,8 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    let accounts = Box::pin(get_batch_stream(database, redis, min_offset).await);
-    crawler.run(accounts).await
+    let batches = Box::pin(get_batch_stream(database, redis, min_offset).await);
+    crawler.run(batches).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -105,7 +105,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .get_multiplexed_async_connection()
         .await?;
 
-    let stream = stream::iter(opts.start_id..opts.end_id)
+    let batches = stream::iter(opts.start_id..opts.end_id)
         .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
@@ -119,7 +119,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         None,
     )
     .await?;
-    crawler.run(stream).await
+    crawler.run(batches).await
 }
 
 impl Crawler {
@@ -149,11 +149,11 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         mut self,
-        accounts: impl Stream<Item = crate::Result<Batch>> + Unpin,
+        batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
     ) -> crate::Result {
         let api = self.api.clone();
 
-        let accounts = accounts
+        let accounts = batches
             // Get account info for all accounts in the batch.
             .and_then(|batch| async {
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
