@@ -38,7 +38,7 @@ pub struct WargamingApi {
 pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
-    pub fn new(application_id: &str) -> crate::Result<WargamingApi> {
+    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -61,7 +61,7 @@ impl WargamingApi {
             client: reqwest::ClientBuilder::new()
                 .default_headers(headers)
                 .https_only(true)
-                .timeout(StdDuration::from_secs(10))
+                .timeout(timeout)
                 .brotli(true)
                 .gzip(true)
                 .deflate(true)

@@ -27,6 +27,8 @@ use crate::DateTime;
 pub mod batch_stream;
 mod metrics;
 
+const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
+
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
@@ -59,7 +61,7 @@ pub struct IncrementalOpts {
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let api = WargamingApi::new(&opts.connections.application_id)?;
+    let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
     let redis = redis::Client::open(internal.redis_uri.as_str())?
@@ -96,7 +98,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = WargamingApi::new(&opts.connections.application_id)?;
+    let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
     let internal = opts.connections.internal;
     let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
     let redis = redis::Client::open(internal.redis_uri.as_str())?

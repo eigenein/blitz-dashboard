@@ -8,6 +8,7 @@ use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
 use crate::wargaming::tank_id::TankId;
 use crate::wargaming::{Tankopedia, WargamingApi};
+use crate::StdDuration;
 
 mod generated;
 
@@ -37,7 +38,7 @@ pub fn remap_tank_id(tank_id: TankId) -> TankId {
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
-    let api = WargamingApi::new(&opts.application_id)?;
+    let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30))?;
     let json_path = Path::new(file!())
         .parent()
         .unwrap()
