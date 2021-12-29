@@ -4,10 +4,11 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use chrono::{Duration, Utc};
-use futures::{stream, Stream, StreamExt, TryStreamExt};
+use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
+use tracing::instrument;
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
@@ -15,7 +16,6 @@ use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
     retrieve_tank_battle_count, retrieve_tank_ids,
 };
-use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
@@ -34,7 +34,7 @@ pub struct Crawler {
     database: PgPool,
     redis: MultiplexedConnection,
 
-    n_tasks: usize,
+    n_buffered_accounts: usize,
     metrics: CrawlerMetrics,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
 
@@ -73,7 +73,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         api,
         database.clone(),
         redis.clone(),
-        opts.n_tasks,
+        opts.n_buffered_accounts,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
             training_stream_duration: opts.training_stream_duration,
@@ -113,7 +113,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         api,
         database,
         redis,
-        opts.n_tasks,
+        opts.n_buffered_accounts,
         None,
         opts.log_interval,
         None,
@@ -127,7 +127,7 @@ impl Crawler {
         api: WargamingApi,
         database: PgPool,
         redis: MultiplexedConnection,
-        n_tasks: usize,
+        n_buffered_accounts: usize,
         incremental: Option<IncrementalOpts>,
         log_interval: StdDuration,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
@@ -138,7 +138,7 @@ impl Crawler {
             api,
             database,
             redis,
-            n_tasks,
+            n_buffered_accounts,
             incremental,
             auto_min_offset,
             vehicle_cache: tank_ids,
@@ -153,112 +153,69 @@ impl Crawler {
     ) -> crate::Result {
         let api = self.api.clone();
 
-        let mut accounts = accounts
+        let accounts = accounts
             // Get account info for all accounts in the batch.
-            .map_ok(|batch| async {
+            .and_then(|batch| async {
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
-                Ok((batch, new_infos))
+                // Match the retrieved infos against the accounts from the batch.
+                Ok(zip_account_infos(batch, new_infos))
             })
-            // Parallel the API calls from above.
-            .try_buffer_unordered(self.n_tasks)
-            // Match the account infos against the accounts from the batch.
-            .map_ok(|(batch, new_infos)| Self::zip_account_infos(batch, new_infos))
             // Make it a stream of accounts instead of the stream of batches.
-            .try_flatten();
+            .try_flatten()
+            // Crawl the accounts.
+            .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
+            // Parallelize the crawling.
+            .try_buffer_unordered(self.n_buffered_accounts)
+            // Filter out unchanged accounts.
+            .try_filter_map(|item| future::ready(Ok(item)));
 
-        while let Some((account, new_info)) = accounts.try_next().await? {
-            self.metrics.add_account(account.id);
-            self.crawl_account(account, new_info).await?;
+        // Update the changed accounts in the database.
+        let mut accounts = Box::pin(accounts);
+        while let Some((account, new_info, tanks)) = accounts.try_next().await? {
+            self.update_account(account, new_info, tanks).await?;
             self.metrics.check(&self.auto_min_offset).await;
         }
+
         Ok(())
     }
 
-    /// Match the batch's accounts to the account infos fetched from the API.
-    ///
-    /// Returns a stream of matched pairs.
-    fn zip_account_infos(
-        batch: Batch,
-        mut new_infos: HashMap<String, Option<AccountInfo>>,
-    ) -> impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo)>> {
-        let accounts = batch.into_iter().filter_map(move |account| {
-            // Try and find the account in the new account infos.
-            let new_info = new_infos.remove(&account.id.to_string()).flatten();
-            // If found, return the matched pair.
-            new_info.map(|new_info| Ok((account, new_info)))
-        });
-        stream::iter(accounts)
-    }
-
-    #[tracing::instrument(skip_all)]
-    async fn crawl_account(
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        fields(account_id = account.id, n_tanks = tanks.len()),
+    )]
+    async fn update_account(
         &mut self,
         account: BaseAccountInfo,
         new_info: AccountInfo,
+        tanks: Vec<Tank>,
     ) -> crate::Result<bool> {
-        let _stopwatch = Stopwatch::new(format!("account #{} crawled", account.id));
-
-        if new_info.base.last_battle_time == account.last_battle_time {
-            tracing::trace!(account_id = account.id, "last battle time unchanged");
-            return Ok(false);
-        }
-
-        tracing::debug!(
-            account_id = account.id,
-            since = account.last_battle_time.to_rfc3339().as_str(),
-            "crawling…",
-        );
-        let statistics = self
-            .get_updated_tanks_statistics(account.id, account.last_battle_time)
-            .await?;
-        let mut transaction = self.database.begin().await?;
-        if !statistics.is_empty() {
-            let achievements = self.api.get_tanks_achievements(account.id).await?;
-            let tanks = merge_tanks(account.id, statistics, achievements);
-            insert_tank_snapshots(&mut transaction, &tanks).await?;
-            self.insert_missing_vehicles(&mut transaction, &tanks)
-                .await?;
-
-            tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "inserted");
-            self.metrics
-                .add_tanks(new_info.base.last_battle_time, tanks.len())?;
-
-            if let Some(opts) = self.incremental {
-                // Zero timestamp means that the account has never played or been crawled before.
-                // FIXME: make the `last_battle_time` nullable instead.
-                if account.last_battle_time.timestamp() != 0 {
-                    self.push_incremental_updates(&opts, account.id, &tanks)
-                        .await?;
-                }
+        if let Some(opts) = self.incremental {
+            // Zero timestamp means that the account has never played or been crawled before.
+            // FIXME: make the `last_battle_time` nullable instead.
+            if account.last_battle_time.timestamp() != 0 {
+                self.push_incremental_updates(&opts, account.id, &tanks)
+                    .await?;
             }
-        } else {
-            tracing::debug!(account_id = account.id, "no updated tanks");
         }
 
+        let mut transaction = self.database.begin().await?;
+
+        insert_tank_snapshots(&mut transaction, &tanks).await?;
+        self.insert_missing_vehicles(&mut transaction, &tanks)
+            .await?;
         replace_account(&mut transaction, &new_info.base).await?;
+
         transaction
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-
-        tracing::debug!(account_id = account.id, "done");
+        tracing::debug!(account_id = account.id, "updated");
+        self.metrics.add_account(account.id);
+        self.metrics
+            .add_tanks(new_info.base.last_battle_time, tanks.len())?;
         Ok(true)
-    }
-
-    /// Gets account tanks which have their last battle time updated since the specified timestamp.
-    async fn get_updated_tanks_statistics(
-        &self,
-        account_id: i32,
-        since: DateTime,
-    ) -> crate::Result<Vec<TankStatistics>> {
-        Ok(self
-            .api
-            .get_tanks_stats(account_id)
-            .await?
-            .into_iter()
-            .filter(|tank| tank.base.last_battle_time > since)
-            .collect())
     }
 
     /// Inserts missing tank IDs into the database.
@@ -318,7 +275,7 @@ impl Crawler {
         Ok(entries)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
     async fn push_incremental_updates(
         &mut self,
         opts: &IncrementalOpts,
@@ -336,5 +293,63 @@ impl Crawler {
             .await?;
         }
         Ok(())
+    }
+}
+
+/// Match the batch's accounts to the account infos fetched from the API.
+///
+/// Returns a stream of matched pairs.
+fn zip_account_infos(
+    batch: Batch,
+    mut new_infos: HashMap<String, Option<AccountInfo>>,
+) -> impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo)>> {
+    let accounts = batch.into_iter().filter_map(move |account| {
+        // Try and find the account in the new account infos.
+        let new_info = new_infos.remove(&account.id.to_string()).flatten();
+        // If found, return the matched pair.
+        new_info.map(|new_info| Ok((account, new_info)))
+    });
+    stream::iter(accounts)
+}
+
+/// Gets account tanks which have their last battle time updated since the specified timestamp.
+async fn get_updated_tanks_statistics(
+    api: &WargamingApi,
+    account_id: i32,
+    since: DateTime,
+) -> crate::Result<Vec<TankStatistics>> {
+    Ok(api
+        .get_tanks_stats(account_id)
+        .await?
+        .into_iter()
+        .filter(|tank| tank.base.last_battle_time > since)
+        .collect())
+}
+
+#[instrument(
+    level = "debug",
+    skip_all,
+    fields(account_id = account.id, since = account.last_battle_time.to_rfc3339().as_str()),
+)]
+async fn crawl_account(
+    api: &WargamingApi,
+    account: BaseAccountInfo,
+    new_info: AccountInfo,
+) -> crate::Result<Option<(BaseAccountInfo, AccountInfo, Vec<Tank>)>> {
+    if new_info.base.last_battle_time == account.last_battle_time {
+        tracing::trace!(account_id = account.id, "last battle time unchanged");
+        return Ok(None);
+    }
+    let statistics =
+        get_updated_tanks_statistics(&api, account.id, account.last_battle_time).await?;
+    if !statistics.is_empty() {
+        tracing::debug!(account_id = account.id, n_updated_tanks = statistics.len());
+        let achievements = api.get_tanks_achievements(account.id).await?;
+        let tanks = merge_tanks(account.id, statistics, achievements);
+        tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
+        Ok(Some((account, new_info, tanks)))
+    } else {
+        tracing::trace!(account_id = account.id, "no updated tanks");
+        Ok(Some((account, new_info, Vec::new())))
     }
 }

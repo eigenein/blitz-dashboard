@@ -86,13 +86,13 @@ pub struct CrawlerOpts {
     #[structopt(long)]
     pub auto_min_offset: bool,
 
-    /// Number of concurrent tasks
+    /// Number of buffered accounts used to parallelize the crawling process
     #[structopt(
         long,
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
-    pub n_tasks: usize,
+    pub n_buffered_accounts: usize,
 
     /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
@@ -141,13 +141,14 @@ pub struct CrawlAccountsOpts {
     #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub end_id: i32,
 
-    /// Number of tasks for the crawler
+    /// Number of buffered accounts used to parallelize the crawling process
     #[structopt(
         long,
+        alias = "n-tasks",
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
-    pub n_tasks: usize,
+    pub n_buffered_accounts: usize,
 
     /// Metrics logging interval
     #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
