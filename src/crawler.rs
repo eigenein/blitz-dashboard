@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
@@ -16,7 +15,6 @@ use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
     retrieve_tank_battle_count, retrieve_tank_ids,
 };
-use crate::helpers::periodic::Periodic;
 use crate::metrics::Stopwatch;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -36,7 +34,6 @@ pub struct Crawler {
 
     n_tasks: usize,
     metrics: CrawlerMetrics,
-    periodic_log: Periodic,
     auto_min_offset: Option<Arc<ArcSwap<StdDuration>>>,
 
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
@@ -135,14 +132,13 @@ impl Crawler {
     ) -> crate::Result<Self> {
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
-            metrics: CrawlerMetrics::new(api.request_counter.clone()),
+            metrics: CrawlerMetrics::new(api.request_counter.clone(), log_interval),
             api,
             database,
             redis,
             n_tasks,
             incremental,
             auto_min_offset,
-            periodic_log: Periodic::new(log_interval),
             vehicle_cache: tank_ids,
         };
         Ok(this)
@@ -170,17 +166,9 @@ impl Crawler {
             .try_flatten();
 
         while let Some((account, new_info)) = accounts.try_next().await? {
-            self.metrics.last_account_id = account.id;
-            self.metrics.n_accounts += 1;
-
+            self.metrics.add_account(account.id);
             self.crawl_account(account, new_info).await?;
-
-            if self.periodic_log.should_trigger() {
-                let lag_50 = self.metrics.log();
-                if let Some(min_offset) = &self.auto_min_offset {
-                    min_offset.swap(Arc::new(lag_50));
-                }
-            }
+            self.metrics.check(&self.auto_min_offset);
         }
         Ok(())
     }
@@ -231,7 +219,8 @@ impl Crawler {
                 .await?;
 
             tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "inserted");
-            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())?;
+            self.metrics
+                .add_tanks(new_info.base.last_battle_time, tanks.len())?;
 
             if let Some(opts) = self.incremental {
                 // Zero timestamp means that the account has never played or been crawled before.
@@ -268,13 +257,6 @@ impl Crawler {
             .into_iter()
             .filter(|tank| tank.base.last_battle_time > since)
             .collect())
-    }
-
-    fn update_tank_metrics(&mut self, last_battle_time: DateTime, n_tanks: usize) -> crate::Result {
-        self.metrics
-            .push_lag((Utc::now() - last_battle_time).num_seconds().try_into()?);
-        self.metrics.n_tanks += n_tanks;
-        Ok(())
     }
 
     /// Inserts missing tank IDs into the database.
@@ -319,7 +301,7 @@ impl Crawler {
             let n_battles = tank.statistics.all.battles - n_battles;
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
-                self.metrics.n_battles += n_battles;
+                self.metrics.add_battles(n_battles);
                 entries.push(StreamEntry {
                     account_id,
                     tank_id,
