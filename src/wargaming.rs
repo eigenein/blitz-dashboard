@@ -61,7 +61,7 @@ impl WargamingApi {
             client: reqwest::ClientBuilder::new()
                 .default_headers(headers)
                 .https_only(true)
-                .timeout(StdDuration::from_secs(5))
+                .timeout(StdDuration::from_secs(10))
                 .brotli(true)
                 .gzip(true)
                 .deflate(true)
