@@ -1,10 +1,11 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use std::time::Duration as StdDuration;
+use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
+use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
@@ -201,29 +202,31 @@ impl Crawler {
         account: BaseAccountInfo,
         new_info: AccountInfo,
         tanks: Vec<Tank>,
-    ) -> crate::Result<bool> {
+    ) -> crate::Result {
+        let start_instant = Instant::now();
+
         if let Some(opts) = self.incremental {
-            // Zero timestamp means that the account has never played or been crawled before.
             // FIXME: make the `last_battle_time` nullable instead.
             if account.last_battle_time.timestamp() != 0 {
+                // Zero timestamp would mean that the account has never played
+                // or been crawled before.
                 self.push_incremental_updates(&opts, account.id, &tanks)
                     .await?;
             }
         }
 
         let mut transaction = self.database.begin().await?;
-
         insert_tank_snapshots(&mut transaction, &tanks).await?;
         self.insert_missing_vehicles(&mut transaction, &tanks)
             .await?;
         replace_account(&mut transaction, &new_info.base).await?;
-
         transaction
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        tracing::debug!(account_id = account.id, "updated");
-        Ok(true)
+
+        tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
+        Ok(())
     }
 
     /// Inserts missing tank IDs into the database.

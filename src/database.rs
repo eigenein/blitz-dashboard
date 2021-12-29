@@ -6,6 +6,7 @@ use std::time::Duration as StdDuration;
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
 use futures::{StreamExt, TryStreamExt};
+use itertools::Itertools;
 use log::LevelFilter;
 use rocket::log::private::Level;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
@@ -194,34 +195,96 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
             hits,
             frags,
             xp
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        )
+        SELECT * FROM UNNEST($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         ON CONFLICT (account_id, tank_id, last_battle_time) DO NOTHING
     ";
-    for snapshot in tanks {
-        log::trace!(
-            "Inserting #{}/#{} tank snapshot…",
-            snapshot.account_id,
-            snapshot.statistics.base.tank_id
-        );
-        sqlx::query(QUERY)
-            .bind(snapshot.account_id)
-            .bind(snapshot.statistics.base.tank_id as i32)
-            .bind(snapshot.statistics.base.last_battle_time)
-            .bind(snapshot.statistics.battle_life_time.num_seconds())
-            .bind(snapshot.statistics.all.battles)
-            .bind(snapshot.statistics.all.wins)
-            .bind(snapshot.statistics.all.survived_battles)
-            .bind(snapshot.statistics.all.win_and_survived)
-            .bind(snapshot.statistics.all.damage_dealt)
-            .bind(snapshot.statistics.all.damage_received)
-            .bind(snapshot.statistics.all.shots)
-            .bind(snapshot.statistics.all.hits)
-            .bind(snapshot.statistics.all.frags)
-            .bind(snapshot.statistics.all.xp)
-            .execute(&mut *connection)
-            .await
-            .context("failed to insert tank snapshots")?;
-    }
+
+    // Workaround for SQLx being unable to insert multiple records at once.
+    // https://github.com/launchbadge/sqlx/issues/294#issuecomment-830409187
+    sqlx::query(QUERY)
+        .bind(&tanks.iter().map(|tank| tank.account_id).collect_vec())
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.base.tank_id as i32)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.base.last_battle_time)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.battle_life_time.num_seconds())
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.battles)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.wins)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.survived_battles)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.win_and_survived)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.damage_dealt)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.damage_received)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.shots)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.hits)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.frags)
+                .collect_vec(),
+        )
+        .bind(
+            &tanks
+                .iter()
+                .map(|tank| tank.statistics.all.xp)
+                .collect_vec(),
+        )
+        .execute(&mut *connection)
+        .await
+        .context("failed to insert tank snapshots")?;
     Ok(())
 }
 
