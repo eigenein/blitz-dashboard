@@ -154,44 +154,51 @@ impl Crawler {
         accounts: impl Stream<Item = crate::Result<Batch>> + Unpin,
     ) -> crate::Result {
         let api = self.api.clone();
-        let mut batches = accounts
+
+        let mut accounts = accounts
+            // Get account info for all accounts in the batch.
             .map_ok(|batch| async {
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
                 Ok((batch, new_infos))
             })
-            .try_buffer_unordered(self.n_tasks);
-        while let Some((batch, new_infos)) = batches.try_next().await? {
-            self.crawl_batch(batch, new_infos).await?;
+            // Parallel the API calls from above.
+            .try_buffer_unordered(self.n_tasks)
+            // Match the account infos against the accounts from the batch.
+            .map_ok(|(batch, new_infos)| Self::zip_account_infos(batch, new_infos))
+            // Make it a stream of accounts instead of the stream of batches.
+            .try_flatten();
+
+        while let Some((account, new_info)) = accounts.try_next().await? {
+            self.metrics.last_account_id = account.id;
+            self.metrics.n_accounts += 1;
+
+            self.crawl_account(account, new_info).await?;
+
+            if self.periodic_log.should_trigger() {
+                let lag_50 = self.metrics.log();
+                if let Some(min_offset) = &self.auto_min_offset {
+                    min_offset.swap(Arc::new(lag_50));
+                }
+            }
         }
         Ok(())
     }
 
-    async fn crawl_batch(
-        &mut self,
+    /// Match the batch's accounts to the account infos fetched from the API.
+    ///
+    /// Returns a stream of matched pairs.
+    fn zip_account_infos(
         batch: Batch,
         mut new_infos: HashMap<String, Option<AccountInfo>>,
-    ) -> crate::Result {
-        for account in batch.into_iter() {
-            let account_id = account.id;
-            if let Some(new_info) = new_infos.remove(&account.id.to_string()).flatten() {
-                self.crawl_account(account, new_info).await?;
-            }
-            self.update_account_metrics(account_id).await;
-        }
-
-        if self.periodic_log.should_trigger() {
-            let lag_50 = self.metrics.log();
-            if let Some(min_offset) = &self.auto_min_offset {
-                min_offset.swap(Arc::new(lag_50));
-            }
-        }
-        Ok(())
-    }
-
-    async fn update_account_metrics(&mut self, account_id: i32) {
-        self.metrics.last_account_id = account_id;
-        self.metrics.n_accounts += 1;
+    ) -> impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo)>> {
+        let accounts = batch.into_iter().filter_map(move |account| {
+            // Try and find the account in the new account infos.
+            let new_info = new_infos.remove(&account.id.to_string()).flatten();
+            // If found, return the matched pair.
+            new_info.map(|new_info| Ok((account, new_info)))
+        });
+        stream::iter(accounts)
     }
 
     #[tracing::instrument(skip_all)]
@@ -224,8 +231,7 @@ impl Crawler {
                 .await?;
 
             tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "inserted");
-            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())
-                .await?;
+            self.update_tank_metrics(new_info.base.last_battle_time, tanks.len())?;
 
             if let Some(opts) = self.incremental {
                 // Zero timestamp means that the account has never played or been crawled before.
@@ -264,11 +270,7 @@ impl Crawler {
             .collect())
     }
 
-    async fn update_tank_metrics(
-        &mut self,
-        last_battle_time: DateTime,
-        n_tanks: usize,
-    ) -> crate::Result {
+    fn update_tank_metrics(&mut self, last_battle_time: DateTime, n_tanks: usize) -> crate::Result {
         self.metrics
             .push_lag((Utc::now() - last_battle_time).num_seconds().try_into()?);
         self.metrics.n_tanks += n_tanks;
