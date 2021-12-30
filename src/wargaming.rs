@@ -15,7 +15,7 @@ use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 use tracing::warn;
 
-use crate::backoff::Backoff;
+use crate::helpers::backoff::Backoff;
 use crate::helpers::format_elapsed;
 use crate::models;
 use crate::wargaming::response::Response;

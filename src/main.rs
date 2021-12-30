@@ -13,7 +13,6 @@ use structopt::StructOpt;
 use crate::helpers::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
-mod backoff;
 mod crawler;
 mod database;
 mod helpers;
