@@ -239,7 +239,7 @@ impl Crawler {
         tanks: &[Tank],
     ) -> crate::Result {
         for tank in tanks {
-            let tank_id = tank.statistics.base.tank_id;
+            let tank_id = tank.tank_id();
             if !self.vehicle_cache.contains(&tank_id) {
                 self.vehicle_cache.insert(tank_id);
                 insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
