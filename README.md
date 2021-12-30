@@ -28,18 +28,10 @@ These are the versions I'm running with. Lower versions may work, but I haven't 
 Blitz Dashboard consists of a single executable `blitz-dashboard`, which serves multiple sub-commands:
 
 - Web application
-- Account crawler: service and the one-off tool
+- [Account crawler](src/crawler): the service process and the one-off tool
 - Win rate prediction model trainer
 - Tankopedia importer
 
-### «Cold» start
+### Wargaming.net API considerations
 
-In order to run the crawler, you'd need to fill in the database with some accounts. The web application automatically stores all viewed accounts in the database. But you can also scan all the account ID space and import existing accounts with `blitz-dashboard crawl-accounts`.
-
-For example:
-
-```shell
-blitz-dashboard -v crawl-accounts --initialize-schema -d postgres://pi@localhost/yastatist -a <application-ID> --start-id 1 --end-id 150000000
-```
-
-This is a **very** slow process. On average, you'll import around 1M accounts per day.
+TODO
