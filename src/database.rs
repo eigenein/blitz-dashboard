@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::num::TryFromIntError;
 use std::str::FromStr;
-use std::time::Duration as StdDuration;
+use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
 use futures::{StreamExt, TryStreamExt};
+use humantime::format_duration;
 use itertools::Itertools;
 use log::LevelFilter;
 use rocket::log::private::Level;
@@ -82,30 +83,47 @@ pub async fn retrieve_latest_tank_snapshots(
         .context("failed to retrieve the latest tank snapshots")
 }
 
-pub async fn retrieve_tank_battle_count(
+#[instrument(
+    level = "debug",
+    skip_all,
+    fields(account_id = account_id, n_tanks = tank_ids.len()),
+)]
+pub async fn retrieve_latest_tank_battle_counts(
     connection: &PgPool,
     account_id: i32,
-    tank_id: TankId,
-) -> crate::Result<(i32, i32)> {
+    tank_ids: &[TankId],
+) -> crate::Result<HashMap<TankId, (i32, i32)>> {
     // language=SQL
-    const QUERY: &str = r#"
-        WITH "snapshots" AS (
-            SELECT last_battle_time, battles, wins
-            FROM tank_snapshots
-            WHERE account_id = $1 AND tank_id = $2
-        )
-        SELECT battles, wins
-        FROM "snapshots"
-        ORDER BY last_battle_time DESC
-        LIMIT 1
-    "#;
-    Ok(sqlx::query_as(QUERY)
+    const QUERY: &str = "
+        SELECT snapshot.tank_id, snapshot.battles, snapshot.wins
+        FROM UNNEST($2) external_tank_id
+        CROSS JOIN LATERAL (
+            SELECT * FROM tank_snapshots snapshot
+            WHERE
+                snapshot.account_id = $1
+                AND snapshot.tank_id = external_tank_id
+            ORDER BY snapshot.last_battle_time DESC
+            LIMIT 1
+        ) snapshot
+    ";
+
+    let start_instant = Instant::now();
+    let result = sqlx::query(QUERY)
         .bind(account_id)
-        .bind(tank_id as i32)
-        .fetch_optional(connection)
+        .bind(&tank_ids.iter().map(|tank_id| *tank_id as i32).collect_vec())
+        .fetch(connection)
+        .map(|row| {
+            let row = row?;
+            sqlx::Result::Ok((
+                try_get::<i32, TankId>(&row, "tank_id")?,
+                (row.try_get("battles")?, row.try_get("wins")?),
+            ))
+        })
+        .try_collect::<HashMap<TankId, (i32, i32)>>()
         .await
-        .context("failed to retrieve tank battle count")?
-        .unwrap_or((0, 0)))
+        .context("failed to retrieve the latest tank battle counts");
+    tracing::debug!(account_id = account_id, elapsed = %format_duration(start_instant.elapsed()));
+    result
 }
 
 pub async fn replace_account(

@@ -6,6 +6,7 @@ use anyhow::Context;
 use chrono::{Duration, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
+use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use sqlx::{PgConnection, PgPool};
 use tokio::sync::RwLock;
@@ -15,7 +16,7 @@ use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
     insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
-    retrieve_tank_battle_count, retrieve_tank_ids,
+    retrieve_latest_tank_battle_counts, retrieve_tank_ids,
 };
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
@@ -209,7 +210,7 @@ impl Crawler {
 
         if let Some(opts) = self.incremental {
             // FIXME: make the `last_battle_time` nullable instead.
-            if account.last_battle_time.timestamp() != 0 {
+            if account.last_battle_time.timestamp() != 0 && !tanks.is_empty() {
                 // Zero timestamp would mean that the account has never played
                 // or been crawled before.
                 self.push_incremental_updates(&opts, account.id, &tanks)
@@ -258,6 +259,13 @@ impl Crawler {
         tanks: &[Tank],
         opts: &IncrementalOpts,
     ) -> crate::Result<Vec<StreamEntry>> {
+        let battle_counts = retrieve_latest_tank_battle_counts(
+            &self.database,
+            account_id,
+            &tanks.iter().map(Tank::tank_id).collect_vec(),
+        )
+        .await?;
+
         let now = Utc::now();
         let mut entries = Vec::new();
 
@@ -267,9 +275,8 @@ impl Crawler {
                 tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
                 continue;
             }
-            let tank_id = tank.statistics.base.tank_id;
-            let (n_battles, n_wins) =
-                retrieve_tank_battle_count(&self.database, account_id, tank_id).await?;
+            let tank_id = tank.tank_id();
+            let (n_battles, n_wins) = battle_counts.get(&tank_id).copied().unwrap_or((0, 0));
             let n_battles = tank.statistics.all.battles - n_battles;
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
