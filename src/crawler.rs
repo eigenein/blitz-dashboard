@@ -19,7 +19,7 @@ use crate::database::{
     retrieve_latest_tank_battle_counts, retrieve_tank_ids,
 };
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
-use crate::opts::{CrawlAccountsOpts, CrawlerOpts};
+use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
 use crate::wargaming::tank_id::TankId;
@@ -36,8 +36,7 @@ pub struct Crawler {
     database: PgPool,
     redis: MultiplexedConnection,
 
-    n_buffered_batches: usize,
-    n_buffered_accounts: usize,
+    buffering: BufferingOpts,
 
     metrics: CrawlerMetrics,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
@@ -77,8 +76,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         api,
         database.clone(),
         redis.clone(),
-        opts.n_buffered_batches,
-        opts.n_buffered_accounts,
+        opts.buffering,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
             training_stream_duration: opts.training_stream_duration,
@@ -118,8 +116,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         api,
         database,
         redis,
-        opts.n_buffered_batches,
-        opts.n_buffered_accounts,
+        opts.buffering,
         None,
         opts.log_interval,
         None,
@@ -129,13 +126,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 }
 
 impl Crawler {
-    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         api: WargamingApi,
         database: PgPool,
         redis: MultiplexedConnection,
-        n_buffered_batches: usize,
-        n_buffered_accounts: usize,
+        buffering: BufferingOpts,
         incremental: Option<IncrementalOpts>,
         log_interval: StdDuration,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
@@ -146,8 +141,7 @@ impl Crawler {
             api,
             database,
             redis,
-            n_buffered_batches,
-            n_buffered_accounts,
+            buffering,
             incremental,
             auto_min_offset,
             vehicle_cache: tank_ids,
@@ -170,7 +164,7 @@ impl Crawler {
                 Ok((batch, new_infos))
             })
             // Parallelize `get_account_info`.
-            .try_buffer_unordered(self.n_buffered_batches)
+            .try_buffer_unordered(self.buffering.n_buffered_batches)
             // Match the retrieved infos against the accounts from the batch.
             .and_then(|(batch, new_infos)| async { Ok(zip_account_infos(batch, new_infos)) })
             // Convert them to the stream of account infos.
@@ -178,7 +172,7 @@ impl Crawler {
             // Crawl the accounts.
             .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
             // Parallelize `crawl_account`.
-            .try_buffer_unordered(self.n_buffered_accounts)
+            .try_buffer_unordered(self.buffering.n_buffered_accounts)
             // Filter out unchanged accounts.
             .try_filter_map(|item| future::ready(Ok(item)));
 

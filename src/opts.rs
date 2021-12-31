@@ -78,6 +78,9 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
+    #[structopt(flatten)]
+    pub buffering: BufferingOpts,
+
     /// Minimum last battle time offset
     #[structopt(long, default_value = "0s", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
@@ -85,22 +88,6 @@ pub struct CrawlerOpts {
     /// Turn on the automatic minimum last battle offset adjustment based on 50%-lag (experimental)
     #[structopt(long)]
     pub auto_min_offset: bool,
-
-    /// Number of buffered accounts in the stream
-    #[structopt(
-        long,
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub n_buffered_accounts: usize,
-
-    /// Number of buffered batches in the stream
-    #[structopt(
-        long,
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub n_buffered_batches: usize,
 
     /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
@@ -141,6 +128,9 @@ pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
     pub connections: ConnectionOpts,
 
+    #[structopt(flatten)]
+    pub buffering: BufferingOpts,
+
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub start_id: i32,
@@ -149,6 +139,13 @@ pub struct CrawlAccountsOpts {
     #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub end_id: i32,
 
+    /// Metrics logging interval
+    #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
+    pub log_interval: StdDuration,
+}
+
+#[derive(StructOpt)]
+pub struct BufferingOpts {
     /// Number of buffered accounts in the stream
     #[structopt(
         long,
@@ -164,10 +161,6 @@ pub struct CrawlAccountsOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_buffered_batches: usize,
-
-    /// Metrics logging interval
-    #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
-    pub log_interval: StdDuration,
 }
 
 /// Trains the collaborative filtering model
