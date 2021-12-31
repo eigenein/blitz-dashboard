@@ -148,19 +148,19 @@ pub struct CrawlAccountsOpts {
 pub struct BufferingOpts {
     /// Number of buffered accounts in the stream
     #[structopt(
-        long,
+        long = "n-buffered-accounts",
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
-    pub n_buffered_accounts: usize,
+    pub n_accounts: usize,
 
     /// Number of buffered batches in the stream
     #[structopt(
-        long,
+        long = "n-buffered-batches",
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
     )]
-    pub n_buffered_batches: usize,
+    pub n_batches: usize,
 }
 
 /// Trains the collaborative filtering model

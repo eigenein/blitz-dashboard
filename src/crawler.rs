@@ -164,7 +164,7 @@ impl Crawler {
                 Ok((batch, new_infos))
             })
             // Parallelize `get_account_info`.
-            .try_buffer_unordered(self.buffering.n_buffered_batches)
+            .try_buffer_unordered(self.buffering.n_batches)
             // Match the retrieved infos against the accounts from the batch.
             .and_then(|(batch, new_infos)| async { Ok(zip_account_infos(batch, new_infos)) })
             // Convert them to the stream of account infos.
@@ -172,7 +172,7 @@ impl Crawler {
             // Crawl the accounts.
             .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
             // Parallelize `crawl_account`.
-            .try_buffer_unordered(self.buffering.n_buffered_accounts)
+            .try_buffer_unordered(self.buffering.n_accounts)
             // Filter out unchanged accounts.
             .try_filter_map(|item| future::ready(Ok(item)));
 
