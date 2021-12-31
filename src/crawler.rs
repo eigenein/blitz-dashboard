@@ -19,7 +19,7 @@ use crate::database::{
     retrieve_latest_tank_battle_counts, retrieve_tank_ids,
 };
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
-use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts};
+use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
 use crate::wargaming::tank_id::TankId;
@@ -64,28 +64,19 @@ pub struct IncrementalOpts {
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
-    let internal = opts.connections.internal;
-    let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
-    let redis = redis::Client::open(internal.redis_uri.as_str())?
-        .get_multiplexed_async_connection()
-        .await?;
-
     let min_offset = Arc::new(RwLock::new(opts.min_offset));
     let crawler = Crawler::new(
-        api,
-        database.clone(),
-        redis.clone(),
-        opts.buffering,
+        opts.shared,
         Some(IncrementalOpts {
             training_stream_size: opts.training_stream_size,
             training_stream_duration: opts.training_stream_duration,
             test_percentage: opts.test_percentage,
         }),
-        opts.log_interval,
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
     .await?;
+    let database = crawler.database();
+    let redis = crawler.redis();
 
     tracing::info!("running…");
     let batches = Box::pin(get_batch_stream(database, redis, min_offset).await);
@@ -101,52 +92,49 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
-    let internal = opts.connections.internal;
-    let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
-    let redis = redis::Client::open(internal.redis_uri.as_str())?
-        .get_multiplexed_async_connection()
-        .await?;
-
     let batches = stream::iter(opts.start_id..opts.end_id)
         .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(
-        api,
-        database,
-        redis,
-        opts.buffering,
-        None,
-        opts.log_interval,
-        None,
-    )
-    .await?;
+    let crawler = Crawler::new(opts.shared, None, None).await?;
     crawler.run(batches).await
 }
 
 impl Crawler {
     pub async fn new(
-        api: WargamingApi,
-        database: PgPool,
-        redis: MultiplexedConnection,
-        buffering: BufferingOpts,
+        opts: SharedCrawlerOpts,
         incremental: Option<IncrementalOpts>,
-        log_interval: StdDuration,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
+        let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
+        let internal = opts.connections.internal;
+        let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
+        let redis = redis::Client::open(internal.redis_uri.as_str())?
+            .get_multiplexed_async_connection()
+            .await?;
+
         let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
-            metrics: CrawlerMetrics::new(api.request_counter.clone(), log_interval),
+            metrics: CrawlerMetrics::new(api.request_counter.clone(), opts.log_interval),
             api,
             database,
             redis,
-            buffering,
+            buffering: opts.buffering,
             incremental,
             auto_min_offset,
             vehicle_cache: tank_ids,
         };
         Ok(this)
+    }
+
+    #[must_use]
+    pub fn database(&self) -> PgPool {
+        self.database.clone()
+    }
+
+    #[must_use]
+    pub fn redis(&self) -> MultiplexedConnection {
+        self.redis.clone()
     }
 
     /// Runs the crawler on the stream of batches.

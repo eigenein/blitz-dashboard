@@ -76,10 +76,7 @@ pub struct WebOpts {
 #[derive(StructOpt)]
 pub struct CrawlerOpts {
     #[structopt(flatten)]
-    pub connections: ConnectionOpts,
-
-    #[structopt(flatten)]
-    pub buffering: BufferingOpts,
+    pub shared: SharedCrawlerOpts,
 
     /// Minimum last battle time offset
     #[structopt(long, default_value = "0s", parse(try_from_str = humantime::parse_duration))]
@@ -88,10 +85,6 @@ pub struct CrawlerOpts {
     /// Turn on the automatic minimum last battle offset adjustment based on 50%-lag (experimental)
     #[structopt(long)]
     pub auto_min_offset: bool,
-
-    /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
-    #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
-    pub log_interval: StdDuration,
 
     /// Maximum training stream size
     #[structopt(
@@ -126,10 +119,7 @@ pub struct ImportTankopediaOpts {
 #[derive(StructOpt)]
 pub struct CrawlAccountsOpts {
     #[structopt(flatten)]
-    pub connections: ConnectionOpts,
-
-    #[structopt(flatten)]
-    pub buffering: BufferingOpts,
+    pub shared: SharedCrawlerOpts,
 
     /// Starting account ID
     #[structopt(long, parse(try_from_str = parsers::account_id))]
@@ -138,10 +128,6 @@ pub struct CrawlAccountsOpts {
     /// Ending account ID (non-inclusive)
     #[structopt(long, parse(try_from_str = parsers::account_id))]
     pub end_id: i32,
-
-    /// Metrics logging interval
-    #[structopt(long, default_value = "30sec", parse(try_from_str = humantime::parse_duration))]
-    pub log_interval: StdDuration,
 }
 
 #[derive(StructOpt)]
@@ -161,6 +147,19 @@ pub struct BufferingOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_batches: usize,
+}
+
+#[derive(StructOpt)]
+pub struct SharedCrawlerOpts {
+    #[structopt(flatten)]
+    pub connections: ConnectionOpts,
+
+    #[structopt(flatten)]
+    pub buffering: BufferingOpts,
+
+    /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
+    #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
+    pub log_interval: StdDuration,
 }
 
 /// Trains the collaborative filtering model
