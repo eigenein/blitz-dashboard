@@ -75,12 +75,10 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
     .await?;
-    let database = crawler.database();
-    let redis = crawler.redis();
 
     tracing::info!("running…");
-    let batches = Box::pin(get_batch_stream(database, redis, min_offset).await);
-    crawler.run(batches).await
+    let batches = get_batch_stream(crawler.database(), crawler.redis(), min_offset).await;
+    crawler.run(Box::pin(batches)).await
 }
 
 /// Performs a very slow one-time account scan.

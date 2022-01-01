@@ -38,15 +38,14 @@ pub struct WargamingApi {
 pub type Tankopedia = BTreeMap<String, serde_json::Value>;
 
 impl WargamingApi {
+    const USER_AGENT: &'static str =
+        concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
+
     pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
-            header::HeaderValue::from_static(concat!(
-                env!("CARGO_PKG_NAME"),
-                "/",
-                env!("CARGO_PKG_VERSION"),
-            )),
+            header::HeaderValue::from_static(Self::USER_AGENT),
         );
         headers.insert(
             header::ACCEPT,
