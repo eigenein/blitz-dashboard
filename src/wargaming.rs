@@ -17,6 +17,7 @@ use tracing::warn;
 
 use crate::helpers::backoff::Backoff;
 use crate::helpers::format_elapsed;
+use crate::helpers::throttler::Throttler;
 use crate::models;
 use crate::wargaming::response::Response;
 use crate::StdDuration;
@@ -31,6 +32,7 @@ pub struct WargamingApi {
 
     application_id: Arc<String>,
     client: reqwest::Client,
+    throttler: Option<Throttler>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -41,7 +43,11 @@ impl WargamingApi {
     const USER_AGENT: &'static str =
         concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
+    pub fn new(
+        application_id: &str,
+        timeout: StdDuration,
+        throttling_period: Option<StdDuration>,
+    ) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -67,6 +73,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
+            throttler: throttling_period.map(Throttler::new),
         };
         Ok(this)
     }
@@ -200,7 +207,7 @@ impl WargamingApi {
             let sleep_duration = backoff.next();
             warn!(
                 sleep_duration = %format_duration(sleep_duration),
-                n_attempts = backoff.n_attempts(),
+                nr_attempt = backoff.n_attempts(),
                 "retrying…",
             );
             tokio::time::sleep(sleep_duration).await;
@@ -212,6 +219,10 @@ impl WargamingApi {
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
+        if let Some(throttler) = &self.throttler {
+            throttler.throttle().await;
+        }
+
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         tracing::debug!(request_id = request_id, "get");
 

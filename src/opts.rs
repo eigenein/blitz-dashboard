@@ -157,6 +157,9 @@ pub struct SharedCrawlerOpts {
     #[structopt(flatten)]
     pub buffering: BufferingOpts,
 
+    #[structopt(long, default_value = "100ms", parse(try_from_str = humantime::parse_duration))]
+    pub throttling_period: StdDuration,
+
     /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,

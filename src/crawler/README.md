@@ -42,6 +42,10 @@ Defines a number of buffered batches of accounts – these are [`account/info`](
 
 For those accounts which last battle timestamp has changed, the crawler does a couple of more calls: [`tanks/stats`](https://developers.wargaming.net/reference/all/wotb/tanks/stats/) and [`tanks/achievements`](https://developers.wargaming.net/reference/all/wotb/tanks/achievements/). This option defines for how many accounts these calls get buffered. The more – the better.
 
+### `--throttling-period`
+
+Minimal period between the API calls, used to prevent the `REQUEST_LIMIT_EXCEEDED` errors. For server-side apps set this to `50ms`, for standalone apps – `100ms`.
+
 ## «Cold» start
 
 In order to run the crawler, you'd need to fill in the database with some accounts. The web application automatically stores all viewed accounts in the database. But you can also scan all the account ID space and import existing accounts with `blitz-dashboard crawl-accounts`.

@@ -38,7 +38,7 @@ pub fn remap_tank_id(tank_id: TankId) -> TankId {
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
-    let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30))?;
+    let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30), None)?;
     let json_path = Path::new(file!())
         .parent()
         .unwrap()
