@@ -6,8 +6,8 @@ use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::tank_id::to_client_id;
-use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
-use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
+use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
+use crate::web::views::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
 
 #[must_use]
 pub fn account_search(

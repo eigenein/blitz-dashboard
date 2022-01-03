@@ -4,7 +4,7 @@ use std::str::FromStr;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
-use routes::r#static;
+use views::r#static;
 
 use crate::opts::WebOpts;
 use crate::wargaming::cache::account::info::AccountInfoCache;
@@ -17,7 +17,7 @@ mod fairings;
 mod partials;
 mod response;
 mod result;
-mod routes;
+mod views;
 
 /// Run the web app.
 #[tracing::instrument(skip(opts), fields(host = opts.host.as_str(), port = opts.port))]
@@ -64,12 +64,12 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![r#static::get_su_svg])
         .mount("/", routes![r#static::get_us_svg])
         .mount("/", routes![r#static::get_xx_svg])
-        .mount("/", routes![routes::index::get])
-        .mount("/", routes![routes::search::get])
-        .mount("/", routes![routes::player::get])
-        .mount("/", routes![routes::status::get])
-        .mount("/", routes![routes::status::vehicle::get])
-        .mount("/", routes![routes::error::get_error])
+        .mount("/", routes![views::index::get])
+        .mount("/", routes![views::search::get])
+        .mount("/", routes![views::player::get])
+        .mount("/", routes![views::status::get])
+        .mount("/", routes![views::status::vehicle::get])
+        .mount("/", routes![views::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)
         .launch()

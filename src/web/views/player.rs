@@ -33,7 +33,7 @@ use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
-use crate::web::routes::player::partials::*;
+use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 
 pub mod partials;

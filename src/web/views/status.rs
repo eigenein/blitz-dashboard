@@ -9,7 +9,7 @@ use crate::tankopedia::get_vehicle;
 use crate::trainer::model::get_all_vehicle_factors;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, sign_class, tier_td, vehicle_th};
-use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
+use crate::web::views::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
 use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;

@@ -12,7 +12,7 @@ use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::response::CustomResponse;
-use crate::web::routes::player::rocket_uri_macro_get as rocket_uri_macro_get_player;
+use crate::web::views::player::rocket_uri_macro_get as rocket_uri_macro_get_player;
 use crate::web::TrackingCode;
 
 const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);

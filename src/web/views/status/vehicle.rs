@@ -16,7 +16,7 @@ use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
 use crate::web::response::CustomResponse;
-use crate::web::routes::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
+use crate::web::views::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::{DisableCaches, TrackingCode};
 
 #[rocket::get("/status/vehicle/<tank_id>")]
