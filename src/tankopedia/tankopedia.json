@@ -396,8 +396,8 @@
         "module_id": 19475,
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          1300,
-          5908
+          5908,
+          1300
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -17997,8 +17997,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21877,8 +21877,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -24541,8 +24541,8 @@
         "name": "90 mm Mecar mit Mehrladeeinrichtung",
         "next_modules": null,
         "next_tanks": [
-          13841,
-          18449
+          18449,
+          13841
         ],
         "price_credit": 0,
         "price_xp": 12500,
@@ -41621,8 +41621,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -48957,8 +48957,8 @@
         "name": "57 mm 55-57FG",
         "next_modules": null,
         "next_tanks": [
-          5169,
-          7729
+          7729,
+          5169
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -52567,8 +52567,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -80126,8 +80126,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -80984,8 +80984,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -86105,8 +86105,8 @@
         "module_id": 14372,
         "name": "90 mm Gun M36",
         "next_modules": [
-          10276,
-          7972
+          7972,
+          10276
         ],
         "next_tanks": null,
         "price_credit": 0,
