@@ -207,6 +207,7 @@ impl Crawler {
         Ok(())
     }
 
+    /// Prepares the training stream entries.
     #[tracing::instrument(
         level = "debug",
         skip_all,
@@ -262,15 +263,13 @@ impl Crawler {
         tanks: &[Tank],
     ) -> crate::Result {
         let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
-        if !entries.is_empty() {
-            push_stream_entries(
-                &mut self.redis.clone(),
-                &entries,
-                opts.training_stream_size,
-                opts.training_stream_duration,
-            )
-            .await?;
-        }
+        push_stream_entries(
+            &mut self.redis,
+            &entries,
+            opts.training_stream_size,
+            opts.training_stream_duration,
+        )
+        .await?;
         Ok(())
     }
 }

@@ -31,6 +31,10 @@ pub async fn push_stream_entries(
     stream_size: usize,
     stream_duration: Duration,
 ) -> crate::Result {
+    if entries.is_empty() {
+        return Ok(());
+    }
+
     let mut pipeline = pipe();
     let maxlen = StreamMaxlen::Approx(stream_size);
 
