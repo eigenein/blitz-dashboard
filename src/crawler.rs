@@ -3,11 +3,12 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use chrono::{Duration, Utc};
+use chrono::{Duration, Timelike, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
+use redis::pipe;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
@@ -274,8 +275,46 @@ impl Crawler {
             opts.training_stream_duration,
         )
         .await?;
+        self.push_vehicle_analytics(tanks).await?;
 
         Ok(())
+    }
+
+    #[instrument(level = "debug", skip_all)]
+    async fn push_vehicle_analytics(&mut self, tanks: &[Tank]) -> crate::Result {
+        if tanks.is_empty() {
+            return Ok(());
+        }
+
+        // Only storing the analytics for the past 24 hours.
+        // The current hour's analytics is being updated, so the TTL is 23 hours.
+        const TTL_SECS: i64 = 23 * 60 * 60;
+        let deadline = Utc::now() - Duration::hours(TTL_SECS);
+
+        let mut pipeline = pipe();
+        for tank in tanks {
+            if tank.statistics.base.last_battle_time < deadline {
+                continue;
+            }
+            let hour = tank.statistics.base.last_battle_time.hour();
+            pipeline
+                .hincr(
+                    format!("analytics::ru::{}::n_battles", hour),
+                    tank.statistics.base.tank_id,
+                    tank.statistics.all.battles,
+                )
+                .ignore()
+                .hincr(
+                    format!("analytics::ru::{}::n_wins", hour),
+                    tank.statistics.base.tank_id,
+                    tank.statistics.all.wins,
+                )
+                .ignore();
+        }
+        pipeline
+            .query_async(&mut self.redis)
+            .await
+            .context("failed to push vehicle analytics")
     }
 }
 
