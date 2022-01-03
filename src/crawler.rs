@@ -187,7 +187,7 @@ impl Crawler {
 
         if let Some(opts) = self.incremental {
             // FIXME: make the `last_battle_time` nullable instead.
-            if account.last_battle_time.timestamp() != 0 && !tanks.is_empty() {
+            if account.last_battle_time.timestamp() != 0 {
                 // Zero timestamp would mean that the account has never played
                 // or been crawled before.
                 self.push_incremental_updates(&opts, account.id, &tanks)
@@ -262,6 +262,10 @@ impl Crawler {
         account_id: i32,
         tanks: &[Tank],
     ) -> crate::Result {
+        if tanks.is_empty() {
+            return Ok(());
+        }
+
         let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
         push_stream_entries(
             &mut self.redis,
@@ -270,6 +274,7 @@ impl Crawler {
             opts.training_stream_duration,
         )
         .await?;
+
         Ok(())
     }
 }
