@@ -7,7 +7,7 @@ use maud::{html, Markup};
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{Tank, TankType};
 use crate::tankopedia::get_vehicle;
-use crate::web::partials::{margin_class, render_float, vehicle_th};
+use crate::web::partials::{render_float, vehicle_th};
 use crate::DateTime;
 
 pub fn render_period_li(
@@ -97,7 +97,7 @@ pub fn render_tank_tr(
                 span.icon-text.is-flex-wrap-nowrap {
                     span {
                         strong { span { (render_percentage(true_win_rate.mean)) } }
-                        span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
+                        span.has-text-grey {
                             " ±" (render_float(100.0 * true_win_rate.margin, 1))
                         }
                     }
@@ -148,7 +148,7 @@ pub fn render_tank_tr(
                 data-value=(expected_wins_per_hour.mean)
             {
                 strong { (render_float(expected_wins_per_hour.mean, 1)) }
-                span.(margin_class(true_win_rate.margin, 0.1, 0.25)) {
+                span.has-text-grey {
                     (format!(" ±{:.1}", expected_wins_per_hour.margin))
                 }
             }
@@ -189,7 +189,7 @@ pub fn render_tank_tr(
                     span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                     span {
                         strong { (render_float(expected_gold.mean, 1)) }
-                        span.(margin_class(expected_gold.margin, 2.0, 3.0)) {
+                        span.has-text-grey {
                             (format!(" ±{:.1}", expected_gold.margin))
                         }
                     }

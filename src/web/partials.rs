@@ -9,6 +9,7 @@ use crate::wargaming::tank_id::to_client_id;
 use crate::web::routes::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 use crate::web::routes::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
 
+#[must_use]
 pub fn account_search(
     class: &str,
     value: &str,
@@ -58,6 +59,7 @@ pub fn account_search(
     }
 }
 
+#[must_use]
 pub fn icon_text(class: &str, text: &str) -> Markup {
     html! {
         span.icon-text.is-flex-wrap-nowrap {
@@ -67,6 +69,7 @@ pub fn icon_text(class: &str, text: &str) -> Markup {
     }
 }
 
+#[must_use]
 pub fn headers() -> Markup {
     html! {
         meta name="viewport" content="width=device-width, initial-scale=1";
@@ -82,6 +85,7 @@ pub fn headers() -> Markup {
     }
 }
 
+#[must_use]
 pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
     html! {
         time
@@ -90,6 +94,7 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
     }
 }
 
+#[must_use]
 pub fn footer() -> Markup {
     html! {
         footer.footer {
@@ -167,6 +172,7 @@ pub fn footer() -> Markup {
     }
 }
 
+#[must_use]
 pub fn home_button() -> Markup {
     html! {
         a.navbar-item href="/" {
@@ -175,6 +181,7 @@ pub fn home_button() -> Markup {
     }
 }
 
+#[must_use]
 pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
     if condition {
         class
@@ -183,6 +190,7 @@ pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
     }
 }
 
+#[must_use]
 pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
     html! {
         th.is-white-space-nowrap {
@@ -191,6 +199,7 @@ pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
     }
 }
 
+#[must_use]
 pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     let flag = match vehicle.nation {
         Nation::China => "flag-icon-cn",
@@ -240,6 +249,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
     }
 }
 
+#[must_use]
 pub fn render_float(value: f64, precision: usize) -> Markup {
     html! {
         span title=(value) {
@@ -248,14 +258,7 @@ pub fn render_float(value: f64, precision: usize) -> Markup {
     }
 }
 
-pub fn margin_class(value: f64, level_success: f64, level_warning: f64) -> &'static str {
-    match value {
-        _ if value < level_success => "",
-        _ if value < level_warning => "has-text-warning-dark",
-        _ => "has-text-danger",
-    }
-}
-
+#[must_use]
 pub fn sign_class(value: f64) -> &'static str {
     if value > 0.0 {
         "has-background-success-light"
@@ -279,6 +282,7 @@ pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     10_i32 => "Ⅹ",
 };
 
+#[must_use]
 pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
     html! {
         td.has-text-centered.(class.unwrap_or("")) data-sort="tier" data-value=(tier) {
@@ -289,6 +293,7 @@ pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
     }
 }
 
+#[must_use]
 pub fn factors_table(factors: &[f64]) -> Markup {
     html! {
         div.table-container {
