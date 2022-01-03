@@ -1,5 +1,6 @@
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
+use tracing::instrument;
 
 use crate::models::AccountInfo;
 use crate::wargaming::WargamingApi;
@@ -16,6 +17,7 @@ impl AccountInfoCache {
         Self { api, redis }
     }
 
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
     pub async fn get(&self, account_id: i32) -> crate::Result<Option<AccountInfo>> {
         let mut redis = self.redis.clone();
 

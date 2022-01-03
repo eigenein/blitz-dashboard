@@ -62,14 +62,21 @@ pub async fn get_vehicles_factors(
     for tank_id in tank_ids {
         command.arg(tank_id);
     }
-    let values: Vec<Vec<u8>> = command
+    let values: Vec<Option<Vec<u8>>> = command
         .query_async(redis)
         .await
         .context("failed to retrieve the vehicles factors")?;
     tank_ids
         .iter()
         .zip(values.into_iter())
-        .map(|(tank_id, value)| Ok((*tank_id, rmp_serde::from_read_ref(&value)?)))
+        .filter_map(|(tank_id, value)| {
+            value.map(|value| {
+                let vector = rmp_serde::from_read_ref(&value).with_context(|| {
+                    format!("failed to deserialize the vehicle #{} factors", tank_id)
+                })?;
+                Ok((*tank_id, vector))
+            })
+        })
         .collect()
 }
 

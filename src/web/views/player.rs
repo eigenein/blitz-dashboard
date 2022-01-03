@@ -551,12 +551,14 @@ async fn make_predictions(
         Some(factors) => factors,
         None => return Ok(IndexMap::new()),
     };
-    let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
+    let tank_ids = tanks
+        .iter()
+        .map(|tank| remap_tank_id(tank.tank_id()))
+        .collect_vec();
     let vehicles_factors = get_vehicles_factors(redis, &tank_ids).await?;
 
-    let mut predictions: IndexMap<TankId, f64> = tanks
-        .iter()
-        .map(|tank| remap_tank_id(tank.statistics.base.tank_id))
+    let mut predictions: IndexMap<TankId, f64> = tank_ids
+        .into_iter()
         .filter_map(|tank_id| {
             vehicles_factors.get(&tank_id).map(|vehicle_factors| {
                 (

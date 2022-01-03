@@ -1,6 +1,7 @@
 use futures::future::try_join;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
+use tracing::instrument;
 
 use crate::helpers::{compress_to_vec, decompress_to_vec};
 use crate::models::{merge_tanks, Tank};
@@ -19,7 +20,7 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
-    #[tracing::instrument(skip_all)]
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
     pub async fn get(&self, account_id: i32) -> crate::Result<Vec<Tank>> {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);
