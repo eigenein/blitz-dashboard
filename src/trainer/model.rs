@@ -36,6 +36,7 @@ pub async fn get_account_factors(
     }
 }
 
+/// Retrieves the latent vectors for the specified single vehicle.
 pub async fn get_vehicle_factors(
     redis: &mut MultiplexedConnection,
     tank_id: u16,
@@ -47,11 +48,36 @@ pub async fn get_vehicle_factors(
     }
 }
 
+/// Retrieves the latent vectors for the specified vehicles.
+#[instrument(level = "debug", skip_all, fields(n_tanks = tank_ids.len()))]
+pub async fn get_vehicles_factors(
+    redis: &mut MultiplexedConnection,
+    tank_ids: &[TankId],
+) -> crate::Result<HashMap<TankId, Vector>> {
+    if tank_ids.is_empty() {
+        return Ok(HashMap::default());
+    }
+    let mut command = redis::cmd("HMGET");
+    command.arg(VEHICLE_FACTORS_KEY);
+    for tank_id in tank_ids {
+        command.arg(tank_id);
+    }
+    let values: Vec<Vec<u8>> = command
+        .query_async(redis)
+        .await
+        .context("failed to retrieve the vehicles factors")?;
+    tank_ids
+        .iter()
+        .zip(values.into_iter())
+        .map(|(tank_id, value)| Ok((*tank_id, rmp_serde::from_read_ref(&value)?)))
+        .collect()
+}
+
+/// Retrieves the latent vectors for the all vehicles.
 pub async fn get_all_vehicle_factors(
     redis: &mut MultiplexedConnection,
 ) -> crate::Result<HashMap<TankId, Vector>> {
-    let hash_map: std::collections::HashMap<u16, Vec<u8>> =
-        redis.hgetall(VEHICLE_FACTORS_KEY).await?;
+    let hash_map: HashMap<u16, Vec<u8>> = redis.hgetall(VEHICLE_FACTORS_KEY).await?;
     hash_map
         .into_iter()
         .map(|(tank_id, value)| Ok((tank_id, rmp_serde::from_read_ref(&value)?)))

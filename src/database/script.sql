@@ -23,12 +23,6 @@ CREATE TABLE IF NOT EXISTS tank_snapshots (
 CREATE UNIQUE INDEX IF NOT EXISTS tank_snapshots_key
     ON tank_snapshots(account_id ASC, tank_id ASC, last_battle_time DESC);
 
--- 0.38.0
-
-CREATE TABLE IF NOT EXISTS vehicles (
-    tank_id INTEGER PRIMARY KEY
-);
-
 -- 0.84.8
 
 ALTER TABLE accounts SET (FILLFACTOR = 90);

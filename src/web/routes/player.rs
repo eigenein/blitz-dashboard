@@ -8,16 +8,16 @@ use std::time::Instant;
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
-use futures::future::try_join3;
+use futures::future::try_join;
 use humantime::parse_duration;
 use indexmap::IndexMap;
+use itertools::Itertools;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
-use tokio::task::spawn_blocking;
 
 use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
@@ -27,7 +27,7 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
-use crate::trainer::model::{get_account_factors, get_all_vehicle_factors};
+use crate::trainer::model::{get_account_factors, get_vehicles_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::tank_id::TankId;
@@ -44,9 +44,9 @@ pub async fn get(
     account_id: i32,
     period: Option<String>,
     database: &State<PgPool>,
-    account_info_cache: &State<AccountInfoCache>,
+    info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
-    account_tanks_cache: &State<AccountTanksCache>,
+    tanks_cache: &State<AccountTanksCache>,
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<CustomResponse> {
     let mut redis = (*redis).clone();
@@ -60,28 +60,26 @@ pub async fn get(
         None => from_days(1),
     };
 
-    let (current_info, tanks, old_tank_snapshots) = {
-        let before = Utc::now() - Duration::from_std(period)?;
-        try_join3(
-            account_info_cache.get(account_id),
-            account_tanks_cache.get(account_id),
-            retrieve_latest_tank_snapshots(database, account_id, &before),
-        )
-        .await?
-    };
+    let (current_info, tanks) =
+        try_join(info_cache.get(account_id), tanks_cache.get(account_id)).await?;
     let current_info = match current_info {
         Some(info) => info,
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&current_info.nickname);
-    let old_info = insert_account_if_not_exists(database, account_id).await?;
-    if old_info.last_battle_time < current_info.base.last_battle_time {
+    let old_tank_snapshots = {
+        let before = Utc::now() - Duration::from_std(period)?;
+        let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
+        retrieve_latest_tank_snapshots(database, account_id, before, &tank_ids).await?
+    };
+    let last_known_battle_time = insert_account_if_not_exists(database, account_id).await?;
+    if last_known_battle_time < current_info.base.last_battle_time {
         push_account_to_priority_queue(&mut redis, account_id).await?;
     }
 
-    let predictions = make_predictions(&mut redis, account_id, &tanks).await?;
-    let tanks_delta = { spawn_blocking(move || subtract_tanks(tanks, old_tank_snapshots)).await? };
+    let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
+    let predictions = make_predictions(&mut redis, account_id, &tanks_delta).await?;
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
@@ -494,7 +492,7 @@ pub async fn get(
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let predicted_win_rate = predictions.get(&remap_tank_id(tank.statistics.base.tank_id)).copied();
-                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, old_info.last_battle_time)?)
+                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, last_known_battle_time)?)
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
@@ -553,7 +551,8 @@ async fn make_predictions(
         Some(factors) => factors,
         None => return Ok(IndexMap::new()),
     };
-    let vehicles_factors = get_all_vehicle_factors(redis).await?;
+    let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
+    let vehicles_factors = get_vehicles_factors(redis, &tank_ids).await?;
 
     let mut predictions: IndexMap<TankId, f64> = tanks
         .iter()

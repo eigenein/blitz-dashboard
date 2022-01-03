@@ -1,15 +1,13 @@
 use std::collections::HashMap;
-use std::num::TryFromIntError;
 use std::str::FromStr;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use chrono::{DateTime, Duration, Utc};
+use chrono::Duration;
 use futures::{StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
-use log::LevelFilter;
-use rocket::log::private::Level;
+use log::{Level, LevelFilter};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 use tracing::instrument;
@@ -19,6 +17,7 @@ use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
 use crate::wargaming::tank_id::TankId;
+use crate::DateTime;
 
 /// Open and initialize the database.
 #[tracing::instrument(skip(uri))]
@@ -47,17 +46,18 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
 pub async fn retrieve_latest_tank_snapshots(
     connection: &PgPool,
     account_id: i32,
-    before: &DateTime<Utc>,
+    before: DateTime,
+    tank_ids: &[TankId],
 ) -> crate::Result<HashMap<TankId, Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT snapshot.*
-        FROM vehicles vehicle
+        FROM UNNEST($3) external_tank_id
         CROSS JOIN LATERAL (
             SELECT * FROM tank_snapshots snapshot
             WHERE
                 snapshot.account_id = $1
-                AND snapshot.tank_id = vehicle.tank_id
+                AND snapshot.tank_id = external_tank_id
                 AND snapshot.last_battle_time <= $2
             ORDER BY snapshot.last_battle_time DESC
             LIMIT 1
@@ -73,6 +73,7 @@ pub async fn retrieve_latest_tank_snapshots(
     sqlx::query(QUERY)
         .bind(account_id)
         .bind(before)
+        .bind(&tank_ids.iter().map(|tank_id| *tank_id as i32).collect_vec())
         .fetch(connection)
         .map(|row| {
             let row = row?;
@@ -150,19 +151,19 @@ pub async fn replace_account(
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     account_id: i32,
-) -> crate::Result<BaseAccountInfo> {
+) -> crate::Result<DateTime> {
     // language=SQL
-    const QUERY: &str = "
+    const QUERY: &str = r#"
         WITH existing AS (
             INSERT INTO accounts (account_id, last_battle_time)
             VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
             ON CONFLICT (account_id) DO NOTHING
-            RETURNING *
+            RETURNING last_battle_time
         )
-        SELECT * FROM existing
-        UNION SELECT * FROM accounts WHERE account_id = $1;
-    ";
-    sqlx::query_as(QUERY)
+        SELECT last_battle_time FROM existing
+        UNION SELECT last_battle_time FROM accounts WHERE account_id = $1;
+    "#;
+    sqlx::query_scalar(QUERY)
         .bind(account_id)
         .fetch_one(connection)
         .await
@@ -308,36 +309,6 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
         .await
         .context("failed to insert tank snapshots")?;
     Ok(())
-}
-
-pub async fn insert_vehicle_or_ignore(
-    connection: &mut PgConnection,
-    tank_id: TankId,
-) -> crate::Result {
-    // language=SQL
-    const QUERY: &str = "
-        INSERT INTO vehicles (tank_id)
-        VALUES ($1)
-        ON CONFLICT (tank_id) DO NOTHING
-    ";
-    sqlx::query(QUERY)
-        .bind(tank_id as i32)
-        .execute(connection)
-        .await
-        .context("failed to insert the vehicle or ignore")?;
-    Ok(())
-}
-
-pub async fn retrieve_tank_ids(connection: &PgPool) -> crate::Result<Vec<TankId>> {
-    // language=SQL
-    const QUERY: &str = "SELECT tank_id FROM vehicles";
-    Ok(sqlx::query_scalar(QUERY)
-        .fetch_all(connection)
-        .await
-        .context("failed to retrieve all tank IDs")?
-        .into_iter()
-        .map(i32::try_into)
-        .collect::<Result<Vec<TankId>, TryFromIntError>>()?)
 }
 
 impl<'r> FromRow<'r, PgRow> for Tank {

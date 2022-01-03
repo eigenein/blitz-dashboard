@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
@@ -8,21 +8,20 @@ use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
-use sqlx::{PgConnection, PgPool};
+use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
-    insert_tank_snapshots, insert_vehicle_or_ignore, open as open_database, replace_account,
-    retrieve_latest_tank_battle_counts, retrieve_tank_ids,
+    insert_tank_snapshots, open as open_database, replace_account,
+    retrieve_latest_tank_battle_counts,
 };
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
-use crate::wargaming::tank_id::TankId;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -44,10 +43,6 @@ pub struct Crawler {
     /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
     /// This also sends out updated tanks to the trainer.
     incremental: Option<IncrementalOpts>,
-
-    /// Used to maintain the vehicle table in the database.
-    /// The cache contains tank IDs which are for sure existing at the moment in the database.
-    vehicle_cache: HashSet<TankId>,
 }
 
 #[derive(Copy, Clone)]
@@ -115,7 +110,6 @@ impl Crawler {
             .get_multiplexed_async_connection()
             .await?;
 
-        let tank_ids: HashSet<TankId> = retrieve_tank_ids(&database).await?.into_iter().collect();
         let this = Self {
             metrics: CrawlerMetrics::new(api.request_counter.clone(), opts.log_interval),
             api,
@@ -124,7 +118,6 @@ impl Crawler {
             buffering: opts.buffering,
             incremental,
             auto_min_offset,
-            vehicle_cache: tank_ids,
         };
         Ok(this)
     }
@@ -204,8 +197,6 @@ impl Crawler {
 
         let mut transaction = self.database.begin().await?;
         insert_tank_snapshots(&mut transaction, &tanks).await?;
-        self.insert_missing_vehicles(&mut transaction, &tanks)
-            .await?;
         replace_account(&mut transaction, &new_info.base).await?;
         transaction
             .commit()
@@ -213,22 +204,6 @@ impl Crawler {
             .with_context(|| format!("failed to commit account #{}", account.id))?;
 
         tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
-        Ok(())
-    }
-
-    /// Inserts missing tank IDs into the database.
-    async fn insert_missing_vehicles(
-        &mut self,
-        connection: &mut PgConnection,
-        tanks: &[Tank],
-    ) -> crate::Result {
-        for tank in tanks {
-            let tank_id = tank.tank_id();
-            if !self.vehicle_cache.contains(&tank_id) {
-                self.vehicle_cache.insert(tank_id);
-                insert_vehicle_or_ignore(&mut *connection, tank_id).await?;
-            }
-        }
         Ok(())
     }
 
