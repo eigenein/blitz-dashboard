@@ -16,10 +16,10 @@ use crate::web::partials::{
     factors_table, footer, headers, home_button, tier_td, vehicle_th, vehicle_title,
 };
 use crate::web::response::CustomResponse;
-use crate::web::views::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
+use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle;
 use crate::web::{DisableCaches, TrackingCode};
 
-#[rocket::get("/status/vehicle/<tank_id>")]
+#[rocket::get("/analytics/vehicles/<tank_id>")]
 pub async fn get(
     tank_id: TankId,
     tracking_code: &State<TrackingCode>,
@@ -29,7 +29,7 @@ pub async fn get(
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
-    let cache_key = format!("html::status::vehicle::{}", tank_id);
+    let cache_key = format!("html::analytics::vehicles::{}", tank_id);
     if !disable_caches.0 {
         if let Some(cached_response) = redis.get(&cache_key).await? {
             return Ok(CustomResponse::Html(cached_response));

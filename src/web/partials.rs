@@ -6,8 +6,8 @@ use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::wargaming::tank_id::to_client_id;
+use crate::web::views::analytics::rocket_uri_macro_get as rocket_uri_macro_get_vehicles_analytics;
 use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
-use crate::web::views::status::rocket_uri_macro_get as rocket_uri_macro_get_status;
 
 #[must_use]
 pub fn account_search(
@@ -158,11 +158,11 @@ pub fn footer() -> Markup {
                     }
 
                     div.column."is-2" {
-                        p.title."is-6" { "Состояние" }
+                        p.title."is-6" { "Аналитика" }
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-chalkboard.has-text-info {} }
-                                span { a href=(uri!(get_status())) { "Мониторинг" } }
+                                span.icon { i.fas.fa-truck-monster.has-text-info {} }
+                                span { a href=(uri!(get_vehicles_analytics())) { "Танки" } }
                             }
                         }
                     }

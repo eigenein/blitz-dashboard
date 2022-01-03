@@ -9,12 +9,12 @@ use crate::tankopedia::get_vehicle;
 use crate::trainer::model::get_all_vehicle_factors;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, sign_class, tier_td, vehicle_th};
-use crate::web::views::status::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_status;
+use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
 use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
 
-#[rocket::get("/status")]
+#[rocket::get("/analytics/vehicles")]
 pub async fn get(
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
@@ -23,7 +23,7 @@ pub async fn get(
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
-    const CACHE_KEY: &str = "html::status";
+    const CACHE_KEY: &str = "html::analytics::vehicles";
     if !disable_caches.0 {
         if let Some(cached_response) = redis.get(CACHE_KEY).await? {
             return Ok(Html(cached_response));
@@ -127,7 +127,7 @@ pub fn tr(tank_id: TankId, factors: &[f64], n_factors: usize) -> Markup {
             @let vehicle = get_vehicle(tank_id);
             (vehicle_th(&vehicle))
             td.has-text-centered {
-                a href=(uri!(get_vehicle_status(tank_id = tank_id))) {
+                a href=(uri!(get_vehicle_analytics(tank_id = tank_id))) {
                     span.icon-text.is-flex-wrap-nowrap {
                         span.icon { { i.fas.fa-link {} } }
                     }
