@@ -108,6 +108,7 @@ fn to_config(opts: &WebOpts) -> crate::Result<rocket::Config> {
     })
 }
 
+#[must_use]
 pub struct TrackingCode(PreEscaped<String>);
 
 impl TrackingCode {

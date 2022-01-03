@@ -96,6 +96,7 @@ pub async fn get(
     Ok(Html(response))
 }
 
+#[must_use]
 pub fn thead(n_factors: usize) -> Markup {
     html! {
         thead {
@@ -121,6 +122,7 @@ pub fn thead(n_factors: usize) -> Markup {
     }
 }
 
+#[must_use]
 pub fn tr(tank_id: TankId, factors: &[f64], n_factors: usize) -> Markup {
     html! {
         tr {

@@ -8,6 +8,7 @@ pub fn mean(values: &[f64]) -> f64 {
 }
 
 #[derive(Copy, Clone)]
+#[must_use]
 pub struct ConfidenceInterval {
     pub mean: f64,
     pub margin: f64,
@@ -15,7 +16,6 @@ pub struct ConfidenceInterval {
 
 impl ConfidenceInterval {
     /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
-    #[must_use]
     pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> Self {
         let n_trials = n_trials as f64;
         let n_successes = n_successes as f64;
@@ -31,7 +31,6 @@ impl ConfidenceInterval {
         Self { mean, margin }
     }
 
-    #[must_use]
     pub fn default_wilson_score_interval(n_trials: i32, n_successes: i32) -> Self {
         Self::wilson_score_interval(n_trials, n_successes, Z_95)
     }
@@ -50,7 +49,6 @@ impl ConfidenceInterval {
 impl Mul<f64> for ConfidenceInterval {
     type Output = Self;
 
-    #[must_use]
     fn mul(self, rhs: f64) -> Self::Output {
         Self::Output {
             mean: self.mean * rhs,
@@ -62,7 +60,6 @@ impl Mul<f64> for ConfidenceInterval {
 impl Mul<ConfidenceInterval> for f64 {
     type Output = ConfidenceInterval;
 
-    #[must_use]
     fn mul(self, rhs: ConfidenceInterval) -> Self::Output {
         rhs * self
     }
@@ -71,7 +68,6 @@ impl Mul<ConfidenceInterval> for f64 {
 impl Add<f64> for ConfidenceInterval {
     type Output = Self;
 
-    #[must_use]
     fn add(self, rhs: f64) -> Self::Output {
         Self::Output {
             mean: self.mean + rhs,
@@ -83,7 +79,6 @@ impl Add<f64> for ConfidenceInterval {
 impl Add<ConfidenceInterval> for f64 {
     type Output = ConfidenceInterval;
 
-    #[must_use]
     fn add(self, rhs: ConfidenceInterval) -> Self::Output {
         rhs + self
     }
