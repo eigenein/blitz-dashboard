@@ -69,13 +69,12 @@ pub async fn get_vehicles_factors(
     tank_ids
         .iter()
         .zip(values.into_iter())
-        .filter_map(|(tank_id, value)| {
-            value.map(|value| {
-                let vector = rmp_serde::from_read_ref(&value).with_context(|| {
-                    format!("failed to deserialize the vehicle #{} factors", tank_id)
-                })?;
-                Ok((*tank_id, vector))
-            })
+        .filter_map(|(tank_id, value)| value.map(|value| (*tank_id, value)))
+        .map(|(tank_id, value)| {
+            let vector = rmp_serde::from_read_ref(&value).with_context(|| {
+                format!("failed to deserialize the vehicle #{} factors", tank_id)
+            })?;
+            Ok((tank_id, vector))
         })
         .collect()
 }
