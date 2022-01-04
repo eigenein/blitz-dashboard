@@ -45,7 +45,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
         .manage(Analytics::new(
             redis.clone(),
-            Duration::hours(1),
+            opts.analytics_time_span,
             Duration::minutes(5),
         ))
         .manage(api)

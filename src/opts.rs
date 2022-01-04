@@ -70,6 +70,9 @@ pub struct WebOpts {
     /// Disable the caches, do not use on production
     #[structopt(long)]
     pub disable_caches: bool,
+
+    #[structopt(long, default_value = "2hours", parse(try_from_str = parsers::duration))]
+    pub analytics_time_span: Duration,
 }
 
 /// Runs the account crawler
