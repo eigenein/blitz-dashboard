@@ -144,7 +144,7 @@ async fn load_sample(
     time_span: Duration,
 ) -> crate::Result<(String, Vec<SamplePoint>)> {
     let mut sample = Vec::new();
-    let mut pointer = "0".to_string();
+    let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
 
     while match refresh_sample(redis, &pointer, &mut sample).await? {
         Some((n_entries, new_pointer)) => {
