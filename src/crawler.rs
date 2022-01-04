@@ -2,14 +2,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
-use ahash::AHashMap;
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
-use itertools::{izip, Itertools};
+use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
-use redis::pipe;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
@@ -24,7 +22,6 @@ use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatist
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
-use crate::wargaming::tank_id::TankId;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -277,87 +274,9 @@ impl Crawler {
             opts.training_stream_duration,
         )
         .await?;
-        self.push_vehicle_analytics(tanks).await?;
 
         Ok(())
     }
-
-    #[instrument(level = "debug", skip_all)]
-    async fn push_vehicle_analytics(&mut self, tanks: &[Tank]) -> crate::Result {
-        if tanks.is_empty() {
-            return Ok(());
-        }
-
-        const TTL_SECS: usize = 7 * 24 * 60 * 60;
-
-        let mut pipeline = pipe();
-        for tank in tanks {
-            let (n_battles_key, n_wins_key) =
-                make_analytics_keys(tank.statistics.base.last_battle_time);
-            let tank_id = tank.statistics.base.tank_id;
-            pipeline
-                .hincr(&n_battles_key, tank_id, tank.statistics.all.battles)
-                .ignore()
-                .expire(&n_battles_key, TTL_SECS)
-                .ignore()
-                .hincr(&n_wins_key, tank_id, tank.statistics.all.wins)
-                .ignore()
-                .expire(&n_wins_key, TTL_SECS)
-                .ignore();
-        }
-        pipeline
-            .query_async(&mut self.redis)
-            .await
-            .context("failed to push vehicle analytics")
-    }
-}
-
-#[must_use]
-pub fn make_analytics_keys(timestamp: DateTime) -> (String, String) {
-    let infix = timestamp.format("%Y%m%d%H");
-    let n_battles_key = format!("analytics::ru::{}::n_battles", infix);
-    let n_wins_key = format!("analytics::ru::{}::n_wins", infix);
-    (n_battles_key, n_wins_key)
-}
-
-#[instrument(level = "debug", skip_all)]
-pub async fn get_analytics(
-    redis: &mut MultiplexedConnection,
-    timestamp: DateTime,
-    tank_ids: &[TankId],
-) -> crate::Result<AHashMap<TankId, f64>> {
-    if tank_ids.is_empty() {
-        return Ok(AHashMap::new());
-    }
-
-    let (n_battles_key, n_wins_key) = make_analytics_keys(timestamp);
-    tracing::debug!(
-        n_battles_key = n_battles_key.as_str(),
-        n_wins_key = n_wins_key.as_str(),
-    );
-
-    let mut pipeline = pipe();
-    for key in [n_battles_key, n_wins_key] {
-        pipeline.cmd("HMGET");
-        pipeline.arg(key);
-        for tank_id in tank_ids {
-            pipeline.arg(tank_id);
-        }
-    }
-    let (n_battles, n_wins): (Vec<Option<i32>>, Vec<Option<i32>>) =
-        pipeline.query_async(redis).await?;
-
-    let analytics = izip!(tank_ids, n_battles.into_iter(), n_wins.into_iter())
-        .filter_map(|(tank_id, n_battles, n_wins)| {
-            n_battles
-                .zip(n_wins)
-                .map(|(n_battles, n_wins)| (*tank_id, n_battles, n_wins))
-        })
-        .map(|(tank_id, n_battles, n_wins)| (tank_id, n_wins as f64 / n_battles as f64))
-        .collect::<AHashMap<TankId, f64>>();
-
-    tracing::debug!(analytics_len = analytics.len());
-    Ok(analytics)
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.

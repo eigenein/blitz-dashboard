@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use chrono::Duration;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
@@ -10,8 +11,10 @@ use crate::opts::WebOpts;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::WargamingApi;
+use crate::web::cache::analytics::Analytics;
 use crate::StdDuration;
 
+mod cache;
 mod error;
 mod fairings;
 mod partials;
@@ -40,6 +43,11 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
+        .manage(Analytics::new(
+            redis.clone(),
+            Duration::hours(1),
+            Duration::minutes(5),
+        ))
         .manage(api)
         .manage(database)
         .manage(TrackingCode::new(&opts))

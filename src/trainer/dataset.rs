@@ -15,7 +15,8 @@ use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 
-const STREAM_KEY: &str = "streams::battles::v2";
+pub const STREAM_KEY: &str = "streams::battles::v2";
+
 const PAGE_SIZE: usize = 100000;
 const ACCOUNT_ID_KEY: &str = "a";
 const TANK_ID_KEY: &str = "t";
@@ -23,6 +24,11 @@ const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
 const IS_TEST_KEY: &str = "tt";
+
+pub type Fields = KeyValueVec<String, i64>;
+pub type Entry = TwoTuple<String, Fields>;
+pub type StreamResponse = TwoTuple<(), Vec<Entry>>;
+pub type XReadResponse = Vec<StreamResponse>;
 
 #[tracing::instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
 pub async fn push_stream_entries(
@@ -185,10 +191,6 @@ async fn refresh_sample(
     sample: &mut Vec<SamplePoint>,
 ) -> crate::Result<Option<(usize, String)>> {
     // Fetch new points.
-    type Fields = KeyValueVec<String, i64>;
-    type Entry = TwoTuple<String, Fields>;
-    type StreamResponse = TwoTuple<(), Vec<Entry>>;
-    type XReadResponse = Vec<StreamResponse>;
     let mut response: XReadResponse = redis
         .xread_options(
             &[STREAM_KEY],
@@ -201,8 +203,8 @@ async fn refresh_sample(
             let result = entries
                 .last()
                 .map(|TwoTuple(id, _)| (entries.len(), id.clone()));
-            for TwoTuple(_, entry) in entries.into_iter() {
-                let points: Vec<SamplePoint> = StreamEntry::try_from(entry)?.into();
+            for TwoTuple(_, fields) in entries.into_iter() {
+                let points: Vec<SamplePoint> = StreamEntry::try_from(fields)?.into();
                 sample.extend(points.into_iter());
             }
             Ok(result)
@@ -253,7 +255,7 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
     }
 }
 
-struct KeyValueVec<K, V>(pub Vec<(K, V)>);
+pub struct KeyValueVec<K, V>(pub Vec<(K, V)>);
 
 impl<K: FromRedisValue, V: FromRedisValue> FromRedisValue for KeyValueVec<K, V> {
     #[tracing::instrument(skip_all)]
@@ -276,7 +278,7 @@ impl<K: FromRedisValue, V: FromRedisValue> FromRedisValue for KeyValueVec<K, V> 
 
 /// Work around the bug in the `redis` crate.
 /// https://github.com/mitsuhiko/redis-rs/issues/334
-struct TwoTuple<T1, T2>(pub T1, pub T2);
+pub struct TwoTuple<T1, T2>(pub T1, pub T2);
 
 impl<T1: FromRedisValue, T2: FromRedisValue> FromRedisValue for TwoTuple<T1, T2> {
     fn from_redis_value(value: &Value) -> RedisResult<Self> {

@@ -19,7 +19,6 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 
 use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
-use crate::crawler::get_analytics;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -31,6 +30,7 @@ use crate::trainer::model::{get_account_factors, get_vehicles_factors};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::tank_id::TankId;
+use crate::web::cache::analytics::Analytics;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -38,6 +38,7 @@ use crate::web::TrackingCode;
 
 pub mod partials;
 
+#[allow(clippy::too_many_arguments)]
 #[tracing::instrument(skip_all, fields(account_id = account_id, period = period.as_deref()))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
@@ -47,6 +48,7 @@ pub async fn get(
     info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     tanks_cache: &State<AccountTanksCache>,
+    analytics: &State<Analytics>,
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<CustomResponse> {
     let mut redis = (*redis).clone();
@@ -79,12 +81,12 @@ pub async fn get(
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
-    let (predictions, analytics) = {
+    let predictions = {
         let tank_ids = tanks_delta.iter().map(Tank::tank_id).collect_vec();
-        let predictions = make_predictions(&mut redis, account_id, &tank_ids).await?;
-        let analytics = get_analytics(&mut redis, Utc::now(), &tank_ids).await?;
-        (predictions, analytics)
+        make_predictions(&mut redis, account_id, &tank_ids).await?
     };
+    analytics.trigger_refresh().await;
+    let analytics = &analytics.win_rates.read().await.1;
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
