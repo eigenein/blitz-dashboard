@@ -198,7 +198,6 @@ dependencies = [
  "fastrand",
  "futures",
  "humantime",
- "indexmap",
  "itertools",
  "jemallocator",
  "log",

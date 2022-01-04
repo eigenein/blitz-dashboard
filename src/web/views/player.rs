@@ -2,15 +2,14 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
-use std::cmp::Ordering;
 use std::time::Instant;
 
+use ahash::AHashMap;
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use futures::future::try_join;
 use humantime::parse_duration;
-use indexmap::IndexMap;
 use itertools::Itertools;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
@@ -20,6 +19,7 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 
 use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
+use crate::crawler::get_analytics;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -79,7 +79,12 @@ pub async fn get(
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
-    let predictions = make_predictions(&mut redis, account_id, &tanks_delta).await?;
+    let (predictions, analytics) = {
+        let tank_ids = tanks_delta.iter().map(Tank::tank_id).collect_vec();
+        let predictions = make_predictions(&mut redis, account_id, &tank_ids).await?;
+        let analytics = get_analytics(&mut redis, Utc::now(), &tank_ids).await?;
+        (predictions, analytics)
+    };
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
@@ -545,30 +550,29 @@ pub async fn get(
 async fn make_predictions(
     redis: &mut MultiplexedConnection,
     account_id: i32,
-    tanks: &[Tank],
-) -> crate::Result<IndexMap<TankId, f64>> {
+    tank_ids: &[TankId],
+) -> crate::Result<AHashMap<TankId, f64>> {
+    if tank_ids.is_empty() {
+        return Ok(AHashMap::new());
+    }
+
     let account_factors = match get_account_factors(redis, account_id).await? {
         Some(factors) => factors,
-        None => return Ok(IndexMap::new()),
+        None => return Ok(AHashMap::new()),
     };
-    let tank_ids = tanks
-        .iter()
-        .map(|tank| remap_tank_id(tank.tank_id()))
-        .collect_vec();
-    let vehicles_factors = get_vehicles_factors(redis, &tank_ids).await?;
+    let vehicles_factors = get_vehicles_factors(redis, tank_ids).await?;
 
-    let mut predictions: IndexMap<TankId, f64> = tank_ids
-        .into_iter()
+    let predictions: AHashMap<TankId, f64> = tank_ids
+        .iter()
         .filter_map(|tank_id| {
-            vehicles_factors.get(&tank_id).map(|vehicle_factors| {
+            vehicles_factors.get(tank_id).map(|vehicle_factors| {
                 (
-                    tank_id,
+                    *tank_id,
                     predict_probability(vehicle_factors, &account_factors),
                 )
             })
         })
         .collect();
-    predictions.sort_by(|_, left, _, right| right.partial_cmp(left).unwrap_or(Ordering::Equal));
     Ok(predictions)
 }
 

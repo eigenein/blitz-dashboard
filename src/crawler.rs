@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
+use ahash::AHashMap;
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
-use itertools::Itertools;
+use itertools::{izip, Itertools};
 use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use sqlx::PgPool;
@@ -19,10 +20,12 @@ use crate::database::{
     insert_tank_snapshots, open as open_database, replace_account,
     retrieve_latest_tank_battle_counts,
 };
+use crate::math::statistics::ConfidenceInterval;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
 use crate::trainer::stream_entry::StreamEntry;
+use crate::wargaming::tank_id::TankId;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -316,6 +319,43 @@ pub fn make_analytics_keys(timestamp: DateTime) -> (String, String) {
     let n_battles_key = format!("analytics::ru::{}::n_battles", infix);
     let n_wins_key = format!("analytics::ru::{}::n_wins", infix);
     (n_battles_key, n_wins_key)
+}
+
+pub async fn get_analytics(
+    redis: &mut MultiplexedConnection,
+    timestamp: DateTime,
+    tank_ids: &[TankId],
+) -> crate::Result<AHashMap<TankId, ConfidenceInterval>> {
+    if tank_ids.is_empty() {
+        return Ok(AHashMap::new());
+    }
+
+    let (n_battles_key, n_wins_key) = make_analytics_keys(timestamp);
+
+    let mut pipeline = pipe();
+    for key in [n_battles_key, n_wins_key] {
+        pipeline.cmd("HMGET");
+        pipeline.arg(key);
+        for tank_id in tank_ids {
+            pipeline.arg(tank_id);
+        }
+    }
+    let (n_battles, n_wins): (Vec<Option<i32>>, Vec<Option<i32>>) =
+        pipeline.query_async(redis).await?;
+
+    let analytics = izip!(tank_ids, n_battles.into_iter(), n_wins.into_iter())
+        .map(|(tank_id, n_battles, n_wins)| {
+            (
+                *tank_id,
+                ConfidenceInterval::default_wilson_score_interval(
+                    n_battles.unwrap_or(0),
+                    n_wins.unwrap_or(0),
+                ),
+            )
+        })
+        .collect();
+
+    Ok(analytics)
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.
