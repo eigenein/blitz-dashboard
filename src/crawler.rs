@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use chrono::{Duration, Timelike, Utc};
+use chrono::{Duration, Utc};
 use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
@@ -286,29 +286,22 @@ impl Crawler {
             return Ok(());
         }
 
-        // Only storing the analytics for the past 24 hours.
-        // The current hour's analytics is being updated, so the TTL is 23 hours.
-        const TTL_SECS: i64 = 23 * 60 * 60;
-        let deadline = Utc::now() - Duration::hours(TTL_SECS);
+        const TTL_SECS: usize = 7 * 24 * 60 * 60;
 
         let mut pipeline = pipe();
         for tank in tanks {
-            if tank.statistics.base.last_battle_time < deadline {
-                continue;
-            }
-            let hour = tank.statistics.base.last_battle_time.hour();
+            let infix = tank.statistics.base.last_battle_time.format("%Y%m%d%H");
+            let n_battles_key = format!("analytics::ru::{}::n_battles", infix);
+            let n_wins_key = format!("analytics::ru::{}::n_wins", infix);
+            let tank_id = tank.statistics.base.tank_id;
             pipeline
-                .hincr(
-                    format!("analytics::ru::{}::n_battles", hour),
-                    tank.statistics.base.tank_id,
-                    tank.statistics.all.battles,
-                )
+                .hincr(&n_battles_key, tank_id, tank.statistics.all.battles)
                 .ignore()
-                .hincr(
-                    format!("analytics::ru::{}::n_wins", hour),
-                    tank.statistics.base.tank_id,
-                    tank.statistics.all.wins,
-                )
+                .expire(&n_battles_key, TTL_SECS)
+                .ignore()
+                .hincr(&n_wins_key, tank_id, tank.statistics.all.wins)
+                .ignore()
+                .expire(&n_wins_key, TTL_SECS)
                 .ignore();
         }
         pipeline
