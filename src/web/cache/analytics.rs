@@ -16,8 +16,9 @@ use crate::{format_elapsed, DateTime};
 
 #[derive(Clone)]
 pub struct Analytics {
-    pub win_rates: Arc<RwLock<(DateTime, AHashMap<TankId, f64>)>>,
+    pub win_rates: Arc<RwLock<AHashMap<TankId, f64>>>,
 
+    triggered_at: Arc<RwLock<DateTime>>,
     redis: MultiplexedConnection,
     time_to_live: Duration,
     time_span: Duration,
@@ -29,14 +30,16 @@ impl Analytics {
             redis,
             time_span,
             time_to_live,
-            win_rates: Arc::new(RwLock::new((Utc.timestamp(0, 0), AHashMap::new()))),
+            win_rates: Arc::new(RwLock::new(AHashMap::new())),
+            triggered_at: Arc::new(RwLock::new(Utc.timestamp(0, 0))),
         }
     }
 
     pub async fn trigger_refresh(&self) {
-        let expiry_time = self.win_rates.read().await.0 + self.time_to_live;
+        let expiry_time = *self.triggered_at.read().await + self.time_to_live;
 
         if Utc::now() > expiry_time {
+            *self.triggered_at.write().await = Utc::now();
             let mut this = self.clone();
             spawn(async move {
                 if let Err(error) = this.refresh().await {
@@ -81,7 +84,7 @@ impl Analytics {
             .map(|(tank_id, (n_wins, n_battles))| (tank_id, n_wins as f64 / n_battles as f64))
             .collect::<AHashMap<TankId, f64>>();
         let n_vehicles = win_rates.len();
-        *self.win_rates.write().await = (Utc::now(), win_rates);
+        *self.win_rates.write().await = win_rates;
 
         tracing::info!(elapsed = %format_elapsed(&start_instant), n_vehicles = n_vehicles, "refreshed");
         Ok(())

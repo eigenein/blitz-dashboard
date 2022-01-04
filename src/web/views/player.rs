@@ -86,7 +86,7 @@ pub async fn get(
         make_predictions(&mut redis, account_id, &tank_ids).await?
     };
     analytics.trigger_refresh().await;
-    let analytics = &analytics.win_rates.read().await.1;
+    let analytics = &analytics.win_rates.read().await;
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
