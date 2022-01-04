@@ -192,7 +192,7 @@ async fn refresh_sample(
     let mut response: XReadResponse = redis
         .xread_options(
             &[STREAM_KEY],
-            &[&last_id],
+            &[last_id],
             &StreamReadOptions::default().count(PAGE_SIZE),
         )
         .await?;
