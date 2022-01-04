@@ -1,5 +1,6 @@
 use maud::Render;
 
+#[allow(dead_code)]
 enum IconKind {
     Solid,
 }
@@ -12,6 +13,7 @@ impl Render for IconKind {
     }
 }
 
+#[allow(dead_code)]
 enum Icon {
     ChartArea,
 }
@@ -24,6 +26,7 @@ impl Render for Icon {
     }
 }
 
+#[allow(dead_code)]
 enum Color {
     GreyLight,
 }
@@ -45,6 +48,7 @@ impl Render for TextColor {
     }
 }
 
+#[allow(dead_code)]
 struct IconSpan {
     icon: Icon,
     kind: IconKind,
@@ -52,6 +56,7 @@ struct IconSpan {
 }
 
 impl IconSpan {
+    #[allow(dead_code)]
     fn new(icon: Icon) -> Self {
         Self {
             icon,

@@ -54,7 +54,7 @@ pub fn render_tank_tr(
     tank: &Tank,
     account_win_rate: &ConfidenceInterval,
     predicted_win_rate: Option<f64>,
-    live_win_rate: Option<ConfidenceInterval>,
+    live_win_rate: Option<f64>,
     last_account_battle_time: DateTime,
 ) -> crate::Result<Markup> {
     let markup = html! {
@@ -128,15 +128,12 @@ pub fn render_tank_tr(
             }
 
             @if let Some(live_win_rate) = live_win_rate {
-                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.mean) {
+                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate) {
                     span.icon-text.is-flex-wrap-nowrap {
                         span.icon.has-text-grey-light { i.fas.fa-chart-area {} }
                         span {
-                            strong title=(live_win_rate.mean) {
-                                (format!("{:.2}%", live_win_rate.mean * 100.0))
-                            }
-                            span.has-text-grey {
-                                (format!(" ±{:.1}", live_win_rate.margin))
+                            strong title=(live_win_rate) {
+                                (format!("{:.2}%", live_win_rate * 100.0))
                             }
                         }
                     }

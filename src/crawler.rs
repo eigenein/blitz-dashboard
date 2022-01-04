@@ -20,7 +20,6 @@ use crate::database::{
     insert_tank_snapshots, open as open_database, replace_account,
     retrieve_latest_tank_battle_counts,
 };
-use crate::math::statistics::ConfidenceInterval;
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::trainer::dataset::push_stream_entries;
@@ -326,7 +325,7 @@ pub async fn get_analytics(
     redis: &mut MultiplexedConnection,
     timestamp: DateTime,
     tank_ids: &[TankId],
-) -> crate::Result<AHashMap<TankId, ConfidenceInterval>> {
+) -> crate::Result<AHashMap<TankId, f64>> {
     if tank_ids.is_empty() {
         return Ok(AHashMap::new());
     }
@@ -354,13 +353,8 @@ pub async fn get_analytics(
                 .zip(n_wins)
                 .map(|(n_battles, n_wins)| (*tank_id, n_battles, n_wins))
         })
-        .map(|(tank_id, n_battles, n_wins)| {
-            (
-                tank_id,
-                ConfidenceInterval::default_wilson_score_interval(n_battles, n_wins),
-            )
-        })
-        .collect::<AHashMap<TankId, ConfidenceInterval>>();
+        .map(|(tank_id, n_battles, n_wins)| (tank_id, n_wins as f64 / n_battles as f64))
+        .collect::<AHashMap<TankId, f64>>();
 
     tracing::debug!(analytics_len = analytics.len());
     Ok(analytics)
