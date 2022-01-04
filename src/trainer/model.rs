@@ -15,6 +15,7 @@ use crate::helpers::format_elapsed;
 use crate::helpers::periodic::Periodic;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
+use crate::tankopedia::remap_tank_id;
 use crate::wargaming::tank_id::TankId;
 
 const VEHICLE_FACTORS_KEY: &str = "trainer::vehicles";
@@ -60,7 +61,7 @@ pub async fn get_vehicles_factors(
     let mut command = redis::cmd("HMGET");
     command.arg(VEHICLE_FACTORS_KEY);
     for tank_id in tank_ids {
-        command.arg(tank_id);
+        command.arg(remap_tank_id(*tank_id));
     }
     let values: Vec<Option<Vec<u8>>> = command
         .query_async(redis)
