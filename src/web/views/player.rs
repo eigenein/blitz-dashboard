@@ -164,21 +164,25 @@ pub async fn get(
                     span { "Техника" }
                 }
             }
+
             th { "Тип" }
-            th {
+
+            th.has-text-right {
                 a data-sort="battle-life-time" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Время в боях" }
                     }
                 }
             }
-            th {
+
+            th.has-text-right {
                 a data-sort="battles" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Бои" }
                     }
                 }
             }
+
             th {
                 a data-sort="wins" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -186,13 +190,15 @@ pub async fn get(
                     }
                 }
             }
-            th {
+
+            th.has-text-right {
                 a data-sort="win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Текущий процент побед" { "WR" } }
                     }
                 }
             }
+
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -200,6 +206,7 @@ pub async fn get(
                     }
                 }
             }
+
             th.is-white-space-nowrap {
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="predicted-win-rate" {
@@ -208,6 +215,7 @@ pub async fn get(
                     }
                 }
             }
+
             th.is-white-space-nowrap {
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="live-win-rate" {
@@ -216,6 +224,7 @@ pub async fn get(
                     }
                 }
             }
+
             th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -223,6 +232,7 @@ pub async fn get(
                     }
                 }
             }
+
             th {
                 a data-sort="wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -230,6 +240,7 @@ pub async fn get(
                     }
                 }
             }
+
             th {
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -237,6 +248,7 @@ pub async fn get(
                     }
                 }
             }
+
             th.is-white-space-nowrap {
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="predicted-wins-per-hour" {
@@ -245,6 +257,7 @@ pub async fn get(
                     }
                 }
             }
+
             th {
                 a data-sort="gold" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -252,6 +265,7 @@ pub async fn get(
                     }
                 }
             }
+
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -259,27 +273,31 @@ pub async fn get(
                     }
                 }
             }
-            th {
+
+            th.has-text-right {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Общий урон" }
                     }
                 }
             }
-            th.is-white-space-nowrap {
+
+            th.has-text-right.is-white-space-nowrap {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Урон за бой" }
                     }
                 }
             }
-            th {
+
+            th.has-text-right {
                 a data-sort="survived-battles" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Выжил" }
                     }
                 }
             }
+
             th {
                 a data-sort="survival-rate" {
                     span.icon-text.is-flex-wrap-nowrap {

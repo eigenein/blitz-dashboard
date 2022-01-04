@@ -64,6 +64,7 @@ pub fn render_tank_tr(
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
+
             td.has-text-centered {
                 @match vehicle.type_ {
                     TankType::Light => "ЛТ",
@@ -73,12 +74,15 @@ pub fn render_tank_tr(
                     TankType::Unknown => "?",
                 }
             }
-            td.is-white-space-nowrap data-sort="battle-life-time" data-value=(tank.statistics.battle_life_time.num_seconds()) {
+
+            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(tank.statistics.battle_life_time.num_seconds()) {
                 (format_duration(tank.statistics.battle_life_time.to_std()?))
             }
-            td data-sort="battles" data-value=(tank.statistics.all.battles) {
+
+            td.has-text-right data-sort="battles" data-value=(tank.statistics.all.battles) {
                 (tank.statistics.all.battles)
             }
+
             td data-sort="wins" data-value=(tank.statistics.all.wins) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
@@ -87,7 +91,7 @@ pub fn render_tank_tr(
             }
 
             @let win_rate = tank.statistics.all.current_win_rate();
-            td data-sort="win-rate" data-value=(win_rate) {
+            td.has-text-right data-sort="win-rate" data-value=(win_rate) {
                 strong { (render_percentage(win_rate)) }
             }
 
@@ -214,16 +218,16 @@ pub fn render_tank_tr(
                 }
             }
 
-            td data-sort="damage-dealt" data-value=(tank.statistics.all.damage_dealt) {
+            td.has-text-right data-sort="damage-dealt" data-value=(tank.statistics.all.damage_dealt) {
                 (tank.statistics.all.damage_dealt)
             }
 
             @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;
-            td data-sort="damage-per-battle" data-value=(damage_per_battle) {
+            td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }
 
-            td data-sort="survived-battles" data-value=(tank.statistics.all.survived_battles) {
+            td.has-text-right data-sort="survived-battles" data-value=(tank.statistics.all.survived_battles) {
                 (tank.statistics.all.survived_battles)
             }
 
