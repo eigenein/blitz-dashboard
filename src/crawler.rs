@@ -290,9 +290,8 @@ impl Crawler {
 
         let mut pipeline = pipe();
         for tank in tanks {
-            let infix = tank.statistics.base.last_battle_time.format("%Y%m%d%H");
-            let n_battles_key = format!("analytics::ru::{}::n_battles", infix);
-            let n_wins_key = format!("analytics::ru::{}::n_wins", infix);
+            let (n_battles_key, n_wins_key) =
+                make_analytics_keys(tank.statistics.base.last_battle_time);
             let tank_id = tank.statistics.base.tank_id;
             pipeline
                 .hincr(&n_battles_key, tank_id, tank.statistics.all.battles)
@@ -309,6 +308,14 @@ impl Crawler {
             .await
             .context("failed to push vehicle analytics")
     }
+}
+
+#[must_use]
+pub fn make_analytics_keys(timestamp: DateTime) -> (String, String) {
+    let infix = timestamp.format("%Y%m%d%H");
+    let n_battles_key = format!("analytics::ru::{}::n_battles", infix);
+    let n_wins_key = format!("analytics::ru::{}::n_wins", infix);
+    (n_battles_key, n_wins_key)
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.
