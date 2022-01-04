@@ -208,6 +208,14 @@ pub async fn get(
                     }
                 }
             }
+            th.is-white-space-nowrap {
+                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
+                a data-sort="live-win-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Средний процент побед этого танка по всему региону за последний час" { "Live WR" } }
+                    }
+                }
+            }
             th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -497,7 +505,8 @@ pub async fn get(
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let predicted_win_rate = predictions.get(&remap_tank_id(tank.statistics.base.tank_id)).copied();
-                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, last_known_battle_time)?)
+                                                @let live_win_rate = analytics.get(&tank.statistics.base.tank_id).copied();
+                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, live_win_rate, last_known_battle_time)?)
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {

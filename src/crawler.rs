@@ -321,6 +321,7 @@ pub fn make_analytics_keys(timestamp: DateTime) -> (String, String) {
     (n_battles_key, n_wins_key)
 }
 
+#[instrument(level = "debug", skip_all)]
 pub async fn get_analytics(
     redis: &mut MultiplexedConnection,
     timestamp: DateTime,
@@ -331,6 +332,10 @@ pub async fn get_analytics(
     }
 
     let (n_battles_key, n_wins_key) = make_analytics_keys(timestamp);
+    tracing::debug!(
+        n_battles_key = n_battles_key.as_str(),
+        n_wins_key = n_wins_key.as_str(),
+    );
 
     let mut pipeline = pipe();
     for key in [n_battles_key, n_wins_key] {
@@ -344,17 +349,20 @@ pub async fn get_analytics(
         pipeline.query_async(redis).await?;
 
     let analytics = izip!(tank_ids, n_battles.into_iter(), n_wins.into_iter())
+        .filter_map(|(tank_id, n_battles, n_wins)| {
+            n_battles
+                .zip(n_wins)
+                .map(|(n_battles, n_wins)| (*tank_id, n_battles, n_wins))
+        })
         .map(|(tank_id, n_battles, n_wins)| {
             (
-                *tank_id,
-                ConfidenceInterval::default_wilson_score_interval(
-                    n_battles.unwrap_or(0),
-                    n_wins.unwrap_or(0),
-                ),
+                tank_id,
+                ConfidenceInterval::default_wilson_score_interval(n_battles, n_wins),
             )
         })
-        .collect();
+        .collect::<AHashMap<TankId, ConfidenceInterval>>();
 
+    tracing::debug!(analytics_len = analytics.len());
     Ok(analytics)
 }
 
