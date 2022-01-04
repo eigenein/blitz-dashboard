@@ -133,7 +133,7 @@ pub fn render_tank_tr(
                         span.icon.has-text-grey-light { i.fas.fa-chart-area {} }
                         span {
                             strong title=(live_win_rate) {
-                                (format!("{:.2}%", live_win_rate * 100.0))
+                                (format!("{:.1}%", live_win_rate * 100.0))
                             }
                         }
                     }
