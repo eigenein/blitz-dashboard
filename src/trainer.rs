@@ -11,13 +11,14 @@ use anyhow::anyhow;
 use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
 
+use crate::helpers::periodic::Periodic;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::dataset::Dataset;
 use crate::trainer::loss::LossPair;
 use crate::trainer::math::make_gradient_descent_step;
 use crate::trainer::math::predict_probability;
-use crate::trainer::model::Model;
+use crate::trainer::model::{store_vehicle_win_rates, Model};
 
 pub mod dataset;
 mod loss;
@@ -50,17 +51,18 @@ pub async fn run(opts: TrainerOpts) -> crate::Result {
         n_factors = opts.model.n_factors,
         learning_rate = opts.model.learning_rate,
         factor_std = opts.model.factor_std,
-        commit_period = %format_duration(opts.model.flush_interval),
+        flush_interval = %format_duration(opts.flush_interval),
     ),
 )]
 async fn run_epochs(
-    redis: MultiplexedConnection,
+    mut redis: MultiplexedConnection,
     opts: TrainerOpts,
     mut dataset: Dataset,
     should_stop: Arc<AtomicBool>,
 ) -> crate::Result<f64> {
     let mut last_losses = LossPair::infinity();
-    let mut model = Model::new(redis, opts.model).await?;
+    let mut model = Model::new(redis.clone(), opts.model).await?;
+    let mut periodic_flush = Periodic::new(opts.flush_interval);
 
     for nr_epoch in 1.. {
         let start_instant = Instant::now();
@@ -93,12 +95,17 @@ async fn run_epochs(
             model.n_initialized_accounts = 0;
             model.n_new_accounts = 0;
         }
+
         if should_stop.load(Ordering::Relaxed) {
             tracing::warn!("interrupted");
             break;
         }
 
-        model.flush().await?;
+        if periodic_flush.should_trigger() {
+            model.flush().await?;
+            let vehicle_win_rates = dataset.calculate_vehicle_win_rates(opts.analytics_time_span);
+            store_vehicle_win_rates(&mut redis, vehicle_win_rates).await?;
+        }
     }
 
     Ok(last_losses.test)

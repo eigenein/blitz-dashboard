@@ -70,9 +70,6 @@ pub struct WebOpts {
     /// Disable the caches, do not use on production
     #[structopt(long)]
     pub disable_caches: bool,
-
-    #[structopt(long, default_value = "2hours", parse(try_from_str = parsers::duration))]
-    pub analytics_time_span: Duration,
 }
 
 /// Runs the account crawler
@@ -198,6 +195,18 @@ pub struct TrainerOpts {
     /// with the specified probability
     #[structopt(long)]
     pub auto_r_bump_chance: Option<f64>,
+
+    /// Store the latent vectors with the specified period
+    #[structopt(
+        long,
+        alias = "flush-period",
+        default_value = "1minute",
+        parse(try_from_str = humantime::parse_duration),
+    )]
+    pub flush_interval: StdDuration,
+
+    #[structopt(long, default_value = "4hours", parse(try_from_str = parsers::duration))]
+    pub analytics_time_span: Duration,
 }
 
 #[derive(Copy, Clone, StructOpt)]
@@ -222,15 +231,6 @@ pub struct TrainerModelOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub account_cache_size: usize,
-
-    /// Store the latent vectors with the specified period
-    #[structopt(
-        long,
-        alias = "flush-period",
-        default_value = "1minute",
-        parse(try_from_str = humantime::parse_duration),
-    )]
-    pub flush_interval: StdDuration,
 }
 
 #[derive(StructOpt)]

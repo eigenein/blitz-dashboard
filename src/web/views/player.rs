@@ -26,11 +26,12 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
-use crate::trainer::model::{get_account_factors, get_vehicles_factors};
+use crate::trainer::model::{
+    get_account_factors, get_vehicles_factors, retrieve_vehicle_win_rates,
+};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::tank_id::TankId;
-use crate::web::cache::analytics::Analytics;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -48,7 +49,6 @@ pub async fn get(
     info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     tanks_cache: &State<AccountTanksCache>,
-    analytics: &State<Analytics>,
     redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<CustomResponse> {
     let mut redis = (*redis).clone();
@@ -81,12 +81,12 @@ pub async fn get(
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
-    let predictions = {
+    let (predictions, vehicle_win_rates) = {
         let tank_ids = tanks_delta.iter().map(Tank::tank_id).collect_vec();
-        make_predictions(&mut redis, account_id, &tank_ids).await?
+        let predictions = make_predictions(&mut redis, account_id, &tank_ids).await?;
+        let vehicle_win_rates = retrieve_vehicle_win_rates(&mut redis, &tank_ids).await?;
+        (predictions, vehicle_win_rates)
     };
-    analytics.trigger_refresh().await;
-    let analytics = &analytics.win_rates.read().await;
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
@@ -525,7 +525,7 @@ pub async fn get(
                                         tbody {
                                             @for tank in &tanks_delta {
                                                 @let predicted_win_rate = predictions.get(&remap_tank_id(tank.statistics.base.tank_id)).copied();
-                                                @let live_win_rate = analytics.get(&tank.statistics.base.tank_id).copied();
+                                                @let live_win_rate = vehicle_win_rates.get(&tank.statistics.base.tank_id).copied();
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate, live_win_rate, last_known_battle_time)?)
                                             }
                                         }

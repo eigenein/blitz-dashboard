@@ -1,4 +1,5 @@
 use std::any::type_name;
+use std::collections::hash_map::Entry;
 
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
@@ -14,9 +15,9 @@ use tracing::instrument;
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
+use crate::wargaming::tank_id::TankId;
 
-pub const STREAM_KEY: &str = "streams::battles::v2";
-
+const STREAM_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
 const ACCOUNT_ID_KEY: &str = "a";
 const TANK_ID_KEY: &str = "t";
@@ -25,10 +26,7 @@ const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
 const IS_TEST_KEY: &str = "tt";
 
-pub type Fields = KeyValueVec<String, i64>;
-pub type Entry = TwoTuple<String, Fields>;
-pub type StreamResponse = TwoTuple<(), Vec<Entry>>;
-pub type XReadResponse = Vec<StreamResponse>;
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 #[tracing::instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
 pub async fn push_stream_entries(
@@ -119,7 +117,7 @@ impl Dataset {
         })
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn refresh(&mut self) -> crate::Result {
         if let Some((_, new_pointer)) =
             refresh_sample(&mut self.redis, &self.pointer, &mut self.sample).await?
@@ -128,6 +126,32 @@ impl Dataset {
             self.pointer = new_pointer;
         }
         Ok(())
+    }
+
+    #[instrument(level = "info", skip_all, fields(time_span = %time_span))]
+    pub fn calculate_vehicle_win_rates(&self, time_span: Duration) -> HashMap<TankId, f64> {
+        let mut statistics = HashMap::default();
+        let minimal_timestamp = (Utc::now() - time_span).timestamp();
+
+        for point in &self.sample {
+            if point.timestamp >= minimal_timestamp {
+                let n_point_wins = if point.is_win { 1 } else { 0 };
+                match statistics.entry(point.tank_id) {
+                    Entry::Vacant(entry) => {
+                        entry.insert((1, n_point_wins));
+                    }
+                    Entry::Occupied(mut entry) => {
+                        let (n_battles, n_wins) = *entry.get();
+                        entry.insert((n_battles + 1, n_wins + n_point_wins));
+                    }
+                }
+            }
+        }
+
+        statistics
+            .into_iter()
+            .map(|(tank_id, (n_battles, n_wins))| (tank_id, n_wins as f64 / n_battles as f64))
+            .collect()
     }
 }
 
@@ -190,6 +214,11 @@ async fn refresh_sample(
     last_id: &str,
     sample: &mut Vec<SamplePoint>,
 ) -> crate::Result<Option<(usize, String)>> {
+    type Fields = KeyValueVec<String, i64>;
+    type Entry = TwoTuple<String, Fields>;
+    type StreamResponse = TwoTuple<(), Vec<Entry>>;
+    type XReadResponse = Vec<StreamResponse>;
+
     // Fetch new points.
     let mut response: XReadResponse = redis
         .xread_options(
@@ -278,7 +307,7 @@ impl<K: FromRedisValue, V: FromRedisValue> FromRedisValue for KeyValueVec<K, V> 
 
 /// Work around the bug in the `redis` crate.
 /// https://github.com/mitsuhiko/redis-rs/issues/334
-pub struct TwoTuple<T1, T2>(pub T1, pub T2);
+struct TwoTuple<T1, T2>(pub T1, pub T2);
 
 impl<T1: FromRedisValue, T2: FromRedisValue> FromRedisValue for TwoTuple<T1, T2> {
     fn from_redis_value(value: &Value) -> RedisResult<Self> {

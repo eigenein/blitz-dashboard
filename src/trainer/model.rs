@@ -12,7 +12,6 @@ use redis::AsyncCommands;
 use tracing::{debug, info, instrument};
 
 use crate::helpers::format_elapsed;
-use crate::helpers::periodic::Periodic;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
 use crate::tankopedia::remap_tank_id;
@@ -21,6 +20,7 @@ use crate::wargaming::tank_id::TankId;
 const VEHICLE_FACTORS_KEY: &str = "trainer::vehicles";
 const ACCOUNT_FACTORS_KEY: &str = "trainer::accounts::ru";
 const REGULARIZATION_KEY: &str = "trainer::r";
+const LIVE_VEHICLE_WIN_RATES: &str = "trainer::vehicles::win_rates::ru";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 type HashSet<V> = std::collections::HashSet<V, ahash::RandomState>;
@@ -91,6 +91,43 @@ pub async fn get_all_vehicle_factors(
         .collect()
 }
 
+#[instrument(skip_all, fields(n_vehicles = win_rates.len()))]
+pub async fn store_vehicle_win_rates(
+    redis: &mut MultiplexedConnection,
+    win_rates: HashMap<TankId, f64>,
+) -> crate::Result {
+    let mut command = redis::cmd("HMSET");
+    command.arg(LIVE_VEHICLE_WIN_RATES);
+    for (tank_id, win_rate) in win_rates.into_iter() {
+        command.arg(tank_id).arg(win_rate);
+    }
+    command
+        .query_async(redis)
+        .await
+        .context("failed to store the vehicle win rates")
+}
+
+#[instrument(level = "debug", skip_all)]
+pub async fn retrieve_vehicle_win_rates(
+    redis: &mut MultiplexedConnection,
+    tank_ids: &[TankId],
+) -> crate::Result<HashMap<TankId, f64>> {
+    let mut command = redis::cmd("HMGET");
+    command.arg(LIVE_VEHICLE_WIN_RATES);
+    for tank_id in tank_ids {
+        command.arg(tank_id);
+    }
+    let win_rates = command
+        .query_async::<_, Vec<Option<f64>>>(redis)
+        .await
+        .context("failed to retrieve vehicle win rates")?
+        .into_iter()
+        .zip(tank_ids)
+        .filter_map(|(win_rate, tank_id)| win_rate.map(|win_rate| (*tank_id, win_rate)))
+        .collect();
+    Ok(win_rates)
+}
+
 pub struct Model {
     pub n_new_accounts: usize,
     pub n_initialized_accounts: usize,
@@ -101,7 +138,6 @@ pub struct Model {
     vehicle_cache: HashMap<u16, Vector>,
     account_cache: LruCache<i32, Vector>,
     modified_account_ids: HashSet<i32>,
-    periodic_flush: Periodic,
 }
 
 pub struct Factors<'a> {
@@ -124,7 +160,6 @@ impl Model {
             modified_account_ids: HashSet::default(),
             n_new_accounts: 0,
             n_initialized_accounts: 0,
-            periodic_flush: Periodic::new(opts.flush_interval),
         })
     }
 
@@ -168,20 +203,12 @@ impl Model {
         self.modified_account_ids.insert(account_id);
     }
 
-    #[instrument(skip_all)]
-    pub async fn flush(&mut self) -> crate::Result {
-        if self.periodic_flush.should_trigger() {
-            self.force_flush().await?;
-        }
-        Ok(())
-    }
-
     /// Store all the account and vehicle factors to Redis and shrink the caches.
     #[instrument(skip_all)]
-    async fn force_flush(&mut self) -> crate::Result {
+    pub async fn flush(&mut self) -> crate::Result {
         let start_instant = Instant::now();
-        self.force_flush_accounts().await?;
-        self.force_flush_vehicles().await?;
+        self.flush_accounts().await?;
+        self.flush_vehicles().await?;
         set_regularization(&mut self.redis, self.regularization).await?;
         info!(
             elapsed = %format_elapsed(&start_instant),
@@ -191,7 +218,7 @@ impl Model {
     }
 
     #[tracing::instrument(skip_all)]
-    async fn force_flush_accounts(&mut self) -> crate::Result {
+    async fn flush_accounts(&mut self) -> crate::Result {
         const BATCH_SIZE: usize = 100000;
         info!(
             n_accounts = self.modified_account_ids.len(),
@@ -224,7 +251,8 @@ impl Model {
     }
 
     #[tracing::instrument(skip_all)]
-    async fn force_flush_vehicles(&mut self) -> crate::Result {
+    async fn flush_vehicles(&mut self) -> crate::Result {
+        info!("flushing the vehicles…");
         let vehicles: crate::Result<Vec<(u16, Vec<u8>)>> = self
             .vehicle_cache
             .iter()
