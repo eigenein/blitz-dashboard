@@ -8,10 +8,11 @@ use rand::prelude::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
 use redis::aio::MultiplexedConnection;
-use redis::AsyncCommands;
+use redis::{pipe, AsyncCommands};
 use tracing::{debug, info, instrument};
 
 use crate::helpers::format_elapsed;
+use crate::math::statistics::ConfidenceInterval;
 use crate::math::vector::Vector;
 use crate::opts::TrainerModelOpts;
 use crate::tankopedia::remap_tank_id;
@@ -21,6 +22,7 @@ const VEHICLE_FACTORS_KEY: &str = "trainer::vehicles";
 const ACCOUNT_FACTORS_KEY: &str = "trainer::accounts::ru";
 const REGULARIZATION_KEY: &str = "trainer::r";
 const LIVE_VEHICLE_WIN_RATES: &str = "trainer::vehicles::win_rates::ru";
+const LIVE_VEHICLE_WIN_RATE_MARGINS: &str = "trainer::vehicles::win_rates::margins::ru";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 type HashSet<V> = std::collections::HashSet<V, ahash::RandomState>;
@@ -94,14 +96,25 @@ pub async fn get_all_vehicle_factors(
 #[instrument(skip_all, fields(n_vehicles = win_rates.len()))]
 pub async fn store_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
-    win_rates: HashMap<TankId, f64>,
+    win_rates: HashMap<TankId, ConfidenceInterval>,
 ) -> crate::Result {
-    let mut command = redis::cmd("HMSET");
-    command.arg(LIVE_VEHICLE_WIN_RATES);
-    for (tank_id, win_rate) in win_rates.into_iter() {
-        command.arg(tank_id).arg(win_rate);
+    let mut pipeline = pipe();
+
+    pipeline.cmd("HMSET");
+    pipeline.arg(LIVE_VEHICLE_WIN_RATES);
+    for (tank_id, win_rate) in win_rates.iter() {
+        pipeline.arg(tank_id).arg(win_rate.mean);
     }
-    command
+    pipeline.ignore();
+
+    pipeline.cmd("HMSET");
+    pipeline.arg(LIVE_VEHICLE_WIN_RATE_MARGINS);
+    for (tank_id, win_rate) in win_rates.into_iter() {
+        pipeline.arg(tank_id).arg(win_rate.margin);
+    }
+    pipeline.ignore();
+
+    pipeline
         .query_async(redis)
         .await
         .context("failed to store the vehicle win rates")

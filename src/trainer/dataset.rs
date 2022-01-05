@@ -1,6 +1,7 @@
 use std::any::type_name;
 use std::collections::hash_map::Entry;
 
+use crate::math::statistics::{ConfidenceInterval, Z};
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use humantime::format_duration;
@@ -129,7 +130,10 @@ impl Dataset {
     }
 
     #[instrument(level = "info", skip_all, fields(time_span = %time_span))]
-    pub fn calculate_vehicle_win_rates(&self, time_span: Duration) -> HashMap<TankId, f64> {
+    pub fn calculate_vehicle_win_rates(
+        &self,
+        time_span: Duration,
+    ) -> HashMap<TankId, ConfidenceInterval> {
         let mut statistics = HashMap::default();
         let minimal_timestamp = (Utc::now() - time_span).timestamp();
 
@@ -150,7 +154,12 @@ impl Dataset {
 
         statistics
             .into_iter()
-            .map(|(tank_id, (n_battles, n_wins))| (tank_id, n_wins as f64 / n_battles as f64))
+            .map(|(tank_id, (n_battles, n_wins))| {
+                (
+                    tank_id,
+                    ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::default()),
+                )
+            })
             .collect()
     }
 }
