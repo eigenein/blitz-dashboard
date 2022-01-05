@@ -10,12 +10,11 @@ use std::time::Instant;
 use anyhow::anyhow;
 use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
-use tracing::info;
 
 use crate::helpers::periodic::Periodic;
 use crate::opts::TrainerOpts;
 use crate::tankopedia::remap_tank_id;
-use crate::trainer::dataset::{calculate_baseline_loss_2, calculate_vehicle_win_rates, Dataset};
+use crate::trainer::dataset::{calculate_vehicle_win_rates, Dataset};
 use crate::trainer::loss::LossPair;
 use crate::trainer::math::make_gradient_descent_step;
 use crate::trainer::math::predict_probability;
@@ -95,14 +94,6 @@ async fn run_epochs(
             );
             model.n_initialized_accounts = 0;
             model.n_new_accounts = 0;
-
-            let (lower_bound_loss, mean_loss, upper_bound_loss) =
-                calculate_baseline_loss_2(&dataset.sample, opts.analytics_time_span);
-            info!(
-                lower_bound_loss = lower_bound_loss,
-                mean_loss = mean_loss,
-                upper_bound_loss = upper_bound_loss,
-            );
         }
 
         if should_stop.load(Ordering::Relaxed) {

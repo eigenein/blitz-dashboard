@@ -133,7 +133,7 @@ pub fn render_tank_tr(
             }
 
             @if let Some(live_win_rate) = live_win_rate {
-                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.mean) {
+                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
                     span.icon-text.is-flex-wrap-nowrap {
                         (Icon::ChartArea.into_span().color(Color::GreyLight))
                         span {

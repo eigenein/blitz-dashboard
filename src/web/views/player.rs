@@ -222,7 +222,7 @@ pub async fn get(
                 sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                 a data-sort="live-win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов" { "Live WR" } }
+                        span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
                     }
                 }
             }
