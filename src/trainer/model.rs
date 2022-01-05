@@ -125,6 +125,10 @@ pub async fn retrieve_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
     tank_ids: &[TankId],
 ) -> crate::Result<HashMap<TankId, ConfidenceInterval>> {
+    if tank_ids.is_empty() {
+        return Ok(HashMap::default());
+    }
+
     let mut pipeline = pipe();
 
     pipeline.cmd("HMGET");

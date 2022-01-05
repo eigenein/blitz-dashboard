@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -5,11 +6,13 @@ use rocket::response::content::Html;
 use rocket::{uri, State};
 
 use crate::logging::clear_user;
+use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::model::get_all_vehicle_factors;
+use crate::trainer::model::{get_all_vehicle_factors, retrieve_vehicle_win_rates};
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, sign_class, tier_td, vehicle_th};
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
+use crate::web::views::bulma::*;
 use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
@@ -31,6 +34,9 @@ pub async fn get(
     }
 
     let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
+    let mut live_win_rates =
+        retrieve_vehicle_win_rates(&mut redis, &vehicle_factors.keys().copied().collect_vec())
+            .await?;
     let n_factors = vehicle_factors
         .values()
         .map(|factors| factors.len())
@@ -42,7 +48,7 @@ pub async fn get(
         html.has-navbar-fixed-top lang="en" {
             head {
                 (headers())
-                title { "Состояние приложения – Я же статист!" }
+                title { "Аналитика по танкам – Я же статист!" }
             }
         }
         body {
@@ -57,16 +63,13 @@ pub async fn get(
 
             section.section {
                 div.container {
-                    h1.title { "Машинное обучение" }
-
                     div.box {
-                        h2.title."is-4" { "Признаки техники" }
                         div.table-container {
                             table.table.is-hoverable.is-striped.is-fullwidth id="vehicle-factors" {
                                 (thead(n_factors))
                                 tbody {
                                     @for (tank_id, factors) in vehicle_factors.into_iter() {
-                                        (tr(tank_id, &factors, n_factors))
+                                        (tr(tank_id, &factors, n_factors, live_win_rates.remove(&tank_id)))
                                     }
                                 }
                             }
@@ -101,7 +104,9 @@ pub fn thead(n_factors: usize) -> Markup {
     html! {
         thead {
             th { "Техника" }
+
             th { }
+
             th {
                 a data-sort="tier" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -109,6 +114,16 @@ pub fn thead(n_factors: usize) -> Markup {
                     }
                 }
             }
+
+            th.is-white-space-nowrap {
+                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
+                a data-sort="live-win-rate" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
+                    }
+                }
+            }
+
             @for i in 0..n_factors {
                 th {
                     a data-sort=(format!("factor-{}", i)) {
@@ -123,11 +138,18 @@ pub fn thead(n_factors: usize) -> Markup {
 }
 
 #[must_use]
-pub fn tr(tank_id: TankId, factors: &[f64], n_factors: usize) -> Markup {
+pub fn tr(
+    tank_id: TankId,
+    factors: &[f64],
+    n_factors: usize,
+    live_win_rate: Option<ConfidenceInterval>,
+) -> Markup {
     html! {
         tr {
             @let vehicle = get_vehicle(tank_id);
+
             (vehicle_th(&vehicle))
+
             td.has-text-centered {
                 a href=(uri!(get_vehicle_analytics(tank_id = tank_id))) {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -135,7 +157,26 @@ pub fn tr(tank_id: TankId, factors: &[f64], n_factors: usize) -> Markup {
                     }
                 }
             }
+
             (tier_td(vehicle.tier, None))
+
+            @if let Some(live_win_rate) = live_win_rate {
+                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        (Icon::ChartArea.into_span().color(Color::GreyLight))
+                        span {
+                            strong title=(live_win_rate.mean) {
+                                (format!("{:.1}%", live_win_rate.mean * 100.0))
+                            }
+                            span.has-text-grey { (format!(" ±{:.1}", live_win_rate.margin * 100.0)) }
+                        }
+                    }
+                }
+            } @else {
+                td.has-text-centered data-sort="live-win-rate" data-value="-1" {
+                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
+                }
+            }
 
             @for i in 0..n_factors {
                 @if let Some(factor) = factors.get(i).copied() {
