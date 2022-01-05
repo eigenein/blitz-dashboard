@@ -8,6 +8,7 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::models::{Tank, TankType};
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::{render_float, vehicle_th};
+use crate::web::views::bulma::*;
 use crate::DateTime;
 
 pub fn render_period_li(
@@ -134,7 +135,7 @@ pub fn render_tank_tr(
             @if let Some(live_win_rate) = live_win_rate {
                 td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.mean) {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span.icon.has-text-grey-light { i.fas.fa-chart-area {} }
+                        (Icon::ChartArea.into_span().color(Color::GreyLight))
                         span {
                             strong title=(live_win_rate.mean) {
                                 (format!("{:.1}%", live_win_rate.mean * 100.0))

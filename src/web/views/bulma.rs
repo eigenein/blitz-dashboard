@@ -1,7 +1,7 @@
 use maud::Render;
 
-#[allow(dead_code)]
-enum IconKind {
+#[must_use]
+pub enum IconKind {
     Solid,
 }
 
@@ -13,8 +13,8 @@ impl Render for IconKind {
     }
 }
 
-#[allow(dead_code)]
-enum Icon {
+#[must_use]
+pub enum Icon {
     ChartArea,
 }
 
@@ -26,8 +26,14 @@ impl Render for Icon {
     }
 }
 
-#[allow(dead_code)]
-enum Color {
+impl Icon {
+    pub fn into_span(self) -> IconSpan {
+        IconSpan::new(self)
+    }
+}
+
+#[must_use]
+pub enum Color {
     GreyLight,
 }
 
@@ -39,6 +45,7 @@ impl Render for Color {
     }
 }
 
+#[must_use]
 struct TextColor(Color);
 
 impl Render for TextColor {
@@ -48,15 +55,14 @@ impl Render for TextColor {
     }
 }
 
-#[allow(dead_code)]
-struct IconSpan {
+#[must_use]
+pub struct IconSpan {
     icon: Icon,
     kind: IconKind,
     color: Option<TextColor>,
 }
 
 impl IconSpan {
-    #[allow(dead_code)]
     fn new(icon: Icon) -> Self {
         Self {
             icon,
@@ -66,13 +72,12 @@ impl IconSpan {
     }
 
     #[allow(dead_code)]
-    fn kind(&mut self, kind: IconKind) -> &mut Self {
+    pub fn kind(mut self, kind: IconKind) -> Self {
         self.kind = kind;
         self
     }
 
-    #[allow(dead_code)]
-    fn color(&mut self, color: Color) -> &mut Self {
+    pub fn color(mut self, color: Color) -> Self {
         self.color = Some(TextColor(color));
         self
     }
@@ -100,7 +105,8 @@ mod tests {
     #[test]
     fn icon_span_ok() {
         let mut buffer = String::new();
-        IconSpan::new(Icon::ChartArea)
+        Icon::ChartArea
+            .into_span()
             .color(Color::GreyLight)
             .render_to(&mut buffer);
         assert_eq!(
