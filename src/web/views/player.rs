@@ -4,7 +4,6 @@
 
 use std::time::Instant;
 
-use ahash::AHashMap;
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
@@ -27,19 +26,12 @@ use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::models::TankType;
 use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::tankopedia::get_vehicle;
-use crate::trainer::math::predict_probability;
-use crate::trainer::model::{
-    get_account_factors, get_vehicles_factors, retrieve_vehicle_win_rates,
-};
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
-use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
-use crate::web::views::bulma::*;
 use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
-use crate::DateTime;
 
 pub mod partials;
 
@@ -85,12 +77,6 @@ pub async fn get(
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
-    let (predictions, vehicle_win_rates) = {
-        let tank_ids = tanks_delta.iter().map(Tank::tank_id).collect_vec();
-        let predictions = make_predictions(&mut redis, account_id, &tank_ids).await?;
-        let vehicle_win_rates = retrieve_vehicle_win_rates(&mut redis, &tank_ids).await?;
-        (predictions, vehicle_win_rates)
-    };
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
@@ -214,24 +200,6 @@ pub async fn get(
                 }
             }
 
-            th.is-white-space-nowrap {
-                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                a data-sort="predicted-win-rate" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Предсказанная вероятность победы этого игрока на этом танке" { "WP" } }
-                    }
-                }
-            }
-
-            th.is-white-space-nowrap {
-                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                a data-sort="live-win-rate" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
-                    }
-                }
-            }
-
             th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -252,15 +220,6 @@ pub async fn get(
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Число побед в час, скорректированное на число проведенных боев" { "TWPH" } }
-                    }
-                }
-            }
-
-            th.is-white-space-nowrap {
-                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                a data-sort="predicted-wins-per-hour" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Предсказанное число побед в час этого игрока на этом танке" { "PWPH" } }
                     }
                 }
             }
@@ -530,9 +489,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let predicted_win_rate = predictions.get(&tank.statistics.base.tank_id).copied();
-                                                @let live_win_rate = vehicle_win_rates.get(&tank.statistics.base.tank_id).copied();
-                                                (render_tank_tr(tank, &current_win_rate, predicted_win_rate, live_win_rate, last_known_battle_time)?)
+                                                (render_tank_tr(tank, &current_win_rate)?)
                                             }
                                         }
                                         @if tanks_delta.len() >= 25 {
@@ -577,40 +534,6 @@ pub async fn get(
     result
 }
 
-/// Generate win rate predictions for the account's tanks.
-///
-/// Returns an ordered map of the win rates by tank ID's.
-/// The entries are sorted by the predicted win rate in the descending order.
-/// That way I'm able to quickly select top N tanks by the predicted win rate.
-async fn make_predictions(
-    redis: &mut MultiplexedConnection,
-    account_id: i32,
-    tank_ids: &[TankId],
-) -> crate::Result<AHashMap<TankId, f64>> {
-    if tank_ids.is_empty() {
-        return Ok(AHashMap::new());
-    }
-
-    let account_factors = match get_account_factors(redis, account_id).await? {
-        Some(factors) => factors,
-        None => return Ok(AHashMap::new()),
-    };
-    let vehicles_factors = get_vehicles_factors(redis, tank_ids).await?;
-
-    let predictions: AHashMap<TankId, f64> = tank_ids
-        .iter()
-        .filter_map(|tank_id| {
-            vehicles_factors.get(tank_id).map(|vehicle_factors| {
-                (
-                    *tank_id,
-                    predict_probability(vehicle_factors, &account_factors),
-                )
-            })
-        })
-        .collect();
-    Ok(predictions)
-}
-
 async fn push_account_to_priority_queue(
     redis: &mut MultiplexedConnection,
     account_id: i32,
@@ -626,13 +549,7 @@ async fn push_account_to_priority_queue(
         })
 }
 
-pub fn render_tank_tr(
-    tank: &Tank,
-    account_win_rate: &ConfidenceInterval,
-    predicted_win_rate: Option<f64>,
-    live_win_rate: Option<ConfidenceInterval>,
-    last_account_battle_time: DateTime,
-) -> crate::Result<Markup> {
+fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();
@@ -686,45 +603,6 @@ pub fn render_tank_tr(
                 }
             }
 
-            @if let Some(predicted_win_rate) = predicted_win_rate {
-                td data-sort="predicted-win-rate" data-value=(predicted_win_rate) {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        @if tank.statistics.base.last_battle_time <= last_account_battle_time {
-                            span.icon.has-text-link { i.fas.fa-dice-d20 {} }
-                        } @else {
-                            span.icon.has-text-grey-light title="Робот еще не просканировал последние бои на этом танке" {
-                                i.fas.fa-hourglass-half {}
-                            }
-                        }
-                        strong title=(predicted_win_rate) {
-                            (format!("{:.0}%", predicted_win_rate * 100.0))
-                        }
-                    }
-                }
-            } @else {
-                td.has-text-centered data-sort="predicted-win-rate" data-value="-1" {
-                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
-                }
-            }
-
-            @if let Some(live_win_rate) = live_win_rate {
-                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        (Icon::ChartArea.into_span().color(Color::GreyLight))
-                        span {
-                            strong title=(live_win_rate.mean) {
-                                (format!("{:.1}%", live_win_rate.mean * 100.0))
-                            }
-                            span.has-text-grey { (format!(" ±{:.1}", live_win_rate.margin * 100.0)) }
-                        }
-                    }
-                }
-            } @else {
-                td.has-text-centered data-sort="live-win-rate" data-value="-1" {
-                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
-                }
-            }
-
             @let frags_per_battle = tank.statistics.all.frags_per_battle();
             td data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
@@ -749,28 +627,6 @@ pub fn render_tank_tr(
                 strong { (render_float(expected_wins_per_hour.mean, 1)) }
                 span.has-text-grey {
                     (format!(" ±{:.1}", expected_wins_per_hour.margin))
-                }
-            }
-
-            @if let Some(predicted_win_rate) = predicted_win_rate {
-                @let predicted_wins_per_hour = predicted_win_rate * tank.battles_per_hour();
-                td data-sort="predicted-wins-per-hour" data-value=(predicted_wins_per_hour) {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        @if tank.statistics.base.last_battle_time <= last_account_battle_time {
-                            span.icon.has-text-link { i.fas.fa-dice-d20 {} }
-                        } @else {
-                            span.icon.has-text-grey-light title="Робот еще не просканировал последние бои на этом танке" {
-                                i.fas.fa-hourglass-half {}
-                            }
-                        }
-                        strong title=(predicted_wins_per_hour) {
-                            (format!("{:.0}", predicted_wins_per_hour))
-                        }
-                    }
-                }
-            } @else {
-                td.has-text-centered data-sort="predicted-wins-per-hour" data-value="-1" {
-                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
                 }
             }
 
