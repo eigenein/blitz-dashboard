@@ -22,7 +22,7 @@ use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
-use crate::math::statistics::ConfidenceInterval;
+use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::models::{subtract_tanks, Statistics, Tank};
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{
@@ -90,9 +90,10 @@ pub async fn get(
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())
         .sum();
-    let current_win_rate = ConfidenceInterval::default_wilson_score_interval(
+    let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
+        Z::default(),
     );
 
     let navbar = html! {
@@ -476,7 +477,8 @@ pub async fn get(
                                                     div {
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
-                                                            @let expected_period_survival_rate = ConfidenceInterval::default_wilson_score_interval(stats_delta.battles, stats_delta.survived_battles);
+                                                            @let expected_period_survival_rate = ConfidenceInterval::wilson_score_interval(
+                                                                stats_delta.battles, stats_delta.survived_battles, Z::default());
                                                             (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }

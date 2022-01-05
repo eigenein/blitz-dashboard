@@ -16,7 +16,8 @@ pub struct ConfidenceInterval {
 
 impl ConfidenceInterval {
     /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
-    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: f64) -> Self {
+    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: Z) -> Self {
+        let z = z.z();
         let n_trials = n_trials as f64;
         let n_successes = n_successes as f64;
 
@@ -29,10 +30,6 @@ impl ConfidenceInterval {
         let margin = z * b * (p_hat * (1.0 - p_hat) / n_trials + a / n_trials / 4.0).sqrt();
 
         Self { mean, margin }
-    }
-
-    pub fn default_wilson_score_interval(n_trials: i32, n_successes: i32) -> Self {
-        Self::wilson_score_interval(n_trials, n_successes, Z_95)
     }
 
     #[must_use]
@@ -104,23 +101,32 @@ impl PartialOrd for ConfidenceInterval {
     }
 }
 
-#[allow(dead_code)]
-pub const Z_95: f64 = 1.96;
+pub enum Z {
+    Z80,
+    Z85,
+    Z87,
+    Z88,
+    Z89,
+    Z90,
+    Z95,
+}
 
-#[allow(dead_code)]
-pub const Z_90: f64 = 1.645;
+impl Default for Z {
+    const default() -> Self {
+        Self::Z95
+    }
+}
 
-#[allow(dead_code)]
-pub const Z_89: f64 = 1.598;
-
-#[allow(dead_code)]
-pub const Z_88: f64 = 1.5548;
-
-#[allow(dead_code)]
-pub const Z_87: f64 = 1.51;
-
-#[allow(dead_code)]
-pub const Z_85: f64 = 1.44;
-
-#[allow(dead_code)]
-pub const Z_80: f64 = 1.28;
+impl Z {
+    pub const fn z(&self) -> f64 {
+        match self {
+            Self::Z80 => 1.28,
+            Self::Z85 => 1.44,
+            Self::Z87 => 1.51,
+            Self::Z88 => 1.5548,
+            Self::Z89 => 1.598,
+            Self::Z90 => 1.645,
+            Self::Z95 => 1.96,
+        }
+    }
+}

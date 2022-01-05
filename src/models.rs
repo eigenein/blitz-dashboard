@@ -9,7 +9,7 @@ use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
 use crate::helpers::{deserialize_duration_seconds, serialize_duration_seconds};
-use crate::math::statistics::ConfidenceInterval;
+use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::wargaming::tank_id::TankId;
 
 /// Search accounts item.
@@ -124,7 +124,7 @@ impl Statistics {
     }
 
     pub fn true_win_rate(&self) -> ConfidenceInterval {
-        ConfidenceInterval::default_wilson_score_interval(self.battles, self.wins)
+        ConfidenceInterval::wilson_score_interval(self.battles, self.wins, Z::default())
     }
 }
 
