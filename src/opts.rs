@@ -86,14 +86,6 @@ pub struct CrawlerOpts {
     #[structopt(long)]
     pub auto_min_offset: bool,
 
-    /// Maximum training stream size
-    #[structopt(
-        long,
-        default_value = "5000000",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub training_stream_size: usize,
-
     /// Maximum training stream duration
     #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]
     pub training_stream_duration: Duration,

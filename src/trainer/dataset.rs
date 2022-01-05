@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use humantime::format_duration;
 use redis::aio::MultiplexedConnection;
-use redis::streams::{StreamMaxlen, StreamReadOptions};
+use redis::streams::StreamReadOptions;
 use redis::{
     from_redis_value, pipe, AsyncCommands, ErrorKind, FromRedisValue, RedisError, RedisResult,
     Value,
@@ -33,7 +33,6 @@ type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 pub async fn push_stream_entries(
     redis: &mut MultiplexedConnection,
     entries: &[StreamEntry],
-    stream_size: usize,
     stream_duration: Duration,
 ) -> crate::Result {
     if entries.is_empty() {
@@ -41,7 +40,6 @@ pub async fn push_stream_entries(
     }
 
     let mut pipeline = pipe();
-    let maxlen = StreamMaxlen::Approx(stream_size);
 
     for entry in entries.iter() {
         let mut items = vec![
@@ -58,9 +56,7 @@ pub async fn push_stream_entries(
         if entry.is_test {
             items.push((IS_TEST_KEY, 1));
         }
-        pipeline
-            .xadd_maxlen(STREAM_KEY, maxlen, "*", &items)
-            .ignore();
+        pipeline.xadd(STREAM_KEY, "*", &items).ignore();
     }
 
     let minimum_id = (Utc::now() - stream_duration).timestamp_millis();

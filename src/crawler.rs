@@ -47,7 +47,6 @@ pub struct Crawler {
 
 #[derive(Copy, Clone)]
 pub struct IncrementalOpts {
-    training_stream_size: usize,
     training_stream_duration: Duration,
     test_percentage: usize,
 }
@@ -63,7 +62,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let crawler = Crawler::new(
         opts.shared,
         Some(IncrementalOpts {
-            training_stream_size: opts.training_stream_size,
             training_stream_duration: opts.training_stream_duration,
             test_percentage: opts.test_percentage,
         }),
@@ -267,13 +265,7 @@ impl Crawler {
         }
 
         let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
-        push_stream_entries(
-            &mut self.redis,
-            &entries,
-            opts.training_stream_size,
-            opts.training_stream_duration,
-        )
-        .await?;
+        push_stream_entries(&mut self.redis, &entries, opts.training_stream_duration).await?;
 
         Ok(())
     }
