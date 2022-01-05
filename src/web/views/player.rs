@@ -24,7 +24,6 @@ use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::models::{subtract_tanks, Statistics, Tank};
-use crate::tankopedia::remap_tank_id;
 use crate::trainer::math::predict_probability;
 use crate::trainer::model::{
     get_account_factors, get_vehicles_factors, retrieve_vehicle_win_rates,
@@ -524,7 +523,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &tanks_delta {
-                                                @let predicted_win_rate = predictions.get(&remap_tank_id(tank.statistics.base.tank_id)).copied();
+                                                @let predicted_win_rate = predictions.get(&tank.statistics.base.tank_id).copied();
                                                 @let live_win_rate = vehicle_win_rates.get(&tank.statistics.base.tank_id).copied();
                                                 (render_tank_tr(tank, &current_win_rate, predicted_win_rate, live_win_rate, last_known_battle_time)?)
                                             }
