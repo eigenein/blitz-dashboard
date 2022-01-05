@@ -205,7 +205,7 @@ pub struct TrainerOpts {
     )]
     pub flush_interval: StdDuration,
 
-    #[structopt(long, default_value = "4hours", parse(try_from_str = parsers::duration))]
+    #[structopt(long, default_value = "1hour", parse(try_from_str = parsers::duration))]
     pub analytics_time_span: Duration,
 }
 

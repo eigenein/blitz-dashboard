@@ -1,7 +1,6 @@
 use std::any::type_name;
 use std::collections::hash_map::Entry;
 
-use crate::math::statistics::{ConfidenceInterval, Z};
 use anyhow::{anyhow, Context};
 use chrono::{Duration, TimeZone, Utc};
 use humantime::format_duration;
@@ -13,6 +12,7 @@ use redis::{
 };
 use tracing::instrument;
 
+use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
@@ -128,40 +128,6 @@ impl Dataset {
         }
         Ok(())
     }
-
-    #[instrument(level = "info", skip_all, fields(time_span = %time_span))]
-    pub fn calculate_vehicle_win_rates(
-        &self,
-        time_span: Duration,
-    ) -> HashMap<TankId, ConfidenceInterval> {
-        let mut statistics = HashMap::default();
-        let minimal_timestamp = (Utc::now() - time_span).timestamp();
-
-        for point in &self.sample {
-            if point.timestamp >= minimal_timestamp {
-                let n_point_wins = if point.is_win { 1 } else { 0 };
-                match statistics.entry(point.tank_id) {
-                    Entry::Vacant(entry) => {
-                        entry.insert((1, n_point_wins));
-                    }
-                    Entry::Occupied(mut entry) => {
-                        let (n_battles, n_wins) = *entry.get();
-                        entry.insert((n_battles + 1, n_wins + n_point_wins));
-                    }
-                }
-            }
-        }
-
-        statistics
-            .into_iter()
-            .map(|(tank_id, (n_battles, n_wins))| {
-                (
-                    tank_id,
-                    ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::default()),
-                )
-            })
-            .collect()
-    }
 }
 
 /// Calculate the loss on the constant model that always predicts `0.5`.
@@ -174,6 +140,64 @@ fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
         }
     }
     loss.finalise()
+}
+
+#[tracing::instrument(skip_all)]
+pub fn calculate_baseline_loss_2(sample: &[SamplePoint], time_span: Duration) -> (f64, f64, f64) {
+    let win_rates = calculate_vehicle_win_rates(sample, time_span);
+    let minimal_timestamp = (Utc::now() - time_span).timestamp();
+
+    let mut lower_bound_loss = BCELoss::default();
+    let mut upper_bound_loss = BCELoss::default();
+    let mut mean_loss = BCELoss::default();
+    for point in sample {
+        if point.timestamp >= minimal_timestamp {
+            if let Some(win_rate) = win_rates.get(&point.tank_id) {
+                lower_bound_loss.push_sample(win_rate.lower(), point.is_win);
+                mean_loss.push_sample(win_rate.mean, point.is_win);
+                upper_bound_loss.push_sample(win_rate.upper(), point.is_win);
+            }
+        }
+    }
+    (
+        lower_bound_loss.finalise(),
+        mean_loss.finalise(),
+        upper_bound_loss.finalise(),
+    )
+}
+
+#[instrument(level = "info", skip_all, fields(time_span = %time_span))]
+pub fn calculate_vehicle_win_rates(
+    sample: &[SamplePoint],
+    time_span: Duration,
+) -> HashMap<TankId, ConfidenceInterval> {
+    let mut statistics = HashMap::default();
+    let minimal_timestamp = (Utc::now() - time_span).timestamp();
+
+    for point in sample {
+        if point.timestamp >= minimal_timestamp {
+            let n_point_wins = if point.is_win { 1 } else { 0 };
+            match statistics.entry(point.tank_id) {
+                Entry::Vacant(entry) => {
+                    entry.insert((1, n_point_wins));
+                }
+                Entry::Occupied(mut entry) => {
+                    let (n_battles, n_wins) = *entry.get();
+                    entry.insert((n_battles + 1, n_wins + n_point_wins));
+                }
+            }
+        }
+    }
+
+    statistics
+        .into_iter()
+        .map(|(tank_id, (n_battles, n_wins))| {
+            (
+                tank_id,
+                ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::default()),
+            )
+        })
+        .collect()
 }
 
 /// Load sample points from the stream within the specified time span.
