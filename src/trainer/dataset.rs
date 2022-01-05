@@ -183,8 +183,7 @@ async fn load_sample(
                 .map(|point| point.timestamp)
                 .unwrap_or_default();
             tracing::info!(
-                n_entries_read = n_entries,
-                n_points_total = sample.len(),
+                n_points = sample.len(),
                 pointer = new_pointer.as_str(),
                 last_timestamp = Utc.timestamp(last_timestamp, 0).to_string().as_str(),
                 "loading…",
