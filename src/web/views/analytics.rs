@@ -61,7 +61,29 @@ pub async fn get(
                     div.box {
                         div.table-container {
                             table.table.is-hoverable.is-striped.is-fullwidth id="vehicle-factors" {
-                                (thead())
+                                thead {
+                                    th { "Техника" }
+
+                                    th { }
+
+                                    th.has-text-centered {
+                                        a data-sort="tier" {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span { "Уровень" }
+                                            }
+                                        }
+                                    }
+
+                                    th.is-white-space-nowrap {
+                                        sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
+                                        a data-sort="live-win-rate" {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 tbody {
                                     @for (tank_id, _) in vehicle_factors.into_iter() {
                                         (tr(tank_id, live_win_rates.remove(&tank_id)))
@@ -92,34 +114,6 @@ pub async fn get(
     let response = markup.into_string();
     redis.set_ex(CACHE_KEY, &response, 60).await?;
     Ok(Html(response))
-}
-
-#[must_use]
-pub fn thead() -> Markup {
-    html! {
-        thead {
-            th { "Техника" }
-
-            th { }
-
-            th {
-                a data-sort="tier" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Уровень" }
-                    }
-                }
-            }
-
-            th.is-white-space-nowrap {
-                sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                a data-sort="live-win-rate" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
-                    }
-                }
-            }
-        }
-    }
 }
 
 #[must_use]
