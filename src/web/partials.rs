@@ -368,6 +368,7 @@ static COLLECTIBLE_VEHICLE_IDS: phf::Set<u16> = phf_set! {
     24081_u16,
     24097_u16,
     24609_u16,
+    24849_u16,
     51201_u16,
     52065_u16,
     52241_u16,
