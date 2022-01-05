@@ -3,7 +3,7 @@ use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use anyhow::Context;
-use itertools::Itertools;
+use itertools::{izip, Itertools};
 use rand::prelude::Distribution;
 use rand::thread_rng;
 use rand_distr::Normal;
@@ -124,19 +124,30 @@ pub async fn store_vehicle_win_rates(
 pub async fn retrieve_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
     tank_ids: &[TankId],
-) -> crate::Result<HashMap<TankId, f64>> {
-    let mut command = redis::cmd("HMGET");
-    command.arg(LIVE_VEHICLE_WIN_RATES);
+) -> crate::Result<HashMap<TankId, ConfidenceInterval>> {
+    let mut pipeline = pipe();
+
+    pipeline.cmd("HMGET");
+    pipeline.arg(LIVE_VEHICLE_WIN_RATES);
     for tank_id in tank_ids {
-        command.arg(tank_id);
+        pipeline.arg(tank_id);
     }
-    let win_rates = command
-        .query_async::<_, Vec<Option<f64>>>(redis)
+
+    pipeline.cmd("HMGET");
+    pipeline.arg(LIVE_VEHICLE_WIN_RATE_MARGINS);
+    for tank_id in tank_ids {
+        pipeline.arg(tank_id);
+    }
+
+    let (means, margins): (Vec<Option<f64>>, Vec<Option<f64>>) = pipeline
+        .query_async(redis)
         .await
-        .context("failed to retrieve vehicle win rates")?
-        .into_iter()
-        .zip(tank_ids)
-        .filter_map(|(win_rate, tank_id)| win_rate.map(|win_rate| (*tank_id, win_rate)))
+        .context("failed to retrieve vehicle win rates")?;
+    let win_rates = izip!(tank_ids, means.into_iter(), margins.into_iter())
+        .filter_map(|(tank_id, mean, margin)| {
+            mean.zip(margin)
+                .map(|(mean, margin)| (*tank_id, ConfidenceInterval { mean, margin }))
+        })
         .collect();
     Ok(win_rates)
 }
