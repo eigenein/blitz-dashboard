@@ -112,7 +112,7 @@ pub enum Z {
 }
 
 impl Default for Z {
-    const default() -> Self {
+    fn default() -> Self {
         Self::Z95
     }
 }
