@@ -4,7 +4,7 @@ use redis::AsyncCommands;
 use rocket::response::content::Html;
 use rocket::{uri, State};
 
-use crate::aggregator::model::retrieve_vehicle_win_rates;
+use crate::aggregator::redis::retrieve_vehicle_win_rates;
 use crate::logging::clear_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;

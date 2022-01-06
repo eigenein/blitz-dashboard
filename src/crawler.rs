@@ -12,7 +12,7 @@ use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
-use crate::aggregator::dataset::push_stream_entries;
+use crate::aggregator::stream::push_entries;
 use crate::aggregator::stream_entry::StreamEntry;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
@@ -253,7 +253,7 @@ impl Crawler {
         let entries = self
             .prepare_stream_entries(account_id, tanks, stream_duration)
             .await?;
-        push_stream_entries(&mut self.redis, &entries, stream_duration).await?;
+        push_entries(&mut self.redis, &entries, stream_duration).await?;
 
         Ok(())
     }

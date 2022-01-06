@@ -12,7 +12,6 @@ use redis::{
 };
 use tracing::instrument;
 
-use crate::aggregator::sample_point::SamplePoint;
 use crate::aggregator::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::wargaming::tank_id::TankId;
@@ -27,7 +26,7 @@ const N_WINS_KEY: &str = "w";
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 #[tracing::instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
-pub async fn push_stream_entries(
+pub async fn push_entries(
     redis: &mut MultiplexedConnection,
     entries: &[StreamEntry],
     stream_duration: Duration,
@@ -68,9 +67,9 @@ pub async fn push_stream_entries(
 }
 
 #[derive(Clone)]
-pub struct Dataset {
-    pub sample: Vec<SamplePoint>,
-    pub redis: MultiplexedConnection,
+pub struct Stream {
+    pub sample: Vec<StreamEntry>,
+    redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
     pointer: String,
@@ -78,9 +77,9 @@ pub struct Dataset {
     time_span: Duration,
 }
 
-impl Dataset {
+impl Stream {
     #[instrument(skip_all, fields(time_span = %format_duration(time_span.to_std()?)))]
-    pub async fn load(
+    pub async fn read(
         mut redis: MultiplexedConnection,
         time_span: Duration,
     ) -> crate::Result<Self> {
@@ -117,7 +116,7 @@ impl Dataset {
 
 #[instrument(level = "info", skip_all, fields(time_span = %time_span))]
 pub fn calculate_vehicle_win_rates(
-    sample: &[SamplePoint],
+    sample: &[StreamEntry],
     time_span: Duration,
 ) -> HashMap<TankId, ConfidenceInterval> {
     let mut statistics = HashMap::default();
@@ -125,14 +124,13 @@ pub fn calculate_vehicle_win_rates(
 
     for point in sample {
         if point.timestamp >= minimal_timestamp {
-            let n_point_wins = if point.is_win { 1 } else { 0 };
             match statistics.entry(point.tank_id) {
                 Entry::Vacant(entry) => {
-                    entry.insert((1, n_point_wins));
+                    entry.insert((point.n_battles, point.n_wins));
                 }
                 Entry::Occupied(mut entry) => {
                     let (n_battles, n_wins) = *entry.get();
-                    entry.insert((n_battles + 1, n_wins + n_point_wins));
+                    entry.insert((n_battles + point.n_battles, n_wins + point.n_wins));
                 }
             }
         }
@@ -154,7 +152,7 @@ pub fn calculate_vehicle_win_rates(
 async fn load_sample(
     redis: &mut MultiplexedConnection,
     time_span: Duration,
-) -> crate::Result<(String, Vec<SamplePoint>)> {
+) -> crate::Result<(String, Vec<StreamEntry>)> {
     let mut sample = Vec::new();
     let mut pointer = (Utc::now() - time_span).timestamp_millis().to_string();
 
@@ -193,7 +191,7 @@ async fn load_sample(
 async fn refresh_sample(
     redis: &mut MultiplexedConnection,
     last_id: &str,
-    sample: &mut Vec<SamplePoint>,
+    sample: &mut Vec<StreamEntry>,
 ) -> crate::Result<Option<(usize, String)>> {
     type Fields = KeyValueVec<String, i64>;
     type Entry = TwoTuple<String, Fields>;
@@ -214,8 +212,7 @@ async fn refresh_sample(
                 .last()
                 .map(|TwoTuple(id, _)| (entries.len(), id.clone()));
             for TwoTuple(_, fields) in entries.into_iter() {
-                let points: Vec<SamplePoint> = StreamEntry::try_from(fields)?.into();
-                sample.extend(points.into_iter());
+                sample.push(StreamEntry::try_from(fields)?);
             }
             Ok(result)
         }
@@ -225,7 +222,7 @@ async fn refresh_sample(
 
 /// Removes expired sample points.
 #[tracing::instrument(level = "debug", skip_all)]
-fn expire(sample: &mut Vec<SamplePoint>, time_span: Duration) {
+fn expire(sample: &mut Vec<StreamEntry>, time_span: Duration) {
     let expiry_timestamp = (Utc::now() - time_span).timestamp();
     sample.retain(|point| point.timestamp > expiry_timestamp);
 }
