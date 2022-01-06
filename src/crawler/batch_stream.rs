@@ -10,16 +10,10 @@ use tokio::sync::RwLock;
 use tokio::time::{sleep, timeout};
 use tracing::{error, info, instrument};
 
-use crate::database::retrieve_accounts;
 use crate::helpers::format_elapsed;
 use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
-
-/// Account IDs from this list get crawled as soon as possible.
-pub const PRIORITY_QUEUE_KEY: &str = "crawler::priority";
-
-pub const PRIORITY_QUEUE_LIMIT: usize = 50;
 
 const POINTER_KEY: &str = "crawler::pointer";
 
@@ -47,14 +41,14 @@ pub async fn get_batch_stream(
             let min_offset = Arc::clone(&min_offset);
             async move {
                 loop {
-                    let priority_batch = retrieve_priority_queue(&database, &mut redis).await?;
-                    let batch_size = MAX_BATCH_SIZE - priority_batch.len();
                     let min_offset = *min_offset.read().await;
-                    let batch = retrieve_batch(&database, pointer, min_offset, batch_size).await?;
+                    let batch =
+                        retrieve_batch(&database, pointer, min_offset, MAX_BATCH_SIZE).await?;
                     match batch.last() {
                         Some(last_item) => {
                             pointer = last_item.id;
                             redis.set(POINTER_KEY, pointer).await?;
+                            break Ok(Some((batch, (pointer, start_time))));
                         }
                         None => {
                             info!(elapsed = %format_elapsed(&start_time), "restarting");
@@ -62,13 +56,6 @@ pub async fn get_batch_stream(
                             start_time = Instant::now();
                             pointer = 0;
                         }
-                    }
-                    let batch: Batch = priority_batch
-                        .into_iter()
-                        .chain(batch.into_iter())
-                        .collect();
-                    if !batch.is_empty() {
-                        break Ok(Some((batch, (pointer, start_time))));
                     }
                 }
             }
@@ -98,22 +85,4 @@ async fn retrieve_batch(
         .await
         .context("the `retrieve_batch` query has timed out")?
         .context("failed to retrieve a batch")
-}
-
-#[instrument(level = "debug", skip_all)]
-async fn retrieve_priority_queue(
-    database: &PgPool,
-    redis: &mut MultiplexedConnection,
-) -> crate::Result<Batch> {
-    let account_ids: Vec<i32> = redis::cmd("SPOP")
-        .arg(PRIORITY_QUEUE_KEY)
-        .arg(PRIORITY_QUEUE_LIMIT)
-        .query_async(redis)
-        .await?;
-    let accounts = if !account_ids.is_empty() {
-        retrieve_accounts(database, &account_ids).await?
-    } else {
-        Vec::new()
-    };
-    Ok(accounts)
 }

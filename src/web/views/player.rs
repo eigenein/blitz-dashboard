@@ -4,7 +4,6 @@
 
 use std::time::Instant;
 
-use anyhow::Context;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use futures::future::try_join;
@@ -12,13 +11,10 @@ use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
 use maud::Markup;
 use maud::{html, PreEscaped, DOCTYPE};
-use redis::aio::MultiplexedConnection;
-use redis::AsyncCommands;
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
 
-use crate::crawler::batch_stream::PRIORITY_QUEUE_KEY;
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::{format_elapsed, from_days, from_hours, from_months};
 use crate::logging::set_user;
@@ -45,10 +41,7 @@ pub async fn get(
     info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     tanks_cache: &State<AccountTanksCache>,
-    redis: &State<MultiplexedConnection>,
 ) -> crate::web::result::Result<CustomResponse> {
-    let mut redis = (*redis).clone();
-
     let start_instant = Instant::now();
     let period = match period {
         Some(period) => match parse_duration(&period) {
@@ -70,10 +63,7 @@ pub async fn get(
         let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
         retrieve_latest_tank_snapshots(database, account_id, before, &tank_ids).await?
     };
-    let last_known_battle_time = insert_account_if_not_exists(database, account_id).await?;
-    if last_known_battle_time < current_info.base.last_battle_time {
-        push_account_to_priority_queue(&mut redis, account_id).await?;
-    }
+    insert_account_if_not_exists(database, account_id).await?;
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
@@ -532,21 +522,6 @@ pub async fn get(
         "finished",
     );
     result
-}
-
-async fn push_account_to_priority_queue(
-    redis: &mut MultiplexedConnection,
-    account_id: i32,
-) -> crate::Result {
-    redis
-        .sadd(PRIORITY_QUEUE_KEY, account_id)
-        .await
-        .with_context(|| {
-            format!(
-                "failed to push account #{} to the priority queue",
-                account_id
-            )
-        })
 }
 
 fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::Result<Markup> {
