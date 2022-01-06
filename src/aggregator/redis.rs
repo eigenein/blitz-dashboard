@@ -17,6 +17,7 @@ pub type StreamResponse = TwoTuple<(), Vec<Entry>>;
 pub type XReadResponse = Vec<StreamResponse>;
 
 pub const STREAM_KEY: &str = "streams::battles::v2";
+pub const UPDATED_AT_KEY: &str = "aggregator::updated_at";
 
 const VEHICLE_WIN_RATES_KEY: &str = "vehicles::win_rates::ru";
 const VEHICLE_WIN_RATE_MARGINS_KEY: &str = "vehicles::win_rates::margins::ru";

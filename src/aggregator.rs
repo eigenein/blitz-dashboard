@@ -1,10 +1,11 @@
 use std::collections::hash_map::Entry;
 
+use ::redis::AsyncCommands;
 use chrono::{Duration, Utc};
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::redis::store_vehicle_win_rates;
+use crate::aggregator::redis::{store_vehicle_win_rates, UPDATED_AT_KEY};
 use crate::aggregator::stream::Stream;
 use crate::aggregator::stream_entry::StreamEntry;
 use crate::math::statistics::{ConfidenceInterval, Z};
@@ -33,6 +34,8 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
 
         let vehicle_win_rates = calculate_vehicle_win_rates(&stream.entries, opts.time_span);
         store_vehicle_win_rates(&mut redis, vehicle_win_rates).await?;
+
+        redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
     }
 }
 

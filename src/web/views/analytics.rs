@@ -1,14 +1,16 @@
+use chrono::{TimeZone, Utc};
+use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::{uri, State};
 
-use crate::aggregator::redis::retrieve_vehicle_win_rates;
+use crate::aggregator::redis::{retrieve_vehicle_win_rates, UPDATED_AT_KEY};
 use crate::logging::clear_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
-use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
+use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
 use crate::web::views::bulma::*;
@@ -22,17 +24,25 @@ pub async fn get(
     redis: &State<MultiplexedConnection>,
     disable_caches: &State<DisableCaches>,
 ) -> crate::web::result::Result<CustomResponse> {
+    const CACHE_KEY: &str = "html::analytics::vehicles";
+    const CACHE_CONTROL: &str = "max-age=60, stale-while-revalidate=3600";
+
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
-    const CACHE_KEY: &str = "html::analytics::vehicles";
-    const CACHE_CONTROL: &str = "max-age=60, stale-while-revalidate=3600";
     if !disable_caches.0 {
         if let Some(content) = redis.get(CACHE_KEY).await? {
             return Ok(CustomResponse::CachedHtml(CACHE_CONTROL, content));
         }
     }
 
+    let updated_at = Utc.timestamp(
+        redis
+            .get::<_, Option<i64>>(UPDATED_AT_KEY)
+            .await?
+            .unwrap_or(0),
+        0,
+    );
     let live_win_rates = retrieve_vehicle_win_rates(&mut redis).await?;
 
     let markup = html! {
@@ -49,6 +59,15 @@ pub async fn get(
                 div.container {
                     div.navbar-brand {
                         (home_button())
+
+                        div.navbar-item title="Обновлено" {
+                            span.icon-text {
+                                span.icon { i.fas.fa-sync {} }
+                                time
+                                    datetime=(updated_at.to_rfc3339())
+                                    title=(updated_at) { (datetime(updated_at, Tense::Past)) }
+                            }
+                        }
                     }
                 }
             }
