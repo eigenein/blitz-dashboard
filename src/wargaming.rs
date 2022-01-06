@@ -46,7 +46,7 @@ impl WargamingApi {
     pub fn new(
         application_id: &str,
         timeout: StdDuration,
-        max_rps: Option<usize>,
+        throttling_period: Option<StdDuration>,
     ) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -73,7 +73,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
-            throttler: max_rps.map(|max_rps| Throttler::new(StdDuration::from_secs(1), max_rps)),
+            throttler: throttling_period.map(|period| Throttler::new(period, 1)),
         };
         Ok(this)
     }
