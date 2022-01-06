@@ -39,15 +39,7 @@ pub struct Crawler {
 
     metrics: CrawlerMetrics,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
-
-    /// `Some(...)` indicates that only tanks with updated last battle time must be crawled.
-    /// This also sends out updated tanks to the trainer.
-    incremental: Option<IncrementalOpts>,
-}
-
-#[derive(Copy, Clone)]
-pub struct IncrementalOpts {
-    stream_duration: Duration,
+    stream_duration: Option<Duration>,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -60,9 +52,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let min_offset = Arc::new(RwLock::new(opts.min_offset));
     let crawler = Crawler::new(
         opts.shared,
-        Some(IncrementalOpts {
-            stream_duration: opts.stream_duration,
-        }),
+        Some(opts.stream_duration),
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
     .await?;
@@ -92,7 +82,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
 impl Crawler {
     pub async fn new(
         opts: SharedCrawlerOpts,
-        incremental: Option<IncrementalOpts>,
+        stream_duration: Option<Duration>,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
         let api = WargamingApi::new(
@@ -112,7 +102,7 @@ impl Crawler {
             database,
             redis,
             buffering: opts.buffering,
-            incremental,
+            stream_duration,
             auto_min_offset,
         };
         Ok(this)
@@ -181,12 +171,12 @@ impl Crawler {
     ) -> crate::Result {
         let start_instant = Instant::now();
 
-        if let Some(opts) = self.incremental {
+        if let Some(stream_duration) = self.stream_duration {
             // FIXME: make the `last_battle_time` nullable instead.
             if account.last_battle_time.timestamp() != 0 {
                 // Zero timestamp would mean that the account has never played
                 // or been crawled before.
-                self.push_incremental_updates(&opts, account.id, &tanks)
+                self.push_incremental_updates(stream_duration, account.id, &tanks)
                     .await?;
             }
         }
@@ -213,7 +203,7 @@ impl Crawler {
         &mut self,
         account_id: i32,
         tanks: &[Tank],
-        opts: &IncrementalOpts,
+        stream_duration: Duration,
     ) -> crate::Result<Vec<StreamEntry>> {
         let battle_counts = retrieve_latest_tank_battle_counts(
             &self.database,
@@ -227,7 +217,7 @@ impl Crawler {
 
         for tank in tanks {
             let last_battle_time = tank.statistics.base.last_battle_time;
-            if now - last_battle_time > opts.stream_duration {
+            if now - last_battle_time > stream_duration {
                 tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
                 continue;
             }
@@ -252,7 +242,7 @@ impl Crawler {
     #[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
     async fn push_incremental_updates(
         &mut self,
-        opts: &IncrementalOpts,
+        stream_duration: Duration,
         account_id: i32,
         tanks: &[Tank],
     ) -> crate::Result {
@@ -260,8 +250,10 @@ impl Crawler {
             return Ok(());
         }
 
-        let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
-        push_stream_entries(&mut self.redis, &entries, opts.stream_duration).await?;
+        let entries = self
+            .prepare_stream_entries(account_id, tanks, stream_duration)
+            .await?;
+        push_stream_entries(&mut self.redis, &entries, stream_duration).await?;
 
         Ok(())
     }
