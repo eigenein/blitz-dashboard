@@ -188,7 +188,11 @@ impl Crawler {
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
 
-        tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
+        if self.stream_duration.is_some() {
+            tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
+        } else {
+            tracing::info!(account_id = account.id, "updated");
+        }
         Ok(())
     }
 
