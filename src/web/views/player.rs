@@ -539,7 +539,7 @@ fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::
                     TankType::Medium => "СТ",
                     TankType::Heavy => "ТТ",
                     TankType::AT => "ПТ",
-                    TankType::Unknown => "?",
+                    TankType::Unknown => "",
                 }
             }
 

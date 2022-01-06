@@ -8,6 +8,7 @@ use rocket::{uri, State};
 use crate::aggregator::redis::{retrieve_vehicle_win_rates, UPDATED_AT_KEY};
 use crate::logging::clear_user;
 use crate::math::statistics::ConfidenceInterval;
+use crate::models::TankType;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
@@ -82,6 +83,8 @@ pub async fn get(
 
                                     th { }
 
+                                    th.has-text-centered { "Тип" }
+
                                     th.has-text-centered {
                                         a data-sort="tier" {
                                             span.icon-text.is-flex-wrap-nowrap {
@@ -145,6 +148,16 @@ pub fn tr(tank_id: TankId, live_win_rate: ConfidenceInterval) -> Markup {
                     span.icon-text.is-flex-wrap-nowrap {
                         span.icon { { i.fas.fa-link {} } }
                     }
+                }
+            }
+
+            td.has-text-centered {
+                @match vehicle.type_ {
+                    TankType::Light => "ЛТ",
+                    TankType::Medium => "СТ",
+                    TankType::Heavy => "ТТ",
+                    TankType::AT => "ПТ",
+                    TankType::Unknown => "",
                 }
             }
 
