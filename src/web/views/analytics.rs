@@ -4,10 +4,10 @@ use redis::AsyncCommands;
 use rocket::response::content::Html;
 use rocket::{uri, State};
 
+use crate::aggregator::model::retrieve_vehicle_win_rates;
 use crate::logging::clear_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::model::retrieve_vehicle_win_rates;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;

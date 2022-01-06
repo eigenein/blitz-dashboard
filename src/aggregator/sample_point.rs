@@ -1,4 +1,4 @@
-use crate::trainer::stream_entry::StreamEntry;
+use crate::aggregator::stream_entry::StreamEntry;
 use crate::wargaming::tank_id::TankId;
 
 /// Single sample point of a dataset.

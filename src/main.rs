@@ -13,6 +13,7 @@ use structopt::StructOpt;
 use crate::helpers::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
+mod aggregator;
 mod crawler;
 mod database;
 mod helpers;
@@ -22,7 +23,6 @@ mod metrics;
 mod models;
 mod opts;
 mod tankopedia;
-mod trainer;
 mod wargaming;
 mod web;
 
@@ -58,7 +58,7 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
-        Subcommand::Train(opts) => trainer::run(opts).await,
+        Subcommand::Aggregate(opts) => aggregator::run(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
     };
     tracing::info!(

@@ -41,8 +41,8 @@ pub enum Subcommand {
     ImportTankopedia(ImportTankopediaOpts),
     CrawlAccounts(CrawlAccountsOpts),
 
-    #[structopt(alias = "trainer")]
-    Train(TrainerOpts),
+    #[structopt(alias = "aggregator")]
+    Aggregate(AggregateOpts),
 }
 
 /// Runs the web application
@@ -86,9 +86,9 @@ pub struct CrawlerOpts {
     #[structopt(long)]
     pub auto_min_offset: bool,
 
-    /// Maximum training stream duration
+    /// Maximum battle stream duration
     #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]
-    pub training_stream_duration: Duration,
+    pub stream_duration: Duration,
 }
 
 /// Updates the bundled Tankopedia module
@@ -151,7 +151,7 @@ pub struct SharedCrawlerOpts {
 
 /// Continuously recalculates the metrics
 #[derive(Clone, StructOpt)]
-pub struct TrainerOpts {
+pub struct AggregateOpts {
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,

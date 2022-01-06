@@ -12,6 +12,8 @@ use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
+use crate::aggregator::dataset::push_stream_entries;
+use crate::aggregator::stream_entry::StreamEntry;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
@@ -20,8 +22,6 @@ use crate::database::{
 };
 use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
-use crate::trainer::dataset::push_stream_entries;
-use crate::trainer::stream_entry::StreamEntry;
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
 
@@ -47,7 +47,7 @@ pub struct Crawler {
 
 #[derive(Copy, Clone)]
 pub struct IncrementalOpts {
-    training_stream_duration: Duration,
+    stream_duration: Duration,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -61,7 +61,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     let crawler = Crawler::new(
         opts.shared,
         Some(IncrementalOpts {
-            training_stream_duration: opts.training_stream_duration,
+            stream_duration: opts.stream_duration,
         }),
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
@@ -203,7 +203,7 @@ impl Crawler {
         Ok(())
     }
 
-    /// Prepares the training stream entries.
+    /// Prepares the battle stream entries.
     #[tracing::instrument(
         level = "debug",
         skip_all,
@@ -227,7 +227,7 @@ impl Crawler {
 
         for tank in tanks {
             let last_battle_time = tank.statistics.base.last_battle_time;
-            if now - last_battle_time > opts.training_stream_duration {
+            if now - last_battle_time > opts.stream_duration {
                 tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
                 continue;
             }
@@ -261,7 +261,7 @@ impl Crawler {
         }
 
         let entries = self.prepare_stream_entries(account_id, tanks, opts).await?;
-        push_stream_entries(&mut self.redis, &entries, opts.training_stream_duration).await?;
+        push_stream_entries(&mut self.redis, &entries, opts.stream_duration).await?;
 
         Ok(())
     }

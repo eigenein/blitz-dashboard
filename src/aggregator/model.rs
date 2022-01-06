@@ -6,8 +6,8 @@ use tracing::instrument;
 use crate::math::statistics::ConfidenceInterval;
 use crate::wargaming::tank_id::TankId;
 
-const LIVE_VEHICLE_WIN_RATES: &str = "trainer::vehicles::win_rates::ru";
-const LIVE_VEHICLE_WIN_RATE_MARGINS: &str = "trainer::vehicles::win_rates::margins::ru";
+const VEHICLE_WIN_RATES: &str = "vehicles::win_rates::ru";
+const VEHICLE_WIN_RATE_MARGINS: &str = "vehicles::win_rates::margins::ru";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
@@ -19,14 +19,14 @@ pub async fn store_vehicle_win_rates(
     let mut pipeline = pipe();
 
     pipeline.cmd("HMSET");
-    pipeline.arg(LIVE_VEHICLE_WIN_RATES);
+    pipeline.arg(VEHICLE_WIN_RATES);
     for (tank_id, win_rate) in win_rates.iter() {
         pipeline.arg(tank_id).arg(win_rate.mean);
     }
     pipeline.ignore();
 
     pipeline.cmd("HMSET");
-    pipeline.arg(LIVE_VEHICLE_WIN_RATE_MARGINS);
+    pipeline.arg(VEHICLE_WIN_RATE_MARGINS);
     for (tank_id, win_rate) in win_rates.into_iter() {
         pipeline.arg(tank_id).arg(win_rate.margin);
     }
@@ -43,8 +43,8 @@ pub async fn retrieve_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
 ) -> crate::Result<HashMap<TankId, ConfidenceInterval>> {
     let (means, mut margins): (HashMap<TankId, f64>, HashMap<TankId, f64>) = pipe()
-        .hgetall(LIVE_VEHICLE_WIN_RATES)
-        .hgetall(LIVE_VEHICLE_WIN_RATE_MARGINS)
+        .hgetall(VEHICLE_WIN_RATES)
+        .hgetall(VEHICLE_WIN_RATE_MARGINS)
         .query_async(redis)
         .await
         .context("failed to retrieve vehicle win rates")?;

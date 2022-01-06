@@ -29,7 +29,7 @@ Blitz Dashboard consists of a single executable `blitz-dashboard`, which serves 
 
 - Web application
 - [Account crawler](src/crawler): the service process and the one-off tool
-- Analytics trainer
+- Analytics aggregator
 - Tankopedia importer
 
 ### Wargaming.net API considerations

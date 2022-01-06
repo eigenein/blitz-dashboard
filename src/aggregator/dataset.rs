@@ -12,9 +12,9 @@ use redis::{
 };
 use tracing::instrument;
 
+use crate::aggregator::sample_point::SamplePoint;
+use crate::aggregator::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::math::statistics::{ConfidenceInterval, Z};
-use crate::trainer::sample_point::SamplePoint;
-use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::wargaming::tank_id::TankId;
 
 const STREAM_KEY: &str = "streams::battles::v2";
@@ -184,7 +184,7 @@ async fn load_sample(
 
     match sample.is_empty() {
         false => Ok((pointer, sample)),
-        true => Err(anyhow!("training set is empty, try a longer time span")),
+        true => Err(anyhow!("battle stream is empty, try a longer time span")),
     }
 }
 
