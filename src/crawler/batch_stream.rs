@@ -1,21 +1,16 @@
 use std::sync::Arc;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use futures::{stream, Stream};
-use redis::aio::MultiplexedConnection;
-use redis::AsyncCommands;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tokio::time::{sleep, timeout};
-use tracing::{error, info, instrument};
+use tracing::{instrument, warn};
 
-use crate::helpers::format_elapsed;
 use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
-
-const POINTER_KEY: &str = "crawler::pointer";
 
 /// Comes from the Wargaming.net API limitation.
 const MAX_BATCH_SIZE: usize = 100;
@@ -23,62 +18,40 @@ const MAX_BATCH_SIZE: usize = 100;
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub async fn get_batch_stream(
     database: PgPool,
-    mut redis: MultiplexedConnection,
     min_offset: Arc<RwLock<StdDuration>>,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    let start_account_id = match redis.get::<_, Option<i32>>(POINTER_KEY).await {
-        Ok(pointer) => pointer.unwrap_or(0),
-        Err(error) => {
-            error!("failed to retrieve the pointer: {:#}", error);
-            0
-        }
-    };
     stream::try_unfold(
-        (start_account_id, Instant::now()),
-        move |(mut pointer, mut start_time)| {
-            let database = database.clone();
-            let mut redis = redis.clone();
-            let min_offset = Arc::clone(&min_offset);
-            async move {
-                loop {
+        (database, min_offset),
+        move |(database, min_offset)| async move {
+            loop {
+                let batch = {
                     let min_offset = *min_offset.read().await;
-                    let batch =
-                        retrieve_batch(&database, pointer, min_offset, MAX_BATCH_SIZE).await?;
-                    match batch.last() {
-                        Some(last_item) => {
-                            pointer = last_item.id;
-                            redis.set(POINTER_KEY, pointer).await?;
-                            break Ok(Some((batch, (pointer, start_time))));
-                        }
-                        None => {
-                            info!(elapsed = %format_elapsed(&start_time), "restarting");
-                            sleep(StdDuration::from_secs(1)).await;
-                            start_time = Instant::now();
-                            pointer = 0;
-                        }
-                    }
+                    retrieve_batch(&database, min_offset, MAX_BATCH_SIZE).await?
+                };
+                if !batch.is_empty() {
+                    break Ok(Some((batch, (database, min_offset))));
                 }
+                warn!("no accounts matched, sleeping…");
+                sleep(StdDuration::from_secs(1)).await;
             }
         },
     )
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(skip_all, level = "debug", fields(starting_at = starting_at))]
+#[instrument(skip_all, level = "debug")]
 async fn retrieve_batch(
     database: &PgPool,
-    starting_at: i32,
     min_offset: StdDuration,
     count: usize,
 ) -> crate::Result<Batch> {
     // language=SQL
     const QUERY: &str = "
-        SELECT account_id, last_battle_time FROM accounts
-        WHERE account_id > $1 AND last_battle_time < now() - $2
-        ORDER BY account_id LIMIT $3
+        -- CREATE EXTENSION tsm_system_rows;
+        SELECT account_id, last_battle_time FROM accounts TABLESAMPLE system_rows($2)
+        WHERE last_battle_time < now() - $1;
     ";
     let query = sqlx::query_as(QUERY)
-        .bind(starting_at)
         .bind(min_offset)
         .bind(i32::try_from(count)?);
     timeout(StdDuration::from_secs(60), query.fetch_all(database))

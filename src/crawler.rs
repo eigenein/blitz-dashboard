@@ -58,7 +58,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    let batches = get_batch_stream(crawler.database(), crawler.redis(), min_offset).await;
+    let batches = get_batch_stream(crawler.database(), min_offset).await;
     crawler.run(Box::pin(batches)).await
 }
 
@@ -113,11 +113,6 @@ impl Crawler {
         self.database.clone()
     }
 
-    #[must_use]
-    pub fn redis(&self) -> MultiplexedConnection {
-        self.redis.clone()
-    }
-
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         mut self,
@@ -148,7 +143,7 @@ impl Crawler {
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
         while let Some((account, new_info, tanks)) = accounts.try_next().await? {
-            self.metrics.add_account(account.id);
+            self.metrics.add_account();
             self.metrics
                 .add_tanks(new_info.base.last_battle_time, tanks.len())?;
             self.update_account(account, new_info, tanks).await?;

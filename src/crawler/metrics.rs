@@ -16,9 +16,6 @@ pub struct CrawlerMetrics {
     /// Inserted tank snapshot count.
     n_tanks: usize,
 
-    /// Last scanned account ID.
-    last_account_id: i32,
-
     n_battles: i32,
 
     /// Request count from the last `log()` call.
@@ -41,7 +38,6 @@ impl CrawlerMetrics {
             request_counter,
             n_accounts: 0,
             n_tanks: 0,
-            last_account_id: 0,
             n_battles: 0,
             reset_instant: Instant::now(),
             lags: Vec::new(),
@@ -49,8 +45,7 @@ impl CrawlerMetrics {
         }
     }
 
-    pub fn add_account(&mut self, account_id: i32) {
-        self.last_account_id = account_id;
+    pub fn add_account(&mut self) {
         self.n_accounts += 1;
     }
 
@@ -106,14 +101,14 @@ impl CrawlerMetrics {
 
         let (lag_p50, lag_p90) = self.lags();
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4.0} | L50: {:>11} | L90: {:>11} | APS: {:5.1} | TPS: {:.2} | A: {:>9}",
+            "RPS: {:>4.1} | battles: {:>4} | L50: {:>11} | L90: {:>11} | NA: {:>4} | APS: {:5.1} | TPS: {:.2}",
             n_requests as f64 / elapsed_secs,
             self.n_battles,
             format_duration(lag_p50).to_string(),
             format_duration(lag_p90).to_string(),
+            self.n_accounts,
             self.n_accounts as f64 / elapsed_secs,
             self.n_tanks as f64 / elapsed_secs,
-            self.last_account_id,
         );
 
         lag_p50
