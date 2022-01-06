@@ -1,5 +1,6 @@
 pub mod backoff;
 pub mod periodic;
+pub mod redis;
 pub mod throttler;
 
 use std::time::Instant;
