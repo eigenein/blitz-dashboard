@@ -147,6 +147,9 @@ pub struct SharedCrawlerOpts {
     /// Metrics logging interval. With `--auto-min-offset` – also the minimum offset update interval
     #[structopt(long, default_value = "1min", parse(try_from_str = humantime::parse_duration))]
     pub log_interval: StdDuration,
+
+    #[structopt(long, default_value = "50", parse(try_from_str = parsers::non_zero_usize))]
+    pub lag_percentile: usize,
 }
 
 /// Continuously recalculates the metrics

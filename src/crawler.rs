@@ -97,7 +97,11 @@ impl Crawler {
             .await?;
 
         let this = Self {
-            metrics: CrawlerMetrics::new(api.request_counter.clone(), opts.log_interval),
+            metrics: CrawlerMetrics::new(
+                api.request_counter.clone(),
+                opts.log_interval,
+                opts.lag_percentile,
+            ),
             api,
             database,
             redis,

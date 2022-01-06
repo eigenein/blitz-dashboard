@@ -29,10 +29,16 @@ pub struct CrawlerMetrics {
     lags: Vec<u64>,
 
     log_trigger: Periodic,
+
+    lag_percentile: usize,
 }
 
 impl CrawlerMetrics {
-    pub fn new(request_counter: Arc<AtomicU32>, log_interval: StdDuration) -> Self {
+    pub fn new(
+        request_counter: Arc<AtomicU32>,
+        log_interval: StdDuration,
+        lag_percentile: usize,
+    ) -> Self {
         Self {
             last_request_count: request_counter.load(Ordering::Relaxed),
             request_counter,
@@ -42,6 +48,7 @@ impl CrawlerMetrics {
             reset_instant: Instant::now(),
             lags: Vec::new(),
             log_trigger: Periodic::new(log_interval),
+            lag_percentile,
         }
     }
 
@@ -62,9 +69,9 @@ impl CrawlerMetrics {
 
     pub async fn check(&mut self, auto_min_offset: &Option<Arc<RwLock<StdDuration>>>) {
         if self.log_trigger.should_trigger() {
-            let lag_50 = self.aggregate_and_log();
+            let lag = self.aggregate_and_log();
             if let Some(min_offset) = auto_min_offset {
-                *min_offset.write().await = lag_50;
+                *min_offset.write().await = lag;
             }
             self.reset();
         }
@@ -79,20 +86,14 @@ impl CrawlerMetrics {
         self.last_request_count = self.request_counter.load(Ordering::Relaxed);
     }
 
-    fn lags(&mut self) -> (StdDuration, StdDuration) {
+    fn lag(&mut self) -> StdDuration {
         if self.lags.is_empty() {
-            return (StdDuration::default(), StdDuration::default());
+            return StdDuration::new(0, 0);
         }
 
-        let index = self.lags.len() / 2;
+        let index = self.lag_percentile * self.lags.len() / 100;
         let (_, secs, _) = self.lags.select_nth_unstable(index);
-        let lag_p50 = StdDuration::from_secs(*secs);
-
-        let index = self.lags.len() * 9 / 10;
-        let (_, secs, _) = self.lags.select_nth_unstable(index);
-        let lag_p90 = StdDuration::from_secs(*secs);
-
-        (lag_p50, lag_p90)
+        StdDuration::from_secs(*secs)
     }
 
     fn aggregate_and_log(&mut self) -> StdDuration {
@@ -100,23 +101,21 @@ impl CrawlerMetrics {
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = self.request_counter.load(Ordering::Relaxed) - self.last_request_count;
 
-        let (lag_p50, lag_p90) = self.lags();
-        let mut formatted_lag_p50 = format_duration(lag_p50).to_string();
-        formatted_lag_p50.truncate(11);
-        let mut formatted_lag_p90 = format_duration(lag_p90).to_string();
-        formatted_lag_p90.truncate(11);
+        let lag = self.lag();
+        let mut formatted_lag = format_duration(lag).to_string();
+        formatted_lag.truncate(11);
 
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4} | L50: {:>11} | L90: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:.2}",
+            "RPS: {:>4.1} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:.2}",
             n_requests as f64 / elapsed_secs,
             self.n_battles,
-            formatted_lag_p50,
-            formatted_lag_p90,
+            self.lag_percentile,
+            formatted_lag,
             self.n_accounts,
             self.n_accounts as f64 / elapsed_mins,
             self.n_tanks as f64 / elapsed_mins,
         );
 
-        lag_p50
+        lag
     }
 }
