@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use tokio::time::{sleep_until, Instant};
 
 use crate::StdDuration;
@@ -8,34 +8,30 @@ use crate::StdDuration;
 #[derive(Clone)]
 pub struct Throttler {
     period: StdDuration,
-    next_instant: Arc<RwLock<Instant>>,
+    limit: usize,
+
+    /// Stores `(start_instant, n_requests)`.
+    counter: Arc<Mutex<(Instant, usize)>>,
 }
 
 impl Throttler {
-    pub fn new(period: StdDuration) -> Self {
+    pub fn new(period: StdDuration, limit: usize) -> Self {
         Self {
             period,
-            next_instant: Arc::new(RwLock::new(Instant::now())),
+            limit,
+            counter: Arc::new(Mutex::new((Instant::now(), 0))),
         }
     }
 
     pub async fn throttle(&self) {
-        let mut next_instant = *self.next_instant.read().await;
+        let mut guard = self.counter.lock().await;
 
-        loop {
-            // Wait for the next call instant to come.
-            sleep_until(next_instant).await;
-            // Attempting to update the next call instant.
-            let mut guard = self.next_instant.write().await;
-            if *guard == next_instant {
-                // We succeeded to get the lock, update the next call instant.
-                *guard = Instant::now() + self.period;
-                // It also means the task is allowed to continue.
-                break;
-            }
-            // Some other task has re-written the next call instant while we were sleeping.
-            // We need to wait for the next available instant.
-            next_instant = *guard;
+        if guard.1 >= self.limit {
+            let deadline = guard.0 + self.period;
+            sleep_until(deadline).await;
+            *guard = (deadline, 1);
+        } else {
+            guard.1 += 1;
         }
     }
 }

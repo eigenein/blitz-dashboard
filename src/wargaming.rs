@@ -73,7 +73,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
-            throttler: throttling_period.map(Throttler::new),
+            throttler: throttling_period.map(|period| Throttler::new(period, 1)),
         };
         Ok(this)
     }
