@@ -8,7 +8,6 @@ use futures::{future, stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
-use redis::AsyncCommands;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
@@ -189,13 +188,6 @@ impl Crawler {
             .commit()
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        self.redis
-            .hset(
-                "accounts::ru::last_battle_time",
-                account.id,
-                new_info.base.last_battle_time.timestamp(),
-            )
-            .await?;
 
         tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
         Ok(())
