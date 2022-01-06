@@ -97,18 +97,24 @@ impl CrawlerMetrics {
 
     fn aggregate_and_log(&mut self) -> StdDuration {
         let elapsed_secs = self.reset_instant.elapsed().as_secs_f64();
+        let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = self.request_counter.load(Ordering::Relaxed) - self.last_request_count;
 
         let (lag_p50, lag_p90) = self.lags();
+        let mut formatted_lag_p50 = format_duration(lag_p50).to_string();
+        formatted_lag_p50.truncate(11);
+        let mut formatted_lag_p90 = format_duration(lag_p90).to_string();
+        formatted_lag_p90.truncate(11);
+
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4} | L50: {:>11} | L90: {:>11} | NA: {:>4} | APS: {:5.1} | TPS: {:.2}",
+            "RPS: {:>4.1} | battles: {:>4} | L50: {:>11} | L90: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:.2}",
             n_requests as f64 / elapsed_secs,
             self.n_battles,
-            format_duration(lag_p50).to_string(),
-            format_duration(lag_p90).to_string(),
+            formatted_lag_p50,
+            formatted_lag_p90,
             self.n_accounts,
-            self.n_accounts as f64 / elapsed_secs,
-            self.n_tanks as f64 / elapsed_secs,
+            self.n_accounts as f64 / elapsed_mins,
+            self.n_tanks as f64 / elapsed_mins,
         );
 
         lag_p50

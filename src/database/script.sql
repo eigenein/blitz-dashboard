@@ -34,3 +34,7 @@ ALTER TABLE tank_snapshots DROP CONSTRAINT IF EXISTS tank_snapshots_account_id_f
 -- 0.85.3
 
 ALTER TABLE accounts DROP COLUMN IF EXISTS factors;
+
+-- 0.144.8
+
+CREATE EXTENSION tsm_system_rows;
