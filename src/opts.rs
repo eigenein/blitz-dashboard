@@ -89,14 +89,6 @@ pub struct CrawlerOpts {
     /// Maximum training stream duration
     #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]
     pub training_stream_duration: Duration,
-
-    /// Percentage of points sent to the test sample
-    #[structopt(
-        long,
-        default_value = "5",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub test_percentage: usize,
 }
 
 /// Updates the bundled Tankopedia module
@@ -157,72 +149,23 @@ pub struct SharedCrawlerOpts {
     pub log_interval: StdDuration,
 }
 
-/// Trains the collaborative filtering model
+/// Continuously recalculates the metrics
 #[derive(Clone, StructOpt)]
 pub struct TrainerOpts {
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
 
-    /// Log every n-th epoch metrics
+    /// Interval for the recalculation
     #[structopt(
         long,
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub log_epochs: usize,
-
-    /// Time span of the training set (most recent battles)
-    #[structopt(long, default_value = "2days", parse(try_from_str = parsers::duration))]
-    pub time_span: Duration,
-
-    #[structopt(flatten)]
-    pub model: TrainerModelOpts,
-
-    /// Enable automatic regularization adjustment (experimental)
-    #[structopt(long)]
-    pub auto_r: bool,
-
-    /// If enabled, unconditionally increases regularization for next epoch by `0.001`
-    /// with the specified probability
-    #[structopt(long)]
-    pub auto_r_bump_chance: Option<f64>,
-
-    /// Store the latent vectors with the specified period
-    #[structopt(
-        long,
-        alias = "flush-period",
         default_value = "1minute",
         parse(try_from_str = humantime::parse_duration),
     )]
-    pub flush_interval: StdDuration,
+    pub interval: StdDuration,
 
     #[structopt(long, default_value = "1hour", parse(try_from_str = parsers::duration))]
-    pub analytics_time_span: Duration,
-}
-
-#[derive(Copy, Clone, StructOpt)]
-pub struct TrainerModelOpts {
-    /// Learning rate
-    #[structopt(long = "lr", default_value = "0.001")]
-    pub learning_rate: f64,
-
-    /// Number of latent factors.
-    /// Ignored for the grid search.
-    #[structopt(short = "f", long = "factors", default_value = "8")]
-    pub n_factors: usize,
-
-    /// Standard deviation of newly initialised latent factors
-    #[structopt(long, default_value = "0.01")]
-    pub factor_std: f64,
-
-    /// Maximum number of cached account latent vectors
-    #[structopt(
-        long,
-        default_value = "750000",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub account_cache_size: usize,
+    pub time_span: Duration,
 }
 
 #[derive(StructOpt)]

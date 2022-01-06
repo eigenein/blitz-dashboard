@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -8,7 +7,7 @@ use rocket::{uri, State};
 use crate::logging::clear_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
-use crate::trainer::model::{get_all_vehicle_factors, retrieve_vehicle_win_rates};
+use crate::trainer::model::retrieve_vehicle_win_rates;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
@@ -33,10 +32,7 @@ pub async fn get(
         }
     }
 
-    let vehicle_factors = get_all_vehicle_factors(&mut redis).await?;
-    let mut live_win_rates =
-        retrieve_vehicle_win_rates(&mut redis, &vehicle_factors.keys().copied().collect_vec())
-            .await?;
+    let live_win_rates = retrieve_vehicle_win_rates(&mut redis).await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -85,8 +81,8 @@ pub async fn get(
                                 }
 
                                 tbody {
-                                    @for (tank_id, _) in vehicle_factors.into_iter() {
-                                        (tr(tank_id, live_win_rates.remove(&tank_id)))
+                                    @for (tank_id, win_rate) in live_win_rates.into_iter() {
+                                        (tr(tank_id, win_rate))
                                     }
                                 }
                             }
@@ -117,7 +113,7 @@ pub async fn get(
 }
 
 #[must_use]
-pub fn tr(tank_id: TankId, live_win_rate: Option<ConfidenceInterval>) -> Markup {
+pub fn tr(tank_id: TankId, live_win_rate: ConfidenceInterval) -> Markup {
     html! {
         tr {
             @let vehicle = get_vehicle(tank_id);
@@ -134,21 +130,15 @@ pub fn tr(tank_id: TankId, live_win_rate: Option<ConfidenceInterval>) -> Markup 
 
             (tier_td(vehicle.tier, None))
 
-            @if let Some(live_win_rate) = live_win_rate {
-                td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        (Icon::ChartArea.into_span().color(Color::GreyLight))
-                        span {
-                            strong title=(live_win_rate.mean) {
-                                (format!("{:.1}%", live_win_rate.mean * 100.0))
-                            }
-                            span.has-text-grey { (format!(" ±{:.1}", live_win_rate.margin * 100.0)) }
+            td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    (Icon::ChartArea.into_span().color(Color::GreyLight))
+                    span {
+                        strong title=(live_win_rate.mean) {
+                            (format!("{:.1}%", live_win_rate.mean * 100.0))
                         }
+                        span.has-text-grey { (format!(" ±{:.1}", live_win_rate.margin * 100.0)) }
                     }
-                }
-            } @else {
-                td.has-text-centered data-sort="live-win-rate" data-value="-1" {
-                    span.icon.has-text-grey-light { i.fas.fa-hourglass-start {} }
                 }
             }
         }

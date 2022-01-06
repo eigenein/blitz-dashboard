@@ -258,17 +258,6 @@ pub fn render_float(value: f64, precision: usize) -> Markup {
     }
 }
 
-#[must_use]
-pub fn sign_class(value: f64) -> &'static str {
-    if value > 0.0 {
-        "has-background-success-light"
-    } else if value < 0.0 {
-        "has-background-danger-light"
-    } else {
-        ""
-    }
-}
-
 pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     1_i32 => "Ⅰ",
     2_i32 => "Ⅱ",
@@ -288,26 +277,6 @@ pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
         td.has-text-centered.(class.unwrap_or("")) data-sort="tier" data-value=(tier) {
             @if let Some(markup) = TIER_MARKUP.get(&tier) {
                 strong { (markup) }
-            }
-        }
-    }
-}
-
-#[must_use]
-pub fn factors_table(factors: &[f64]) -> Markup {
-    html! {
-        div.table-container {
-            table.table.is-hoverable.is-striped.is-fullwidth {
-                thead {
-                    @for i in 0..factors.len() {
-                        th { "#" (i) }
-                    }
-                }
-                tbody {
-                    @for factor in factors {
-                        td.(sign_class(*factor)) { (format!("{:+.4}", factor)) }
-                    }
-                }
             }
         }
     }

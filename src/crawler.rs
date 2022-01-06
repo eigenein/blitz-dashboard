@@ -48,7 +48,6 @@ pub struct Crawler {
 #[derive(Copy, Clone)]
 pub struct IncrementalOpts {
     training_stream_duration: Duration,
-    test_percentage: usize,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -63,7 +62,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
         opts.shared,
         Some(IncrementalOpts {
             training_stream_duration: opts.training_stream_duration,
-            test_percentage: opts.test_percentage,
         }),
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
@@ -240,12 +238,10 @@ impl Crawler {
             if n_battles > 0 && n_wins >= 0 {
                 self.metrics.add_battles(n_battles);
                 entries.push(StreamEntry {
-                    account_id,
                     tank_id,
                     timestamp: last_battle_time.timestamp(),
                     n_battles,
                     n_wins,
-                    is_test: fastrand::usize(0..100) < opts.test_percentage,
                 });
             }
         }

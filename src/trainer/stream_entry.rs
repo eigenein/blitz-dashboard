@@ -5,32 +5,26 @@ use crate::wargaming::tank_id::TankId;
 /// Single sample point of a dataset.
 #[derive(Debug, Copy, Clone)]
 pub struct StreamEntry {
-    pub account_id: i32,
     pub tank_id: TankId,
     pub timestamp: i64,
     pub n_battles: i32,
     pub n_wins: i32,
-    pub is_test: bool,
 }
 
 pub struct StreamEntryBuilder {
     timestamp: Option<i64>,
-    account_id: Option<i32>,
     tank_id: Option<TankId>,
     n_battles: i32,
     n_wins: i32,
-    is_test: bool,
 }
 
 impl Default for StreamEntryBuilder {
     fn default() -> Self {
         Self {
             timestamp: None,
-            account_id: None,
             tank_id: None,
             n_battles: 1,
             n_wins: 0,
-            is_test: false,
         }
     }
 }
@@ -38,11 +32,6 @@ impl Default for StreamEntryBuilder {
 impl StreamEntryBuilder {
     pub fn timestamp(&mut self, secs: i64) -> &mut Self {
         self.timestamp = Some(secs);
-        self
-    }
-
-    pub fn account_id(&mut self, account_id: i32) -> &mut Self {
-        self.account_id = Some(account_id);
         self
     }
 
@@ -61,21 +50,12 @@ impl StreamEntryBuilder {
         self
     }
 
-    pub fn set_test(&mut self, is_test: bool) -> &mut Self {
-        self.is_test = is_test;
-        self
-    }
-
     pub fn build(&self) -> crate::Result<StreamEntry> {
         let point = StreamEntry {
             timestamp: self
                 .timestamp
                 .ok_or_else(|| anyhow!("timestamp is missing"))?,
-            account_id: self
-                .account_id
-                .ok_or_else(|| anyhow!("account ID is missing"))?,
             tank_id: self.tank_id.ok_or_else(|| anyhow!("tank ID is missing"))?,
-            is_test: self.is_test,
             n_battles: self.n_battles,
             n_wins: self.n_wins,
         };

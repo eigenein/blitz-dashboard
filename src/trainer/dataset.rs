@@ -13,19 +13,16 @@ use redis::{
 use tracing::instrument;
 
 use crate::math::statistics::{ConfidenceInterval, Z};
-use crate::trainer::loss::BCELoss;
 use crate::trainer::sample_point::SamplePoint;
 use crate::trainer::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::wargaming::tank_id::TankId;
 
 const STREAM_KEY: &str = "streams::battles::v2";
 const PAGE_SIZE: usize = 100000;
-const ACCOUNT_ID_KEY: &str = "a";
 const TANK_ID_KEY: &str = "t";
 const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
-const IS_TEST_KEY: &str = "tt";
 
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
@@ -43,7 +40,6 @@ pub async fn push_stream_entries(
 
     for entry in entries.iter() {
         let mut items = vec![
-            (ACCOUNT_ID_KEY, entry.account_id as i64),
             (TANK_ID_KEY, entry.tank_id as i64),
             (TIMESTAMP_KEY, entry.timestamp),
         ];
@@ -52,9 +48,6 @@ pub async fn push_stream_entries(
         }
         if entry.n_wins != 0 {
             items.push((N_WINS_KEY, entry.n_wins as i64));
-        }
-        if entry.is_test {
-            items.push((IS_TEST_KEY, 1));
         }
         pipeline.xadd(STREAM_KEY, "*", &items).ignore();
     }
@@ -77,7 +70,6 @@ pub async fn push_stream_entries(
 #[derive(Clone)]
 pub struct Dataset {
     pub sample: Vec<SamplePoint>,
-    pub baseline_loss: f64,
     pub redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
@@ -93,7 +85,6 @@ impl Dataset {
         time_span: Duration,
     ) -> crate::Result<Self> {
         let (pointer, sample) = load_sample(&mut redis, time_span).await?;
-        let baseline_loss = calculate_baseline_loss(&sample);
         let first_timestamp = sample
             .first()
             .map(|point| point.timestamp)
@@ -102,19 +93,17 @@ impl Dataset {
             first_timestamp = Utc.timestamp(first_timestamp, 0).to_string().as_str(),
             n_points = sample.len(),
             pointer = pointer.as_str(),
-            baseline_loss = baseline_loss,
             "loaded",
         );
         Ok(Self {
             redis,
             sample,
             pointer,
-            baseline_loss,
             time_span,
         })
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "info", skip_all, fields(pointer = self.pointer.as_str()))]
     pub async fn refresh(&mut self) -> crate::Result {
         if let Some((_, new_pointer)) =
             refresh_sample(&mut self.redis, &self.pointer, &mut self.sample).await?
@@ -124,18 +113,6 @@ impl Dataset {
         }
         Ok(())
     }
-}
-
-/// Calculate the loss on the constant model that always predicts `0.5`.
-#[tracing::instrument(skip_all)]
-fn calculate_baseline_loss(sample: &[SamplePoint]) -> f64 {
-    let mut loss = BCELoss::default();
-    for point in sample {
-        if point.is_test {
-            loss.push_sample(0.5, point.is_win);
-        }
-    }
-    loss.finalise()
 }
 
 #[instrument(level = "info", skip_all, fields(time_span = %time_span))]
@@ -263,9 +240,6 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
                 "timestamp" | TIMESTAMP_KEY => {
                     builder.timestamp(value);
                 }
-                "account_id" | ACCOUNT_ID_KEY => {
-                    builder.account_id(value.try_into()?);
-                }
                 "tank_id" | TANK_ID_KEY => {
                     builder.tank_id(value.try_into()?);
                 }
@@ -274,9 +248,6 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
                 }
                 "n_wins" | N_WINS_KEY => {
                     builder.n_wins(value.try_into()?);
-                }
-                "is_test" | IS_TEST_KEY if value == 1 => {
-                    builder.set_test(true);
                 }
                 "is_win" => {
                     builder.n_wins(value.try_into()?);

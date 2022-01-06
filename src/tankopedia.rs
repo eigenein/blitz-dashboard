@@ -20,19 +20,6 @@ pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
         .unwrap_or_else(|| Cow::Owned(Vehicle::new_hardcoded(tank_id)))
 }
 
-/// Some vehicles are just copies of another vehicles.
-/// Maps a tank ID to its original vehicle.
-#[must_use]
-#[inline]
-pub fn remap_tank_id(tank_id: TankId) -> TankId {
-    match tank_id {
-        64273 => 55313, // 8,8 cm Pak 43 Jagdtiger
-        64769 => 9217,  // ИС-6 Бесстрашный
-        64801 => 2849,  // T34 Independence
-        _ => tank_id,
-    }
-}
-
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
 #[tracing::instrument(skip_all)]
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
