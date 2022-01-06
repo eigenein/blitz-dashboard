@@ -88,7 +88,7 @@ impl Crawler {
         let api = WargamingApi::new(
             &opts.connections.application_id,
             API_TIMEOUT,
-            Some(opts.throttling_period),
+            Some(opts.max_rps),
         )?;
         let internal = opts.connections.internal;
         let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
