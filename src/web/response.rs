@@ -9,7 +9,8 @@ use rocket::{Request, Response};
 #[allow(clippy::large_enum_variant)]
 pub enum CustomResponse {
     Html(String),
-    CachedHtml(&'static str, Markup),
+    CachedMarkup(&'static str, Markup),
+    CachedHtml(&'static str, String),
     Redirect(Redirect),
     Static(ContentType, &'static [u8]),
     Status(Status),
@@ -21,8 +22,12 @@ impl<'r> Responder<'r, 'static> for CustomResponse {
         match self {
             CustomResponse::Html(content) => Html(content).respond_to(request),
             CustomResponse::Redirect(redirect) => redirect.respond_to(request),
-            CustomResponse::CachedHtml(cache_control, markup) => Response::build()
+            CustomResponse::CachedMarkup(cache_control, markup) => Response::build()
                 .merge(Html(markup.into_string()).respond_to(request)?)
+                .raw_header("Cache-Control", cache_control)
+                .ok(),
+            CustomResponse::CachedHtml(cache_control, content) => Response::build()
+                .merge(Html(content).respond_to(request)?)
                 .raw_header("Cache-Control", cache_control)
                 .ok(),
             CustomResponse::Static(content_type, blob) => Response::build()

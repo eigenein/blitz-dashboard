@@ -522,7 +522,7 @@ pub async fn get(
         }
     };
 
-    let result = Ok(CustomResponse::CachedHtml(
+    let result = Ok(CustomResponse::CachedMarkup(
         "max-age=60, stale-while-revalidate=3600",
         markup,
     ));

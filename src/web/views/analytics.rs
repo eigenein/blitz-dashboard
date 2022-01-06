@@ -1,7 +1,6 @@
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
-use rocket::response::content::Html;
 use rocket::{uri, State};
 
 use crate::aggregator::redis::retrieve_vehicle_win_rates;
@@ -10,6 +9,7 @@ use crate::math::statistics::ConfidenceInterval;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, tier_td, vehicle_th};
+use crate::web::response::CustomResponse;
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
 use crate::web::views::bulma::*;
 use crate::web::{DisableCaches, TrackingCode};
@@ -21,14 +21,15 @@ pub async fn get(
     tracking_code: &State<TrackingCode>,
     redis: &State<MultiplexedConnection>,
     disable_caches: &State<DisableCaches>,
-) -> crate::web::result::Result<Html<String>> {
+) -> crate::web::result::Result<CustomResponse> {
     clear_user();
 
     let mut redis = MultiplexedConnection::clone(redis);
     const CACHE_KEY: &str = "html::analytics::vehicles";
+    const CACHE_CONTROL: &str = "max-age=60, stale-while-revalidate=3600";
     if !disable_caches.0 {
-        if let Some(cached_response) = redis.get(CACHE_KEY).await? {
-            return Ok(Html(cached_response));
+        if let Some(content) = redis.get(CACHE_KEY).await? {
+            return Ok(CustomResponse::CachedHtml(CACHE_CONTROL, content));
         }
     }
 
@@ -107,9 +108,9 @@ pub async fn get(
         }
     };
 
-    let response = markup.into_string();
-    redis.set_ex(CACHE_KEY, &response, 60).await?;
-    Ok(Html(response))
+    let content = markup.into_string();
+    redis.set_ex(CACHE_KEY, &content, 60).await?;
+    Ok(CustomResponse::CachedHtml(CACHE_CONTROL, content))
 }
 
 #[must_use]
