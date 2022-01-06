@@ -190,8 +190,8 @@ impl Crawler {
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
         self.redis
-            .zadd(
-                "accounts::last_battle_time",
+            .hset(
+                "accounts::ru::last_battle_time",
                 account.id,
                 new_info.base.last_battle_time.timestamp(),
             )
