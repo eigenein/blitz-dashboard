@@ -32,8 +32,9 @@ static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-type Result<T = ()> = anyhow::Result<T>;
+type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 type DateTime = chrono::DateTime<chrono::Utc>;
+type Result<T = ()> = anyhow::Result<T>;
 
 #[tokio::main]
 #[tracing::instrument]

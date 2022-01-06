@@ -12,7 +12,7 @@ use sqlx::PgPool;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
-use crate::aggregator::stream::push_entries;
+use crate::aggregator::redis::push_entries;
 use crate::aggregator::stream_entry::StreamEntry;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
