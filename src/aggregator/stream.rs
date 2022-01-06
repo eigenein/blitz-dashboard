@@ -4,7 +4,7 @@ use redis::streams::StreamReadOptions;
 use redis::AsyncCommands;
 use tracing::{info, instrument};
 
-use crate::aggregator::redis::{KeyValueVec, TwoTuple, STREAM_KEY};
+use crate::aggregator::redis::{TwoTuple, XReadResponse, STREAM_KEY};
 use crate::aggregator::stream_entry::StreamEntry;
 
 const PAGE_SIZE: usize = 100000;
@@ -17,7 +17,7 @@ pub struct Stream {
     /// Last read entry ID of the Redis stream.
     pointer: String,
 
-    time_span: Duration,
+    max_period: Duration,
 }
 
 impl Stream {
@@ -28,12 +28,12 @@ impl Stream {
         Ok(this)
     }
 
-    pub fn new(redis: MultiplexedConnection, time_span: Duration) -> Self {
+    pub fn new(redis: MultiplexedConnection, max_period: Duration) -> Self {
         Self {
             entries: Vec::new(),
             redis,
-            time_span,
-            pointer: (Utc::now() - time_span).timestamp_millis().to_string(),
+            max_period,
+            pointer: (Utc::now() - max_period).timestamp_millis().to_string(),
         }
     }
 
@@ -58,11 +58,6 @@ impl Stream {
 
     #[tracing::instrument(level = "debug", skip_all, fields(pointer = self.pointer.as_str()))]
     async fn read_page(&mut self) -> crate::Result<usize> {
-        type Fields = KeyValueVec<String, i64>;
-        type Entry = TwoTuple<String, Fields>;
-        type StreamResponse = TwoTuple<(), Vec<Entry>>;
-        type XReadResponse = Vec<StreamResponse>;
-
         let mut response: XReadResponse = self
             .redis
             .xread_options(
@@ -89,9 +84,9 @@ impl Stream {
     }
 
     /// Removes expired entries.
-    #[tracing::instrument(level = "debug", skip_all, fields(time_span = %self.time_span))]
+    #[tracing::instrument(level = "debug", skip_all, fields(max_period = %self.max_period))]
     fn expire(&mut self) {
-        let expiry_timestamp = (Utc::now() - self.time_span).timestamp();
+        let expiry_timestamp = (Utc::now() - self.max_period).timestamp();
         self.entries
             .retain(|point| point.timestamp > expiry_timestamp);
     }

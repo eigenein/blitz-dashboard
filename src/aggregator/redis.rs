@@ -9,6 +9,12 @@ use tracing::instrument;
 use crate::aggregator::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::math::statistics::ConfidenceInterval;
 use crate::wargaming::tank_id::TankId;
+use crate::AHashMap;
+
+pub type Fields = KeyValueVec<String, i64>;
+pub type Entry = TwoTuple<String, Fields>;
+pub type StreamResponse = TwoTuple<(), Vec<Entry>>;
+pub type XReadResponse = Vec<StreamResponse>;
 
 pub const STREAM_KEY: &str = "streams::battles::v2";
 
@@ -19,8 +25,6 @@ const TANK_ID_KEY: &str = "t";
 const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
-
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 #[instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
 pub async fn push_entries(
@@ -66,7 +70,7 @@ pub async fn push_entries(
 #[instrument(skip_all, fields(n_vehicles = win_rates.len()))]
 pub async fn store_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
-    win_rates: HashMap<TankId, ConfidenceInterval>,
+    win_rates: AHashMap<TankId, ConfidenceInterval>,
 ) -> crate::Result {
     let mut pipeline = pipe();
 
@@ -93,8 +97,8 @@ pub async fn store_vehicle_win_rates(
 #[instrument(level = "debug", skip_all)]
 pub async fn retrieve_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
-) -> crate::Result<HashMap<TankId, ConfidenceInterval>> {
-    let (means, mut margins): (HashMap<TankId, f64>, HashMap<TankId, f64>) = pipe()
+) -> crate::Result<AHashMap<TankId, ConfidenceInterval>> {
+    let (means, mut margins): (AHashMap<TankId, f64>, AHashMap<TankId, f64>) = pipe()
         .hgetall(VEHICLE_WIN_RATES_KEY)
         .hgetall(VEHICLE_WIN_RATE_MARGINS_KEY)
         .query_async(redis)
