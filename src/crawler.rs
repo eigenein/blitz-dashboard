@@ -147,7 +147,7 @@ impl Crawler {
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
         while let Some((account, new_info, tanks)) = accounts.try_next().await? {
-            self.metrics.add_account();
+            self.metrics.add_account(account.id);
             self.metrics
                 .add_tanks(new_info.base.last_battle_time, tanks.len())?;
             self.update_account(account, new_info, tanks).await?;
@@ -188,11 +188,7 @@ impl Crawler {
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
 
-        if self.stream_duration.is_some() {
-            tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
-        } else {
-            tracing::info!(account_id = account.id, "updated");
-        }
+        tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
         Ok(())
     }
 

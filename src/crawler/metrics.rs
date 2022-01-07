@@ -18,6 +18,8 @@ pub struct CrawlerMetrics {
 
     n_battles: i32,
 
+    last_account_id: i32,
+
     /// Request count from the last `log()` call.
     last_request_count: u32,
 
@@ -45,6 +47,7 @@ impl CrawlerMetrics {
             n_accounts: 0,
             n_tanks: 0,
             n_battles: 0,
+            last_account_id: 0,
             reset_instant: Instant::now(),
             lags: Vec::new(),
             log_trigger: Periodic::new(log_interval),
@@ -52,8 +55,9 @@ impl CrawlerMetrics {
         }
     }
 
-    pub fn add_account(&mut self) {
+    pub fn add_account(&mut self, account_id: i32) {
         self.n_accounts += 1;
+        self.last_account_id = account_id;
     }
 
     pub fn add_tanks(&mut self, last_battle_time: DateTime, n_tanks: usize) -> crate::Result {
@@ -106,7 +110,7 @@ impl CrawlerMetrics {
         formatted_lag.truncate(11);
 
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:.2}",
+            "RPS: {:>4.1} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
             n_requests as f64 / elapsed_secs,
             self.n_battles,
             self.lag_percentile,
@@ -114,6 +118,7 @@ impl CrawlerMetrics {
             self.n_accounts,
             self.n_accounts as f64 / elapsed_mins,
             self.n_tanks as f64 / elapsed_mins,
+            self.last_account_id,
         );
 
         lag
