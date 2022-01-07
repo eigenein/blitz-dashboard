@@ -14,6 +14,7 @@ use reqwest::header::HeaderValue;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
+use tokio::sync::Semaphore;
 use tracing::{instrument, warn};
 
 use crate::helpers::backoff::Backoff;
@@ -34,6 +35,8 @@ pub struct WargamingApi {
     application_id: Arc<String>,
     client: reqwest::Client,
     throttler: Option<Throttler>,
+
+    semaphore: Option<Arc<Semaphore>>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -48,6 +51,7 @@ impl WargamingApi {
         application_id: &str,
         timeout: StdDuration,
         throttling_period: Option<StdDuration>,
+        n_semaphore_permits: Option<usize>,
     ) -> crate::Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -73,6 +77,7 @@ impl WargamingApi {
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
             throttler: throttling_period.map(Throttler::new),
+            semaphore: n_semaphore_permits.map(|n| Arc::new(Semaphore::new(n))),
         };
         Ok(this)
     }
@@ -223,6 +228,11 @@ impl WargamingApi {
         if let Some(throttler) = &self.throttler {
             throttler.throttle().await;
         }
+
+        let _guard = match &self.semaphore {
+            Some(semaphore) => Some(semaphore.acquire().await),
+            None => None,
+        };
 
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         tracing::debug!(request_id = request_id, "get");

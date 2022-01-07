@@ -89,6 +89,7 @@ impl Crawler {
             &opts.connections.application_id,
             API_TIMEOUT,
             opts.throttling_period,
+            opts.n_semaphore_permits,
         )?;
         let internal = opts.connections.internal;
         let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
