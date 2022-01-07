@@ -154,6 +154,7 @@ impl WargamingApi {
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
     async fn call_by_account<T: DeserializeOwned>(
         &self,
         url: &str,
@@ -172,7 +173,7 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, fields(path = url.path()))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
         let mut backoff = Backoff::new(100, 25600);
         loop {
