@@ -140,12 +140,14 @@ impl Crawler {
             .and_then(|(batch, new_infos)| async { Ok(zip_account_infos(batch, new_infos)) })
             // Convert them to the stream of account infos.
             .try_flatten()
+            // Filter out unchanged accounts.
+            .try_filter(|(account, new_info)| {
+                future::ready(account.last_battle_time != new_info.base.last_battle_time)
+            })
             // Crawl the accounts.
             .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
             // Parallelize `crawl_account`.
-            .try_buffer_unordered(self.buffering.n_accounts)
-            // Filter out unchanged accounts.
-            .try_filter_map(|item| future::ready(Ok(item)));
+            .try_buffer_unordered(self.buffering.n_accounts);
 
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
@@ -305,11 +307,7 @@ async fn crawl_account(
     api: &WargamingApi,
     account: BaseAccountInfo,
     new_info: AccountInfo,
-) -> crate::Result<Option<(BaseAccountInfo, AccountInfo, Vec<Tank>)>> {
-    if new_info.base.last_battle_time == account.last_battle_time {
-        tracing::trace!(account_id = account.id, "last battle time unchanged");
-        return Ok(None);
-    }
+) -> crate::Result<(BaseAccountInfo, AccountInfo, Vec<Tank>)> {
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
@@ -317,9 +315,9 @@ async fn crawl_account(
         let achievements = api.get_tanks_achievements(account.id).await?;
         let tanks = merge_tanks(account.id, statistics, achievements);
         tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
-        Ok(Some((account, new_info, tanks)))
+        Ok((account, new_info, tanks))
     } else {
         tracing::trace!(account_id = account.id, "no updated tanks");
-        Ok(Some((account, new_info, Vec::new())))
+        Ok((account, new_info, Vec::new()))
     }
 }
