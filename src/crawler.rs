@@ -4,7 +4,7 @@ use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
 use chrono::{Duration, Utc};
-use futures::{future, stream, Stream, StreamExt, TryStreamExt};
+use futures::{stream, Stream, StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
@@ -122,27 +122,18 @@ impl Crawler {
         let batch_sizes = self.metrics.batch_sizes();
 
         let accounts = batches
-            // Get account info for all accounts in the batch.
             .map_ok(|batch| async {
                 batch_sizes.lock().await.push(batch.len());
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
-                Ok((batch, new_infos))
+                let mut crawled = Vec::new();
+                for (account, new_info) in match_account_infos(batch, new_infos).into_iter() {
+                    crawled.push(crawl_account(&api, account, new_info).await);
+                }
+                Ok(stream::iter(crawled))
             })
-            // Parallelize `get_account_info`.
             .try_buffer_unordered(self.buffering.n_batches)
-            // Match the retrieved infos against the accounts from the batch.
-            .and_then(|(batch, new_infos)| async { Ok(zip_account_infos(batch, new_infos)) })
-            // Convert them to the stream of account infos.
-            .try_flatten()
-            // Filter out unchanged accounts.
-            .try_filter(|(account, new_info)| {
-                future::ready(account.last_battle_time != new_info.base.last_battle_time)
-            })
-            // Crawl the accounts.
-            .map_ok(|(account, new_info)| crawl_account(&api, account, new_info))
-            // Parallelize `crawl_account`.
-            .try_buffer_unordered(self.buffering.n_accounts);
+            .try_flatten();
 
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
@@ -259,19 +250,24 @@ impl Crawler {
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.
+/// Filters out accounts with unchanged last battle time.
 ///
-/// Returns a stream of matched pairs.
-fn zip_account_infos(
+/// Returns matched pairs.
+fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,
-) -> impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo)>> {
-    let accounts = batch.into_iter().filter_map(move |account| {
-        // Try and find the account in the new account infos.
-        let new_info = new_infos.remove(&account.id.to_string()).flatten();
-        // If found, return the matched pair.
-        new_info.map(|new_info| Ok((account, new_info)))
-    });
-    stream::iter(accounts)
+) -> Vec<(BaseAccountInfo, AccountInfo)> {
+    batch
+        .into_iter()
+        .filter_map(
+            move |account| match new_infos.remove(&account.id.to_string()).flatten() {
+                Some(new_info) if account.last_battle_time != new_info.base.last_battle_time => {
+                    Some((account, new_info))
+                }
+                _ => None,
+            },
+        )
+        .collect()
 }
 
 /// Gets account tanks which have their last battle time updated since the specified timestamp.

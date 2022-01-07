@@ -14,8 +14,7 @@ ExecStart = /home/pi/bin/blitz-dashboard \
     -a=<application-ID> \
     -d=postgres://user@host/database \
     --auto-min-offset \
-    --n-buffered-batches=4 \
-    --n-buffered-accounts=15 \
+    --n-buffered-batches=6 \
     --log-interval=60s \
     --stream-duration=5d \
     --redis-uri=redis+unix:///var/run/redis/redis-server.sock
@@ -32,19 +31,7 @@ WantedBy = multi-user.target
 
 ## Tuning
 
-Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilise 19-20 RPS for the crawler service. There's a few parameters to tune:
-
-### `--n-buffered-batches`
-
-Defines a number of buffered batches of accounts – these are [`account/info`](https://developers.wargaming.net/reference/all/wotb/account/info/) calls with up to 100 accounts used to check their last battle timestamps.
-
-The more – the better, unless you start getting `REQUEST_LIMIT_EXCEEDED`.
-
-### `--n-buffered-accounts`
-
-For those accounts which last battle timestamp has changed, the crawler does a couple of more calls: [`tanks/stats`](https://developers.wargaming.net/reference/all/wotb/tanks/stats/) and [`tanks/achievements`](https://developers.wargaming.net/reference/all/wotb/tanks/achievements/). This option defines for how many accounts these calls get buffered.
-
-The more – the better, unless you start getting `REQUEST_LIMIT_EXCEEDED`.
+Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilise 19-20 RPS for the crawler service by increasing the `--n-buffered-batches` option until you hit the maximal RPS without getting `REQUEST_LIMIT_EXCEEDED` errors.
 
 ## «Cold» start
 

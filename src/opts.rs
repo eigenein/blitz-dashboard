@@ -116,14 +116,6 @@ pub struct CrawlAccountsOpts {
 
 #[derive(StructOpt)]
 pub struct BufferingOpts {
-    /// Number of buffered accounts in the stream
-    #[structopt(
-        long = "n-buffered-accounts",
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-    )]
-    pub n_accounts: usize,
-
     /// Number of buffered batches in the stream
     #[structopt(
         long = "n-buffered-batches",
