@@ -216,7 +216,7 @@ impl WargamingApi {
         }
     }
 
-    #[tracing::instrument(skip_all, level = "debug")]
+    #[tracing::instrument(skip_all, level = "debug", fields(path = url.path()))]
     async fn call_once<T: DeserializeOwned>(
         &self,
         url: Url,
