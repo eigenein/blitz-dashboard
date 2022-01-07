@@ -44,6 +44,7 @@ async fn retrieve_batch(database: &PgPool, min_offset: StdDuration) -> crate::Re
         WITH "inner" AS (
             SELECT account_id, last_battle_time
             FROM accounts TABLESAMPLE system_rows(1000)
+            ORDER BY random()
         )
         SELECT * FROM "inner" WHERE last_battle_time < NOW() - $1 LIMIT 100
     "#;
