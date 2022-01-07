@@ -277,6 +277,11 @@ fn zip_account_infos(
 }
 
 /// Gets account tanks which have their last battle time updated since the specified timestamp.
+#[instrument(
+    level = "debug",
+    skip_all,
+    fields(account_id = account_id, since = since.to_rfc3339().as_str()),
+)]
 async fn get_updated_tanks_statistics(
     api: &WargamingApi,
     account_id: i32,
@@ -293,7 +298,7 @@ async fn get_updated_tanks_statistics(
 #[instrument(
     level = "debug",
     skip_all,
-    fields(account_id = account.id, since = account.last_battle_time.to_rfc3339().as_str()),
+    fields(account_id = account.id, last_battle_time = account.last_battle_time.to_rfc3339().as_str()),
 )]
 async fn crawl_account(
     api: &WargamingApi,

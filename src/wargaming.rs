@@ -13,7 +13,7 @@ use reqwest::header;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
-use tracing::warn;
+use tracing::{instrument, warn};
 
 use crate::helpers::backoff::Backoff;
 use crate::helpers::format_elapsed;
@@ -126,6 +126,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
     pub async fn get_tanks_achievements(
         &self,
         account_id: i32,
