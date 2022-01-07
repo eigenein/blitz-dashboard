@@ -36,15 +36,19 @@ Wargaming.net API is limited at 20 requests per second for a server-side applica
 
 ### `--n-buffered-batches`
 
-Defines a number of buffered batches of accounts – these are [`account/info`](https://developers.wargaming.net/reference/all/wotb/account/info/) calls with up to 100 accounts used to check their last battle timestamps. The more – the better.
+Defines a number of buffered batches of accounts – these are [`account/info`](https://developers.wargaming.net/reference/all/wotb/account/info/) calls with up to 100 accounts used to check their last battle timestamps.
+
+The more – the better. I recommend try and increase this setting one by one until you start getting `REQUEST_LIMIT_EXCEEDED`, and then use the last successful value.
 
 ### `--n-buffered-accounts`
 
-For those accounts which last battle timestamp has changed, the crawler does a couple of more calls: [`tanks/stats`](https://developers.wargaming.net/reference/all/wotb/tanks/stats/) and [`tanks/achievements`](https://developers.wargaming.net/reference/all/wotb/tanks/achievements/). This option defines for how many accounts these calls get buffered. The more – the better.
+For those accounts which last battle timestamp has changed, the crawler does a couple of more calls: [`tanks/stats`](https://developers.wargaming.net/reference/all/wotb/tanks/stats/) and [`tanks/achievements`](https://developers.wargaming.net/reference/all/wotb/tanks/achievements/). This option defines for how many accounts these calls get buffered. The more – the better, unless you start getting `REQUEST_LIMIT_EXCEEDED`.
 
 ### `--throttling-period`
 
 Minimal period between the API calls, used to prevent the `REQUEST_LIMIT_EXCEEDED` errors. For server-side apps set this to `50ms`, for standalone apps – `100ms`.
+
+This setting is rather **unstable**. It may cause `REQUEST_LIMIT_EXCEEDED`, or lower the RPS, or make the process stuck forever.
 
 ## «Cold» start
 
