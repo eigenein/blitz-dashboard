@@ -24,12 +24,7 @@ mod views;
 pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
-    let api = WargamingApi::new(
-        &opts.connections.application_id,
-        StdDuration::from_secs(3),
-        None,
-        None,
-    )?;
+    let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
     let database = crate::database::open(
         &opts.connections.internal.database_uri,
         opts.connections.internal.initialize_schema,

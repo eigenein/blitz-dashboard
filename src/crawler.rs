@@ -85,12 +85,7 @@ impl Crawler {
         stream_duration: Option<Duration>,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
-        let api = WargamingApi::new(
-            &opts.connections.application_id,
-            API_TIMEOUT,
-            opts.throttling_period,
-            opts.n_semaphore_permits,
-        )?;
+        let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = opts.connections.internal;
         let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
         let redis = redis::Client::open(internal.redis_uri.as_str())?

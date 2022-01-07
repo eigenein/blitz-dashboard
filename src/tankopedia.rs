@@ -25,7 +25,7 @@ pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
-    let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30), None, None)?;
+    let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30))?;
     let json_path = Path::new(file!())
         .parent()
         .unwrap()
