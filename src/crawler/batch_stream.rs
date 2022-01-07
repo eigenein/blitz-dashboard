@@ -12,9 +12,6 @@ use crate::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
-/// Comes from the Wargaming.net API limitation.
-const MAX_BATCH_SIZE: usize = 100;
-
 /// Generates an infinite stream of batches, looping through the entire account table.
 pub async fn get_batch_stream(
     database: PgPool,
@@ -26,7 +23,7 @@ pub async fn get_batch_stream(
             loop {
                 let batch = {
                     let min_offset = *min_offset.read().await;
-                    retrieve_batch(&database, min_offset, MAX_BATCH_SIZE).await?
+                    retrieve_batch(&database, min_offset).await?
                 };
                 if !batch.is_empty() {
                     break Ok(Some((batch, (database, min_offset))));
@@ -40,20 +37,17 @@ pub async fn get_batch_stream(
 
 /// Retrieves a single account batch from the database.
 #[instrument(skip_all, level = "debug")]
-async fn retrieve_batch(
-    database: &PgPool,
-    min_offset: StdDuration,
-    count: usize,
-) -> crate::Result<Batch> {
+async fn retrieve_batch(database: &PgPool, min_offset: StdDuration) -> crate::Result<Batch> {
     // language=SQL
-    const QUERY: &str = "
+    const QUERY: &str = r#"
         -- CREATE EXTENSION tsm_system_rows;
-        SELECT account_id, last_battle_time FROM accounts TABLESAMPLE system_rows($2)
-        WHERE last_battle_time < now() - $1;
-    ";
-    let query = sqlx::query_as(QUERY)
-        .bind(min_offset)
-        .bind(i32::try_from(count)?);
+        WITH "inner" AS (
+            SELECT account_id, last_battle_time
+            FROM accounts TABLESAMPLE system_rows(1000)
+        )
+        SELECT * FROM "inner" WHERE last_battle_time < NOW() - $1 LIMIT 100
+    "#;
+    let query = sqlx::query_as(QUERY).bind(min_offset);
     timeout(StdDuration::from_secs(60), query.fetch_all(database))
         .await
         .context("the `retrieve_batch` query has timed out")?
