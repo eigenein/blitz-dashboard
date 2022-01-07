@@ -72,6 +72,10 @@ pub async fn store_vehicle_win_rates(
     redis: &mut MultiplexedConnection,
     win_rates: AHashMap<TankId, ConfidenceInterval>,
 ) -> crate::Result {
+    if win_rates.is_empty() {
+        return Ok(());
+    }
+
     let mut pipeline = pipe();
 
     pipeline.cmd("HMSET");
