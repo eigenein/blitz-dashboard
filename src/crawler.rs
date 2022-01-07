@@ -123,10 +123,12 @@ impl Crawler {
         batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
     ) -> crate::Result {
         let api = self.api.clone();
+        let batch_sizes = self.metrics.batch_sizes();
 
         let accounts = batches
             // Get account info for all accounts in the batch.
             .map_ok(|batch| async {
+                batch_sizes.lock().await.push(batch.len());
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
                 Ok((batch, new_infos))

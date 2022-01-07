@@ -4,35 +4,23 @@ use std::time::{Duration as StdDuration, Instant};
 
 use chrono::Utc;
 use humantime::format_duration;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 use crate::helpers::periodic::Periodic;
 use crate::DateTime;
 
 pub struct CrawlerMetrics {
-    /// Scanned account count.
     n_accounts: u32,
-
-    /// Inserted tank snapshot count.
     n_tanks: usize,
-
     n_battles: i32,
-
     last_account_id: i32,
-
-    /// Request count from the last `log()` call.
     last_request_count: u32,
-
     reset_instant: Instant,
-
-    /// API request counter.
     request_counter: Arc<AtomicU32>,
-
     lags: Vec<u64>,
-
     log_trigger: Periodic,
-
     lag_percentile: usize,
+    batch_sizes: Arc<Mutex<Vec<usize>>>,
 }
 
 impl CrawlerMetrics {
@@ -52,7 +40,12 @@ impl CrawlerMetrics {
             lags: Vec::new(),
             log_trigger: Periodic::new(log_interval),
             lag_percentile,
+            batch_sizes: Arc::new(Mutex::new(Vec::new())),
         }
+    }
+
+    pub fn batch_sizes(&self) -> Arc<Mutex<Vec<usize>>> {
+        self.batch_sizes.clone()
     }
 
     pub fn add_account(&mut self, account_id: i32) {
@@ -73,21 +66,11 @@ impl CrawlerMetrics {
 
     pub async fn check(&mut self, auto_min_offset: &Option<Arc<RwLock<StdDuration>>>) {
         if self.log_trigger.should_trigger() {
-            let lag = self.aggregate_and_log();
+            let lag = self.aggregate_and_log().await;
             if let Some(min_offset) = auto_min_offset {
                 *min_offset.write().await = lag;
             }
-            self.reset();
         }
-    }
-
-    fn reset(&mut self) {
-        self.n_accounts = 0;
-        self.n_tanks = 0;
-        self.n_battles = 0;
-        self.lags.clear();
-        self.reset_instant = Instant::now();
-        self.last_request_count = self.request_counter.load(Ordering::Relaxed);
     }
 
     fn lag(&mut self) -> StdDuration {
@@ -100,7 +83,7 @@ impl CrawlerMetrics {
         StdDuration::from_secs(*secs)
     }
 
-    fn aggregate_and_log(&mut self) -> StdDuration {
+    async fn aggregate_and_log(&mut self) -> StdDuration {
         let elapsed_secs = self.reset_instant.elapsed().as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = self.request_counter.load(Ordering::Relaxed) - self.last_request_count;
@@ -109,9 +92,13 @@ impl CrawlerMetrics {
         let mut formatted_lag = format_duration(lag).to_string();
         formatted_lag.truncate(11);
 
+        let mut batch_sizes = self.batch_sizes.lock().await;
+        let batch_size = batch_sizes.iter().sum::<usize>() as f64 / batch_sizes.len() as f64;
+
         log::info!(
-            "RPS: {:>4.1} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
+            "RPS: {:>4.1} | BS: {:>3.0} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
             n_requests as f64 / elapsed_secs,
+            batch_size,
             self.n_battles,
             self.lag_percentile,
             formatted_lag,
@@ -120,6 +107,14 @@ impl CrawlerMetrics {
             self.n_tanks as f64 / elapsed_mins,
             self.last_account_id,
         );
+
+        self.n_accounts = 0;
+        self.n_tanks = 0;
+        self.n_battles = 0;
+        self.lags.clear();
+        self.reset_instant = Instant::now();
+        self.last_request_count = self.request_counter.load(Ordering::Relaxed);
+        batch_sizes.clear();
 
         lag
     }
