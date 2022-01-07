@@ -1,30 +1,40 @@
 use std::sync::Arc;
 
-use tokio::sync::Mutex;
-use tokio::time::{sleep, Instant};
+use tokio::sync::RwLock;
+use tokio::task::yield_now;
+use tokio::time::{sleep_until, Instant};
 
 use crate::StdDuration;
 
 #[derive(Clone)]
 pub struct Throttler {
     period: StdDuration,
-    counter: Arc<Mutex<Instant>>,
+    instant: Arc<RwLock<Instant>>,
 }
 
 impl Throttler {
     pub fn new(period: StdDuration) -> Self {
         Self {
             period,
-            counter: Arc::new(Mutex::new(Instant::now())),
+            instant: Arc::new(RwLock::new(Instant::now())),
         }
     }
 
     pub async fn throttle(&self) {
-        let mut guard = self.counter.lock().await;
-        let deadline = *guard + self.period;
-        if let Some(duration) = deadline.checked_duration_since(Instant::now()) {
-            sleep(duration).await;
+        loop {
+            let read_instant = *self.instant.read().await;
+            let deadline = read_instant + self.period;
+
+            sleep_until(deadline).await;
+            while Instant::now() < deadline {
+                yield_now().await;
+            }
+
+            let mut instant = self.instant.write().await;
+            if *instant == read_instant {
+                *instant = deadline;
+                break;
+            }
         }
-        *guard = Instant::now();
     }
 }

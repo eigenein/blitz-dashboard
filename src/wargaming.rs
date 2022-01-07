@@ -10,6 +10,7 @@ use anyhow::{anyhow, Context};
 use humantime::format_duration;
 use itertools::Itertools;
 use reqwest::header;
+use reqwest::header::HeaderValue;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
@@ -51,16 +52,14 @@ impl WargamingApi {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
-            header::HeaderValue::from_static(Self::USER_AGENT),
+            HeaderValue::from_static(Self::USER_AGENT),
         );
-        headers.insert(
-            header::ACCEPT,
-            header::HeaderValue::from_static("application/json"),
-        );
+        headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
         headers.insert(
             header::ACCEPT_ENCODING,
-            header::HeaderValue::from_static("br, deflate, gzip"),
+            HeaderValue::from_static("br, deflate, gzip"),
         );
+        headers.insert(header::CONNECTION, HeaderValue::from_static("keep-alive"));
         let this = Self {
             application_id: Arc::new(application_id.to_string()),
             client: reqwest::ClientBuilder::new()
