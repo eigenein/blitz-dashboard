@@ -6,10 +6,14 @@ use chrono::Utc;
 use humantime::format_duration;
 use tokio::sync::{Mutex, RwLock};
 
+use crate::helpers::average::Average;
 use crate::helpers::periodic::Periodic;
 use crate::DateTime;
 
 pub struct CrawlerMetrics {
+    pub average_batch_size: Arc<Mutex<Average>>,
+    pub average_batch_fill_level: Arc<Mutex<Average>>,
+
     n_accounts: u32,
     n_tanks: usize,
     n_battles: i32,
@@ -20,7 +24,6 @@ pub struct CrawlerMetrics {
     lags: Vec<u64>,
     log_trigger: Periodic,
     lag_percentile: usize,
-    batch_sizes: Arc<Mutex<Vec<usize>>>,
 }
 
 impl CrawlerMetrics {
@@ -40,12 +43,9 @@ impl CrawlerMetrics {
             lags: Vec::new(),
             log_trigger: Periodic::new(log_interval),
             lag_percentile,
-            batch_sizes: Arc::new(Mutex::new(Vec::new())),
+            average_batch_size: Arc::new(Mutex::new(Average::default())),
+            average_batch_fill_level: Arc::new(Mutex::new(Average::default())),
         }
-    }
-
-    pub fn batch_sizes(&self) -> Arc<Mutex<Vec<usize>>> {
-        self.batch_sizes.clone()
     }
 
     pub fn add_account(&mut self, account_id: i32) {
@@ -92,13 +92,14 @@ impl CrawlerMetrics {
         let mut formatted_lag = format_duration(lag).to_string();
         formatted_lag.truncate(11);
 
-        let mut batch_sizes = self.batch_sizes.lock().await;
-        let batch_size = batch_sizes.iter().sum::<usize>() as f64 / batch_sizes.len() as f64;
+        let average_batch_size = self.average_batch_size.lock().await.average();
+        let average_batch_fill_level = self.average_batch_fill_level.lock().await.average();
 
         log::info!(
-            "RPS: {:>4.1} | BS: {:>3.0} | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
+            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>4.1}% | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
             n_requests as f64 / elapsed_secs,
-            batch_size,
+            average_batch_size,
+            average_batch_fill_level,
             self.n_battles,
             self.lag_percentile,
             formatted_lag,
@@ -114,7 +115,8 @@ impl CrawlerMetrics {
         self.lags.clear();
         self.reset_instant = Instant::now();
         self.last_request_count = self.request_counter.load(Ordering::Relaxed);
-        batch_sizes.clear();
+        *self.average_batch_size.lock().await = Average::default();
+        *self.average_batch_fill_level.lock().await = Average::default();
 
         lag
     }

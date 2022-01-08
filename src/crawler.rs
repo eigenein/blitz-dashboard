@@ -119,15 +119,21 @@ impl Crawler {
         batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
     ) -> crate::Result {
         let api = self.api.clone();
-        let batch_sizes = self.metrics.batch_sizes();
+        let average_batch_size = Arc::clone(&self.metrics.average_batch_size);
+        let average_batch_fill_level = Arc::clone(&self.metrics.average_batch_fill_level);
 
         let accounts = batches
             .map_ok(|batch| async {
-                batch_sizes.lock().await.push(batch.len());
+                average_batch_size.lock().await.push(batch.len() as f64);
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
+                let matched = match_account_infos(batch, new_infos);
+                average_batch_fill_level
+                    .lock()
+                    .await
+                    .push(matched.len() as f64);
                 let mut crawled = Vec::new();
-                for (account, new_info) in match_account_infos(batch, new_infos).into_iter() {
+                for (account, new_info) in matched.into_iter() {
                     crawled.push(crawl_account(&api, account, new_info).await);
                 }
                 Ok(stream::iter(crawled))
