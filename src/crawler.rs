@@ -58,7 +58,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     tracing::info!("running…");
     let batches = get_batch_stream(crawler.database(), opts.batch_select_limit, min_offset).await;
-    crawler.run(Box::pin(batches), &opts.shared.buffering).await
+    crawler.run(batches, &opts.shared.buffering).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -114,7 +114,7 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         self,
-        batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
+        batches: impl Stream<Item = crate::Result<Batch>>,
         buffering: &BufferingOpts,
     ) -> crate::Result {
         batches
