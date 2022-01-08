@@ -13,11 +13,13 @@ ExecStart = /home/pi/bin/blitz-dashboard \
     crawl \
     -a=<application-ID> \
     -d=postgres://user@host/database \
+    --min-offset=4h \
     --auto-min-offset \
-    --n-buffered-batches=20 \
-    --n-buffered-accounts=10 \
+    --n-buffered-batches=18 \
+    --n-buffered-accounts=18 \
+    --batch-select-limit=1000 \
+    --lag-percentile=50 \
     --log-interval=60s \
-    --stream-duration=5d \
     --redis-uri=redis+unix:///var/run/redis/redis-server.sock
 WorkingDirectory = /home/pi
 StandardOutput = journal
