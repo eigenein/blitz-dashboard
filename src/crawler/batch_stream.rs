@@ -51,7 +51,9 @@ async fn retrieve_batch(
             FROM accounts TABLESAMPLE system_rows($2)
             ORDER BY random()
         )
-        SELECT * FROM "inner" WHERE last_battle_time < NOW() - $1 LIMIT 100
+        SELECT * FROM "inner"
+        WHERE last_battle_time IS NULL OR (last_battle_time < NOW() - $1)
+        LIMIT 100
     "#;
     let query = sqlx::query_as(QUERY)
         .bind(min_offset)

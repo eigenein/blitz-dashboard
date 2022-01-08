@@ -38,3 +38,7 @@ ALTER TABLE accounts DROP COLUMN IF EXISTS factors;
 -- 0.144.8
 
 CREATE EXTENSION tsm_system_rows;
+
+-- 0.145.0
+
+ALTER TABLE accounts ALTER COLUMN last_battle_time DROP NOT NULL;

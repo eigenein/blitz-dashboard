@@ -4,13 +4,14 @@ use std::iter::Sum;
 use std::ops::Sub;
 
 use anyhow::anyhow;
-use chrono::{DateTime, Datelike, Duration, TimeZone, Utc};
+use chrono::{Datelike, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
 use crate::helpers::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::wargaming::tank_id::TankId;
+use crate::DateTime;
 
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
@@ -27,7 +28,7 @@ pub struct BaseAccountInfo {
     pub id: i32,
 
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub last_battle_time: DateTime<Utc>,
+    pub last_battle_time: DateTime,
 }
 
 impl BaseAccountInfo {
@@ -48,7 +49,7 @@ pub struct AccountInfo {
     pub nickname: String,
 
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub created_at: DateTime<Utc>,
+    pub created_at: DateTime,
 
     pub statistics: AccountInfoStatistics,
 }
@@ -154,7 +155,7 @@ pub struct BaseTankStatistics {
     /// The moment in time when the related state is actual.
     /// Every new timestamp produces a new tank snapshot in the database.
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub last_battle_time: DateTime<Utc>,
+    pub last_battle_time: DateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]

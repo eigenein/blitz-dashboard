@@ -3,7 +3,7 @@ use std::str::FromStr;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use chrono::Duration;
+use chrono::{Duration, TimeZone, Utc};
 use futures::{StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
@@ -28,7 +28,7 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     options.log_slow_statements(LevelFilter::Warn, StdDuration::from_millis(500));
     let inner = PgPoolOptions::new()
         .connect_timeout(StdDuration::from_secs(5))
-        .max_connections(30)
+        .max_connections(50)
         .connect_with(options)
         .await
         .context("failed to connect")?;
@@ -45,6 +45,11 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     Ok(inner)
 }
 
+#[instrument(
+    level = "debug",
+    skip_all,
+    fields(account_id = account_id, before = %before, n_tanks = tank_ids.len()),
+)]
 pub async fn retrieve_latest_tank_snapshots(
     connection: &PgPool,
     account_id: i32,
@@ -150,15 +155,16 @@ pub async fn replace_account(
     Ok(())
 }
 
+#[instrument(level = "debug", skip_all, fields(account_id = account_id))]
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     account_id: i32,
-) -> crate::Result<DateTime> {
+) -> crate::Result<Option<DateTime>> {
     // language=SQL
     const QUERY: &str = r#"
         WITH existing AS (
             INSERT INTO accounts (account_id, last_battle_time)
-            VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00')
+            VALUES ($1, NULL)
             ON CONFLICT (account_id) DO NOTHING
             RETURNING last_battle_time
         )
@@ -184,20 +190,6 @@ pub async fn retrieve_account(
         .fetch_optional(connection)
         .await
         .with_context(|| format!("failed to retrieve account #{}", account_id))
-}
-
-#[instrument(level = "debug", skip_all, fields(n_accounts = account_ids.len()))]
-pub async fn retrieve_accounts(
-    connection: &PgPool,
-    account_ids: &[i32],
-) -> crate::Result<Vec<BaseAccountInfo>> {
-    // language=SQL
-    const QUERY: &str = "SELECT * FROM accounts WHERE account_id IN (SELECT * FROM UNNEST($1))";
-    sqlx::query_as(QUERY)
-        .bind(account_ids)
-        .fetch_all(connection)
-        .await
-        .context("failed to retrieve the accounts")
 }
 
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
@@ -357,7 +349,9 @@ impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             id: row.try_get("account_id")?,
-            last_battle_time: row.try_get("last_battle_time")?,
+            last_battle_time: row
+                .try_get::<'_, Option<DateTime>, _>("last_battle_time")?
+                .unwrap_or_else(|| Utc.timestamp(0, 0)),
         })
     }
 }

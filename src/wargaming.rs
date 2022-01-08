@@ -214,23 +214,37 @@ impl WargamingApi {
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        tracing::debug!(request_id = request_id, "get");
+        tracing::debug!(request_id = request_id, path = url.path(), "get");
 
         let start_instant = Instant::now();
         let result = self.client.get(url).send().await;
+
+        let response = match result {
+            Ok(result) => result,
+            Err(error) => {
+                if error.is_timeout() {
+                    log::warn!("#{} has timed out.", request_id);
+                } else {
+                    log::warn!("#{} has failed: {:#}.", request_id, error);
+                }
+                return Err(error);
+            }
+        };
+
+        tracing::debug!(request_id = request_id, status = response.status().as_u16());
+        let response = response.error_for_status()?;
+
+        tracing::debug!(
+            request_id = request_id,
+            type_name = std::any::type_name::<T>(),
+        );
+        let result = response.json::<Response<T>>().await;
+
         tracing::debug!(
             request_id = request_id,
             elapsed = %format_elapsed(&start_instant),
             "done",
         );
-
-        if let Err(error) = &result {
-            if error.is_timeout() {
-                log::warn!("#{} has timed out.", request_id);
-            } else {
-                log::warn!("#{} has failed: {:#}.", request_id, error);
-            }
-        }
-        result?.error_for_status()?.json::<Response<T>>().await
+        result
     }
 }
