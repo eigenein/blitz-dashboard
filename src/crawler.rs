@@ -9,7 +9,7 @@ use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use sqlx::PgPool;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::instrument;
 
 use crate::aggregator::redis::push_entries;
@@ -37,9 +37,10 @@ pub struct Crawler {
 
     buffering: BufferingOpts,
 
-    metrics: CrawlerMetrics,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     stream_duration: Option<Duration>,
+    log_interval: StdDuration,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -93,17 +94,17 @@ impl Crawler {
             .await?;
 
         let this = Self {
-            metrics: CrawlerMetrics::new(
-                api.request_counter.clone(),
-                opts.log_interval,
+            metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
+                &api.request_counter,
                 opts.lag_percentile,
-            ),
+            ))),
             api,
             database,
             redis,
             buffering: opts.buffering,
             stream_duration,
             auto_min_offset,
+            log_interval: opts.log_interval,
         };
         Ok(this)
     }
@@ -119,19 +120,16 @@ impl Crawler {
         batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
     ) -> crate::Result {
         let api = self.api.clone();
-        let average_batch_size = Arc::clone(&self.metrics.average_batch_size);
-        let average_batch_fill_level = Arc::clone(&self.metrics.average_batch_fill_level);
+        let metrics = self.metrics.clone();
 
         let accounts = batches
             .map_ok(|batch| async {
-                average_batch_size.lock().await.push(batch.len() as f64);
                 let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
                 let new_infos = api.get_account_info(&account_ids).await?;
+                let batch_len = batch.len();
                 let matched = match_account_infos(batch, new_infos);
-                average_batch_fill_level
-                    .lock()
-                    .await
-                    .push(matched.len() as f64);
+                metrics.lock().await.add_batch(batch_len, matched.len());
+
                 let mut crawled = Vec::new();
                 for (account, new_info) in matched.into_iter() {
                     crawled.push(crawl_account(&api, account, new_info).await);
@@ -144,10 +142,18 @@ impl Crawler {
         // Update the changed accounts in the database.
         let mut accounts = Box::pin(accounts);
         while let Some((account, new_info, tanks)) = accounts.try_next().await? {
-            self.metrics.add_account(account.id);
-            self.metrics.add_lag(new_info.base.last_battle_time)?;
+            let account_id = account.id;
+            let last_battle_time = new_info.base.last_battle_time;
             self.update_account(account, new_info, tanks).await?;
-            self.metrics.check(&self.auto_min_offset).await;
+
+            let mut metrics = self.metrics.lock().await;
+            metrics.add_account(account_id);
+            metrics.add_lag_from(last_battle_time)?;
+            if metrics.start_instant.elapsed() >= self.log_interval {
+                *metrics = metrics
+                    .finalise(&self.api.request_counter, &self.auto_min_offset)
+                    .await;
+            }
         }
 
         Ok(())
@@ -221,7 +227,7 @@ impl Crawler {
             let n_battles = tank.statistics.all.battles - n_battles;
             let n_wins = tank.statistics.all.wins - n_wins;
             if n_battles > 0 && n_wins >= 0 {
-                self.metrics.add_battles(n_battles);
+                self.metrics.lock().await.n_battles += n_battles;
                 entries.push(StreamEntry {
                     tank_id,
                     timestamp: last_battle_time.timestamp(),

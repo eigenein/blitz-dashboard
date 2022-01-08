@@ -1,6 +1,5 @@
 pub mod average;
 pub mod backoff;
-pub mod periodic;
 pub mod redis;
 
 use std::time::Instant;
