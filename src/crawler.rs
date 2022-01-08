@@ -169,7 +169,7 @@ impl Crawler {
 
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
-        metrics.add_lag_from(account.last_battle_time)?;
+        metrics.add_lag_from(new_info.base.last_battle_time)?;
         if metrics.start_instant.elapsed() >= self.log_interval {
             *metrics = metrics
                 .finalise(&self.api.request_counter, &self.auto_min_offset)
