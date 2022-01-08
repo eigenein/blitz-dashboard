@@ -133,6 +133,13 @@ pub struct BufferingOpts {
         parse(try_from_str = parsers::non_zero_usize),
     )]
     pub n_batches: usize,
+
+    #[structopt(
+        long = "n-buffered-accounts",
+        default_value = "1",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub n_accounts: usize,
 }
 
 #[derive(StructOpt)]

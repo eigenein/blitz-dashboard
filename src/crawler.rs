@@ -30,13 +30,11 @@ mod metrics;
 
 const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
 
+#[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
     redis: MultiplexedConnection,
-
-    buffering: BufferingOpts,
-
     metrics: Arc<Mutex<CrawlerMetrics>>,
     auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     stream_duration: Option<Duration>,
@@ -52,7 +50,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     let min_offset = Arc::new(RwLock::new(opts.min_offset));
     let crawler = Crawler::new(
-        opts.shared,
+        &opts.shared,
         Some(opts.stream_duration),
         opts.auto_min_offset.then(|| min_offset.clone()),
     )
@@ -60,7 +58,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     tracing::info!("running…");
     let batches = get_batch_stream(crawler.database(), opts.batch_select_limit, min_offset).await;
-    crawler.run(Box::pin(batches)).await
+    crawler.run(Box::pin(batches), &opts.shared.buffering).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -76,18 +74,18 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(opts.shared, None, None).await?;
-    crawler.run(batches).await
+    let crawler = Crawler::new(&opts.shared, None, None).await?;
+    crawler.run(batches, &opts.shared.buffering).await
 }
 
 impl Crawler {
     pub async fn new(
-        opts: SharedCrawlerOpts,
+        opts: &SharedCrawlerOpts,
         stream_duration: Option<Duration>,
         auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
-        let internal = opts.connections.internal;
+        let internal = &opts.connections.internal;
         let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
         let redis = redis::Client::open(internal.redis_uri.as_str())?
             .get_multiplexed_async_connection()
@@ -101,7 +99,6 @@ impl Crawler {
             api,
             database,
             redis,
-            buffering: opts.buffering,
             stream_duration,
             auto_min_offset,
             log_interval: opts.log_interval,
@@ -116,47 +113,18 @@ impl Crawler {
 
     /// Runs the crawler on the stream of batches.
     pub async fn run(
-        mut self,
+        self,
         batches: impl Stream<Item = crate::Result<Batch>> + Unpin,
+        buffering: &BufferingOpts,
     ) -> crate::Result {
-        let api = self.api.clone();
-        let metrics = self.metrics.clone();
-
-        let accounts = batches
-            .map_ok(|batch| async {
-                let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
-                let new_infos = api.get_account_info(&account_ids).await?;
-                let batch_len = batch.len();
-                let matched = match_account_infos(batch, new_infos);
-                metrics.lock().await.add_batch(batch_len, matched.len());
-
-                let mut crawled = Vec::new();
-                for (account, new_info) in matched.into_iter() {
-                    crawled.push(crawl_account(&api, account, new_info).await);
-                }
-                Ok(stream::iter(crawled))
+        batches
+            .map_ok(|batch| crawl_batch(self.api.clone(), batch, self.metrics.clone()))
+            .try_buffer_unordered(buffering.n_batches)
+            .try_flatten()
+            .try_for_each_concurrent(Some(buffering.n_accounts), |(account, new_info, tanks)| {
+                self.clone().update_account(account, new_info, tanks)
             })
-            .try_buffer_unordered(self.buffering.n_batches)
-            .try_flatten();
-
-        // Update the changed accounts in the database.
-        let mut accounts = Box::pin(accounts);
-        while let Some((account, new_info, tanks)) = accounts.try_next().await? {
-            let account_id = account.id;
-            let last_battle_time = new_info.base.last_battle_time;
-            self.update_account(account, new_info, tanks).await?;
-
-            let mut metrics = self.metrics.lock().await;
-            metrics.add_account(account_id);
-            metrics.add_lag_from(last_battle_time)?;
-            if metrics.start_instant.elapsed() >= self.log_interval {
-                *metrics = metrics
-                    .finalise(&self.api.request_counter, &self.auto_min_offset)
-                    .await;
-            }
-        }
-
-        Ok(())
+            .await
     }
 
     #[tracing::instrument(
@@ -165,7 +133,7 @@ impl Crawler {
         fields(account_id = account.id, n_tanks = tanks.len()),
     )]
     async fn update_account(
-        &mut self,
+        mut self,
         account: BaseAccountInfo,
         new_info: AccountInfo,
         tanks: Vec<Tank>,
@@ -177,8 +145,15 @@ impl Crawler {
             if account.last_battle_time.timestamp() != 0 {
                 // Zero timestamp would mean that the account has never played
                 // or been crawled before.
-                self.push_incremental_updates(stream_duration, account.id, &tanks)
-                    .await?;
+                push_incremental_updates(
+                    &self.database,
+                    &mut self.redis,
+                    stream_duration,
+                    &self.metrics,
+                    account.id,
+                    &tanks,
+                )
+                .await?;
             }
         }
 
@@ -191,73 +166,103 @@ impl Crawler {
             .with_context(|| format!("failed to commit account #{}", account.id))?;
 
         tracing::debug!(account_id = account.id, elapsed = %format_duration(start_instant.elapsed()), "updated");
-        Ok(())
-    }
 
-    /// Prepares the battle stream entries.
-    #[tracing::instrument(
-        level = "debug",
-        skip_all,
-        fields(account_id = account_id, n_tanks = tanks.len()),
-    )]
-    async fn prepare_stream_entries(
-        &mut self,
-        account_id: i32,
-        tanks: &[Tank],
-        stream_duration: Duration,
-    ) -> crate::Result<Vec<StreamEntry>> {
-        let battle_counts = retrieve_latest_tank_battle_counts(
-            &self.database,
-            account_id,
-            &tanks.iter().map(Tank::tank_id).collect_vec(),
-        )
-        .await?;
-
-        let now = Utc::now();
-        let mut entries = Vec::new();
-
-        for tank in tanks {
-            let last_battle_time = tank.statistics.base.last_battle_time;
-            if now - last_battle_time > stream_duration {
-                tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
-                continue;
-            }
-            let tank_id = tank.tank_id();
-            let (n_battles, n_wins) = battle_counts.get(&tank_id).copied().unwrap_or((0, 0));
-            let n_battles = tank.statistics.all.battles - n_battles;
-            let n_wins = tank.statistics.all.wins - n_wins;
-            if n_battles > 0 && n_wins >= 0 {
-                self.metrics.lock().await.n_battles += n_battles;
-                entries.push(StreamEntry {
-                    tank_id,
-                    timestamp: last_battle_time.timestamp(),
-                    n_battles,
-                    n_wins,
-                });
-            }
+        let mut metrics = self.metrics.lock().await;
+        metrics.add_account(account.id);
+        metrics.add_lag_from(account.last_battle_time)?;
+        if metrics.start_instant.elapsed() >= self.log_interval {
+            *metrics = metrics
+                .finalise(&self.api.request_counter, &self.auto_min_offset)
+                .await;
         }
-
-        Ok(entries)
-    }
-
-    #[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
-    async fn push_incremental_updates(
-        &mut self,
-        stream_duration: Duration,
-        account_id: i32,
-        tanks: &[Tank],
-    ) -> crate::Result {
-        if tanks.is_empty() {
-            return Ok(());
-        }
-
-        let entries = self
-            .prepare_stream_entries(account_id, tanks, stream_duration)
-            .await?;
-        push_entries(&mut self.redis, &entries, stream_duration).await?;
 
         Ok(())
     }
+}
+
+async fn crawl_batch(
+    api: WargamingApi,
+    batch: Batch,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
+) -> crate::Result<impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo, Vec<Tank>)>>> {
+    let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
+    let new_infos = api.get_account_info(&account_ids).await?;
+    let batch_len = batch.len();
+    let matched = match_account_infos(batch, new_infos);
+    metrics.lock().await.add_batch(batch_len, matched.len());
+
+    let mut crawled = Vec::new();
+    for (account, new_info) in matched.into_iter() {
+        crawled.push(crawl_account(&api, account, new_info).await);
+    }
+    Ok(stream::iter(crawled))
+}
+
+#[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
+async fn push_incremental_updates(
+    database: &PgPool,
+    redis: &mut MultiplexedConnection,
+    stream_duration: Duration,
+    metrics: &Arc<Mutex<CrawlerMetrics>>,
+    account_id: i32,
+    tanks: &[Tank],
+) -> crate::Result {
+    if tanks.is_empty() {
+        return Ok(());
+    }
+
+    let entries =
+        prepare_stream_entries(database, metrics, account_id, tanks, stream_duration).await?;
+    push_entries(redis, &entries, stream_duration).await?;
+
+    Ok(())
+}
+
+/// Prepares the battle stream entries.
+#[tracing::instrument(
+    level = "debug",
+    skip_all,
+    fields(account_id = account_id, n_tanks = tanks.len()),
+)]
+async fn prepare_stream_entries(
+    database: &PgPool,
+    metrics: &Arc<Mutex<CrawlerMetrics>>,
+    account_id: i32,
+    tanks: &[Tank],
+    stream_duration: Duration,
+) -> crate::Result<Vec<StreamEntry>> {
+    let battle_counts = retrieve_latest_tank_battle_counts(
+        database,
+        account_id,
+        &tanks.iter().map(Tank::tank_id).collect_vec(),
+    )
+    .await?;
+
+    let now = Utc::now();
+    let mut entries = Vec::new();
+
+    for tank in tanks {
+        let last_battle_time = tank.statistics.base.last_battle_time;
+        if now - last_battle_time > stream_duration {
+            tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
+            continue;
+        }
+        let tank_id = tank.tank_id();
+        let (n_battles, n_wins) = battle_counts.get(&tank_id).copied().unwrap_or((0, 0));
+        let n_battles = tank.statistics.all.battles - n_battles;
+        let n_wins = tank.statistics.all.wins - n_wins;
+        if n_battles > 0 && n_wins >= 0 {
+            metrics.lock().await.n_battles += n_battles;
+            entries.push(StreamEntry {
+                tank_id,
+                timestamp: last_battle_time.timestamp(),
+                n_battles,
+                n_wins,
+            });
+        }
+    }
+
+    Ok(entries)
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.
@@ -292,12 +297,13 @@ async fn get_updated_tanks_statistics(
     account_id: i32,
     since: DateTime,
 ) -> crate::Result<Vec<TankStatistics>> {
-    Ok(api
+    let statistics = api
         .get_tanks_stats(account_id)
         .await?
         .into_iter()
         .filter(|tank| tank.base.last_battle_time > since)
-        .collect())
+        .collect();
+    Ok(statistics)
 }
 
 #[instrument(
