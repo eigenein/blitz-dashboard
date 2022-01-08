@@ -26,6 +26,7 @@ const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
 
+/// Pushes the entries to the battle stream.
 #[instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
 pub async fn push_entries(
     redis: &mut MultiplexedConnection,

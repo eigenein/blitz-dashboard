@@ -193,11 +193,15 @@ async fn crawl_batch(
 
     let mut crawled = Vec::new();
     for (account, new_info) in matched.into_iter() {
-        crawled.push(crawl_account(&api, account, new_info).await);
+        let (new_info, tanks) = crawl_account(&api, &account, new_info).await?;
+        crawled.push((account, new_info, tanks));
     }
-    Ok(stream::iter(crawled))
+    Ok(stream::iter(crawled.into_iter().map(Ok)))
 }
 
+/// When the crawler is being run in the normal incremental mode (and not `crawl-accounts`),
+/// it pushes the tanks' differences to the Redis stream, which is used to build
+/// the aggregated statistics.
 #[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
 async fn push_incremental_updates(
     database: &PgPool,
@@ -207,18 +211,15 @@ async fn push_incremental_updates(
     account_id: i32,
     tanks: &[Tank],
 ) -> crate::Result {
-    if tanks.is_empty() {
-        return Ok(());
+    if !tanks.is_empty() {
+        let entries =
+            prepare_stream_entries(database, metrics, account_id, tanks, stream_duration).await?;
+        push_entries(redis, &entries, stream_duration).await?;
     }
-
-    let entries =
-        prepare_stream_entries(database, metrics, account_id, tanks, stream_duration).await?;
-    push_entries(redis, &entries, stream_duration).await?;
-
     Ok(())
 }
 
-/// Prepares the battle stream entries.
+/// Converts the account info to the battle stream entries.
 #[tracing::instrument(
     level = "debug",
     skip_all,
@@ -268,7 +269,9 @@ async fn prepare_stream_entries(
 /// Match the batch's accounts to the account infos fetched from the API.
 /// Filters out accounts with unchanged last battle time.
 ///
-/// Returns matched pairs.
+/// # Returns
+///
+/// Vector of matched pairs.
 fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,
@@ -287,6 +290,10 @@ fn match_account_infos(
 }
 
 /// Gets account tanks which have their last battle time updated since the specified timestamp.
+///
+/// # Returns
+///
+/// The tanks statistics as returned by the API.
 #[instrument(
     level = "debug",
     skip_all,
@@ -306,6 +313,11 @@ async fn get_updated_tanks_statistics(
     Ok(statistics)
 }
 
+/// Crawls account from Wargaming.net API, including the tank statistics and achievements.
+///
+/// # Returns
+///
+/// Updated account information and account's tanks.
 #[instrument(
     level = "debug",
     skip_all,
@@ -313,9 +325,9 @@ async fn get_updated_tanks_statistics(
 )]
 async fn crawl_account(
     api: &WargamingApi,
-    account: BaseAccountInfo,
+    account: &BaseAccountInfo,
     new_info: AccountInfo,
-) -> crate::Result<(BaseAccountInfo, AccountInfo, Vec<Tank>)> {
+) -> crate::Result<(AccountInfo, Vec<Tank>)> {
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
@@ -323,9 +335,9 @@ async fn crawl_account(
         let achievements = api.get_tanks_achievements(account.id).await?;
         let tanks = merge_tanks(account.id, statistics, achievements);
         tracing::debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
-        Ok((account, new_info, tanks))
+        Ok((new_info, tanks))
     } else {
         tracing::trace!(account_id = account.id, "no updated tanks");
-        Ok((account, new_info, Vec::new()))
+        Ok((new_info, Vec::new()))
     }
 }
