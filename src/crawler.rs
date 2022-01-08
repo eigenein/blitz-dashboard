@@ -145,8 +145,7 @@ impl Crawler {
         let mut accounts = Box::pin(accounts);
         while let Some((account, new_info, tanks)) = accounts.try_next().await? {
             self.metrics.add_account(account.id);
-            self.metrics
-                .add_tanks(new_info.base.last_battle_time, tanks.len())?;
+            self.metrics.add_lag(new_info.base.last_battle_time)?;
             self.update_account(account, new_info, tanks).await?;
             self.metrics.check(&self.auto_min_offset).await;
         }

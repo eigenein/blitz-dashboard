@@ -15,7 +15,6 @@ pub struct CrawlerMetrics {
     pub average_batch_fill_level: Arc<Mutex<Average>>,
 
     n_accounts: u32,
-    n_tanks: usize,
     n_battles: i32,
     last_account_id: i32,
     last_request_count: u32,
@@ -36,7 +35,6 @@ impl CrawlerMetrics {
             last_request_count: request_counter.load(Ordering::Relaxed),
             request_counter,
             n_accounts: 0,
-            n_tanks: 0,
             n_battles: 0,
             last_account_id: 0,
             reset_instant: Instant::now(),
@@ -53,10 +51,9 @@ impl CrawlerMetrics {
         self.last_account_id = account_id;
     }
 
-    pub fn add_tanks(&mut self, last_battle_time: DateTime, n_tanks: usize) -> crate::Result {
+    pub fn add_lag(&mut self, last_battle_time: DateTime) -> crate::Result {
         self.lags
             .push((Utc::now() - last_battle_time).num_seconds().try_into()?);
-        self.n_tanks += n_tanks;
         Ok(())
     }
 
@@ -96,7 +93,7 @@ impl CrawlerMetrics {
         let average_batch_fill_level = self.average_batch_fill_level.lock().await.average();
 
         log::info!(
-            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>4.1}% | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | TPM: {:6.1} | A: {}",
+            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>4.1}% | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | T| A: {}",
             n_requests as f64 / elapsed_secs,
             average_batch_size,
             average_batch_fill_level,
@@ -105,12 +102,10 @@ impl CrawlerMetrics {
             formatted_lag,
             self.n_accounts,
             self.n_accounts as f64 / elapsed_mins,
-            self.n_tanks as f64 / elapsed_mins,
             self.last_account_id,
         );
 
         self.n_accounts = 0;
-        self.n_tanks = 0;
         self.n_battles = 0;
         self.lags.clear();
         self.reset_instant = Instant::now();
