@@ -28,7 +28,7 @@ pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     options.log_slow_statements(LevelFilter::Warn, StdDuration::from_millis(500));
     let inner = PgPoolOptions::new()
         .connect_timeout(StdDuration::from_secs(5))
-        .max_connections(20)
+        .max_connections(30)
         .connect_with(options)
         .await
         .context("failed to connect")?;
