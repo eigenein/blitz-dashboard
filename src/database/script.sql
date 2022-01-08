@@ -45,3 +45,4 @@ ALTER TABLE accounts ALTER COLUMN last_battle_time DROP NOT NULL;
 -- 0.146.0
 
 DROP INDEX IF EXISTS accounts_last_battle_time;
+DROP TABLE IF EXISTS vehicles;
