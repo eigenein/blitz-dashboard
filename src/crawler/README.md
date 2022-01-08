@@ -15,7 +15,7 @@ ExecStart = /home/pi/bin/blitz-dashboard \
     -d=postgres://user@host/database \
     --auto-min-offset \
     --n-buffered-batches=20 \
-    --n-buffered-accounts=6 \
+    --n-buffered-accounts=10 \
     --log-interval=60s \
     --stream-duration=5d \
     --redis-uri=redis+unix:///var/run/redis/redis-server.sock
