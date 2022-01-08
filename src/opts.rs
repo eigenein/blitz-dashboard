@@ -82,13 +82,23 @@ pub struct CrawlerOpts {
     #[structopt(long, default_value = "0s", parse(try_from_str = humantime::parse_duration))]
     pub min_offset: StdDuration,
 
-    /// Turn on the automatic minimum last battle offset adjustment based on 50%-lag (experimental)
+    /// Turn on the automatic minimum last battle offset adjustment based on the lag percentile (experimental)
     #[structopt(long)]
     pub auto_min_offset: bool,
 
     /// Maximum battle stream duration
     #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]
     pub stream_duration: Duration,
+
+    /// Limit for the inner query when retrieving a batch from the database.
+    /// Lower is faster, larger keeps the mean batch size closer to the maximum (which is better).
+    /// Aim for `100` in the `BS` metric. See also `crate::crawler::batch_stream::retrieve_batch`
+    #[structopt(
+        long,
+        default_value = "1000",
+        parse(try_from_str = parsers::non_zero_usize),
+    )]
+    pub batch_select_limit: usize,
 }
 
 /// Updates the bundled Tankopedia module
