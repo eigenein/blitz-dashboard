@@ -14,7 +14,8 @@ ExecStart = /home/pi/bin/blitz-dashboard \
     -a=<application-ID> \
     -d=postgres://user@host/database \
     --auto-min-offset \
-    --n-buffered-batches=6 \
+    --n-buffered-batches=20 \
+    --n-buffered-accounts=6 \
     --log-interval=60s \
     --stream-duration=5d \
     --redis-uri=redis+unix:///var/run/redis/redis-server.sock
@@ -31,7 +32,15 @@ WantedBy = multi-user.target
 
 ## Tuning
 
-Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilise 19-20 RPS for the crawler service by increasing the `--n-buffered-batches` option until you hit the maximal RPS without getting `REQUEST_LIMIT_EXCEEDED` errors.
+Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilise 19-20 RPS for the crawler service by tuning the few options:
+
+### `--n-buffered-batches`
+
+Defines how many batches of up to 100 accounts get crawled concurrently. For each batch there's at least 1 request per batch and 2 additional requests per each account which last battle time has changed. Increase this option one by one till you hit the maximal RPS without getting `REQUEST_LIMIT_EXCEEDED` errors yet. Values greater than `20` will most likely lead to the numerous errors. The value of `20` is actually a good try.
+
+### `--n-buffered-accounts`
+
+Defines how many accounts get updated in the database concurrently. Increase one by one till you get the stable maximal RPS. You're limited by a maximal number of active database connections.
 
 ## «Cold» start
 
