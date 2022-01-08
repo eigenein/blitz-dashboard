@@ -125,6 +125,7 @@ impl Crawler {
                 self.clone().update_account(account, new_info, tanks)
             })
             .await
+            .context("the main crawler stream has failed")
     }
 
     #[tracing::instrument(
