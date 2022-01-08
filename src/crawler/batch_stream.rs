@@ -17,6 +17,7 @@ pub async fn get_batch_stream(
     database: PgPool,
     inner_limit: usize,
     min_offset: Arc<RwLock<StdDuration>>,
+    max_offset: StdDuration,
 ) -> impl Stream<Item = crate::Result<Batch>> {
     stream::try_unfold(
         (database, min_offset),
@@ -24,7 +25,7 @@ pub async fn get_batch_stream(
             loop {
                 let batch = {
                     let min_offset = *min_offset.read().await;
-                    retrieve_batch(&database, inner_limit, min_offset).await?
+                    retrieve_batch(&database, inner_limit, min_offset, max_offset).await?
                 };
                 if !batch.is_empty() {
                     break Ok(Some((batch, (database, min_offset))));
@@ -42,6 +43,7 @@ async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,
     min_offset: StdDuration,
+    max_offset: StdDuration,
 ) -> crate::Result<Batch> {
     // language=SQL
     const QUERY: &str = r#"
@@ -52,12 +54,15 @@ async fn retrieve_batch(
             ORDER BY random()
         )
         SELECT * FROM "inner"
-        WHERE last_battle_time IS NULL OR (last_battle_time < NOW() - $1)
+        WHERE
+            last_battle_time IS NULL
+            OR (last_battle_time BETWEEN SYMMETRIC NOW() - $3 AND NOW() - $1)
         LIMIT 100
     "#;
     let query = sqlx::query_as(QUERY)
         .bind(min_offset)
-        .bind(inner_limit as i32);
+        .bind(inner_limit as i32)
+        .bind(max_offset);
     timeout(StdDuration::from_secs(60), query.fetch_all(database))
         .await
         .context("the `retrieve_batch` query has timed out")?

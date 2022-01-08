@@ -57,7 +57,13 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     .await?;
 
     tracing::info!("running…");
-    let batches = get_batch_stream(crawler.database(), opts.batch_select_limit, min_offset).await;
+    let batches = get_batch_stream(
+        crawler.database(),
+        opts.batch_select_limit,
+        min_offset,
+        opts.max_offset,
+    )
+    .await;
     crawler.run(batches, &opts.shared.buffering).await
 }
 

@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_id INTEGER PRIMARY KEY,
     last_battle_time TIMESTAMP WITH TIME ZONE NOT NULL
 );
-CREATE INDEX IF NOT EXISTS accounts_last_battle_time ON accounts(last_battle_time DESC);
 
 CREATE TABLE IF NOT EXISTS tank_snapshots (
     account_id INTEGER NOT NULL REFERENCES accounts (account_id) ON DELETE CASCADE,
@@ -42,3 +41,7 @@ CREATE EXTENSION tsm_system_rows;
 -- 0.145.0
 
 ALTER TABLE accounts ALTER COLUMN last_battle_time DROP NOT NULL;
+
+-- 0.146.0
+
+DROP INDEX IF EXISTS accounts_last_battle_time;
