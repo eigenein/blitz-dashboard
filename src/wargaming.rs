@@ -14,7 +14,7 @@ use reqwest::header::HeaderValue;
 use reqwest::Url;
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
-use tracing::{instrument, warn};
+use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
 use crate::helpers::format_elapsed;
@@ -71,6 +71,7 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
+    #[instrument(level = "debug", skip_all, fields(query = query))]
     pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::FoundAccount>> {
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
@@ -85,6 +86,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
+    #[instrument(level = "debug", skip_all, fields(n_accounts = account_ids.len()))]
     pub async fn get_account_info(
         &self,
         account_ids: &[i32],
@@ -106,6 +108,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
+    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
     pub async fn get_tanks_stats(
         &self,
         account_id: i32,
@@ -178,10 +181,17 @@ impl WargamingApi {
                         let message = error.message.as_str();
                         match message {
                             "REQUEST_LIMIT_EXCEEDED" | "SOURCE_NOT_AVAILABLE" => {
-                                tracing::warn!(message = message);
+                                // ♻️ Retrying for these particular errors.
+                                warn!(
+                                    message = message,
+                                    code = error.code,
+                                    n_attempts = backoff.n_attempts(),
+                                );
                                 capture_message(message, Level::Warning);
                             }
+
                             _ => {
+                                // 🥅 This is an unexpected API error.
                                 return Err(anyhow!("{}/{}", error.code, error.message));
                             }
                         }
@@ -189,17 +199,24 @@ impl WargamingApi {
                 },
                 Err(error) if error.is_timeout() => {
                     // ♻️ The HTTP request has timed out. No action needed, retrying…
+                    warn!(path = url.path(), "request timeout");
                 }
                 Err(error) => {
                     // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
+                    warn!(
+                        path = url.path(),
+                        n_attempts = backoff.n_attempts(),
+                        "{:#}",
+                        error,
+                    );
                     if backoff.n_attempts() >= 10 {
                         // 🥅 Don't know what to do.
-                        return Err(error).context("failed to call the Wargaming.net API");
+                        return Err(error).context("all attempts have failed");
                     }
                 }
             };
             let sleep_duration = backoff.next();
-            warn!(
+            debug!(
                 sleep_duration = %format_duration(sleep_duration),
                 nr_attempt = backoff.n_attempts(),
                 "retrying…",
@@ -222,11 +239,6 @@ impl WargamingApi {
         let response = match result {
             Ok(result) => result,
             Err(error) => {
-                if error.is_timeout() {
-                    log::warn!("#{} has timed out.", request_id);
-                } else {
-                    log::warn!("#{} has failed: {:#}.", request_id, error);
-                }
                 return Err(error);
             }
         };

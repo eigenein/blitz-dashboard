@@ -42,7 +42,7 @@ Defines how many batches of up to 100 accounts get crawled concurrently. For eac
 
 ### `--n-buffered-accounts`
 
-Defines how many accounts get updated in the database concurrently. Increase one by one till you get the stable maximal RPS. You're limited by a maximal number of active database connections.
+Defines how many accounts get updated in the database concurrently. Too small and too large values decrease the RPS. You'll need to find a good balance between too low QPS and flooding your database.
 
 ## «Cold» start
 
