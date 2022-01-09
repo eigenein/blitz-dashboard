@@ -78,17 +78,9 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub shared: SharedCrawlerOpts,
 
-    /// Minimum last battle time offset
-    #[structopt(long, default_value = "0s", parse(try_from_str = humantime::parse_duration))]
-    pub min_offset: StdDuration,
-
     /// Maximum last battle time offset
     #[structopt(long, default_value = "3years", parse(try_from_str = humantime::parse_duration))]
     pub max_offset: StdDuration,
-
-    /// Turn on the automatic minimum last battle offset adjustment based on the lag percentile (experimental)
-    #[structopt(long)]
-    pub auto_min_offset: bool,
 
     /// Maximum battle stream duration
     #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]

@@ -1,10 +1,8 @@
-use std::sync::Arc;
 use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use futures::{stream, Stream};
 use sqlx::PgPool;
-use tokio::sync::RwLock;
 use tokio::time::{sleep, timeout};
 use tracing::{instrument, warn};
 
@@ -16,25 +14,18 @@ pub type Batch = Vec<BaseAccountInfo>;
 pub async fn get_batch_stream(
     database: PgPool,
     inner_limit: usize,
-    min_offset: Arc<RwLock<StdDuration>>,
     max_offset: StdDuration,
 ) -> impl Stream<Item = crate::Result<Batch>> {
-    stream::try_unfold(
-        (database, min_offset),
-        move |(database, min_offset)| async move {
-            loop {
-                let batch = {
-                    let min_offset = *min_offset.read().await;
-                    retrieve_batch(&database, inner_limit, min_offset, max_offset).await?
-                };
-                if !batch.is_empty() {
-                    break Ok(Some((batch, (database, min_offset))));
-                }
-                warn!("no accounts matched, sleeping…");
-                sleep(StdDuration::from_secs(1)).await;
+    stream::try_unfold(database, move |database| async move {
+        loop {
+            let batch = { retrieve_batch(&database, inner_limit, max_offset).await? };
+            if !batch.is_empty() {
+                break Ok(Some((batch, database)));
             }
-        },
-    )
+            warn!("no accounts matched, sleeping…");
+            sleep(StdDuration::from_secs(1)).await;
+        }
+    })
 }
 
 /// Retrieves a single account batch from the database.
@@ -42,7 +33,6 @@ pub async fn get_batch_stream(
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,
-    min_offset: StdDuration,
     max_offset: StdDuration,
 ) -> crate::Result<Batch> {
     // language=SQL
@@ -50,17 +40,14 @@ async fn retrieve_batch(
         -- CREATE EXTENSION tsm_system_rows;
         WITH "inner" AS (
             SELECT account_id, last_battle_time
-            FROM accounts TABLESAMPLE system_rows($2)
+            FROM accounts TABLESAMPLE system_rows($1)
             ORDER BY random()
         )
         SELECT * FROM "inner"
-        WHERE
-            last_battle_time IS NULL
-            OR (last_battle_time BETWEEN SYMMETRIC NOW() - $3 AND NOW() - $1)
+        WHERE last_battle_time IS NULL OR (last_battle_time >= NOW() - $2)
         LIMIT 100
     "#;
     let query = sqlx::query_as(QUERY)
-        .bind(min_offset)
         .bind(inner_limit as i32)
         .bind(max_offset);
     timeout(StdDuration::from_secs(60), query.fetch_all(database))

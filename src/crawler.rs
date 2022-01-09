@@ -9,7 +9,7 @@ use humantime::format_duration;
 use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use sqlx::PgPool;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::aggregator::redis::push_entries;
@@ -36,7 +36,6 @@ pub struct Crawler {
     database: PgPool,
     redis: MultiplexedConnection,
     metrics: Arc<Mutex<CrawlerMetrics>>,
-    auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     stream_duration: Option<Duration>,
     log_interval: StdDuration,
 }
@@ -48,22 +47,11 @@ pub struct Crawler {
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
-    let min_offset = Arc::new(RwLock::new(opts.min_offset));
-    let crawler = Crawler::new(
-        &opts.shared,
-        Some(opts.stream_duration),
-        opts.auto_min_offset.then(|| min_offset.clone()),
-    )
-    .await?;
+    let crawler = Crawler::new(&opts.shared, Some(opts.stream_duration)).await?;
 
     tracing::info!("running…");
-    let batches = get_batch_stream(
-        crawler.database(),
-        opts.batch_select_limit,
-        min_offset,
-        opts.max_offset,
-    )
-    .await;
+    let batches =
+        get_batch_stream(crawler.database(), opts.batch_select_limit, opts.max_offset).await;
     crawler.run(batches, &opts.shared.buffering).await
 }
 
@@ -80,7 +68,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
         .map(BaseAccountInfo::empty)
         .chunks(100)
         .map(Ok);
-    let crawler = Crawler::new(&opts.shared, None, None).await?;
+    let crawler = Crawler::new(&opts.shared, None).await?;
     crawler.run(batches, &opts.shared.buffering).await
 }
 
@@ -88,7 +76,6 @@ impl Crawler {
     pub async fn new(
         opts: &SharedCrawlerOpts,
         stream_duration: Option<Duration>,
-        auto_min_offset: Option<Arc<RwLock<StdDuration>>>,
     ) -> crate::Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
@@ -106,7 +93,6 @@ impl Crawler {
             database,
             redis,
             stream_duration,
-            auto_min_offset,
             log_interval: opts.log_interval,
         };
         Ok(this)
@@ -178,9 +164,7 @@ impl Crawler {
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
         if metrics.start_instant.elapsed() >= self.log_interval {
-            *metrics = metrics
-                .finalise(&self.api.request_counter, &self.auto_min_offset)
-                .await;
+            *metrics = metrics.finalise(&self.api.request_counter).await;
         }
 
         Ok(())

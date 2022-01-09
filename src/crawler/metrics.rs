@@ -4,7 +4,6 @@ use std::time::{Duration as StdDuration, Instant};
 
 use chrono::Utc;
 use humantime::format_duration;
-use tokio::sync::RwLock;
 
 use crate::helpers::average::Average;
 use crate::DateTime;
@@ -55,11 +54,7 @@ impl CrawlerMetrics {
             .push(matched_len as f64 / batch_len);
     }
 
-    pub async fn finalise(
-        &mut self,
-        request_counter: &Arc<AtomicU32>,
-        auto_min_offset: &Option<Arc<RwLock<StdDuration>>>,
-    ) -> Self {
+    pub async fn finalise(&mut self, request_counter: &Arc<AtomicU32>) -> Self {
         let elapsed_secs = self.start_instant.elapsed().as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter.load(Ordering::Relaxed) - self.start_request_count;
@@ -67,10 +62,6 @@ impl CrawlerMetrics {
         let lag = self.lag();
         let mut formatted_lag = format_duration(lag).to_string();
         formatted_lag.truncate(11);
-
-        if let Some(min_offset) = auto_min_offset {
-            *min_offset.write().await = lag;
-        }
 
         log::info!(
             "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | battles: {:>5} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | A: {}",
