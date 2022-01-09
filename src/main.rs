@@ -9,6 +9,7 @@ use itertools::Itertools;
 use log::LevelFilter;
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
+use tracing::info;
 
 use crate::helpers::format_elapsed;
 use crate::opts::{Opts, Subcommand};
@@ -29,7 +30,6 @@ mod web;
 #[global_allocator]
 static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
@@ -41,8 +41,10 @@ type Result<T = ()> = anyhow::Result<T>;
 async fn main() -> crate::Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity)?;
-    log::info!("{} {}", CRATE_NAME, CRATE_VERSION);
-    log::info!("started with: {}", std::env::args().skip(1).join(" "));
+    info!(
+        version = CRATE_VERSION,
+        args = std::env::args().skip(1).join(" ").as_str(),
+    );
     let _sentry_guard = init_sentry(&opts);
 
     let result = run_subcommand(opts).await;
@@ -62,7 +64,7 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
         Subcommand::Aggregate(opts) => aggregator::run(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
     };
-    tracing::info!(
+    info!(
         elapsed = %format_elapsed(&start_instant),
         "finished",
     );
