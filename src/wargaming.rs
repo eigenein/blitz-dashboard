@@ -17,7 +17,7 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
-use crate::helpers::format_elapsed;
+use crate::helpers::time::format_elapsed;
 use crate::models;
 use crate::wargaming::response::Response;
 use crate::StdDuration;

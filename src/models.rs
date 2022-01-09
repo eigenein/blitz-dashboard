@@ -8,7 +8,7 @@ use chrono::{Datelike, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
 
-use crate::helpers::{deserialize_duration_seconds, serialize_duration_seconds};
+use crate::helpers::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::wargaming::tank_id::TankId;
 use crate::DateTime;

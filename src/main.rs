@@ -11,7 +11,7 @@ use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
 use tracing::info;
 
-use crate::helpers::format_elapsed;
+use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
 mod aggregator;

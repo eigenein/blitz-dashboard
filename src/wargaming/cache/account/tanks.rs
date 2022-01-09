@@ -3,7 +3,7 @@ use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use tracing::instrument;
 
-use crate::helpers::{compress_to_vec, decompress_to_vec};
+use crate::helpers::miniz_oxide::{compress_to_vec, decompress_to_vec};
 use crate::models::{merge_tanks, Tank};
 use crate::wargaming::WargamingApi;
 
