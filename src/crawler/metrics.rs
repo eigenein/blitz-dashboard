@@ -73,7 +73,7 @@ impl CrawlerMetrics {
         }
 
         log::info!(
-            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | battles: {:>4} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | A: {}",
+            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | battles: {:>5} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | A: {}",
             n_requests as f64 / elapsed_secs,
             self.average_batch_size.average(),
             self.average_batch_fill_level.average() * 100.0,
