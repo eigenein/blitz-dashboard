@@ -103,6 +103,7 @@ pub enum Z {
     Z89,
     Z90,
     Z95,
+    Z99,
 }
 
 impl Default for Z {
@@ -115,12 +116,13 @@ impl Z {
     pub const fn z(&self) -> f64 {
         match self {
             Self::Z80 => 1.28,
-            Self::Z85 => 1.44,
+            Self::Z85 => 1.440,
             Self::Z87 => 1.51,
             Self::Z88 => 1.5548,
             Self::Z89 => 1.598,
             Self::Z90 => 1.645,
-            Self::Z95 => 1.96,
+            Self::Z95 => 1.960,
+            Self::Z99 => 2.576,
         }
     }
 }
