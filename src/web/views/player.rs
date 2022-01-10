@@ -185,7 +185,7 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Истинный процент побед – это WR, скорректированный на число боев" { "TWR" } }
+                        span { abbr title="Истинный процент побед – это WR, скорректированный на число боев, CI 95%" { "TWR" } }
                     }
                 }
             }
@@ -209,7 +209,7 @@ pub async fn get(
             th {
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед в час, скорректированное на число проведенных боев" { "TWPH" } }
+                        span { abbr title="Число побед в час, скорректированное на число проведенных боев, CI 95%" { "TWPH" } }
                     }
                 }
             }
@@ -225,7 +225,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев" { "Истинное золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 95%" { "Истинное золото" } }
                     }
                 }
             }
