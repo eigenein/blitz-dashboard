@@ -17,7 +17,7 @@ use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
 use crate::wargaming::tank_id::TankId;
-use crate::DateTime;
+use crate::{AHashMap, DateTime};
 
 /// Open and initialize the database.
 #[tracing::instrument(skip(uri))]
@@ -100,7 +100,11 @@ pub async fn retrieve_latest_tank_battle_counts(
     connection: &PgPool,
     account_id: i32,
     tank_ids: &[TankId],
-) -> crate::Result<HashMap<TankId, (i32, i32)>> {
+) -> crate::Result<AHashMap<TankId, (i32, i32)>> {
+    if tank_ids.is_empty() {
+        return Ok(AHashMap::default());
+    }
+
     // language=SQL
     const QUERY: &str = "
         SELECT snapshot.tank_id, snapshot.battles, snapshot.wins
@@ -127,7 +131,7 @@ pub async fn retrieve_latest_tank_battle_counts(
                 (row.try_get("battles")?, row.try_get("wins")?),
             ))
         })
-        .try_collect::<HashMap<TankId, (i32, i32)>>()
+        .try_collect::<AHashMap<TankId, (i32, i32)>>()
         .await
         .context("failed to retrieve the latest tank battle counts");
     tracing::debug!(account_id = account_id, elapsed = %format_duration(start_instant.elapsed()));

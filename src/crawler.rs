@@ -223,22 +223,22 @@ async fn prepare_stream_entries(
     tanks: &[Tank],
     stream_duration: Duration,
 ) -> crate::Result<Vec<StreamEntry>> {
-    let battle_counts = retrieve_latest_tank_battle_counts(
-        database,
-        account_id,
-        &tanks.iter().map(Tank::tank_id).collect_vec(),
-    )
-    .await?;
-
     let now = Utc::now();
-    let mut entries = Vec::new();
+    let tanks = tanks
+        .iter()
+        .filter(|tank| {
+            // `tanks` contains all tanks that have been played since the last known account battle time.
+            // However, some of them may have already become outdated for the stream.
+            // Thus, we can optimise the `retrieve_latest_tank_battle_counts` call
+            // and also reduce the traffic to Redis.
+            now - tank.statistics.base.last_battle_time < stream_duration
+        })
+        .collect_vec();
+    let tank_ids = tanks.iter().map(|tank| tank.tank_id()).collect_vec();
+    let battle_counts = retrieve_latest_tank_battle_counts(database, account_id, &tank_ids).await?;
 
+    let mut entries = Vec::new();
     for tank in tanks {
-        let last_battle_time = tank.statistics.base.last_battle_time;
-        if now - last_battle_time > stream_duration {
-            tracing::debug!(tank_id = tank.tank_id(), "the last battle is too old");
-            continue;
-        }
         let tank_id = tank.tank_id();
         let (n_battles, n_wins) = battle_counts.get(&tank_id).copied().unwrap_or((0, 0));
         let n_battles = tank.statistics.all.battles - n_battles;
@@ -247,13 +247,12 @@ async fn prepare_stream_entries(
             metrics.lock().await.n_battles += n_battles;
             entries.push(StreamEntry {
                 tank_id,
-                timestamp: last_battle_time.timestamp(),
+                timestamp: tank.statistics.base.last_battle_time.timestamp(),
                 n_battles,
                 n_wins,
             });
         }
     }
-
     Ok(entries)
 }
 
