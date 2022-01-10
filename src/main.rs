@@ -79,8 +79,7 @@ fn init_sentry(opts: &opts::Opts) -> Option<sentry::ClientInitGuard> {
             dsn.as_str(),
             sentry::ClientOptions {
                 release: sentry::release_name!(),
-                debug: [LevelFilter::Trace, LevelFilter::Debug, LevelFilter::Info]
-                    .contains(&opts.verbosity),
+                debug: false,
                 ..Default::default()
             },
         ))
