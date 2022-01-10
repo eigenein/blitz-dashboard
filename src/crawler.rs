@@ -234,8 +234,8 @@ async fn prepare_stream_entries(
             now - tank.statistics.base.last_battle_time < stream_duration
         })
         .collect_vec();
-    let tank_ids = tanks.iter().map(|tank| tank.tank_id()).collect_vec();
-    let battle_counts = retrieve_latest_tank_battle_counts(database, account_id, &tank_ids).await?;
+    let tank_ids = tanks.iter().map(|tank| tank.tank_id());
+    let battle_counts = retrieve_latest_tank_battle_counts(database, account_id, tank_ids).await?;
 
     let mut entries = Vec::new();
     for tank in tanks {

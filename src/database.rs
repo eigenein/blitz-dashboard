@@ -94,13 +94,17 @@ pub async fn retrieve_latest_tank_snapshots(
 #[instrument(
     level = "debug",
     skip_all,
-    fields(account_id = account_id, n_tanks = tank_ids.len()),
+    fields(account_id = account_id),
 )]
 pub async fn retrieve_latest_tank_battle_counts(
     connection: &PgPool,
     account_id: i32,
-    tank_ids: &[TankId],
+    tank_ids: impl IntoIterator<Item = TankId>,
 ) -> crate::Result<AHashMap<TankId, (i32, i32)>> {
+    let tank_ids = tank_ids
+        .into_iter()
+        .map(|tank_id| tank_id as i32)
+        .collect_vec();
     if tank_ids.is_empty() {
         return Ok(AHashMap::default());
     }
@@ -122,7 +126,7 @@ pub async fn retrieve_latest_tank_battle_counts(
     let start_instant = Instant::now();
     let result = sqlx::query(QUERY)
         .bind(account_id)
-        .bind(&tank_ids.iter().map(|tank_id| *tank_id as i32).collect_vec())
+        .bind(&tank_ids)
         .fetch(connection)
         .map(|row| {
             let row = row?;
