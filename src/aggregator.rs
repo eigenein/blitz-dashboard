@@ -66,7 +66,7 @@ fn calculate_vehicle_win_rates(
         .map(|(tank_id, (n_battles, n_wins))| {
             (
                 tank_id,
-                ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::Z99),
+                ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::default()),
             )
         })
         .collect()

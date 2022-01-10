@@ -97,7 +97,7 @@ pub async fn get(
                                         sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
                                         a data-sort="live-win-rate" {
                                             span.icon-text.is-flex-wrap-nowrap {
-                                                span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов" { "Live WR" } }
+                                                span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
                                             }
                                         }
                                     }
@@ -163,7 +163,7 @@ pub fn tr(tank_id: TankId, live_win_rate: ConfidenceInterval) -> Markup {
 
             (tier_td(vehicle.tier, None))
 
-            td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.mean) {
+            td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
                 span.icon-text.is-flex-wrap-nowrap {
                     (Icon::ChartArea.into_span().color(Color::GreyLight))
                     span {
