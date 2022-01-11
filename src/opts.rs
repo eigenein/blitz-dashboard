@@ -2,12 +2,15 @@
 
 mod parsers;
 
+use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
 use chrono::Duration;
 use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
+
+use crate::math::statistics::Z;
 
 #[derive(StructOpt)]
 #[structopt(
@@ -169,8 +172,8 @@ pub struct AggregateOpts {
     )]
     pub interval: StdDuration,
 
-    #[structopt(long, default_value = "1hour", parse(try_from_str = parsers::duration))]
-    pub time_span: Duration,
+    #[structopt(long = "time-span", required = true, parse(try_from_str = parsers::duration))]
+    pub time_spans: Vec<Duration>,
 }
 
 #[derive(StructOpt)]
@@ -196,4 +199,15 @@ pub struct InternalConnectionOpts {
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
+}
+
+impl FromStr for Z {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "95" | "95%" => Ok(Self::Z95),
+            _ => Err(format!("`{}` is not a valid confidence level", s)),
+        }
+    }
 }

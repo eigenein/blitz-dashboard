@@ -1,7 +1,9 @@
 use std::cmp::Ordering;
 use std::ops::{Add, Mul};
 
-#[derive(Copy, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Copy, Clone, Serialize, Deserialize)]
 #[must_use]
 pub struct ConfidenceInterval {
     pub mean: f64,
@@ -95,6 +97,7 @@ impl PartialOrd for ConfidenceInterval {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Z {
     Z80,
     Z85,

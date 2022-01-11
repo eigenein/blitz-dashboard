@@ -1,14 +1,12 @@
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use redis::aio::MultiplexedConnection;
-use redis::pipe;
+use redis::{pipe, AsyncCommands};
 use tracing::instrument;
 
 use crate::aggregator::stream_entry::{StreamEntry, StreamEntryBuilder};
+use crate::aggregator::Analytics;
 use crate::helpers::redis::{KeyValueVec, TwoTuple};
-use crate::math::statistics::ConfidenceInterval;
-use crate::wargaming::tank_id::TankId;
-use crate::AHashMap;
 
 pub type Fields = KeyValueVec<String, i64>;
 pub type Entry = TwoTuple<String, Fields>;
@@ -18,8 +16,7 @@ pub type XReadResponse = Vec<StreamResponse>;
 pub const STREAM_KEY: &str = "streams::battles::v2";
 pub const UPDATED_AT_KEY: &str = "aggregator::updated_at";
 
-const VEHICLE_WIN_RATES_KEY: &str = "vehicles::win_rates::ru";
-const VEHICLE_WIN_RATE_MARGINS_KEY: &str = "vehicles::win_rates::margins::ru";
+const ANALYTICS_KEY: &str = "analytics::ru";
 
 const TANK_ID_KEY: &str = "t";
 const TIMESTAMP_KEY: &str = "ts";
@@ -68,58 +65,27 @@ pub async fn push_entries(
         .context("failed to add the sample points to the stream")
 }
 
-#[instrument(skip_all, fields(n_vehicles = win_rates.len()))]
-pub async fn store_vehicle_win_rates(
+#[instrument(
+    skip_all,
+    fields(
+        n_time_spans = analytics.time_spans.len(),
+        n_vehicles = analytics.win_rates.len(),
+    ),
+)]
+pub async fn store_analytics(
     redis: &mut MultiplexedConnection,
-    win_rates: AHashMap<TankId, ConfidenceInterval>,
+    analytics: &Analytics,
 ) -> crate::Result {
-    if win_rates.is_empty() {
-        return Ok(());
-    }
-
-    let mut pipeline = pipe();
-
-    pipeline.cmd("HMSET");
-    pipeline.arg(VEHICLE_WIN_RATES_KEY);
-    for (tank_id, win_rate) in win_rates.iter() {
-        pipeline.arg(tank_id).arg(win_rate.mean);
-    }
-    pipeline.ignore();
-
-    pipeline.cmd("HMSET");
-    pipeline.arg(VEHICLE_WIN_RATE_MARGINS_KEY);
-    for (tank_id, win_rate) in win_rates.into_iter() {
-        pipeline.arg(tank_id).arg(win_rate.margin);
-    }
-    pipeline.ignore();
-
-    pipeline
-        .query_async(redis)
+    redis
+        .set(ANALYTICS_KEY, rmp_serde::to_vec_named(analytics)?)
         .await
-        .context("failed to store the vehicle win rates")
+        .context("failed to store the analytics")
 }
 
 #[instrument(level = "debug", skip_all)]
-pub async fn retrieve_vehicle_win_rates(
-    redis: &mut MultiplexedConnection,
-) -> crate::Result<AHashMap<TankId, ConfidenceInterval>> {
-    let (means, mut margins): (AHashMap<TankId, f64>, AHashMap<TankId, f64>) = pipe()
-        .hgetall(VEHICLE_WIN_RATES_KEY)
-        .hgetall(VEHICLE_WIN_RATE_MARGINS_KEY)
-        .query_async(redis)
-        .await
-        .context("failed to retrieve vehicle win rates")?;
-    let win_rates = means
-        .into_iter()
-        .filter_map(|(tank_id, mean)| {
-            margins
-                .remove(&tank_id)
-                .map(|margin| (tank_id, mean, margin))
-        })
-        .map(|(tank_id, mean, margin)| (tank_id, ConfidenceInterval { mean, margin }))
-        .collect();
-
-    Ok(win_rates)
+pub async fn retrieve_analytics(redis: &mut MultiplexedConnection) -> crate::Result<Analytics> {
+    let blob: Vec<u8> = redis.get(ANALYTICS_KEY).await?;
+    Ok(rmp_serde::from_read_ref(&blob)?)
 }
 
 impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {

@@ -1,13 +1,12 @@
 use chrono::{TimeZone, Utc};
 use chrono_humanize::Tense;
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::{uri, State};
 
-use crate::aggregator::redis::{retrieve_vehicle_win_rates, UPDATED_AT_KEY};
+use crate::aggregator::persistence::{retrieve_analytics, UPDATED_AT_KEY};
 use crate::logging::clear_user;
-use crate::math::statistics::ConfidenceInterval;
 use crate::models::TankType;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
@@ -44,7 +43,7 @@ pub async fn get(
             .unwrap_or(0),
         0,
     );
-    let live_win_rates = retrieve_vehicle_win_rates(&mut redis).await?;
+    let analytics = retrieve_analytics(&mut redis).await?;
 
     let markup = html! {
         (DOCTYPE)
@@ -93,19 +92,62 @@ pub async fn get(
                                         }
                                     }
 
-                                    th.is-white-space-nowrap {
-                                        sup title="В разработке" { strong.has-text-danger-dark { "ɑ" } }
-                                        a data-sort="live-win-rate" {
-                                            span.icon-text.is-flex-wrap-nowrap {
-                                                span { abbr title="Средний процент побед этого танка по всему региону за последние несколько часов (сортировка по нижней границе интервала)" { "Live WR" } }
+                                    @for time_span in analytics.time_spans.iter() {
+                                        th.is-white-space-nowrap {
+                                            a data-sort=(format!("mean-{}", time_span.duration)) {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span { "Среднее " (time_span.duration) }
+                                                }
                                             }
                                         }
                                     }
                                 }
 
                                 tbody {
-                                    @for (tank_id, win_rate) in live_win_rates.into_iter() {
-                                        (tr(tank_id, win_rate))
+                                    @for (tank_id, win_rates) in analytics.win_rates.into_iter() {
+                                        tr {
+                                            @let vehicle = get_vehicle(tank_id);
+
+                                            (vehicle_th(&vehicle))
+
+                                            td.has-text-centered {
+                                                a href=(uri!(get_vehicle_analytics(tank_id = tank_id))) {
+                                                    span.icon-text.is-flex-wrap-nowrap {
+                                                        span.icon { { i.fas.fa-link {} } }
+                                                    }
+                                                }
+                                            }
+
+                                            td.has-text-centered {
+                                                @match vehicle.type_ {
+                                                    TankType::Light => "ЛТ",
+                                                    TankType::Medium => "СТ",
+                                                    TankType::Heavy => "ТТ",
+                                                    TankType::AT => "ПТ",
+                                                    TankType::Unknown => "",
+                                                }
+                                            }
+
+                                            (tier_td(vehicle.tier, None))
+
+                                            @for (time_span, win_rate) in analytics.time_spans.iter().zip(win_rates) {
+                                                @if let Some(win_rate) = win_rate {
+                                                    td.is-white-space-nowrap data-sort=(format!("mean-{}", time_span.duration)) data-value=(win_rate.mean) {
+                                                        span.icon-text.is-flex-wrap-nowrap {
+                                                            (Icon::ChartArea.into_span().color(Color::GreyLight))
+                                                            span {
+                                                                strong title=(win_rate.mean) {
+                                                                    (format!("{:.1}%", win_rate.mean * 100.0))
+                                                                }
+                                                                span.has-text-grey { (format!(" ±{:.1}", win_rate.margin * 100.0)) }
+                                                            }
+                                                        }
+                                                    }
+                                                } @else {
+                                                    td data-sort=(format!("mean-{}", time_span.duration)) data-value="-1" {}
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -133,47 +175,4 @@ pub async fn get(
     let content = markup.into_string();
     redis.set_ex(CACHE_KEY, &content, 60).await?;
     Ok(CustomResponse::CachedHtml(CACHE_CONTROL, content))
-}
-
-#[must_use]
-pub fn tr(tank_id: TankId, live_win_rate: ConfidenceInterval) -> Markup {
-    html! {
-        tr {
-            @let vehicle = get_vehicle(tank_id);
-
-            (vehicle_th(&vehicle))
-
-            td.has-text-centered {
-                a href=(uri!(get_vehicle_analytics(tank_id = tank_id))) {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span.icon { { i.fas.fa-link {} } }
-                    }
-                }
-            }
-
-            td.has-text-centered {
-                @match vehicle.type_ {
-                    TankType::Light => "ЛТ",
-                    TankType::Medium => "СТ",
-                    TankType::Heavy => "ТТ",
-                    TankType::AT => "ПТ",
-                    TankType::Unknown => "",
-                }
-            }
-
-            (tier_td(vehicle.tier, None))
-
-            td.is-white-space-nowrap data-sort="live-win-rate" data-value=(live_win_rate.lower()) {
-                span.icon-text.is-flex-wrap-nowrap {
-                    (Icon::ChartArea.into_span().color(Color::GreyLight))
-                    span {
-                        strong title=(live_win_rate.mean) {
-                            (format!("{:.1}%", live_win_rate.mean * 100.0))
-                        }
-                        span.has-text-grey { (format!(" ±{:.1}", live_win_rate.margin * 100.0)) }
-                    }
-                }
-            }
-        }
-    }
 }

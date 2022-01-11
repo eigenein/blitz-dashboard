@@ -4,7 +4,7 @@ use redis::streams::StreamReadOptions;
 use redis::AsyncCommands;
 use tracing::{info, instrument};
 
-use crate::aggregator::redis::{XReadResponse, STREAM_KEY};
+use crate::aggregator::persistence::{XReadResponse, STREAM_KEY};
 use crate::aggregator::stream_entry::StreamEntry;
 use crate::helpers::redis::TwoTuple;
 

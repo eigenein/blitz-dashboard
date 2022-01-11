@@ -2,10 +2,12 @@ use std::collections::hash_map::Entry;
 
 use ::redis::AsyncCommands;
 use chrono::{Duration, Utc};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::redis::{store_vehicle_win_rates, UPDATED_AT_KEY};
+use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::aggregator::stream::Stream;
 use crate::aggregator::stream_entry::StreamEntry;
 use crate::math::statistics::{ConfidenceInterval, Z};
@@ -13,18 +15,18 @@ use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
 use crate::AHashMap;
 
-pub mod redis;
+pub mod persistence;
 pub mod stream;
 pub mod stream_entry;
 
-#[tracing::instrument(skip_all, fields(time_span = %opts.time_span))]
+#[tracing::instrument(skip_all)]
 pub async fn run(opts: AggregateOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "aggregator"));
 
     let mut redis = ::redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let mut stream = Stream::read(redis.clone(), opts.time_span).await?;
+    let mut stream = Stream::read(redis.clone(), *opts.time_spans.iter().max().unwrap()).await?;
     let mut interval = interval(opts.interval);
 
     info!("running…");
@@ -32,42 +34,102 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
         interval.tick().await;
         stream.refresh().await?;
 
-        let vehicle_win_rates = calculate_vehicle_win_rates(&stream.entries, opts.time_span);
-        store_vehicle_win_rates(&mut redis, vehicle_win_rates).await?;
+        let analytics = calculate_analytics(&stream.entries, &opts.time_spans);
+        store_analytics(&mut redis, &analytics).await?;
 
         redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
     }
 }
 
-#[instrument(level = "info", skip_all, fields(time_span = %time_span))]
-fn calculate_vehicle_win_rates(
-    sample: &[StreamEntry],
-    time_span: Duration,
-) -> AHashMap<TankId, ConfidenceInterval> {
+#[derive(Serialize, Deserialize)]
+pub struct Analytics {
+    pub time_spans: Vec<DurationWrapper>,
+    pub win_rates: Vec<(TankId, Vec<Option<ConfidenceInterval>>)>,
+}
+
+#[derive(Serialize, Deserialize)]
+
+pub struct DurationWrapper {
+    #[serde(
+        serialize_with = "crate::helpers::serde::serialize_duration_seconds",
+        deserialize_with = "crate::helpers::serde::deserialize_duration_seconds"
+    )]
+    pub duration: Duration,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct BattleCount {
+    n_wins: i32,
+    n_battles: i32,
+}
+
+#[instrument(level = "info", skip_all)]
+fn calculate_analytics(sample: &[StreamEntry], time_spans: &[Duration]) -> Analytics {
+    let now = Utc::now();
+    let deadlines = time_spans
+        .iter()
+        .map(|time_span| (now - *time_span).timestamp())
+        .collect_vec();
     let mut statistics = AHashMap::default();
-    let minimal_timestamp = (Utc::now() - time_span).timestamp();
 
     for point in sample {
-        if point.timestamp >= minimal_timestamp {
-            match statistics.entry(point.tank_id) {
-                Entry::Vacant(entry) => {
-                    entry.insert((point.n_battles, point.n_wins));
-                }
-                Entry::Occupied(mut entry) => {
-                    let (n_battles, n_wins) = *entry.get();
-                    entry.insert((n_battles + point.n_battles, n_wins + point.n_wins));
+        match statistics.entry(point.tank_id) {
+            Entry::Vacant(entry) => {
+                let value = deadlines
+                    .iter()
+                    .map(|deadline| {
+                        if point.timestamp >= *deadline {
+                            BattleCount {
+                                n_battles: point.n_battles,
+                                n_wins: point.n_wins,
+                            }
+                        } else {
+                            BattleCount::default()
+                        }
+                    })
+                    .collect_vec();
+                entry.insert(value);
+            }
+
+            Entry::Occupied(mut entry) => {
+                for (value, deadline) in entry.get_mut().iter_mut().zip(&deadlines) {
+                    if point.timestamp >= *deadline {
+                        value.n_battles += point.n_battles;
+                        value.n_wins += point.n_wins;
+                    }
                 }
             }
         }
     }
 
-    statistics
-        .into_iter()
-        .map(|(tank_id, (n_battles, n_wins))| {
-            (
-                tank_id,
-                ConfidenceInterval::wilson_score_interval(n_battles, n_wins, Z::default()),
-            )
-        })
-        .collect()
+    Analytics {
+        time_spans: time_spans
+            .iter()
+            .map(|time_span| DurationWrapper {
+                duration: *time_span,
+            })
+            .collect(),
+        win_rates: statistics
+            .into_iter()
+            .map(|(tank_id, counts)| {
+                (
+                    tank_id,
+                    counts
+                        .into_iter()
+                        .map(|count| {
+                            if count.n_battles != 0 {
+                                Some(ConfidenceInterval::wilson_score_interval(
+                                    count.n_battles,
+                                    count.n_wins,
+                                    Z::default(),
+                                ))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                )
+            })
+            .collect(),
+    }
 }
