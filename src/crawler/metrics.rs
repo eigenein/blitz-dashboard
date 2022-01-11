@@ -64,15 +64,14 @@ impl CrawlerMetrics {
         formatted_lag.truncate(11);
 
         log::info!(
-            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | battles: {:>5} | L{}: {:>11} | NA: {:>4} | APM: {:5.1} | A: {}",
+            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | APM: {:>3.0} | BPM: {:>4.0} | L{}: {:>11} | #A: {}",
             n_requests as f64 / elapsed_secs,
             self.average_batch_size.average(),
             self.average_batch_fill_level.average() * 100.0,
-            self.n_battles,
+            self.n_accounts as f64 / elapsed_mins,
+            self.n_battles as f64 / elapsed_mins,
             self.lag_percentile,
             formatted_lag,
-            self.n_accounts,
-            self.n_accounts as f64 / elapsed_mins,
             self.last_account_id,
         );
 

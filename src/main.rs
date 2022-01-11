@@ -6,7 +6,6 @@ pub use std::time::Duration as StdDuration;
 use std::time::Instant;
 
 use itertools::Itertools;
-use log::LevelFilter;
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
 use tracing::info;
