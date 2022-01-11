@@ -38,12 +38,8 @@ async fn retrieve_batch(
     // language=SQL
     const QUERY: &str = r#"
         -- CREATE EXTENSION tsm_system_rows;
-        WITH "inner" AS (
-            SELECT account_id, last_battle_time
-            FROM accounts TABLESAMPLE system_rows($1)
-            ORDER BY random()
-        )
-        SELECT * FROM "inner"
+        SELECT account_id, last_battle_time
+        FROM accounts TABLESAMPLE system_rows($1)
         WHERE last_battle_time IS NULL OR (last_battle_time >= NOW() - $2)
         LIMIT 100
     "#;
