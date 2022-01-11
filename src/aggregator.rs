@@ -1,8 +1,8 @@
 use std::collections::hash_map::Entry;
 
-use ::redis::AsyncCommands;
 use chrono::{Duration, Utc};
 use itertools::Itertools;
+use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{info, instrument};
@@ -48,7 +48,6 @@ pub struct Analytics {
 }
 
 #[derive(Serialize, Deserialize)]
-
 pub struct DurationWrapper {
     #[serde(
         serialize_with = "crate::helpers::serde::serialize_duration_seconds",
