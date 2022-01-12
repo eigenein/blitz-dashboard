@@ -14,13 +14,18 @@ impl Render for IconKind {
 }
 
 #[must_use]
+#[allow(dead_code)]
 pub enum Icon {
+    ArrowDown,
+    ArrowUp,
     ChartArea,
 }
 
 impl Render for Icon {
     fn render_to(&self, buffer: &mut String) {
         buffer.push_str(match self {
+            Self::ArrowDown => "fa-arrow-down",
+            Self::ArrowUp => "fa-arrow-up",
             Self::ChartArea => "fa-chart-area",
         });
     }

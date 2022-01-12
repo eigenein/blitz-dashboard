@@ -1,5 +1,6 @@
 use chrono::{TimeZone, Utc};
 use chrono_humanize::Tense;
+use humantime::format_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
@@ -93,10 +94,31 @@ pub async fn get(
                                     }
 
                                     @for time_span in analytics.time_spans.iter() {
+                                        @let time_span = time_span.duration;
+                                        @let formatted_time_span = format_duration(time_span.to_std()?);
+
                                         th.is-white-space-nowrap {
-                                            a data-sort=(format!("mean-{}", time_span.duration)) {
+                                            a data-sort=(format!("lower-{}", time_span)) {
                                                 span.icon-text.is-flex-wrap-nowrap {
-                                                    span { "Среднее " (time_span.duration) }
+                                                    (Icon::ArrowDown.into_span())
+                                                    span { (formatted_time_span) }
+                                                }
+                                            }
+                                        }
+
+                                        th.is-white-space-nowrap {
+                                            a data-sort=(format!("mean-{}", time_span)) {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span { (formatted_time_span) }
+                                                }
+                                            }
+                                        }
+
+                                        th.is-white-space-nowrap {
+                                            a data-sort=(format!("upper-{}", time_span)) {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    (Icon::ArrowUp.into_span())
+                                                    span { (formatted_time_span) }
                                                 }
                                             }
                                         }
@@ -130,21 +152,52 @@ pub async fn get(
 
                                             (tier_td(vehicle.tier, None))
 
-                                            @for (time_span, win_rate) in analytics.time_spans.iter().zip(win_rates) {
+                                            @for (i, (time_span, win_rate)) in analytics.time_spans.iter().zip(win_rates).enumerate() {
+                                                @let background_class = if i % 2 == 0 { "has-background-info-light" } else { "" };
+
                                                 @if let Some(win_rate) = win_rate {
-                                                    td.is-white-space-nowrap data-sort=(format!("mean-{}", time_span.duration)) data-value=(win_rate.mean) {
+                                                    td.is-white-space-nowrap.(background_class)
+                                                        data-sort=(format!("lower-{}", time_span.duration))
+                                                        data-value=(win_rate.lower())
+                                                    {
                                                         span.icon-text.is-flex-wrap-nowrap {
-                                                            (Icon::ChartArea.into_span().color(Color::GreyLight))
+                                                            (Icon::ArrowDown.into_span().color(Color::GreyLight))
                                                             span {
-                                                                strong title=(win_rate.mean) {
-                                                                    (format!("{:.1}%", win_rate.mean * 100.0))
+                                                                strong title=(win_rate.lower()) {
+                                                                    (format!("{:.1}%", win_rate.lower() * 100.0))
                                                                 }
-                                                                span.has-text-grey { (format!(" ±{:.1}", win_rate.margin * 100.0)) }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    td.is-white-space-nowrap.(background_class)
+                                                        data-sort=(format!("mean-{}", time_span.duration))
+                                                        data-value=(win_rate.mean)
+                                                    {
+                                                        span {
+                                                            strong title=(win_rate.mean) {
+                                                                (format!("{:.1}%", win_rate.mean * 100.0))
+                                                            }
+                                                        }
+                                                    }
+
+                                                    td.is-white-space-nowrap.(background_class)
+                                                        data-sort=(format!("upper-{}", time_span.duration))
+                                                        data-value=(win_rate.upper())
+                                                    {
+                                                        span.icon-text.is-flex-wrap-nowrap {
+                                                            (Icon::ArrowUp.into_span().color(Color::GreyLight))
+                                                            span {
+                                                                strong title=(win_rate.upper()) {
+                                                                    (format!("{:.1}%", win_rate.upper() * 100.0))
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 } @else {
-                                                    td data-sort=(format!("mean-{}", time_span.duration)) data-value="-1" {}
+                                                    td.(background_class) data-sort=(format!("lower-{}", time_span.duration)) data-value="-1" {}
+                                                    td.(background_class) data-sort=(format!("mean-{}", time_span.duration)) data-value="-1" {}
+                                                    td.(background_class) data-sort=(format!("upper-{}", time_span.duration)) data-value="-1" {}
                                                 }
                                             }
                                         }
