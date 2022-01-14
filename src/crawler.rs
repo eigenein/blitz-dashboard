@@ -246,6 +246,7 @@ async fn prepare_stream_entries(
         if n_battles > 0 && n_wins >= 0 {
             metrics.lock().await.n_battles += n_battles;
             entries.push(StreamEntry {
+                account_id,
                 tank_id,
                 timestamp: tank.statistics.base.last_battle_time.timestamp(),
                 n_battles,

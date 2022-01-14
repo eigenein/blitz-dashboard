@@ -2,9 +2,9 @@ use anyhow::anyhow;
 
 use crate::wargaming::tank_id::TankId;
 
-/// Single sample point of a dataset.
 #[derive(Debug, Copy, Clone)]
 pub struct StreamEntry {
+    pub account_id: i32,
     pub tank_id: TankId,
     pub timestamp: i64,
     pub n_battles: i32,
@@ -12,8 +12,9 @@ pub struct StreamEntry {
 }
 
 pub struct StreamEntryBuilder {
-    timestamp: Option<i64>,
+    account_id: Option<i32>,
     tank_id: Option<TankId>,
+    timestamp: Option<i64>,
     n_battles: i32,
     n_wins: i32,
 }
@@ -21,8 +22,9 @@ pub struct StreamEntryBuilder {
 impl Default for StreamEntryBuilder {
     fn default() -> Self {
         Self {
-            timestamp: None,
+            account_id: None,
             tank_id: None,
+            timestamp: None,
             n_battles: 1,
             n_wins: 0,
         }
@@ -52,10 +54,11 @@ impl StreamEntryBuilder {
 
     pub fn build(&self) -> crate::Result<StreamEntry> {
         let point = StreamEntry {
+            account_id: self.account_id.unwrap_or(0), // FIXME: it'll become required.
+            tank_id: self.tank_id.ok_or_else(|| anyhow!("tank ID is missing"))?,
             timestamp: self
                 .timestamp
                 .ok_or_else(|| anyhow!("timestamp is missing"))?,
-            tank_id: self.tank_id.ok_or_else(|| anyhow!("tank ID is missing"))?,
             n_battles: self.n_battles,
             n_wins: self.n_wins,
         };

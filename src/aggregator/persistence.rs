@@ -18,6 +18,7 @@ pub const UPDATED_AT_KEY: &str = "aggregator::updated_at";
 
 const ANALYTICS_KEY: &str = "analytics::ru";
 
+const ACCOUNT_ID_KEY: &str = "a";
 const TANK_ID_KEY: &str = "t";
 const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
@@ -37,16 +38,13 @@ pub async fn push_entries(
     let mut pipeline = pipe();
 
     for entry in entries.iter() {
-        let mut items = vec![
+        let items = [
+            (ACCOUNT_ID_KEY, entry.account_id as i64),
             (TANK_ID_KEY, entry.tank_id as i64),
             (TIMESTAMP_KEY, entry.timestamp),
+            (N_BATTLES_KEY, entry.n_battles as i64),
+            (N_WINS_KEY, entry.n_wins as i64),
         ];
-        if entry.n_battles != 1 {
-            items.push((N_BATTLES_KEY, entry.n_battles as i64));
-        }
-        if entry.n_wins != 0 {
-            items.push((N_WINS_KEY, entry.n_wins as i64));
-        }
         pipeline.xadd(STREAM_KEY, "*", &items).ignore();
     }
 
@@ -62,7 +60,7 @@ pub async fn push_entries(
     pipeline
         .query_async(redis)
         .await
-        .context("failed to add the sample points to the stream")
+        .context("failed to add the entries to the stream")
 }
 
 #[instrument(
