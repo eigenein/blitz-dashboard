@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.147.8"
+version = "0.147.9"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
