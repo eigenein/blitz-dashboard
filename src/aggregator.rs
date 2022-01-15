@@ -1,3 +1,5 @@
+pub mod persistence;
+
 use std::collections::hash_map::Entry;
 
 use chrono::{Duration, Utc};
@@ -7,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{info, instrument};
 
+use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::battle_stream::entry::StreamEntry;
 use crate::battle_stream::stream::Stream;
-use crate::battle_stream::{store_analytics, UPDATED_AT_KEY};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
