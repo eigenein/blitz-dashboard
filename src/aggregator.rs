@@ -1,3 +1,4 @@
+mod models;
 pub mod persistence;
 
 use std::collections::hash_map::Entry;
@@ -5,16 +6,15 @@ use std::collections::hash_map::Entry;
 use chrono::{Duration, Utc};
 use itertools::Itertools;
 use redis::AsyncCommands;
-use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{info, instrument};
 
+use crate::aggregator::models::{Analytics, BattleCount, DurationWrapper};
 use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::battle_stream::entry::StreamEntry;
 use crate::battle_stream::stream::Stream;
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
-use crate::wargaming::tank_id::TankId;
 use crate::AHashMap;
 
 #[tracing::instrument(skip_all)]
@@ -37,27 +37,6 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
 
         redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Analytics {
-    pub time_spans: Vec<DurationWrapper>,
-    pub win_rates: Vec<(TankId, Vec<Option<ConfidenceInterval>>)>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DurationWrapper {
-    #[serde(
-        serialize_with = "crate::helpers::serde::serialize_duration_seconds",
-        deserialize_with = "crate::helpers::serde::deserialize_duration_seconds"
-    )]
-    pub duration: Duration,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct BattleCount {
-    n_wins: i32,
-    n_battles: i32,
 }
 
 #[instrument(level = "info", skip_all)]

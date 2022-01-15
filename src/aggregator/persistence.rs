@@ -3,7 +3,7 @@ use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use tracing::instrument;
 
-use crate::aggregator::Analytics;
+use crate::aggregator::models::Analytics;
 
 pub const UPDATED_AT_KEY: &str = "aggregator::updated_at";
 const ANALYTICS_KEY: &str = "analytics::ru";
