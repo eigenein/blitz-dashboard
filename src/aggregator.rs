@@ -7,16 +7,13 @@ use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
-use crate::aggregator::stream::Stream;
 use crate::battle_stream::entry::StreamEntry;
+use crate::battle_stream::persistence::{store_analytics, UPDATED_AT_KEY};
+use crate::battle_stream::stream::Stream;
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
 use crate::AHashMap;
-
-pub mod persistence;
-pub mod stream;
 
 #[tracing::instrument(skip_all)]
 pub async fn run(opts: AggregateOpts) -> crate::Result {

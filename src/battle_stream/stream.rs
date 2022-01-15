@@ -4,8 +4,8 @@ use redis::streams::StreamReadOptions;
 use redis::AsyncCommands;
 use tracing::{info, instrument};
 
-use crate::aggregator::persistence::{XReadResponse, STREAM_KEY};
 use crate::battle_stream::entry::StreamEntry;
+use crate::battle_stream::persistence::{XReadResponse, STREAM_KEY};
 use crate::helpers::redis::TwoTuple;
 
 const PAGE_SIZE: usize = 100000;

@@ -6,7 +6,7 @@ use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::{uri, State};
 
-use crate::aggregator::persistence::{retrieve_analytics, UPDATED_AT_KEY};
+use crate::battle_stream::persistence::{retrieve_analytics, UPDATED_AT_KEY};
 use crate::logging::clear_user;
 use crate::models::TankType;
 use crate::tankopedia::get_vehicle;
