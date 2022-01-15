@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 use tracing::instrument;
 
 use crate::battle_stream::entry::StreamEntry;
-use crate::battle_stream::persistence::push_entries;
+use crate::battle_stream::push_entries;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
