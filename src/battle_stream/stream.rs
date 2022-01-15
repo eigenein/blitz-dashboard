@@ -10,7 +10,6 @@ use crate::helpers::redis::TwoTuple;
 
 const PAGE_SIZE: usize = 100000;
 
-#[derive(Clone)]
 pub struct Stream {
     pub entries: Vec<StreamEntry>,
     redis: MultiplexedConnection,

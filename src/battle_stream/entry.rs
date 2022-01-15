@@ -2,7 +2,6 @@ use anyhow::anyhow;
 
 use crate::wargaming::tank_id::TankId;
 
-#[derive(Debug, Copy, Clone)]
 pub struct StreamEntry {
     pub account_id: i32,
     pub tank_id: TankId,
