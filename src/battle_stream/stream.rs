@@ -17,7 +17,7 @@ pub struct Stream {
     /// Last read entry ID of the Redis stream.
     pointer: String,
 
-    max_period: Duration,
+    time_span: Duration,
 }
 
 impl Stream {
@@ -28,12 +28,12 @@ impl Stream {
         Ok(this)
     }
 
-    pub fn new(redis: MultiplexedConnection, max_period: Duration) -> Self {
+    pub fn new(redis: MultiplexedConnection, time_span: Duration) -> Self {
         Self {
             entries: Vec::new(),
             redis,
-            max_period,
-            pointer: (Utc::now() - max_period).timestamp_millis().to_string(),
+            time_span,
+            pointer: (Utc::now() - time_span).timestamp_millis().to_string(),
         }
     }
 
@@ -86,9 +86,9 @@ impl Stream {
     }
 
     /// Removes expired entries.
-    #[tracing::instrument(level = "debug", skip_all, fields(max_period = %self.max_period))]
+    #[tracing::instrument(level = "debug", skip_all, fields(time_span = %self.time_span))]
     fn expire(&mut self) {
-        let expiry_timestamp = (Utc::now() - self.max_period).timestamp();
+        let expiry_timestamp = (Utc::now() - self.time_span).timestamp();
         self.entries
             .retain(|entry| entry.tank.timestamp > expiry_timestamp);
     }

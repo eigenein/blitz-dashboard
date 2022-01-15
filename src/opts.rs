@@ -188,6 +188,9 @@ pub struct ExportStreamOpts {
 
     #[structopt(long = "time-span", parse(try_from_str = parsers::duration))]
     pub time_span: Duration,
+
+    #[structopt(long)]
+    pub sort_by_timestamp: bool,
 }
 
 #[derive(StructOpt)]

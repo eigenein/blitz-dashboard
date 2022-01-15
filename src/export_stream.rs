@@ -8,8 +8,13 @@ pub async fn run(opts: ExportStreamOpts) -> crate::Result {
     let redis = ::redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let stream = Stream::read(redis, opts.time_span).await?;
-    for entry in stream.entries {
+    let mut entries = Stream::read(redis, opts.time_span).await?.entries;
+
+    if opts.sort_by_timestamp {
+        entries.sort_by_key(|entry| entry.tank.timestamp);
+    }
+
+    for entry in entries {
         println!("{}", serde_json::to_string(&entry)?);
     }
 
