@@ -42,10 +42,13 @@ pub enum Subcommand {
     Crawl(CrawlerOpts),
 
     ImportTankopedia(ImportTankopediaOpts),
+
     CrawlAccounts(CrawlAccountsOpts),
 
     #[structopt(alias = "aggregator")]
     Aggregate(AggregateOpts),
+
+    ExportStream(ExportStreamOpts),
 }
 
 /// Runs the web application
@@ -174,6 +177,17 @@ pub struct AggregateOpts {
 
     #[structopt(long = "time-span", required = true, parse(try_from_str = parsers::duration))]
     pub time_spans: Vec<Duration>,
+}
+
+/// Exports the battle stream into JSONL format
+#[derive(Clone, StructOpt)]
+pub struct ExportStreamOpts {
+    /// Redis URI
+    #[structopt(long, default_value = "redis://127.0.0.1/0")]
+    pub redis_uri: String,
+
+    #[structopt(long = "time-span", parse(try_from_str = parsers::duration))]
+    pub time_span: Duration,
 }
 
 #[derive(StructOpt)]

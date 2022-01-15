@@ -70,6 +70,9 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
         let mut builder = StreamEntryBuilder::default();
         for (key, value) in map.0.into_iter() {
             match key.as_str() {
+                ACCOUNT_ID_KEY => {
+                    builder.account_id(value.try_into()?);
+                }
                 "timestamp" | TIMESTAMP_KEY => {
                     builder.timestamp(value)?;
                 }

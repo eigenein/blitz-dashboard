@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use serde::Serialize;
 
 use crate::wargaming::tank_id::TankId;
 
@@ -22,6 +23,7 @@ impl StreamEntry {
 }
 
 /// Represents a single tank from a stream entry.
+#[derive(Serialize)]
 pub struct TankEntry {
     pub tank_id: TankId,
     pub timestamp: i64,
@@ -31,6 +33,7 @@ pub struct TankEntry {
 
 /// Contains account ID in addition to a single account's tank.
 /// Used to retain separate tank entries in the aggregator.
+#[derive(Serialize)]
 pub struct DenormalizedStreamEntry {
     pub account_id: i32,
     pub tank: TankEntry,
@@ -43,6 +46,11 @@ pub struct StreamEntryBuilder {
 }
 
 impl StreamEntryBuilder {
+    pub fn account_id(&mut self, account_id: i32) -> &mut Self {
+        self.account_id = Some(account_id);
+        self
+    }
+
     /// Starts a new tank entry with the specified tank ID.
     pub fn tank_id(&mut self, tank_id: TankId) -> &mut Self {
         self.tanks.push(TankEntryBuilder::new(tank_id));
@@ -75,7 +83,7 @@ impl StreamEntryBuilder {
 
     pub fn build(&self) -> crate::Result<StreamEntry> {
         let entry = StreamEntry {
-            account_id: self.account_id.unwrap_or(0), // FIXME: it'll become required.
+            account_id: self.account_id.unwrap_or(-1), // FIXME: it'll become required.
             tanks: self
                 .tanks
                 .iter()

@@ -17,6 +17,7 @@ mod aggregator;
 mod battle_stream;
 mod crawler;
 mod database;
+mod export_stream;
 mod helpers;
 mod logging;
 mod math;
@@ -58,10 +59,11 @@ async fn main() -> crate::Result {
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let start_instant = Instant::now();
     let result = match opts.subcommand {
-        Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
-        Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
-        Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Aggregate(opts) => aggregator::run(opts).await,
+        Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
+        Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
+        Subcommand::ExportStream(opts) => export_stream::run(opts).await,
+        Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
     };
     info!(
