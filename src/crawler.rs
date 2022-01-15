@@ -12,8 +12,8 @@ use sqlx::PgPool;
 use tokio::sync::Mutex;
 use tracing::instrument;
 
-use crate::battle_stream::entry::StreamEntry;
-use crate::battle_stream::push_entries;
+use crate::battle_stream::entry::{StreamEntry, TankEntry};
+use crate::battle_stream::push_entry;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{
@@ -203,26 +203,26 @@ async fn push_incremental_updates(
     tanks: &[Tank],
 ) -> crate::Result {
     if !tanks.is_empty() {
-        let entries =
-            prepare_stream_entries(database, metrics, account_id, tanks, stream_duration).await?;
-        push_entries(redis, &entries, stream_duration).await?;
+        let entry =
+            prepare_stream_entry(database, metrics, account_id, tanks, stream_duration).await?;
+        push_entry(redis, &entry, stream_duration).await?;
     }
     Ok(())
 }
 
-/// Converts the account info to the battle stream entries.
+/// Converts the account info and tank statistics to the battle stream entry.
 #[tracing::instrument(
     level = "debug",
     skip_all,
     fields(account_id = account_id, n_tanks = tanks.len()),
 )]
-async fn prepare_stream_entries(
+async fn prepare_stream_entry(
     database: &PgPool,
     metrics: &Arc<Mutex<CrawlerMetrics>>,
     account_id: i32,
     tanks: &[Tank],
     stream_duration: Duration,
-) -> crate::Result<Vec<StreamEntry>> {
+) -> crate::Result<StreamEntry> {
     let now = Utc::now();
     let tanks = tanks
         .iter()
@@ -237,7 +237,10 @@ async fn prepare_stream_entries(
     let tank_ids = tanks.iter().map(|tank| tank.tank_id());
     let battle_counts = retrieve_latest_tank_battle_counts(database, account_id, tank_ids).await?;
 
-    let mut entries = Vec::new();
+    let mut entry = StreamEntry {
+        account_id,
+        tanks: Vec::with_capacity(tanks.len()),
+    };
     for tank in tanks {
         let tank_id = tank.tank_id();
         let (n_battles, n_wins) = battle_counts.get(&tank_id).copied().unwrap_or((0, 0));
@@ -245,8 +248,7 @@ async fn prepare_stream_entries(
         let n_wins = tank.statistics.all.wins - n_wins;
         if n_battles > 0 && n_wins >= 0 {
             metrics.lock().await.n_battles += n_battles;
-            entries.push(StreamEntry {
-                account_id,
+            entry.tanks.push(TankEntry {
                 tank_id,
                 timestamp: tank.statistics.base.last_battle_time.timestamp(),
                 n_battles,
@@ -254,7 +256,7 @@ async fn prepare_stream_entries(
             });
         }
     }
-    Ok(entries)
+    Ok(entry)
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.

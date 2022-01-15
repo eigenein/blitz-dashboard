@@ -4,14 +4,14 @@ use redis::streams::StreamReadOptions;
 use redis::AsyncCommands;
 use tracing::{info, instrument};
 
-use crate::battle_stream::entry::StreamEntry;
+use crate::battle_stream::entry::{DenormalizedStreamEntry, StreamEntry};
 use crate::battle_stream::{XReadResponse, STREAM_KEY};
 use crate::helpers::redis::TwoTuple;
 
 const PAGE_SIZE: usize = 100000;
 
 pub struct Stream {
-    pub entries: Vec<StreamEntry>,
+    pub entries: Vec<DenormalizedStreamEntry>,
     redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
@@ -42,8 +42,8 @@ impl Stream {
         while {
             let n_entries = self.read_page().await?;
             tracing::info!(
-                n_read = n_entries,
-                n_entries = self.entries.len(),
+                n_compressed_entries_read = n_entries,
+                n_entries_total = self.entries.len(),
                 pointer = self.pointer.as_str(),
                 "reading…",
             );
@@ -52,7 +52,7 @@ impl Stream {
 
         self.expire();
 
-        info!(n_entries = self.entries.len(), "refreshed");
+        info!(n_actual_entries = self.entries.len(), "refreshed");
         Ok(())
     }
 
@@ -70,9 +70,11 @@ impl Stream {
         match response.pop() {
             Some(TwoTuple(_, entries)) => {
                 let n_entries = entries.len();
+                info!(n_compressed_entries_read = n_entries);
                 let new_pointer = entries.last().map(|entry| &entry.0).cloned();
                 for TwoTuple(_, fields) in entries.into_iter() {
-                    self.entries.push(StreamEntry::try_from(fields)?);
+                    let entry = StreamEntry::try_from(fields)?;
+                    self.entries.extend(entry.into_denormalized());
                 }
                 if let Some(new_pointer) = new_pointer {
                     self.pointer = new_pointer;
@@ -88,6 +90,6 @@ impl Stream {
     fn expire(&mut self) {
         let expiry_timestamp = (Utc::now() - self.max_period).timestamp();
         self.entries
-            .retain(|point| point.timestamp > expiry_timestamp);
+            .retain(|entry| entry.tank.timestamp > expiry_timestamp);
     }
 }

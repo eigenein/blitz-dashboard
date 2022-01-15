@@ -23,29 +23,30 @@ const TIMESTAMP_KEY: &str = "ts";
 const N_BATTLES_KEY: &str = "b";
 const N_WINS_KEY: &str = "w";
 
-/// Pushes the entries to the battle stream.
-#[instrument(level = "debug", skip_all, fields(n_entries = entries.len()))]
-pub async fn push_entries(
+/// Pushes the entry to the battle stream.
+#[instrument(level = "debug", skip_all, fields(n_tanks = entry.tanks.len()))]
+pub async fn push_entry(
     redis: &mut MultiplexedConnection,
-    entries: &[StreamEntry],
+    entry: &StreamEntry,
     stream_duration: Duration,
 ) -> crate::Result {
-    if entries.is_empty() {
+    if entry.tanks.is_empty() {
         return Ok(());
     }
 
     let mut pipeline = pipe();
 
-    for entry in entries.iter() {
-        let items = [
-            (ACCOUNT_ID_KEY, entry.account_id as i64),
-            (TANK_ID_KEY, entry.tank_id as i64),
-            (TIMESTAMP_KEY, entry.timestamp),
-            (N_BATTLES_KEY, entry.n_battles as i64),
-            (N_WINS_KEY, entry.n_wins as i64),
-        ];
-        pipeline.xadd(STREAM_KEY, "*", &items).ignore();
+    let mut items = vec![(ACCOUNT_ID_KEY, entry.account_id as i64)];
+    for tank in &entry.tanks {
+        items.extend([
+            // Must start with tank ID.
+            (TANK_ID_KEY, tank.tank_id as i64),
+            (TIMESTAMP_KEY, tank.timestamp),
+            (N_BATTLES_KEY, tank.n_battles as i64),
+            (N_WINS_KEY, tank.n_wins as i64),
+        ]);
     }
+    pipeline.xadd(STREAM_KEY, "*", &items).ignore();
 
     let minimum_id = (Utc::now() - stream_duration).timestamp_millis();
     tracing::debug!(minimum_id = minimum_id, "adding the stream entries…");
@@ -70,19 +71,19 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
         for (key, value) in map.0.into_iter() {
             match key.as_str() {
                 "timestamp" | TIMESTAMP_KEY => {
-                    builder.timestamp(value);
+                    builder.timestamp(value)?;
                 }
                 "tank_id" | TANK_ID_KEY => {
                     builder.tank_id(value.try_into()?);
                 }
                 "n_battles" | N_BATTLES_KEY => {
-                    builder.n_battles(value.try_into()?);
+                    builder.n_battles(value.try_into()?)?;
                 }
                 "n_wins" | N_WINS_KEY => {
-                    builder.n_wins(value.try_into()?);
+                    builder.n_wins(value.try_into()?)?;
                 }
                 "is_win" => {
-                    builder.n_wins(value.try_into()?);
+                    builder.n_wins(value.try_into()?)?;
                 }
                 _ => {}
             }

@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 
 use crate::aggregator::models::{Analytics, BattleCount, DurationWrapper};
 use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
-use crate::battle_stream::entry::StreamEntry;
+use crate::battle_stream::entry::DenormalizedStreamEntry;
 use crate::battle_stream::stream::Stream;
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
@@ -40,7 +40,7 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
 }
 
 #[instrument(level = "info", skip_all)]
-fn calculate_analytics(sample: &[StreamEntry], time_spans: &[Duration]) -> Analytics {
+fn calculate_analytics(sample: &[DenormalizedStreamEntry], time_spans: &[Duration]) -> Analytics {
     let now = Utc::now();
     let deadlines = time_spans
         .iter()
@@ -48,16 +48,16 @@ fn calculate_analytics(sample: &[StreamEntry], time_spans: &[Duration]) -> Analy
         .collect_vec();
     let mut statistics = AHashMap::default();
 
-    for point in sample {
-        match statistics.entry(point.tank_id) {
+    for sample_entry in sample {
+        match statistics.entry(sample_entry.tank.tank_id) {
             Entry::Vacant(entry) => {
                 let value = deadlines
                     .iter()
                     .map(|deadline| {
-                        if point.timestamp >= *deadline {
+                        if sample_entry.tank.timestamp >= *deadline {
                             BattleCount {
-                                n_battles: point.n_battles,
-                                n_wins: point.n_wins,
+                                n_battles: sample_entry.tank.n_battles,
+                                n_wins: sample_entry.tank.n_wins,
                             }
                         } else {
                             BattleCount::default()
@@ -69,9 +69,9 @@ fn calculate_analytics(sample: &[StreamEntry], time_spans: &[Duration]) -> Analy
 
             Entry::Occupied(mut entry) => {
                 for (value, deadline) in entry.get_mut().iter_mut().zip(&deadlines) {
-                    if point.timestamp >= *deadline {
-                        value.n_battles += point.n_battles;
-                        value.n_wins += point.n_wins;
+                    if sample_entry.tank.timestamp >= *deadline {
+                        value.n_battles += sample_entry.tank.n_battles;
+                        value.n_wins += sample_entry.tank.n_wins;
                     }
                 }
             }
