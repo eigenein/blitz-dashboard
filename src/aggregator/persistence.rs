@@ -4,8 +4,8 @@ use redis::aio::MultiplexedConnection;
 use redis::{pipe, AsyncCommands};
 use tracing::instrument;
 
-use crate::aggregator::stream_entry::{StreamEntry, StreamEntryBuilder};
 use crate::aggregator::Analytics;
+use crate::battle_stream::entry::{StreamEntry, StreamEntryBuilder};
 use crate::helpers::redis::{KeyValueVec, TwoTuple};
 
 pub type Fields = KeyValueVec<String, i64>;

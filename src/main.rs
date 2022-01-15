@@ -14,6 +14,7 @@ use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
 mod aggregator;
+mod battle_stream;
 mod crawler;
 mod database;
 mod helpers;
