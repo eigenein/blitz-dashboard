@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::battle_stream::stream::Stream;
 use crate::opts::ExportStreamOpts;
 
@@ -14,7 +16,10 @@ pub async fn run(opts: ExportStreamOpts) -> crate::Result {
         entries.sort_by_key(|entry| entry.tank.timestamp);
     }
 
-    for entry in entries {
+    for (i, entry) in entries.into_iter().enumerate() {
+        if i % 100000 == 0 {
+            info!(i);
+        }
         println!("{}", serde_json::to_string(&entry)?);
     }
 
