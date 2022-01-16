@@ -26,6 +26,7 @@ use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
+use crate::web::views::bulma::*;
 use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 
@@ -399,7 +400,12 @@ pub async fn get(
                                 div.column."is-4-tablet"."is-2-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-check", "Победы")) }
+                                            p.card-header-title {
+                                                span.icon-text {
+                                                    (Icon::Check.into_span().color(Color::Success))
+                                                    span { "Победы" }
+                                                }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {

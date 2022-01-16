@@ -19,15 +19,18 @@ pub enum Icon {
     ArrowDown,
     ArrowUp,
     ChartArea,
+    Check,
 }
 
 impl Render for Icon {
     fn render_to(&self, buffer: &mut String) {
-        buffer.push_str(match self {
-            Self::ArrowDown => "fa-arrow-down",
-            Self::ArrowUp => "fa-arrow-up",
-            Self::ChartArea => "fa-chart-area",
-        });
+        let string = match self {
+            Self::ArrowDown => "arrow-down",
+            Self::ArrowUp => "arrow-up",
+            Self::ChartArea => "chart-area",
+            Self::Check => "check",
+        };
+        buffer.push_str(string);
     }
 }
 
@@ -40,13 +43,16 @@ impl Icon {
 #[must_use]
 pub enum Color {
     GreyLight,
+    Success,
 }
 
 impl Render for Color {
     fn render_to(&self, buffer: &mut String) {
-        buffer.push_str(match self {
+        let string = match self {
             Self::GreyLight => "grey-light",
-        });
+            Self::Success => "success",
+        };
+        buffer.push_str(string);
     }
 }
 
@@ -97,7 +103,7 @@ impl Render for IconSpan {
         }
         buffer.push_str("\"><i class=\"");
         self.kind.render_to(buffer);
-        buffer.push(' ');
+        buffer.push_str(" fa-");
         self.icon.render_to(buffer);
         buffer.push_str("\"></i></span>");
     }
