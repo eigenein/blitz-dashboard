@@ -26,7 +26,6 @@ use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
-use crate::web::views::bulma::*;
 use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 
@@ -402,7 +401,7 @@ pub async fn get(
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text {
-                                                    (Icon::Check.into_span().color(Color::Success))
+                                                    span.icon.has-text-success { i.fas.fa-check {} }
                                                     span { "Победы" }
                                                 }
                                             }

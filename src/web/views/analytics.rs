@@ -14,7 +14,6 @@ use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
-use crate::web::views::bulma::*;
 use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
@@ -100,7 +99,7 @@ pub async fn get(
                                         th.is-white-space-nowrap {
                                             a data-sort=(format!("lower-{}", time_span)) {
                                                 span.icon-text.is-flex-wrap-nowrap {
-                                                    (Icon::ArrowDown.into_span())
+                                                    span.icon { i.fas.fa-arrow-down {} }
                                                     span { (formatted_time_span) }
                                                 }
                                             }
@@ -117,7 +116,7 @@ pub async fn get(
                                         th.is-white-space-nowrap {
                                             a data-sort=(format!("upper-{}", time_span)) {
                                                 span.icon-text.is-flex-wrap-nowrap {
-                                                    (Icon::ArrowUp.into_span())
+                                                    span.icon { i.fas.fa-arrow-up {} }
                                                     span { (formatted_time_span) }
                                                 }
                                             }
@@ -161,7 +160,7 @@ pub async fn get(
                                                         data-value=(win_rate.lower())
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
-                                                            (Icon::ArrowDown.into_span().color(Color::GreyLight))
+                                                            span.icon.has-text-grey-light { i.fas.fa-arrow-down {} }
                                                             span {
                                                                 strong title=(win_rate.lower()) {
                                                                     (format!("{:.1}%", win_rate.lower() * 100.0))
@@ -186,7 +185,7 @@ pub async fn get(
                                                         data-value=(win_rate.upper())
                                                     {
                                                         span.icon-text.is-flex-wrap-nowrap {
-                                                            (Icon::ArrowUp.into_span().color(Color::GreyLight))
+                                                            span.icon.has-text-grey-light { i.fas.fa-arrow-up {} }
                                                             span {
                                                                 strong title=(win_rate.upper()) {
                                                                     (format!("{:.1}%", win_rate.upper() * 100.0))
