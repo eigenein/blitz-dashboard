@@ -1,20 +1,28 @@
 use maud::Render;
 
+/// Elements that are able to render their CSS class.
+pub trait Class {
+    fn render_class_to(&self, buffer: &mut String);
+}
+
 #[must_use]
+#[derive(Copy, Clone)]
 pub enum IconKind {
     Solid,
 }
 
-impl Render for IconKind {
-    fn render_to(&self, buffer: &mut String) {
-        buffer.push_str(match self {
+impl Class for IconKind {
+    fn render_class_to(&self, buffer: &mut String) {
+        let string = match self {
             Self::Solid => "fas",
-        });
+        };
+        buffer.push_str(string);
     }
 }
 
 #[must_use]
 #[allow(dead_code)]
+#[derive(Copy, Clone)]
 pub enum Icon {
     ArrowDown,
     ArrowUp,
@@ -24,13 +32,7 @@ pub enum Icon {
 
 impl Render for Icon {
     fn render_to(&self, buffer: &mut String) {
-        let string = match self {
-            Self::ArrowDown => "arrow-down",
-            Self::ArrowUp => "arrow-up",
-            Self::ChartArea => "chart-area",
-            Self::Check => "check",
-        };
-        buffer.push_str(string);
+        self.into_span().render_to(buffer)
     }
 }
 
@@ -40,14 +42,27 @@ impl Icon {
     }
 }
 
+impl Class for Icon {
+    fn render_class_to(&self, buffer: &mut String) {
+        let string = match self {
+            Self::ArrowDown => "fa-arrow-down",
+            Self::ArrowUp => "fa-arrow-up",
+            Self::ChartArea => "fa-chart-area",
+            Self::Check => "fa-check",
+        };
+        buffer.push_str(string);
+    }
+}
+
 #[must_use]
+#[derive(Copy, Clone)]
 pub enum Color {
     GreyLight,
     Success,
 }
 
-impl Render for Color {
-    fn render_to(&self, buffer: &mut String) {
+impl Class for Color {
+    fn render_class_to(&self, buffer: &mut String) {
         let string = match self {
             Self::GreyLight => "grey-light",
             Self::Success => "success",
@@ -57,16 +72,18 @@ impl Render for Color {
 }
 
 #[must_use]
+#[derive(Copy, Clone)]
 struct TextColor(Color);
 
-impl Render for TextColor {
-    fn render_to(&self, buffer: &mut String) {
+impl Class for TextColor {
+    fn render_class_to(&self, buffer: &mut String) {
         buffer.push_str("has-text-");
-        self.0.render_to(buffer);
+        self.0.render_class_to(buffer);
     }
 }
 
 #[must_use]
+#[derive(Copy, Clone)]
 pub struct IconSpan {
     icon: Icon,
     kind: IconKind,
@@ -99,12 +116,12 @@ impl Render for IconSpan {
         buffer.push_str("<span class=\"icon");
         if let Some(color) = &self.color {
             buffer.push(' ');
-            color.render_to(buffer);
+            color.render_class_to(buffer);
         }
         buffer.push_str("\"><i class=\"");
-        self.kind.render_to(buffer);
-        buffer.push_str(" fa-");
-        self.icon.render_to(buffer);
+        self.kind.render_class_to(buffer);
+        buffer.push(' ');
+        self.icon.render_class_to(buffer);
         buffer.push_str("\"></i></span>");
     }
 }
