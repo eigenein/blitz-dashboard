@@ -83,7 +83,9 @@ impl StreamEntryBuilder {
 
     pub fn build(&self) -> crate::Result<StreamEntry> {
         let entry = StreamEntry {
-            account_id: self.account_id.unwrap_or(-1), // FIXME: it'll become required.
+            account_id: self
+                .account_id
+                .ok_or_else(|| anyhow!("account ID is missing"))?,
             tanks: self
                 .tanks
                 .iter()
@@ -93,7 +95,7 @@ impl StreamEntryBuilder {
         Ok(entry)
     }
 
-    /// Gets the current (last) tank from the list being costructed.
+    /// Gets the current (last) tank from the list being constructed.
     fn tank(&mut self) -> crate::Result<&mut TankEntryBuilder> {
         self.tanks
             .last_mut()
