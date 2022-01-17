@@ -109,12 +109,15 @@ pub struct TankEntryBuilder {
 }
 
 impl TankEntryBuilder {
+    pub const DEFAULT_N_BATTLES: i32 = 1;
+    pub const DEFAULT_N_WINS: i32 = 0;
+
     pub fn new(tank_id: TankId) -> Self {
         Self {
             tank_id,
             timestamp: None,
-            n_battles: 1, // FIXME: it'll become required.
-            n_wins: 0,    // FIXME: it'll become required.
+            n_battles: Self::DEFAULT_N_BATTLES,
+            n_wins: Self::DEFAULT_N_WINS,
         }
     }
 

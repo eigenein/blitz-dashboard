@@ -7,7 +7,7 @@ use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use tracing::instrument;
 
-use crate::battle_stream::entry::{StreamEntry, StreamEntryBuilder};
+use crate::battle_stream::entry::{StreamEntry, StreamEntryBuilder, TankEntryBuilder};
 use crate::helpers::redis::{KeyValueVec, TwoTuple};
 
 pub type Fields = KeyValueVec<String, i64>;
@@ -42,9 +42,15 @@ pub async fn push_entry(
             // Must start with tank ID.
             (TANK_ID_KEY, tank.tank_id as i64),
             (TIMESTAMP_KEY, tank.timestamp),
-            (N_BATTLES_KEY, tank.n_battles as i64),
-            (N_WINS_KEY, tank.n_wins as i64),
         ]);
+        if tank.n_battles != TankEntryBuilder::DEFAULT_N_BATTLES {
+            // Optimise for the single battle case.
+            items.push((N_BATTLES_KEY, tank.n_battles as i64));
+        }
+        if tank.n_wins != TankEntryBuilder::DEFAULT_N_WINS {
+            // Optimise for the single loss case.
+            items.push((N_WINS_KEY, tank.n_wins as i64));
+        }
     }
     pipeline.xadd(STREAM_KEY, "*", &items).ignore();
 
