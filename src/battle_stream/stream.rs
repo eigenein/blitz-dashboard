@@ -10,17 +10,23 @@ use crate::helpers::redis::TwoTuple;
 
 const PAGE_SIZE: usize = 100000;
 
-pub struct Stream {
+/// Reads and maintains the sorted battle stream.
+pub struct BattleStream {
     pub entries: Vec<DenormalizedStreamEntry>,
+
     redis: MultiplexedConnection,
 
     /// Last read entry ID of the Redis stream.
     pointer: String,
 
+    /// Specifies the minimum timestamp for the stream to read,
+    /// up to the current moment of time.
+    ///
+    /// In other words, the total duration of the stream.
     time_span: Duration,
 }
 
-impl Stream {
+impl BattleStream {
     #[instrument(skip_all, fields(time_span = %time_span))]
     pub async fn read(redis: MultiplexedConnection, time_span: Duration) -> crate::Result<Self> {
         let mut this = Self::new(redis, time_span);
@@ -51,6 +57,7 @@ impl Stream {
         } {}
 
         self.expire();
+        self.entries.sort_by_key(|entry| entry.tank.timestamp);
 
         info!(n_actual_entries = self.entries.len(), "refreshed");
         Ok(())

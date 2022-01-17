@@ -27,7 +27,7 @@ impl StreamEntry {
 pub struct TankEntry {
     pub tank_id: TankId,
     pub timestamp: i64,
-    pub n_battles: i32,
+    pub n_battles: i32, // FIXME: introduce a structure with the both counts (aka `BattleCounts`).
     pub n_wins: i32,
 }
 

@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::battle_stream::stream::Stream;
+use crate::battle_stream::stream::BattleStream;
 use crate::opts::ExportStreamOpts;
 
 #[tracing::instrument(skip_all)]
@@ -10,7 +10,7 @@ pub async fn run(opts: ExportStreamOpts) -> crate::Result {
     let redis = ::redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let mut entries = Stream::read(redis, opts.time_span).await?.entries;
+    let mut entries = BattleStream::read(redis, opts.time_span).await?.entries;
 
     if opts.sort_by_timestamp {
         entries.sort_by_key(|entry| entry.tank.timestamp);

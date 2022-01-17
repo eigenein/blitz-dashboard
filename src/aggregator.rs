@@ -3,18 +3,19 @@ pub mod persistence;
 
 use std::collections::hash_map::Entry;
 
-use chrono::{Duration, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use itertools::Itertools;
 use redis::AsyncCommands;
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::models::{Analytics, BattleCount, DurationWrapper};
+use crate::aggregator::models::{Analytics, BattleCounts, DurationWrapper, VehicleEntry};
 use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::battle_stream::entry::DenormalizedStreamEntry;
-use crate::battle_stream::stream::Stream;
+use crate::battle_stream::stream::BattleStream;
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
+use crate::wargaming::tank_id::TankId;
 use crate::AHashMap;
 
 #[tracing::instrument(skip_all)]
@@ -24,7 +25,8 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
     let mut redis = ::redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let mut stream = Stream::read(redis.clone(), *opts.time_spans.iter().max().unwrap()).await?;
+    let mut stream =
+        BattleStream::read(redis.clone(), *opts.time_spans.iter().max().unwrap()).await?;
     let mut interval = interval(opts.interval);
 
     info!("running…");
@@ -40,7 +42,7 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
 }
 
 #[instrument(level = "info", skip_all)]
-fn calculate_analytics(sample: &[DenormalizedStreamEntry], time_spans: &[Duration]) -> Analytics {
+fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Duration]) -> Analytics {
     let now = Utc::now();
     let deadlines = time_spans
         .iter()
@@ -48,19 +50,19 @@ fn calculate_analytics(sample: &[DenormalizedStreamEntry], time_spans: &[Duratio
         .collect_vec();
     let mut statistics = AHashMap::default();
 
-    for sample_entry in sample {
+    for sample_entry in entries {
         match statistics.entry(sample_entry.tank.tank_id) {
             Entry::Vacant(entry) => {
                 let value = deadlines
                     .iter()
                     .map(|deadline| {
                         if sample_entry.tank.timestamp >= *deadline {
-                            BattleCount {
+                            BattleCounts {
                                 n_battles: sample_entry.tank.n_battles,
                                 n_wins: sample_entry.tank.n_wins,
                             }
                         } else {
-                            BattleCount::default()
+                            BattleCounts::default()
                         }
                     })
                     .collect_vec();
@@ -108,4 +110,46 @@ fn calculate_analytics(sample: &[DenormalizedStreamEntry], time_spans: &[Duratio
             })
             .collect(),
     }
+}
+
+/// For each vehicle in the stream builds the win-rate timeline.
+#[instrument(skip_all)]
+fn build_timelines(entries: &[DenormalizedStreamEntry]) -> Vec<(TankId, ())> {
+    group_entries_by_tank_id(entries)
+        .into_iter()
+        .map(|(tank_id, entries)| (tank_id, build_vehicle_timeline(entries)))
+        .collect()
+}
+
+/// Groups the battle stream entries by tank ID.
+#[instrument(skip_all)]
+fn group_entries_by_tank_id(
+    entries: &[DenormalizedStreamEntry],
+) -> AHashMap<TankId, Vec<VehicleEntry>> {
+    let mut vehicle_entries = AHashMap::default();
+
+    for stream_entry in entries {
+        let vehicle_entry = VehicleEntry {
+            timestamp: Utc.timestamp(stream_entry.tank.timestamp, 0),
+            battle_counts: BattleCounts {
+                n_battles: stream_entry.tank.n_battles,
+                n_wins: stream_entry.tank.n_wins,
+            },
+        };
+        match vehicle_entries.entry(stream_entry.tank.tank_id) {
+            Entry::Vacant(entry) => {
+                entry.insert(vec![vehicle_entry]);
+            }
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().push(vehicle_entry);
+            }
+        }
+    }
+
+    vehicle_entries
+}
+
+#[instrument(skip_all)]
+fn build_vehicle_timeline(_entries: Vec<VehicleEntry>) {
+    unimplemented!();
 }
