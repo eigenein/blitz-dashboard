@@ -1,9 +1,9 @@
-use crate::DateTime;
 use chrono::Duration;
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::ConfidenceInterval;
 use crate::wargaming::tank_id::TankId;
+use crate::DateTime;
 
 #[must_use]
 #[derive(Serialize, Deserialize)]
@@ -31,3 +31,5 @@ pub struct VehicleEntry {
     pub timestamp: DateTime,
     pub battle_counts: BattleCounts,
 }
+
+pub type Timeline = Vec<(DateTime, ConfidenceInterval)>;

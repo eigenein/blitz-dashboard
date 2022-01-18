@@ -2,6 +2,7 @@ mod models;
 pub mod persistence;
 
 use std::collections::hash_map::Entry;
+use std::collections::VecDeque;
 
 use chrono::{Duration, TimeZone, Utc};
 use itertools::Itertools;
@@ -9,14 +10,14 @@ use redis::AsyncCommands;
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::models::{Analytics, BattleCounts, DurationWrapper, VehicleEntry};
+use crate::aggregator::models::{Analytics, BattleCounts, DurationWrapper, Timeline, VehicleEntry};
 use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::battle_stream::entry::DenormalizedStreamEntry;
 use crate::battle_stream::stream::BattleStream;
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
-use crate::AHashMap;
+use crate::{AHashMap, DateTime};
 
 #[tracing::instrument(skip_all)]
 pub async fn run(opts: AggregateOpts) -> crate::Result {
@@ -113,11 +114,16 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
 }
 
 /// For each vehicle in the stream builds the win-rate timeline.
+///
+/// The entries MUST be sorted by timestamp.
 #[instrument(skip_all)]
-fn build_timelines(entries: &[DenormalizedStreamEntry]) -> Vec<(TankId, ())> {
+fn build_timelines(
+    entries: &[DenormalizedStreamEntry],
+    window_span: Duration,
+) -> Vec<(TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
-        .map(|(tank_id, entries)| (tank_id, build_vehicle_timeline(entries)))
+        .map(|(tank_id, entries)| (tank_id, build_vehicle_timeline(entries, window_span)))
         .collect()
 }
 
@@ -149,7 +155,64 @@ fn group_entries_by_tank_id(
     vehicle_entries
 }
 
+/// Builds the vehicle timeline.
+///
+/// The entries MUST be sorted by timestamp.
 #[instrument(skip_all)]
-fn build_vehicle_timeline(_entries: Vec<VehicleEntry>) {
+fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> Timeline {
+    let mut window = VecDeque::new();
+    for entry in entries {
+        cleanup_window(&mut window, entry.timestamp, window_span);
+        window.push_back(entry);
+        todo!("sum");
+        todo!("confidence interval");
+    }
     unimplemented!();
+}
+
+/// Removes the «expired» front entries.
+#[instrument(skip_all)]
+fn cleanup_window(
+    window: &mut VecDeque<VehicleEntry>,
+    last_timestamp: DateTime,
+    window_span: Duration,
+) {
+    while match window.front() {
+        Some(first) if last_timestamp - first.timestamp >= window_span => true,
+        _ => false,
+    } {
+        window.pop_front();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cleanup_window_ok() {
+        let mut window = VecDeque::from([
+            VehicleEntry {
+                timestamp: Utc.timestamp(1, 0),
+                battle_counts: BattleCounts::default(),
+            },
+            VehicleEntry {
+                timestamp: Utc.timestamp(2, 0),
+                battle_counts: BattleCounts::default(),
+            },
+            VehicleEntry {
+                timestamp: Utc.timestamp(2, 1),
+                battle_counts: BattleCounts::default(),
+            },
+            VehicleEntry {
+                timestamp: Utc.timestamp(3, 0),
+                battle_counts: BattleCounts::default(),
+            },
+        ]);
+        cleanup_window(&mut window, Utc.timestamp(4, 0), Duration::seconds(2));
+
+        assert_eq!(window.len(), 2);
+        assert_eq!(window.get(0).unwrap().timestamp, Utc.timestamp(2, 1));
+        assert_eq!(window.get(1).unwrap().timestamp, Utc.timestamp(3, 0));
+    }
 }
