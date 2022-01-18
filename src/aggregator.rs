@@ -161,24 +161,43 @@ fn group_entries_by_tank_id(
 #[instrument(skip_all)]
 fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> Timeline {
     let mut window = VecDeque::new();
+    let mut battle_counts = BattleCounts::default();
+
     for entry in entries {
-        cleanup_window(&mut window, entry.timestamp, window_span);
+        cleanup_window(
+            &mut window,
+            &mut battle_counts,
+            entry.timestamp,
+            window_span,
+        );
+
+        battle_counts.n_battles += entry.battle_counts.n_battles;
+        battle_counts.n_wins += entry.battle_counts.n_wins;
         window.push_back(entry);
+
         unimplemented!();
     }
     unimplemented!();
 }
 
-/// Removes the «expired» front entries.
+/// Removes the «expired» front entries from the window
+/// and decreases the respective battle counts.
 #[instrument(skip_all)]
 fn cleanup_window(
     window: &mut VecDeque<VehicleEntry>,
+    battle_counts: &mut BattleCounts,
     last_timestamp: DateTime,
     window_span: Duration,
 ) {
-    while matches!(window.front(), Some(first) if last_timestamp - first.timestamp >= window_span) {
-        window.pop_front();
-    }
+    while match window.front() {
+        Some(first) if last_timestamp - first.timestamp >= window_span => {
+            battle_counts.n_battles -= first.battle_counts.n_battles;
+            battle_counts.n_wins -= first.battle_counts.n_wins;
+            window.pop_front();
+            true
+        }
+        _ => false,
+    } {}
 }
 
 #[cfg(test)]
@@ -192,11 +211,17 @@ mod tests {
         let mut window = VecDeque::from([
             VehicleEntry {
                 timestamp: Utc.timestamp(1, 0),
-                battle_counts: BattleCounts::default(),
+                battle_counts: BattleCounts {
+                    n_battles: 1,
+                    n_wins: 1,
+                },
             },
             VehicleEntry {
                 timestamp: Utc.timestamp(2, 0),
-                battle_counts: BattleCounts::default(),
+                battle_counts: BattleCounts {
+                    n_battles: 1,
+                    n_wins: 2,
+                },
             },
             VehicleEntry {
                 timestamp: Utc.timestamp(2, 1),
@@ -207,7 +232,19 @@ mod tests {
                 battle_counts: BattleCounts::default(),
             },
         ]);
-        cleanup_window(&mut window, Utc.timestamp(4, 0), Duration::seconds(2));
+        let mut battle_counts = BattleCounts {
+            n_battles: 4,
+            n_wins: 4,
+        };
+        cleanup_window(
+            &mut window,
+            &mut battle_counts,
+            Utc.timestamp(4, 0),
+            Duration::seconds(2),
+        );
+
+        assert_eq!(battle_counts.n_battles, 4 - 1 - 1);
+        assert_eq!(battle_counts.n_wins, 4 - 1 - 2);
 
         assert_eq!(window.len(), 2);
         assert_eq!(window.get(0).unwrap().timestamp, Utc.timestamp(2, 1));
