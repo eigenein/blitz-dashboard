@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use serde::Serialize;
 
 use crate::wargaming::tank_id::TankId;
+use crate::DateTime;
 
 /// Represents a single entry in the Redis stream
 /// and contains many tanks of the same account.
@@ -26,7 +27,7 @@ impl StreamEntry {
 #[derive(Serialize)]
 pub struct TankEntry {
     pub tank_id: TankId,
-    pub timestamp: i64,
+    pub timestamp: DateTime,
     pub n_battles: i32, // FIXME: introduce a structure with the both counts (aka `BattleCounts`).
     pub n_wins: i32,
 }
@@ -58,11 +59,11 @@ impl StreamEntryBuilder {
     }
 
     /// Sets the timestamp on the last tank.
-    pub fn timestamp(&mut self, secs: i64) -> crate::Result<&mut Self> {
+    pub fn timestamp(&mut self, timestamp: DateTime) -> crate::Result<&mut Self> {
         let tank = self.tank()?;
         match tank.timestamp {
             None => {
-                tank.timestamp = Some(secs);
+                tank.timestamp = Some(timestamp);
                 Ok(self)
             }
             Some(_) => Err(anyhow!("repeated timestamp for tank #{}", tank.tank_id)),
@@ -105,7 +106,7 @@ impl StreamEntryBuilder {
 
 pub struct TankEntryBuilder {
     tank_id: TankId,
-    timestamp: Option<i64>,
+    timestamp: Option<DateTime>,
     n_battles: i32,
     n_wins: i32,
 }

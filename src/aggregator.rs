@@ -4,7 +4,7 @@ pub mod persistence;
 use std::collections::hash_map::Entry;
 use std::collections::VecDeque;
 
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{Duration, Utc};
 use itertools::Itertools;
 use redis::AsyncCommands;
 use tokio::time::interval;
@@ -47,7 +47,7 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
     let now = Utc::now();
     let deadlines = time_spans
         .iter()
-        .map(|time_span| (now - *time_span).timestamp())
+        .map(|time_span| now - *time_span)
         .collect_vec();
     let mut statistics = AHashMap::default();
 
@@ -136,7 +136,7 @@ fn group_entries_by_tank_id(
 
     for stream_entry in entries {
         let vehicle_entry = VehicleEntry {
-            timestamp: Utc.timestamp(stream_entry.tank.timestamp, 0),
+            timestamp: stream_entry.tank.timestamp,
             battle_counts: BattleCounts {
                 n_battles: stream_entry.tank.n_battles,
                 n_wins: stream_entry.tank.n_wins,
@@ -164,8 +164,7 @@ fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> 
     for entry in entries {
         cleanup_window(&mut window, entry.timestamp, window_span);
         window.push_back(entry);
-        todo!("sum");
-        todo!("confidence interval");
+        unimplemented!();
     }
     unimplemented!();
 }
@@ -177,16 +176,15 @@ fn cleanup_window(
     last_timestamp: DateTime,
     window_span: Duration,
 ) {
-    while match window.front() {
-        Some(first) if last_timestamp - first.timestamp >= window_span => true,
-        _ => false,
-    } {
+    while matches!(window.front(), Some(first) if last_timestamp - first.timestamp >= window_span) {
         window.pop_front();
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use chrono::TimeZone;
+
     use super::*;
 
     #[test]

@@ -2,7 +2,7 @@ pub mod entry;
 pub mod stream;
 
 use anyhow::Context;
-use chrono::{Duration, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use redis::aio::MultiplexedConnection;
 use redis::pipe;
 use tracing::instrument;
@@ -41,7 +41,7 @@ pub async fn push_entry(
         items.extend([
             // Must start with tank ID.
             (TANK_ID_KEY, tank.tank_id as i64),
-            (TIMESTAMP_KEY, tank.timestamp),
+            (TIMESTAMP_KEY, tank.timestamp.timestamp()),
         ]);
         if tank.n_battles != TankEntryBuilder::DEFAULT_N_BATTLES {
             // Optimise for the single battle case.
@@ -80,7 +80,7 @@ impl TryFrom<KeyValueVec<String, i64>> for StreamEntry {
                     builder.account_id(value.try_into()?);
                 }
                 "timestamp" | TIMESTAMP_KEY => {
-                    builder.timestamp(value)?;
+                    builder.timestamp(Utc.timestamp(value, 0))?;
                 }
                 "tank_id" | TANK_ID_KEY => {
                     builder.tank_id(value.try_into()?);

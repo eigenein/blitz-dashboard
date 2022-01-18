@@ -95,7 +95,7 @@ impl BattleStream {
     /// Removes expired entries.
     #[tracing::instrument(level = "debug", skip_all, fields(time_span = %self.time_span))]
     fn expire(&mut self) {
-        let expiry_timestamp = (Utc::now() - self.time_span).timestamp();
+        let expiry_timestamp = Utc::now() - self.time_span;
         self.entries
             .retain(|entry| entry.tank.timestamp > expiry_timestamp);
     }

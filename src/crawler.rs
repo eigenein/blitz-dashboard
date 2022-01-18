@@ -250,7 +250,7 @@ async fn prepare_stream_entry(
             metrics.lock().await.n_battles += n_battles;
             entry.tanks.push(TankEntry {
                 tank_id,
-                timestamp: tank.statistics.base.last_battle_time.timestamp(),
+                timestamp: tank.statistics.base.last_battle_time,
                 n_battles,
                 n_wins,
             });
