@@ -20,7 +20,9 @@ use crate::database::{
     insert_tank_snapshots, open as open_database, replace_account,
     retrieve_latest_tank_battle_counts,
 };
-use crate::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
+use crate::models::{
+    merge_tanks, AccountInfo, BaseAccountInfo, BattleCounts, Tank, TankStatistics,
+};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::wargaming::WargamingApi;
 use crate::DateTime;
@@ -251,8 +253,7 @@ async fn prepare_stream_entry(
             entry.tanks.push(TankEntry {
                 tank_id,
                 timestamp: tank.statistics.base.last_battle_time,
-                n_battles,
-                n_wins,
+                battle_counts: BattleCounts { n_battles, n_wins },
             });
         }
     }

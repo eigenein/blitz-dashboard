@@ -180,6 +180,12 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
+#[derive(Default, Copy, Clone, Serialize, Deserialize)]
+pub struct BattleCounts {
+    pub n_wins: i32,
+    pub n_battles: i32,
+}
+
 /// Represents a generic vehicle from the tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {

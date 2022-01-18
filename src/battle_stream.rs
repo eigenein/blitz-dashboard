@@ -43,13 +43,13 @@ pub async fn push_entry(
             (TANK_ID_KEY, tank.tank_id as i64),
             (TIMESTAMP_KEY, tank.timestamp.timestamp()),
         ]);
-        if tank.n_battles != TankEntryBuilder::DEFAULT_N_BATTLES {
+        if tank.battle_counts.n_battles != TankEntryBuilder::DEFAULT_N_BATTLES {
             // Optimise for the single battle case.
-            items.push((N_BATTLES_KEY, tank.n_battles as i64));
+            items.push((N_BATTLES_KEY, tank.battle_counts.n_battles as i64));
         }
-        if tank.n_wins != TankEntryBuilder::DEFAULT_N_WINS {
+        if tank.battle_counts.n_wins != TankEntryBuilder::DEFAULT_N_WINS {
             // Optimise for the single loss case.
-            items.push((N_WINS_KEY, tank.n_wins as i64));
+            items.push((N_WINS_KEY, tank.battle_counts.n_wins as i64));
         }
     }
     pipeline.xadd(STREAM_KEY, "*", &items).ignore();

@@ -10,11 +10,12 @@ use redis::AsyncCommands;
 use tokio::time::interval;
 use tracing::{info, instrument};
 
-use crate::aggregator::models::{Analytics, BattleCounts, DurationWrapper, Timeline, VehicleEntry};
+use crate::aggregator::models::{Analytics, DurationWrapper, Timeline, VehicleEntry};
 use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
 use crate::battle_stream::entry::DenormalizedStreamEntry;
 use crate::battle_stream::stream::BattleStream;
 use crate::math::statistics::{ConfidenceInterval, Z};
+use crate::models::BattleCounts;
 use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
 use crate::{AHashMap, DateTime};
@@ -58,10 +59,7 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
                     .iter()
                     .map(|deadline| {
                         if sample_entry.tank.timestamp >= *deadline {
-                            BattleCounts {
-                                n_battles: sample_entry.tank.n_battles,
-                                n_wins: sample_entry.tank.n_wins,
-                            }
+                            sample_entry.tank.battle_counts
                         } else {
                             BattleCounts::default()
                         }
@@ -73,8 +71,8 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
             Entry::Occupied(mut entry) => {
                 for (value, deadline) in entry.get_mut().iter_mut().zip(&deadlines) {
                     if sample_entry.tank.timestamp >= *deadline {
-                        value.n_battles += sample_entry.tank.n_battles;
-                        value.n_wins += sample_entry.tank.n_wins;
+                        value.n_battles += sample_entry.tank.battle_counts.n_battles;
+                        value.n_wins += sample_entry.tank.battle_counts.n_wins;
                     }
                 }
             }
@@ -137,10 +135,7 @@ fn group_entries_by_tank_id(
     for stream_entry in entries {
         let vehicle_entry = VehicleEntry {
             timestamp: stream_entry.tank.timestamp,
-            battle_counts: BattleCounts {
-                n_battles: stream_entry.tank.n_battles,
-                n_wins: stream_entry.tank.n_wins,
-            },
+            battle_counts: stream_entry.tank.battle_counts,
         };
         match vehicle_entries.entry(stream_entry.tank.tank_id) {
             Entry::Vacant(entry) => {

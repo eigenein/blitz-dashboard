@@ -2,6 +2,7 @@ use chrono::Duration;
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::ConfidenceInterval;
+use crate::models::BattleCounts;
 use crate::wargaming::tank_id::TankId;
 use crate::DateTime;
 
@@ -19,12 +20,6 @@ pub struct DurationWrapper {
         deserialize_with = "crate::helpers::serde::deserialize_duration_seconds"
     )]
     pub duration: Duration,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct BattleCounts {
-    pub n_wins: i32,
-    pub n_battles: i32,
 }
 
 pub struct VehicleEntry {

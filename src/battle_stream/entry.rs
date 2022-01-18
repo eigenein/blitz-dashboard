@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use serde::Serialize;
 
+use crate::models::BattleCounts;
 use crate::wargaming::tank_id::TankId;
 use crate::DateTime;
 
@@ -28,8 +29,7 @@ impl StreamEntry {
 pub struct TankEntry {
     pub tank_id: TankId,
     pub timestamp: DateTime,
-    pub n_battles: i32, // FIXME: introduce a structure with the both counts (aka `BattleCounts`).
-    pub n_wins: i32,
+    pub battle_counts: BattleCounts,
 }
 
 /// Contains account ID in addition to a single account's tank.
@@ -130,8 +130,10 @@ impl TankEntryBuilder {
             timestamp: self
                 .timestamp
                 .ok_or_else(|| anyhow!("timestamp is missing"))?,
-            n_battles: self.n_battles,
-            n_wins: self.n_wins,
+            battle_counts: BattleCounts {
+                n_battles: self.n_battles,
+                n_wins: self.n_wins,
+            },
         };
         Ok(entry)
     }
