@@ -1621,6 +1621,14 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
         nation: Nation::Japan,
         type_: TankType::Light,
     },
+    24065_u16 => Vehicle {
+        tank_id: 24065,
+        name: Cow::Borrowed("ЛТГ"),
+        tier: 7,
+        is_premium: false,
+        nation: Nation::Ussr,
+        type_: TankType::Light,
+    },
     24081_u16 => Vehicle {
         tank_id: 24081,
         name: Cow::Borrowed("U-Panzer"),
@@ -1641,7 +1649,7 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
         tank_id: 24321,
         name: Cow::Borrowed("Т-100 ЛТ"),
         tier: 10,
-        is_premium: true,
+        is_premium: false,
         nation: Nation::Ussr,
         type_: TankType::Light,
     },

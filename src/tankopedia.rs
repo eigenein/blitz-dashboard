@@ -86,14 +86,6 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
 fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
     for vehicle in [
         Vehicle {
-            tank_id: 23057,
-            name: Cow::Borrowed("Kunze Panzer"),
-            tier: 7,
-            is_premium: true,
-            nation: Nation::Germany,
-            type_: TankType::Light,
-        },
-        Vehicle {
             tank_id: 20817,
             name: Cow::Borrowed("Эксплорер"),
             tier: 6,
@@ -228,14 +220,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::R
             is_premium: true,
             nation: Nation::Europe,
             type_: TankType::Medium,
-        },
-        Vehicle {
-            tank_id: 24321,
-            name: Cow::Borrowed("Т-100 ЛТ"),
-            tier: 10,
-            is_premium: true,
-            nation: Nation::Ussr,
-            type_: TankType::Light,
         },
         Vehicle {
             tank_id: 24577,
