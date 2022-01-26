@@ -57,7 +57,7 @@ version = "0.4.19"
 features = ["serde"]
 
 [dependencies.sentry]
-version = "0.23.0"
+version = "0.24.2"
 default-features = false
 features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "log"]
 

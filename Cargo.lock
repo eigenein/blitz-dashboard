@@ -66,6 +66,9 @@ name = "anyhow"
 version = "1.0.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94a45b455c14666b85fc40a019e8ab9eb75e3a124e05494f5397122bc9eb06e0"
+dependencies = [
+ "backtrace",
+]
 
 [[package]]
 name = "async-compression"
@@ -1203,6 +1206,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_threads"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97ba99ba6393e2c3734791401b66902d981cb03bf190af674ca69949b6d5fb15"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "object"
 version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1846,9 +1858,9 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "sentry"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "546b9b6f76c26c60ffbcf0b7136e15169fe13d43949b4aadb7c1edc1c3f3a26f"
+checksum = "31264b0d765fc0ece5a8366439647c0b30fc67691b9674cc31cee2dc845cab08"
 dependencies = [
  "httpdate",
  "reqwest",
@@ -1863,9 +1875,9 @@ dependencies = [
 
 [[package]]
 name = "sentry-anyhow"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "338ef04f73ca2fb1130ebab3853dca36041aa219a442ae873627373887660c36"
+checksum = "464e0e5910c06218efb7c490ddf54c250e47a709e587c73943f843fbcc42ccf2"
 dependencies = [
  "anyhow",
  "sentry-backtrace",
@@ -1874,9 +1886,9 @@ dependencies = [
 
 [[package]]
 name = "sentry-backtrace"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cd0cba2aff36ac98708f7a6e7abbdde82dbaf180d5870c41084dc1b473648b9"
+checksum = "4ffe2d027566e546cce7ae4caa418234fc2033eb655bd52e511feae9b65d4e9b"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -1886,14 +1898,12 @@ dependencies = [
 
 [[package]]
 name = "sentry-contexts"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bacf1c62427c6c97b896640d0c4dd204bbd3b79dd192d7cb40891aa5ee11d58"
+checksum = "84f73ee13a5dee162fe0576aa6e4818645a21940c0ee42349c961f68b6de6fc0"
 dependencies = [
  "hostname",
- "lazy_static",
  "libc",
- "regex",
  "rustc_version 0.4.0",
  "sentry-core",
  "uname",
@@ -1901,11 +1911,10 @@ dependencies = [
 
 [[package]]
 name = "sentry-core"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9a957270c9a430218f8031c866493061a27e35a70250e9527f093563a33ce6b"
+checksum = "139f79ea5a4f4a9f4e5a5b91a933943ded3556a0a369d088e8dbdf37c7875594"
 dependencies = [
- "chrono",
  "lazy_static",
  "rand",
  "sentry-types",
@@ -1915,9 +1924,9 @@ dependencies = [
 
 [[package]]
 name = "sentry-log"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66da5759b0704a2fb0d420863b0795ea3429739e188ff67fff82bb13dcd3cc50"
+checksum = "450b185889125f341d97879357e3a6f5f71dd50b5a7dd0f937849333e90f26cd"
 dependencies = [
  "log",
  "sentry-core",
@@ -1925,9 +1934,9 @@ dependencies = [
 
 [[package]]
 name = "sentry-panic"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "692bf989f0c99f025e33d7f58e62822c3771f56d189698c66dcc863122255d95"
+checksum = "d0f73a5d17341accfc6b9d0b73adf118649f88ed6a0f8ca23bb524a50159d4ff"
 dependencies = [
  "sentry-backtrace",
  "sentry-core",
@@ -1935,15 +1944,17 @@ dependencies = [
 
 [[package]]
 name = "sentry-types"
-version = "0.23.0"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4dd2266fee014a86e250e98e389191ecd23be546b5c42b6a2fb9af2972fadac"
+checksum = "00348bb8d45f085dec3d966c37c9eaaf4a223578f04a29cdf055e93962b02a55"
 dependencies = [
- "chrono",
  "debugid",
+ "getrandom",
+ "hex",
  "serde",
  "serde_json",
  "thiserror",
+ "time 0.3.6",
  "url",
  "uuid",
 ]
@@ -2412,6 +2423,17 @@ dependencies = [
  "time-macros",
  "version_check",
  "winapi",
+]
+
+[[package]]
+name = "time"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8d54b9298e05179c335de2b9645d061255bcd5155f843b3e328d2cfe0a5b413"
+dependencies = [
+ "itoa 1.0.1",
+ "libc",
+ "num_threads",
 ]
 
 [[package]]
