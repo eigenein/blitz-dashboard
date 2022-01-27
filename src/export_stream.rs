@@ -1,9 +1,9 @@
-use tracing::info;
+use tracing::{info, instrument};
 
 use crate::battle_stream::stream::BattleStream;
 use crate::opts::ExportStreamOpts;
 
-#[tracing::instrument(skip_all)]
+#[instrument(skip_all)]
 pub async fn run(opts: ExportStreamOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "export-stream"));
 

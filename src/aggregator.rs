@@ -20,7 +20,7 @@ use crate::opts::AggregateOpts;
 use crate::wargaming::tank_id::TankId;
 use crate::{AHashMap, DateTime};
 
-#[tracing::instrument(skip_all)]
+#[instrument(skip_all)]
 pub async fn run(opts: AggregateOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "aggregator"));
 

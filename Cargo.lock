@@ -192,7 +192,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blitz-dashboard"
-version = "0.149.2"
+version = "0.149.3"
 dependencies = [
  "ahash",
  "anyhow",
@@ -223,6 +223,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-futures",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1868,8 +1869,8 @@ dependencies = [
  "sentry-backtrace",
  "sentry-contexts",
  "sentry-core",
- "sentry-log",
  "sentry-panic",
+ "sentry-tracing",
  "tokio",
 ]
 
@@ -1923,16 +1924,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sentry-log"
-version = "0.24.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "450b185889125f341d97879357e3a6f5f71dd50b5a7dd0f937849333e90f26cd"
-dependencies = [
- "log",
- "sentry-core",
-]
-
-[[package]]
 name = "sentry-panic"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1940,6 +1931,17 @@ checksum = "d0f73a5d17341accfc6b9d0b73adf118649f88ed6a0f8ca23bb524a50159d4ff"
 dependencies = [
  "sentry-backtrace",
  "sentry-core",
+]
+
+[[package]]
+name = "sentry-tracing"
+version = "0.24.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "507f4a306130c8c97ca86fa416470e60fc56147a3e67167bcc5306c428c2a987"
+dependencies = [
+ "sentry-core",
+ "tracing-core",
+ "tracing-subscriber",
 ]
 
 [[package]]

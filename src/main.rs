@@ -46,7 +46,10 @@ async fn main() -> crate::Result {
         version = CRATE_VERSION,
         args = std::env::args().skip(1).join(" ").as_str(),
     );
-    let _sentry_guard = init_sentry(&opts);
+    let _sentry_guard = opts
+        .sentry_dsn
+        .as_ref()
+        .map(|dsn| crate::helpers::sentry::init(dsn, opts.verbosity));
 
     let result = run_subcommand(opts).await;
     if let Err(ref error) = result {
@@ -75,19 +78,4 @@ async fn run_subcommand(opts: Opts) -> crate::Result {
         "finished",
     );
     result
-}
-
-/// Initialize Sentry.
-/// See also: <https://docs.sentry.io/platforms/rust/>.
-fn init_sentry(opts: &opts::Opts) -> Option<sentry::ClientInitGuard> {
-    opts.sentry_dsn.as_ref().map(|dsn| {
-        sentry::init((
-            dsn.as_str(),
-            sentry::ClientOptions {
-                release: sentry::release_name!(),
-                debug: false,
-                ..Default::default()
-            },
-        ))
-    })
 }

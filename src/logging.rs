@@ -1,12 +1,10 @@
 use std::io::Write;
 
 use log::{Level, LevelFilter, Log, Metadata, Record};
-use sentry::integrations::log::{LogFilter, SentryLogger};
 
 /// Initialises logging.
 pub fn init(max_level: LevelFilter) -> anyhow::Result<()> {
-    let logger = SentryLogger::with_dest(JournaldLogger).filter(|_| LogFilter::Breadcrumb);
-    log::set_boxed_logger(Box::new(logger))?;
+    log::set_boxed_logger(Box::new(JournaldLogger))?;
     log::set_max_level(max_level);
     Ok(())
 }

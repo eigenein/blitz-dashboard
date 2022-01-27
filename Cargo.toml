@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.149.2"
+version = "0.149.3"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
@@ -38,6 +38,7 @@ serde_qs = "0.8.5"
 structopt = { version = "0.3.25", default_features = false, features = ["color", "suggestions"] }
 tracing = { version = "0.1.29", features = ["log-always"] }
 tracing-futures = "0.2.5"
+tracing-subscriber = { version = "0.3.7", default_features = false, features = ["std", "registry"] }
 
 [dependencies.tokio]
 version = "1.15.0"
@@ -59,7 +60,7 @@ features = ["serde"]
 [dependencies.sentry]
 version = "0.24.2"
 default-features = false
-features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "log"]
+features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "tracing"]
 
 [dependencies.serde]
 version = "1.0.136"

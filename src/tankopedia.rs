@@ -4,6 +4,8 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
+use tracing::instrument;
+
 use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
 use crate::wargaming::tank_id::TankId;
@@ -21,7 +23,7 @@ pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
 }
 
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
-#[tracing::instrument(skip_all)]
+#[instrument(skip_all)]
 pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
