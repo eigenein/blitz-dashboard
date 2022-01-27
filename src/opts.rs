@@ -49,6 +49,8 @@ pub enum Subcommand {
     Aggregate(AggregateOpts),
 
     ExportStream(ExportStreamOpts),
+
+    InitializeDatabase(InitializeDatabaseOpts),
 }
 
 /// Runs the web application
@@ -193,6 +195,14 @@ pub struct ExportStreamOpts {
     pub sort_by_timestamp: bool,
 }
 
+/// Initializes the database schema
+#[derive(Clone, StructOpt)]
+pub struct InitializeDatabaseOpts {
+    /// PostgreSQL database URI
+    #[structopt(short, long = "database")]
+    pub database_uri: String,
+}
+
 #[derive(StructOpt)]
 pub struct ConnectionOpts {
     #[structopt(flatten)]
@@ -208,10 +218,6 @@ pub struct InternalConnectionOpts {
     /// PostgreSQL database URI
     #[structopt(short, long = "database")]
     pub database_uri: String,
-
-    /// Initialize the database schema at startup
-    #[structopt(long)]
-    pub initialize_schema: bool,
 
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]

@@ -9,12 +9,12 @@
       <jdbc-url>jdbc:postgresql://yastatist.local:5432/yastatist</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="blitz_dashboard@localhost" uuid="2c6ccf2f-df07-439a-85a2-7db687d80e7e">
+    <data-source source="LOCAL" name="yastatist@localhost" uuid="2c6ccf2f-df07-439a-85a2-7db687d80e7e">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <remarks>Local</remarks>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/blitz_dashboard</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/yastatist</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

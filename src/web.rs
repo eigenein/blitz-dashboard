@@ -25,11 +25,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 
     let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
-    let database = crate::database::open(
-        &opts.connections.internal.database_uri,
-        opts.connections.internal.initialize_schema,
-    )
-    .await?;
+    let database = crate::database::open(&opts.connections.internal.database_uri, false).await?;
     let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;

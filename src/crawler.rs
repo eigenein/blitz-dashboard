@@ -81,10 +81,11 @@ impl Crawler {
     ) -> crate::Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
-        let database = open_database(&internal.database_uri, internal.initialize_schema).await?;
+        let database = open_database(&internal.database_uri, false).await?;
         let redis = redis::Client::open(internal.redis_uri.as_str())?
             .get_multiplexed_async_connection()
-            .await?;
+            .await
+            .context("failed to connect to the Redis")?;
 
         let this = Self {
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
