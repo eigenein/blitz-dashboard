@@ -6,7 +6,7 @@ use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{uri, State};
 
-use crate::logging::clear_user;
+use crate::helpers::logging::clear_user;
 use crate::models::AccountInfo;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::WargamingApi;

@@ -5,6 +5,7 @@ pub use std::result::Result as StdResult;
 pub use std::time::Duration as StdDuration;
 use std::time::Instant;
 
+use helpers::logging;
 use itertools::Itertools;
 use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
@@ -19,7 +20,6 @@ mod crawler;
 mod database;
 mod export_stream;
 mod helpers;
-mod logging;
 mod math;
 mod metrics;
 mod models;

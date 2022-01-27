@@ -1,7 +1,7 @@
 use maud::{html, DOCTYPE};
 use rocket::State;
 
-use crate::logging::clear_user;
+use crate::helpers::logging::clear_user;
 use crate::web::partials::{account_search, headers};
 use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;

@@ -3,7 +3,7 @@ use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::State;
 
-use crate::logging::clear_user;
+use crate::helpers::logging::clear_user;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
 use crate::web::partials::{footer, headers, home_button, vehicle_title};
