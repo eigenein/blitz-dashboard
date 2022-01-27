@@ -157,22 +157,27 @@ fn group_entries_by_tank_id(
 fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> Timeline {
     let mut window = VecDeque::new();
     let mut battle_counts = BattleCounts::default();
+    let mut timeline = Timeline::new();
 
     for entry in entries {
-        cleanup_window(
-            &mut window,
-            &mut battle_counts,
-            entry.timestamp,
-            window_span,
-        );
+        let timestamp = entry.timestamp;
+        cleanup_window(&mut window, &mut battle_counts, timestamp, window_span);
 
         battle_counts.n_battles += entry.battle_counts.n_battles;
         battle_counts.n_wins += entry.battle_counts.n_wins;
         window.push_back(entry);
 
-        unimplemented!();
+        timeline.push((
+            timestamp,
+            ConfidenceInterval::wilson_score_interval(
+                battle_counts.n_battles,
+                battle_counts.n_wins,
+                Z::default(),
+            ),
+        ));
     }
-    unimplemented!();
+
+    timeline
 }
 
 /// Removes the «expired» front entries from the window
