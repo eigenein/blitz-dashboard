@@ -17999,8 +17999,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -25432,9 +25432,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          8065,
           1409,
-          3713
+          3713,
+          8065
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -36364,6 +36364,223 @@
     "tier": 3,
     "turrets": [],
     "type": "AT-SPG"
+  },
+  "23809": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 100,
+          "rear": 40,
+          "sides": 60
+        },
+        "turret": {
+          "front": 90,
+          "rear": 45,
+          "sides": 70
+        }
+      },
+      "battle_level_range_max": 10,
+      "battle_level_range_min": 9,
+      "engine": {
+        "fire_chance": 0.12,
+        "name": "ДГ",
+        "power": 400,
+        "tier": 8,
+        "weight": 750
+      },
+      "engine_id": 69893,
+      "firepower": 53,
+      "gun": {
+        "aim_time": 3.79,
+        "caliber": 100,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.34,
+        "fire_rate": 7.32,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "100 мм Д-10Т обр. 1945 г.",
+        "reload_time": 8.2,
+        "tier": 7,
+        "traverse_speed": 33.25,
+        "weight": 2300
+      },
+      "gun_id": 19460,
+      "hp": 1600,
+      "hull_hp": 1280,
+      "hull_weight": 9952,
+      "is_default": true,
+      "maneuverability": 56,
+      "max_ammo": 50,
+      "max_weight": 35000,
+      "profile_id": "19460-69893-261122-261123",
+      "protection": 54,
+      "shells": [
+        {
+          "damage": 280,
+          "penetration": 175,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 240,
+          "penetration": 235,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 350,
+          "penetration": 50,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 68,
+      "signal_range": null,
+      "speed_backward": 25,
+      "speed_forward": 65,
+      "suspension": {
+        "load_limit": 35000,
+        "name": "Объект 84",
+        "tier": 8,
+        "traverse_speed": 38,
+        "weight": 4500
+      },
+      "suspension_id": 261122,
+      "turret": {
+        "hp": 320,
+        "name": "Объект 84",
+        "tier": 9,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 44,
+        "view_range": 260,
+        "weight": 5360
+      },
+      "turret_id": 261123,
+      "weight": 23162
+    },
+    "description": "Объект 84 (Т-84 или танк Васильева) — один из вариантов развития танка Т-54 образца 1946 года, предложенный П.П. Васильевым. Проект предполагал конструкцию подвески с возможностью регулировки клиренса. Дальнейшие работы были прекращены.",
+    "engines": [
+      70149,
+      69893,
+      70405
+    ],
+    "guns": [
+      19460,
+      19972
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/R_Object_84.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/R_Object_84.png"
+    },
+    "is_premium": false,
+    "modules_tree": {
+      "19460": {
+        "is_default": true,
+        "module_id": 19460,
+        "name": "100 мм Д-10Т обр. 1945 г.",
+        "next_modules": [
+          19972
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "19972": {
+        "is_default": false,
+        "module_id": 19972,
+        "name": "100 мм Д-54",
+        "next_modules": null,
+        "next_tanks": [
+          24321
+        ],
+        "price_credit": 0,
+        "price_xp": 59300,
+        "type": "vehicleGun"
+      },
+      "261122": {
+        "is_default": true,
+        "module_id": 261122,
+        "name": "Объект 84",
+        "next_modules": [
+          261378
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "261123": {
+        "is_default": true,
+        "module_id": 261123,
+        "name": "Объект 84",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "261378": {
+        "is_default": false,
+        "module_id": 261378,
+        "name": "Объект 84М",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 29500,
+        "type": "vehicleChassis"
+      },
+      "69893": {
+        "is_default": true,
+        "module_id": 69893,
+        "name": "ДГ",
+        "next_modules": [
+          70149
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "70149": {
+        "is_default": false,
+        "module_id": 70149,
+        "name": "ТД-12С",
+        "next_modules": [
+          70405
+        ],
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 20000,
+        "type": "vehicleEngine"
+      },
+      "70405": {
+        "is_default": false,
+        "module_id": 70405,
+        "name": "В-2-34С",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 25000,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Объект 84",
+    "nation": "ussr",
+    "next_tanks": {
+      "24321": 280000
+    },
+    "prices_xp": null,
+    "suspensions": [
+      261122,
+      261378
+    ],
+    "tank_id": 23809,
+    "tier": 9,
+    "turrets": [
+      261123
+    ],
+    "type": "lightTank"
   },
   "2385": {
     "cost": {
@@ -75250,8 +75467,8 @@
         "name": "76 mm AT Gun M1A2",
         "next_modules": null,
         "next_tanks": [
-          11553,
-          7201
+          7201,
+          11553
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -78453,8 +78670,8 @@
         "name": "QF Mk. VI Bofors",
         "next_modules": null,
         "next_tanks": [
-          849,
-          9041
+          9041,
+          849
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -79025,8 +79242,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          2049,
-          6913
+          6913,
+          2049
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -80658,8 +80875,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -81516,8 +81733,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -83835,8 +84052,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -88252,6 +88469,167 @@
       16675
     ],
     "type": "heavyTank"
+  },
+  "9521": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 125,
+          "rear": 50,
+          "sides": 70
+        },
+        "turret": {
+          "front": 210,
+          "rear": 65,
+          "sides": 110
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.12,
+        "name": "12150L7BW",
+        "power": 565,
+        "tier": 8,
+        "weight": 935
+      },
+      "engine_id": 10805,
+      "firepower": 43,
+      "gun": {
+        "aim_time": 4.68,
+        "caliber": 120,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.39,
+        "fire_rate": 4.29,
+        "move_down_arc": 7,
+        "move_up_arc": 15,
+        "name": "120 mm TG",
+        "reload_time": 14.0,
+        "tier": 8,
+        "traverse_speed": 35.0,
+        "weight": 2350
+      },
+      "gun_id": 13364,
+      "hp": 1450,
+      "hull_hp": 1120,
+      "hull_weight": 16453,
+      "is_default": true,
+      "maneuverability": 38,
+      "max_ammo": 42,
+      "max_weight": 39000,
+      "profile_id": "10805-13364-14131-15154",
+      "protection": 48,
+      "shells": [
+        {
+          "damage": 400,
+          "penetration": 203,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 340,
+          "penetration": 270,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 500,
+          "penetration": 52,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 67,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 45,
+      "suspension": {
+        "load_limit": 39000,
+        "name": "WZ-122 TM",
+        "tier": 8,
+        "traverse_speed": 28,
+        "weight": 7700
+      },
+      "suspension_id": 15154,
+      "turret": {
+        "hp": 330,
+        "name": "WZ-122 TM",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 30,
+        "view_range": 250,
+        "weight": 9720
+      },
+      "turret_id": 14131,
+      "weight": 37458
+    },
+    "description": "В ходе советско-китайского пограничного конфликта 1969 года китайцами был захвачен современный советский танк Т-62, что оказало значительное влияние на разработку проекта 122. Осенью 1970 года было создано два прототипа машины, которые отличались дополнительным вооружением: на бортах башни установили четыре установки ПТУР, на люке наводчика находилась спаренная установка пулемётов ДШК. Испытания, проходившие в 1971–1973 годах, показали ненадёжность конструкции, после чего в 1974 году работы над проектом были остановлены.",
+    "engines": [
+      10805
+    ],
+    "guns": [
+      13364
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Ch43_WZ-122_2.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Ch43_WZ-122_2.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "10805": {
+        "is_default": true,
+        "module_id": 10805,
+        "name": "12150L7BW",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "13364": {
+        "is_default": true,
+        "module_id": 13364,
+        "name": "120 mm TG",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "14131": {
+        "is_default": true,
+        "module_id": 14131,
+        "name": "WZ-122 TM",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "15154": {
+        "is_default": true,
+        "module_id": 15154,
+        "name": "WZ-122 TM",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "WZ-122 TM",
+    "nation": "china",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      15154
+    ],
+    "tank_id": 9521,
+    "tier": 8,
+    "turrets": [
+      14131
+    ],
+    "type": "mediumTank"
   },
   "9553": {
     "cost": {

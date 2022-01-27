@@ -1,3 +1,7 @@
+.PHONY: build
+build:
+	cargo build
+
 .PHONY: tag/%
 tag/%:
 	command git tag -a $* -m $*
