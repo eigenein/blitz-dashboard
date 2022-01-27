@@ -16,7 +16,7 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
-use crate::helpers::logging::set_user;
+use crate::helpers::sentry::set_user;
 use crate::helpers::time::{format_elapsed, from_days, from_hours, from_months};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::models::TankType;

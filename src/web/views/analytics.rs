@@ -7,7 +7,7 @@ use redis::AsyncCommands;
 use rocket::{uri, State};
 
 use crate::aggregator::persistence::{retrieve_analytics, UPDATED_AT_KEY};
-use crate::helpers::logging::clear_user;
+use crate::helpers::sentry::clear_user;
 use crate::models::TankType;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::tank_id::TankId;
