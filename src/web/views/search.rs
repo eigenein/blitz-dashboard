@@ -5,6 +5,7 @@ use maud::{html, Markup, DOCTYPE};
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{uri, State};
+use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
 use crate::models::AccountInfo;
@@ -19,6 +20,7 @@ const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 
 pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
+#[instrument(skip_all, fields(query))]
 #[rocket::get("/search?<query>")]
 pub async fn get(
     query: String,

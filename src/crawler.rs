@@ -174,6 +174,7 @@ impl Crawler {
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 async fn crawl_batch(
     api: WargamingApi,
     batch: Batch,
@@ -267,6 +268,7 @@ async fn prepare_stream_entry(
 /// # Returns
 ///
 /// Vector of matched pairs.
+#[instrument(level = "debug", skip_all)]
 fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,

@@ -2,6 +2,7 @@ use maud::{html, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::State;
+use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
 use crate::tankopedia::get_vehicle;
@@ -10,6 +11,7 @@ use crate::web::partials::{footer, headers, home_button, vehicle_title};
 use crate::web::response::CustomResponse;
 use crate::web::{DisableCaches, TrackingCode};
 
+#[instrument(skip_all, fields(tank_id))]
 #[rocket::get("/analytics/vehicles/<tank_id>")]
 pub async fn get(
     tank_id: TankId,

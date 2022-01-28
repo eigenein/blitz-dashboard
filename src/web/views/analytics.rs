@@ -5,6 +5,7 @@ use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use rocket::{uri, State};
+use tracing::instrument;
 
 use crate::aggregator::persistence::{retrieve_analytics, UPDATED_AT_KEY};
 use crate::helpers::sentry::clear_user;
@@ -18,6 +19,7 @@ use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
 
+#[instrument(skip_all)]
 #[rocket::get("/analytics/vehicles")]
 pub async fn get(
     tracking_code: &State<TrackingCode>,

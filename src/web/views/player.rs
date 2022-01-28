@@ -14,6 +14,7 @@ use maud::{html, PreEscaped, DOCTYPE};
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
+use tracing::instrument;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::sentry::set_user;
@@ -32,7 +33,7 @@ use crate::web::TrackingCode;
 pub mod partials;
 
 #[allow(clippy::too_many_arguments)]
-#[tracing::instrument(skip_all, fields(account_id = account_id, period = period.as_deref()))]
+#[instrument(skip_all, fields(account_id = account_id, period = period.as_deref()))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
     account_id: i32,
