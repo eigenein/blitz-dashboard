@@ -142,6 +142,7 @@ pub async fn retrieve_latest_tank_battle_counts(
     result
 }
 
+#[instrument(level = "debug", skip_all)]
 pub async fn replace_account(
     connection: &mut PgConnection,
     account: &BaseAccountInfo,
@@ -187,6 +188,7 @@ pub async fn insert_account_if_not_exists(
 }
 
 #[allow(dead_code)]
+#[instrument(level = "debug", skip_all)]
 pub async fn retrieve_account(
     connection: &PgPool,
     account_id: i32,
@@ -200,6 +202,7 @@ pub async fn retrieve_account(
         .with_context(|| format!("failed to retrieve account #{}", account_id))
 }
 
+#[instrument(level = "debug", skip_all)]
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
 
