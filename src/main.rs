@@ -49,7 +49,7 @@ async fn main() -> crate::Result {
     let _sentry_guard = opts
         .sentry_dsn
         .as_ref()
-        .map(|dsn| crate::helpers::sentry::init(dsn, opts.verbosity));
+        .map(|dsn| crate::helpers::sentry::init(dsn, opts.verbosity, opts.traces_sample_rate));
 
     let result = run_subcommand(opts).await;
     if let Err(ref error) = result {
@@ -58,7 +58,6 @@ async fn main() -> crate::Result {
     result
 }
 
-#[tracing::instrument(skip_all)]
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let start_instant = Instant::now();
     let result = match opts.subcommand {

@@ -4,7 +4,6 @@ use std::str::FromStr;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
-use tracing::instrument;
 use views::r#static;
 
 use crate::opts::WebOpts;
@@ -21,7 +20,6 @@ mod result;
 mod views;
 
 /// Run the web app.
-#[instrument(skip(opts), fields(host = opts.host.as_str(), port = opts.port))]
 pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
 

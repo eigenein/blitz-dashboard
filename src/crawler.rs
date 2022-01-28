@@ -46,7 +46,6 @@ pub struct Crawler {
 /// in the database.
 ///
 /// Intended to be run as a system service.
-#[instrument(skip_all)]
 pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
@@ -64,7 +63,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 ///
 /// This is a technical script which is intended to be run one time for an entire region
 /// to populate the database.
-#[instrument(skip_all)]
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
