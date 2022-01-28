@@ -7,7 +7,7 @@ use crate::web::partials::{account_search, headers};
 use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;
 
-#[instrument(skip_all)]
+#[instrument(skip_all, name = "index::get")]
 #[rocket::get("/")]
 pub async fn get(
     tracking_code: &State<TrackingCode>,

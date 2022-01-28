@@ -41,6 +41,7 @@ impl AccountInfoCache {
         Ok(account_info)
     }
 
+    #[instrument(level = "debug", skip_all, fields(account_id = account_info.base.id))]
     pub async fn put(&self, account_info: &AccountInfo) -> crate::Result {
         let blob = rmp_serde::to_vec(&account_info)?;
         tracing::debug!(

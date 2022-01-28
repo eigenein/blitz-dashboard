@@ -20,7 +20,7 @@ const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 
 pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
-#[instrument(skip_all, fields(query))]
+#[instrument(skip_all, name = "search::get", fields(query))]
 #[rocket::get("/search?<query>")]
 pub async fn get(
     query: String,

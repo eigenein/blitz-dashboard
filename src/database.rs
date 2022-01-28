@@ -20,7 +20,7 @@ use crate::wargaming::tank_id::TankId;
 use crate::{AHashMap, DateTime};
 
 /// Open and initialize the database.
-#[instrument(skip(uri))]
+#[instrument(name = "database::open", skip(uri))]
 pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;

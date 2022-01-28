@@ -19,7 +19,7 @@ use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
 
-#[instrument(skip_all)]
+#[instrument(skip_all, name = "analytics::get")]
 #[rocket::get("/analytics/vehicles")]
 pub async fn get(
     tracking_code: &State<TrackingCode>,
