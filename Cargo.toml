@@ -41,7 +41,7 @@ tracing-futures = "0.2.5"
 tracing-subscriber = { version = "0.3.7", default_features = false, features = ["std", "registry"] }
 
 [dependencies.tokio]
-version = "1.15.0"
+version = "1.16.1"
 features = ["rt-multi-thread", "time"]
 
 [dependencies.futures]
