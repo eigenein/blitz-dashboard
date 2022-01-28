@@ -20,7 +20,7 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
-    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
+    #[instrument(level = "debug", name = "AccountTanksCache::get", skip_all, fields(account_id = account_id))]
     pub async fn get(&self, account_id: i32) -> crate::Result<Vec<Tank>> {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);

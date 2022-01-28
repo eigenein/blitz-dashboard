@@ -27,7 +27,7 @@ pub struct BattleStream {
 }
 
 impl BattleStream {
-    #[instrument(skip_all, fields(time_span = %time_span))]
+    #[instrument(skip_all, name = "BattleStream::read", fields(time_span = %time_span))]
     pub async fn read(redis: MultiplexedConnection, time_span: Duration) -> crate::Result<Self> {
         let mut this = Self::new(redis, time_span);
         this.refresh().await?;
