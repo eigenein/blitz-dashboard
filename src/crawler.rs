@@ -10,7 +10,8 @@ use itertools::Itertools;
 use redis::aio::MultiplexedConnection;
 use sqlx::PgPool;
 use tokio::sync::Mutex;
-use tracing::instrument;
+use tracing::{debug_span, instrument};
+use tracing_futures::Instrument;
 
 use crate::battle_stream::entry::{StreamEntry, TankEntry};
 use crate::battle_stream::push_entry;
@@ -158,6 +159,7 @@ impl Crawler {
         replace_account(&mut transaction, &new_info.base).await?;
         transaction
             .commit()
+            .instrument(debug_span!("commit"))
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
 

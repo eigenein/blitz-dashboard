@@ -1,6 +1,6 @@
 [package]
 name = "blitz-dashboard"
-version = "0.149.9"
+version = "0.149.10"
 authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 edition = "2021"
 description = "World of Tanks Blitz player's web dashboard"
@@ -36,8 +36,8 @@ rocket = "0.5.0-rc.1"
 serde_json = "1.0.78"
 serde_qs = "0.8.5"
 structopt = { version = "0.3.25", default_features = false, features = ["color", "suggestions"] }
-tracing = { version = "0.1.29", features = ["log-always"] }
-tracing-futures = "0.2.5"
+tracing = { version = "0.1.29", features = ["std", "log-always"] }
+tracing-futures = { version = "0.2.5", features = ["tokio"] }
 tracing-subscriber = { version = "0.3.7", default_features = false, features = ["std", "registry"] }
 
 [dependencies.tokio]
