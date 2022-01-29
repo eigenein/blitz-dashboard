@@ -5,7 +5,6 @@ use redis::{from_redis_value, ErrorKind, FromRedisValue, RedisError, RedisResult
 pub struct KeyValueVec<K, V>(pub Vec<(K, V)>);
 
 impl<K: FromRedisValue, V: FromRedisValue> FromRedisValue for KeyValueVec<K, V> {
-    #[tracing::instrument(skip_all)]
     fn from_redis_value(value: &Value) -> RedisResult<Self> {
         let inner = value
             .as_map_iter()

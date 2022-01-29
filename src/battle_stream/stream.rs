@@ -43,7 +43,7 @@ impl BattleStream {
         }
     }
 
-    #[tracing::instrument(level = "info", skip_all, fields(pointer = self.pointer.as_str()))]
+    #[tracing::instrument(level = "info", name = "BattleStream::refresh", skip_all, fields(pointer = self.pointer.as_str()))]
     pub async fn refresh(&mut self) -> crate::Result {
         while {
             let n_entries = self.read_page().await?;
@@ -63,7 +63,12 @@ impl BattleStream {
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(pointer = self.pointer.as_str()))]
+    #[tracing::instrument(
+        level = "debug",
+        name = "BattleStream::read_page",
+        skip_all,
+        fields(pointer = self.pointer.as_str()),
+    )]
     async fn read_page(&mut self) -> crate::Result<usize> {
         let mut response: XReadResponse = self
             .redis
