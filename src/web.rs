@@ -4,6 +4,7 @@ use std::str::FromStr;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
+use tracing::info;
 use views::r#static;
 
 use crate::opts::WebOpts;
@@ -22,6 +23,7 @@ mod views;
 /// Run the web app.
 pub async fn run(opts: WebOpts) -> crate::Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
+    info!(host = opts.host.as_str(), port = opts.port);
 
     let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
     let database = crate::database::open(&opts.connections.internal.database_uri, false).await?;

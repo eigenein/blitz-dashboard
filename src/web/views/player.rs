@@ -178,7 +178,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Текущий процент побед" { "WR" } }
+                        span { "Процент побед" }
                     }
                 }
             }
@@ -194,7 +194,7 @@ pub async fn get(
             th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Среднее число фрагов за бой" { "FPB" } }
+                        span { "Фраги за бой" }
                     }
                 }
             }
@@ -202,7 +202,7 @@ pub async fn get(
             th {
                 a data-sort="wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед за время жизни танка в бою – полезно для событий на победы" { "WPH" } }
+                        span { "Победы в час" }
                     }
                 }
             }
@@ -216,17 +216,9 @@ pub async fn get(
             }
 
             th {
-                a data-sort="gold" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Текущий доход от золотых бустеров, если они были установлены" { "Золото" } }
-                    }
-                }
-            }
-
-            th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 95%" { "Истинное золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 95%" { "Ожидаемое золото" } }
                     }
                 }
             }
@@ -235,6 +227,14 @@ pub async fn get(
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Общий урон" }
+                    }
+                }
+            }
+
+            th.has-text-right {
+                a data-sort="damage-per-minute" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { "Урон в минуту" }
                     }
                 }
             }
@@ -423,7 +423,12 @@ pub async fn get(
                                 div.column."is-8-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-heart", "Выживаемость")) }
+                                            p.card-header-title {
+                                                span.icon-text {
+                                                    span.icon { i.fas.fa-heart.has-text-danger {} }
+                                                    span { "Выживаемость" }
+                                                }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
@@ -611,14 +616,6 @@ fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::
                 }
             }
 
-            @let gold = 10 * tank.statistics.all.battles + vehicle.tier * tank.statistics.all.wins;
-            td data-sort="gold" data-value=(gold) {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                    span { (gold) }
-                }
-            }
-
             @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
             td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                 span.icon-text.is-flex-wrap-nowrap {
@@ -634,6 +631,11 @@ fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::
 
             td.has-text-right data-sort="damage-dealt" data-value=(tank.statistics.all.damage_dealt) {
                 (tank.statistics.all.damage_dealt)
+            }
+
+            @let damage_per_minute = tank.damage_per_minute();
+            td.has-text-right data-sort="damage-per-minute" data-value=(damage_per_minute) {
+                (format!("{:.0}", damage_per_minute))
             }
 
             @let damage_per_battle = tank.statistics.all.damage_dealt as f64 / tank.statistics.all.battles as f64;

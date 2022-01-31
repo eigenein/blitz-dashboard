@@ -328,6 +328,13 @@ impl Tank {
         self.statistics.all.battles as f64 / self.statistics.battle_life_time.num_seconds() as f64
             * 3600.0
     }
+
+    #[must_use]
+    pub fn damage_per_minute(&self) -> f64 {
+        self.statistics.all.damage_dealt as f64
+            / self.statistics.battle_life_time.num_seconds() as f64
+            * 60.0
+    }
 }
 
 impl Sub for TankStatistics {
