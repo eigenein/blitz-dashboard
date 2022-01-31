@@ -38,11 +38,14 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
         let analytics = calculate_analytics(&stream.entries, &opts.time_spans);
         store_analytics(&mut redis, &analytics).await?;
 
+        let timelines = build_timelines(&stream.entries, Duration::days(1));
+        info!(n_timelines = timelines.len());
+
         redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
     }
 }
 
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "info", skip_all, fields(n_entries = entries.len()))]
 fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Duration]) -> Analytics {
     let now = Utc::now();
     let deadlines = time_spans
@@ -113,7 +116,7 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
 /// For each vehicle in the stream builds the win-rate timeline.
 ///
 /// The entries MUST be sorted by timestamp.
-#[instrument(skip_all)]
+#[instrument(skip_all, fields(n_entries = entries.len(), window_span = window_span.to_string().as_str()))]
 fn build_timelines(
     entries: &[DenormalizedStreamEntry],
     window_span: Duration,
