@@ -268,6 +268,21 @@ pub async fn get(
         (DOCTYPE)
         html lang="en" {
             head {
+                script type="module" defer {
+                    (PreEscaped(r#"""
+                        "use strict";
+                        
+                        import { initSortableTable } from "/static/table.js?v5";
+                        
+                        (function () {
+                            const vehicles = document.getElementById("vehicles");
+                            if (vehicles != null) {
+                                initSortableTable(vehicles, "battles");
+                            }
+                        })();
+                    """#))
+                }
+
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
                 title { (current_info.nickname) " – Я – статист в World of Tanks Blitz!" }
@@ -504,21 +519,6 @@ pub async fn get(
                 }
 
                 (footer())
-
-                script type="module" {
-                    (PreEscaped(r#"""
-                        "use strict";
-                        
-                        import { initSortableTable } from "/static/table.js?v5";
-                        
-                        (function () {
-                            const vehicles = document.getElementById("vehicles");
-                            if (vehicles != null) {
-                                initSortableTable(vehicles, "battles");
-                            }
-                        })();
-                    """#))
-                }
             }
         }
     };

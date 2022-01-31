@@ -51,6 +51,18 @@ pub async fn get(
         (DOCTYPE)
         html.has-navbar-fixed-top lang="en" {
             head {
+                script type="module" defer {
+                    (PreEscaped(r#"""
+                        "use strict";
+                        
+                        import { initSortableTable } from "/static/table.js?v5";
+                        
+                        (function () {
+                            initSortableTable(document.getElementById("analytics"), "tier");
+                        })();
+                    """#))
+                }
+
                 (headers())
                 title { "Аналитика по танкам – Я же статист!" }
             }
@@ -211,18 +223,6 @@ pub async fn get(
             }
 
             (footer())
-
-            script type="module" {
-                (PreEscaped(r#"""
-                    "use strict";
-                    
-                    import { initSortableTable } from "/static/table.js?v5";
-                    
-                    (function () {
-                        initSortableTable(document.getElementById("analytics"), "tier");
-                    })();
-                """#))
-            }
         }
     };
 
