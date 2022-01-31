@@ -36582,6 +36582,167 @@
     ],
     "type": "lightTank"
   },
+  "23825": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 20,
+          "rear": 8,
+          "sides": 10
+        },
+        "turret": {
+          "front": 20,
+          "rear": 10,
+          "sides": 10
+        }
+      },
+      "battle_level_range_max": 8,
+      "battle_level_range_min": 7,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "12 cylinder Boxer-Motor",
+        "power": 230,
+        "tier": 7,
+        "weight": 600
+      },
+      "engine_id": 40981,
+      "firepower": 54,
+      "gun": {
+        "aim_time": 3.82,
+        "caliber": 88,
+        "clip_capacity": 3,
+        "clip_reload_time": 2.5,
+        "dispersion": 0.36,
+        "fire_rate": 9.47,
+        "move_down_arc": 7,
+        "move_up_arc": 17,
+        "name": "8,8 cm Pak 43 L/71 B",
+        "reload_time": 14.0,
+        "tier": 8,
+        "traverse_speed": 30.63,
+        "weight": 2562
+      },
+      "gun_id": 262932,
+      "hp": 1000,
+      "hull_hp": 740,
+      "hull_weight": 5493,
+      "is_default": true,
+      "maneuverability": 50,
+      "max_ammo": 60,
+      "max_weight": 16000,
+      "profile_id": "40981-261651-262162-262932",
+      "protection": 14,
+      "shells": [
+        {
+          "damage": 220,
+          "penetration": 215,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 252,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 44,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 75,
+      "signal_range": null,
+      "speed_backward": 17,
+      "speed_forward": 50,
+      "suspension": {
+        "load_limit": 16000,
+        "name": "Krupp-Steyr Waffenträger",
+        "tier": 7,
+        "traverse_speed": 38,
+        "weight": 3000
+      },
+      "suspension_id": 262162,
+      "turret": {
+        "hp": 260,
+        "name": "Krupp-Steyr Waffenträger",
+        "tier": 7,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 24,
+        "view_range": 240,
+        "weight": 2000
+      },
+      "turret_id": 261651,
+      "weight": 13930
+    },
+    "description": "Проект компании Steyr, разработанный в рамках конкурса по созданию специального артиллерийского транспортёра, способного не только перевозить артиллерийскую систему, но и вести огонь непосредственно с шасси. Для удешевления и максимального упрощения конструкции предполагалось широко использовать детали гусеничного тягача Raupenschlepper Ost. Башня с орудием была предоставлена компанией Krupp. К 2 сентября 1944 года изготовили деревянный макет и один прототип.",
+    "engines": [
+      40981
+    ],
+    "guns": [
+      262932
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/G109_Steyr_WT.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/G109_Steyr_WT.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "261651": {
+        "is_default": true,
+        "module_id": 261651,
+        "name": "Krupp-Steyr Waffenträger",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262162": {
+        "is_default": true,
+        "module_id": 262162,
+        "name": "Krupp-Steyr Waffenträger",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "262932": {
+        "is_default": true,
+        "module_id": 262932,
+        "name": "8,8 cm Pak 43 L/71 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "40981": {
+        "is_default": true,
+        "module_id": 40981,
+        "name": "12 cylinder Boxer-Motor",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Krupp-Steyr Waffenträger",
+    "nation": "germany",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      262162
+    ],
+    "tank_id": 23825,
+    "tier": 7,
+    "turrets": [
+      261651
+    ],
+    "type": "AT-SPG"
+  },
   "2385": {
     "cost": {
       "price_credit": 0,
@@ -37098,6 +37259,167 @@
       261379
     ],
     "type": "lightTank"
+  },
+  "24081": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 62,
+          "rear": 52,
+          "sides": 52
+        },
+        "turret": {
+          "front": 84,
+          "rear": 47,
+          "sides": 47
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 210",
+        "power": 700,
+        "tier": 7,
+        "weight": 1200
+      },
+      "engine_id": 41237,
+      "firepower": 39,
+      "gun": {
+        "aim_time": 4.08,
+        "caliber": 75,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.35,
+        "fire_rate": 9.84,
+        "move_down_arc": 8,
+        "move_up_arc": 20,
+        "name": "7,5 cm Kw.K. 42 L/70",
+        "reload_time": 6.1,
+        "tier": 6,
+        "traverse_speed": 35.0,
+        "weight": 955
+      },
+      "gun_id": 263188,
+      "hp": 1000,
+      "hull_hp": 720,
+      "hull_weight": 16760,
+      "is_default": true,
+      "maneuverability": 65,
+      "max_ammo": 80,
+      "max_weight": 36000,
+      "profile_id": "41237-261907-262418-263188",
+      "protection": 30,
+      "shells": [
+        {
+          "damage": 160,
+          "penetration": 150,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 135,
+          "penetration": 194,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 200,
+          "penetration": 20,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 61,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 56,
+      "suspension": {
+        "load_limit": 36000,
+        "name": "VK 30.01 (D)",
+        "tier": 6,
+        "traverse_speed": 45,
+        "weight": 9000
+      },
+      "suspension_id": 262418,
+      "turret": {
+        "hp": 280,
+        "name": "Pz.Kpfw. III/IV Ausf. B",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 32,
+        "view_range": 240,
+        "weight": 6000
+      },
+      "turret_id": 261907,
+      "weight": 34165
+    },
+    "description": null,
+    "engines": [
+      41237
+    ],
+    "guns": [
+      263188
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/VK3002DB_BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/VK3002DB_BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "261907": {
+        "is_default": true,
+        "module_id": 261907,
+        "name": "Pz.Kpfw. III/IV Ausf. B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262418": {
+        "is_default": true,
+        "module_id": 262418,
+        "name": "VK 30.01 (D)",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "263188": {
+        "is_default": true,
+        "module_id": 263188,
+        "name": "7,5 cm Kw.K. 42 L/70",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "41237": {
+        "is_default": true,
+        "module_id": 41237,
+        "name": "Maybach HL 210",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "U-Panzer",
+    "nation": "germany",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      262418
+    ],
+    "tank_id": 24081,
+    "tier": 6,
+    "turrets": [
+      261907
+    ],
+    "type": "mediumTank"
   },
   "24097": {
     "cost": null,

@@ -1607,7 +1607,7 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
     },
     23825_u16 => Vehicle {
         tank_id: 23825,
-        name: Cow::Borrowed("Steyr WT"),
+        name: Cow::Borrowed("Krupp-Steyr Waffenträger"),
         tier: 7,
         is_premium: true,
         nation: Nation::Germany,
