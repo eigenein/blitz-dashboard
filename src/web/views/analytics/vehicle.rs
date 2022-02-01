@@ -11,7 +11,7 @@ use crate::web::partials::{footer, headers, home_button, vehicle_title};
 use crate::web::response::CustomResponse;
 use crate::web::{DisableCaches, TrackingCode};
 
-#[instrument(skip_all, name = "vehicle::get", fields(tank_id))]
+#[instrument(skip_all, name = "vehicle::get", fields(tank_id = tank_id))]
 #[rocket::get("/analytics/vehicles/<tank_id>")]
 pub async fn get(
     tank_id: TankId,
@@ -35,6 +35,7 @@ pub async fn get(
         (DOCTYPE)
         html.has-navbar-fixed-top lang="en" {
             head {
+                script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js" integrity="sha512-TW5s0IT/IppJtu76UbysrBH9Hy/5X41OTAbQuffZFU6lQ1rdcLHzpU5BzVvr/YFykoiMYZVWlr/PX1mDcfM9Qg==" crossorigin="anonymous" referrerpolicy="no-referrer" {}
                 (headers())
                 title { (vehicle.name) " – Я статист!" }
             }
