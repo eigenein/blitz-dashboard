@@ -38,7 +38,7 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
         let analytics = calculate_analytics(&stream.entries, &opts.time_spans);
         store_analytics(&mut redis, &analytics).await?;
 
-        let timelines = build_timelines(&stream.entries, Duration::days(1));
+        let timelines: Vec<_> = build_timelines(&stream.entries, Duration::days(1)).collect();
         info!(n_timelines = timelines.len());
 
         redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
@@ -117,18 +117,19 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
 ///
 /// The entries MUST be sorted by timestamp.
 #[instrument(skip_all, fields(n_entries = entries.len(), window_span = window_span.to_string().as_str()))]
+#[must_use]
 fn build_timelines(
     entries: &[DenormalizedStreamEntry],
     window_span: Duration,
-) -> Vec<(TankId, Timeline)> {
+) -> impl Iterator<Item = (TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
-        .map(|(tank_id, entries)| (tank_id, build_vehicle_timeline(entries, window_span)))
-        .collect()
+        .map(move |(tank_id, entries)| (tank_id, build_vehicle_timeline(entries, window_span)))
 }
 
 /// Groups the battle stream entries by tank ID.
 #[instrument(skip_all)]
+#[must_use]
 fn group_entries_by_tank_id(
     entries: &[DenormalizedStreamEntry],
 ) -> AHashMap<TankId, Vec<VehicleEntry>> {
@@ -156,6 +157,7 @@ fn group_entries_by_tank_id(
 ///
 /// The entries MUST be sorted by timestamp.
 #[instrument(skip_all)]
+#[must_use]
 fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> Timeline {
     let mut window = VecDeque::new();
     let mut battle_counts = BattleCounts::default();
