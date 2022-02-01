@@ -181,8 +181,17 @@ pub struct AggregateOpts {
     )]
     pub interval: StdDuration,
 
+    /// Time spans for the global vehicle statistics table
     #[structopt(long = "time-span", required = true, parse(try_from_str = parsers::duration))]
     pub time_spans: Vec<Duration>,
+
+    /// Vehicle chart duration
+    #[structopt(long, default_value = "24h", parse(try_from_str = parsers::duration))]
+    pub charts_time_span: Duration,
+
+    /// Vehicle chart averaging window duration
+    #[structopt(long, default_value = "120min", parse(try_from_str = parsers::duration))]
+    pub charts_window_span: Duration,
 }
 
 /// Exports the battle stream into JSONL format

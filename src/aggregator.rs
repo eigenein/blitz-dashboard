@@ -7,11 +7,12 @@ use std::collections::VecDeque;
 use chrono::{Duration, Utc};
 use itertools::Itertools;
 use redis::AsyncCommands;
+use serde_json::json;
 use tokio::time::interval;
 use tracing::{info, instrument};
 
 use crate::aggregator::models::{Analytics, DurationWrapper, Timeline, VehicleEntry};
-use crate::aggregator::persistence::{store_analytics, UPDATED_AT_KEY};
+use crate::aggregator::persistence::{store_analytics, store_charts, UPDATED_AT_KEY};
 use crate::battle_stream::entry::DenormalizedStreamEntry;
 use crate::battle_stream::stream::BattleStream;
 use crate::math::statistics::{ConfidenceInterval, Z};
@@ -26,8 +27,16 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
     let mut redis = ::redis::Client::open(opts.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    let mut stream =
-        BattleStream::read(redis.clone(), *opts.time_spans.iter().max().unwrap()).await?;
+    let mut stream = BattleStream::read(
+        redis.clone(),
+        *opts
+            .time_spans
+            .iter()
+            .max()
+            .unwrap()
+            .max(&(opts.charts_time_span + opts.charts_window_span)),
+    )
+    .await?;
     let mut interval = interval(opts.interval);
 
     info!("running…");
@@ -38,8 +47,13 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
         let analytics = calculate_analytics(&stream.entries, &opts.time_spans);
         store_analytics(&mut redis, &analytics).await?;
 
-        let timelines: Vec<_> = build_timelines(&stream.entries, Duration::days(1)).collect();
-        info!(n_timelines = timelines.len());
+        let charts = build_timelines(
+            &stream.entries,
+            opts.charts_time_span,
+            opts.charts_window_span,
+        )
+        .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
+        store_charts(&mut redis, charts).await?;
 
         redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
     }
@@ -116,15 +130,25 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
 /// For each vehicle in the stream builds the win-rate timeline.
 ///
 /// The entries MUST be sorted by timestamp.
-#[instrument(skip_all, fields(n_entries = entries.len(), window_span = window_span.to_string().as_str()))]
+#[instrument(
+    skip_all,
+    level = "info",
+    fields(n_entries = entries.len(), window_span = window_span.to_string().as_str()),
+)]
 #[must_use]
 fn build_timelines(
     entries: &[DenormalizedStreamEntry],
+    time_span: Duration,
     window_span: Duration,
 ) -> impl Iterator<Item = (TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
-        .map(move |(tank_id, entries)| (tank_id, build_vehicle_timeline(entries, window_span)))
+        .map(move |(tank_id, entries)| {
+            (
+                tank_id,
+                build_vehicle_timeline(entries, time_span, window_span),
+            )
+        })
 }
 
 /// Groups the battle stream entries by tank ID.
@@ -158,7 +182,12 @@ fn group_entries_by_tank_id(
 /// The entries MUST be sorted by timestamp.
 #[instrument(skip_all)]
 #[must_use]
-fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> Timeline {
+fn build_vehicle_timeline(
+    entries: Vec<VehicleEntry>,
+    time_span: Duration,
+    window_span: Duration,
+) -> Timeline {
+    let start_time = Utc::now() - time_span;
     let mut window = VecDeque::new();
     let mut battle_counts = BattleCounts::default();
     let mut timeline = Timeline::new();
@@ -171,14 +200,16 @@ fn build_vehicle_timeline(entries: Vec<VehicleEntry>, window_span: Duration) -> 
         battle_counts.n_wins += entry.battle_counts.n_wins;
         window.push_back(entry);
 
-        timeline.push((
-            timestamp,
-            ConfidenceInterval::wilson_score_interval(
-                battle_counts.n_battles,
-                battle_counts.n_wins,
-                Z::default(),
-            ),
-        ));
+        if timestamp >= start_time {
+            timeline.push((
+                timestamp,
+                ConfidenceInterval::wilson_score_interval(
+                    battle_counts.n_battles,
+                    battle_counts.n_wins,
+                    Z::default(),
+                ),
+            ));
+        }
     }
 
     timeline
@@ -202,6 +233,55 @@ fn cleanup_window(
         }
         _ => false,
     } {}
+}
+
+#[instrument(skip_all, level = "debug", fields(tank_id = tank_id))]
+fn build_timeline_chart(tank_id: TankId, timeline: Timeline) -> serde_json::Value {
+    const TENSION: f32 = 0.1;
+
+    json!({
+        "type": "line",
+        "options": {
+            "maintainAspectRatio": false,
+            "zone": "system",
+            "colorMode": "auto",
+            "scales": {"x": {"type": "time"}},
+            "plugins": {
+                "tooltip": {
+                    "mode": "index",
+                    "intersect": false,
+                    "position": "average",
+                },
+            }
+        },
+        "data": {
+            "labels": timeline.iter().map(|(timestamp, _)| timestamp.timestamp_millis()).collect_vec(),
+            "datasets": [
+                {
+                    "label": "Средний",
+                    "data": timeline.iter().map(|(_, interval)| interval.mean * 100.0).collect_vec(),
+                    "fill": false,
+                    "tension": TENSION,
+                },
+                {
+                    "label": "Верхний CI 95%",
+                    "data": timeline.iter().map(|(_, interval)| interval.upper() * 100.0).collect_vec(),
+                    "fill": 0,
+                    "borderColor": "transparent",
+                    "tension": TENSION,
+                    "pointRadius": 0,
+                },
+                {
+                    "label": "Нижний CI 95%",
+                    "data": timeline.iter().map(|(_, interval)| interval.lower() * 100.0).collect_vec(),
+                    "fill": 0,
+                    "borderColor": "transparent",
+                    "tension": TENSION,
+                    "pointRadius": 0,
+                },
+            ],
+        }
+    })
 }
 
 #[cfg(test)]
