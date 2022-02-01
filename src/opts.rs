@@ -176,7 +176,7 @@ pub struct AggregateOpts {
     /// Interval for the recalculation
     #[structopt(
         long,
-        default_value = "1minute",
+        default_value = "5minutes",
         parse(try_from_str = humantime::parse_duration),
     )]
     pub interval: StdDuration,
