@@ -104,7 +104,7 @@ pub async fn get(
                                         defaults.scale.ticks.autoSkipPadding = 15;
                                         defaults.scale.ticks.maxRotation = 0;
                                         defaults.plugins.legend.labels.boxWidth = defaults.font.size;
-                                        // defaults.plugins.legend.position = "top";
+                                        defaults.animation = false;
                                         
                                         new Chart(document.getElementById("chart"), {});
                                     "###, chart)))
