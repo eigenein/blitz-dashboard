@@ -245,7 +245,7 @@ fn build_timeline_chart(tank_id: TankId, timeline: Timeline) -> serde_json::Valu
             "maintainAspectRatio": false,
             "zone": "system",
             "colorMode": "auto",
-            "scales": {"x": {"type": "time"}},
+            "scales": {"x": {"type": "time"}, "y": {"position": "right"}},
             "plugins": {
                 "tooltip": {
                     "mode": "index",
