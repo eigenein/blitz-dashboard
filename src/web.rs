@@ -57,7 +57,6 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![r#static::get_su_svg])
         .mount("/", routes![r#static::get_us_svg])
         .mount("/", routes![r#static::get_xx_svg])
-        .mount("/", routes![r#static::get_bulma_prefers_dark])
         .mount("/", routes![views::index::get])
         .mount("/", routes![views::search::get])
         .mount("/", routes![views::player::get])

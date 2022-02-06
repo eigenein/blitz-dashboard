@@ -109,11 +109,3 @@ pub async fn get_us_svg() -> CustomResponse {
 pub async fn get_xx_svg() -> CustomResponse {
     CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/xx.svg"))
 }
-
-#[get("/static/bulma-prefers-dark.css")]
-pub async fn get_bulma_prefers_dark() -> CustomResponse {
-    CustomResponse::Static(
-        ContentType::CSS,
-        include_bytes!("static/bulma-prefers-dark.css"),
-    )
-}
