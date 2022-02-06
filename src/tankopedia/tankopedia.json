@@ -14847,6 +14847,167 @@
     "turrets": [],
     "type": "AT-SPG"
   },
+  "15617": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 100,
+          "rear": 40,
+          "sides": 60
+        },
+        "turret": {
+          "front": 208,
+          "rear": 46,
+          "sides": 160
+        }
+      },
+      "battle_level_range_max": 11,
+      "battle_level_range_min": 10,
+      "engine": {
+        "fire_chance": 0.1,
+        "name": "В-12-5У",
+        "power": 700,
+        "tier": 10,
+        "weight": 700
+      },
+      "engine_id": 24069,
+      "firepower": 78,
+      "gun": {
+        "aim_time": 4.26,
+        "caliber": 100,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "fire_rate": 9.23,
+        "move_down_arc": 7,
+        "move_up_arc": 16,
+        "name": "100 мм Д-54ТС",
+        "reload_time": 6.5,
+        "tier": 10,
+        "traverse_speed": 33.25,
+        "weight": 2557
+      },
+      "gun_id": 30468,
+      "hp": 1900,
+      "hull_hp": 1520,
+      "hull_weight": 17363,
+      "is_default": true,
+      "maneuverability": 72,
+      "max_ammo": 55,
+      "max_weight": 39000,
+      "profile_id": "24069-29955-30468-35586",
+      "protection": 59,
+      "shells": [
+        {
+          "damage": 310,
+          "penetration": 240,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 260,
+          "penetration": 300,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 420,
+          "penetration": 50,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 81,
+      "signal_range": null,
+      "speed_backward": 25,
+      "speed_forward": 60,
+      "suspension": {
+        "load_limit": 39000,
+        "name": "Объект 907",
+        "tier": 10,
+        "traverse_speed": 54,
+        "weight": 7000
+      },
+      "suspension_id": 35586,
+      "turret": {
+        "hp": 380,
+        "name": "Объект 907",
+        "tier": 10,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 48,
+        "view_range": 260,
+        "weight": 8000
+      },
+      "turret_id": 29955,
+      "weight": 35920
+    },
+    "description": "Одновременно с совершенствованием Т-54 в 1950-е гг. в СССР велись работы над созданием средних танков нового поколения. Соответствующее решение было принято 13 июля 1953 года. Эскизный проект танка был разработан ВНИИ-100 и представлен в феврале-марте 1954 года. В апреле 1955 года проведены испытания обстрелом опытных корпусов. Дальнейшие работы над проектом были свёрнуты по причине сложности конструкции.",
+    "engines": [
+      24069
+    ],
+    "guns": [
+      30468
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Object_907.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Object_907.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "24069": {
+        "is_default": true,
+        "module_id": 24069,
+        "name": "В-12-5У",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "29955": {
+        "is_default": true,
+        "module_id": 29955,
+        "name": "Объект 907",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "30468": {
+        "is_default": true,
+        "module_id": 30468,
+        "name": "100 мм Д-54ТС",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "35586": {
+        "is_default": true,
+        "module_id": 35586,
+        "name": "Объект 907",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      }
+    },
+    "name": "Объект 907",
+    "nation": "ussr",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      35586
+    ],
+    "tank_id": 15617,
+    "tier": 10,
+    "turrets": [
+      29955
+    ],
+    "type": "mediumTank"
+  },
   "15649": {
     "cost": {
       "price_credit": 1400000,
@@ -17999,8 +18160,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18666,8 +18827,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21883,8 +22044,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -34899,9 +35060,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -34980,8 +35141,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -36740,6 +36901,167 @@
     "tier": 7,
     "turrets": [
       261651
+    ],
+    "type": "AT-SPG"
+  },
+  "23841": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 25,
+          "rear": 25,
+          "sides": 25
+        },
+        "turret": {
+          "front": 76,
+          "rear": 40,
+          "sides": 40
+        }
+      },
+      "battle_level_range_max": 8,
+      "battle_level_range_min": 7,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Wright Continental\nR-975-C4 (858)",
+        "power": 460,
+        "tier": 7,
+        "weight": 550
+      },
+      "engine_id": 24869,
+      "firepower": 62,
+      "gun": {
+        "aim_time": 4.04,
+        "caliber": 90,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "fire_rate": 10.34,
+        "move_down_arc": 9,
+        "move_up_arc": 17,
+        "name": "90 mm AT Gun M3T",
+        "reload_time": 5.8,
+        "tier": 7,
+        "traverse_speed": 35.0,
+        "weight": 2050
+      },
+      "gun_id": 264228,
+      "hp": 1100,
+      "hull_hp": 840,
+      "hull_weight": 9003,
+      "is_default": true,
+      "maneuverability": 62,
+      "max_ammo": 40,
+      "max_weight": 22000,
+      "profile_id": "24869-262435-262690-264228",
+      "protection": 23,
+      "shells": [
+        {
+          "damage": 225,
+          "penetration": 182,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 243,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 45,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 67,
+      "signal_range": null,
+      "speed_backward": 20,
+      "speed_forward": 65,
+      "suspension": {
+        "load_limit": 22000,
+        "name": "Super Hellcat",
+        "tier": 7,
+        "traverse_speed": 34,
+        "weight": 4000
+      },
+      "suspension_id": 262690,
+      "turret": {
+        "hp": 260,
+        "name": "Super Hellcat",
+        "tier": 7,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 20,
+        "view_range": 240,
+        "weight": 4500
+      },
+      "turret_id": 262435,
+      "weight": 20378
+    },
+    "description": "Боевые действия в Европе показали, что штатное 76-мм орудие малоэффективно на средних и дальних дистанциях против новейших немецких средних и тяжёлых танков, поэтому появилась идея совместить ходовую часть М18 и башню истребителя танков М36 с установленным в неё мощным 90-мм орудием. Была построена одна машина, которая проходила испытания на Абердинском полигоне. В связи с окончанием войны работы по машине были прекращены.",
+    "engines": [
+      24869
+    ],
+    "guns": [
+      264228
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/A130_Super_Hellcat.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/A130_Super_Hellcat.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "24869": {
+        "is_default": true,
+        "module_id": 24869,
+        "name": "Wright Continental\nR-975-C4 (858)",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "262435": {
+        "is_default": true,
+        "module_id": 262435,
+        "name": "Super Hellcat",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262690": {
+        "is_default": true,
+        "module_id": 262690,
+        "name": "Super Hellcat",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "264228": {
+        "is_default": true,
+        "module_id": 264228,
+        "name": "90 mm AT Gun M3T",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      }
+    },
+    "name": "Super Hellcat",
+    "nation": "usa",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      262690
+    ],
+    "tank_id": 23841,
+    "tier": 7,
+    "turrets": [
+      262435
     ],
     "type": "AT-SPG"
   },
@@ -48235,8 +48557,8 @@
         "name": "Kw.K. 39 L/60",
         "next_modules": null,
         "next_tanks": [
-          1809,
-          17425
+          17425,
+          1809
         ],
         "price_credit": 0,
         "price_xp": 1050,
@@ -53638,8 +53960,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -81197,8 +81519,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -82055,8 +82377,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -88216,6 +88538,167 @@
       17747
     ],
     "type": "AT-SPG"
+  },
+  "9329": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 90,
+          "rear": 75,
+          "sides": 90
+        },
+        "turret": {
+          "front": 150,
+          "rear": 75,
+          "sides": 100
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "V-5B",
+        "power": 635,
+        "tier": 7,
+        "weight": 750
+      },
+      "engine_id": 22389,
+      "firepower": 39,
+      "gun": {
+        "aim_time": 5.74,
+        "caliber": 85,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.4,
+        "fire_rate": 7.89,
+        "move_down_arc": 7,
+        "move_up_arc": 20,
+        "name": "85 mm ZiS S-53 B",
+        "reload_time": 7.6,
+        "tier": 7,
+        "traverse_speed": 39.38,
+        "weight": 1150
+      },
+      "gun_id": 22644,
+      "hp": 1200,
+      "hull_hp": 960,
+      "hull_weight": 30200,
+      "is_default": true,
+      "maneuverability": 27,
+      "max_ammo": 90,
+      "max_weight": 58800,
+      "profile_id": "22389-22644-34418-34675",
+      "protection": 52,
+      "shells": [
+        {
+          "damage": 200,
+          "penetration": 147,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 160,
+          "penetration": 210,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 300,
+          "penetration": 43,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 53,
+      "signal_range": null,
+      "speed_backward": 11,
+      "speed_forward": 35,
+      "suspension": {
+        "load_limit": 58800,
+        "name": "Titan-150",
+        "tier": 6,
+        "traverse_speed": 24,
+        "weight": 10600
+      },
+      "suspension_id": 34418,
+      "turret": {
+        "hp": 240,
+        "name": "Titan-150",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 20,
+        "view_range": 230,
+        "weight": 10000
+      },
+      "turret_id": 34675,
+      "weight": 52950
+    },
+    "description": "Версия тяжёлого танка Т-150, усовершенствованная лучшими инженерами лаборатории «Титан». Нетороплив, но очень эффективен благодаря сочетанию надёжного бронирования, живучести и скорострельности!",
+    "engines": [
+      22389
+    ],
+    "guns": [
+      22644
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Oth31_T150BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Oth31_T150BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "22389": {
+        "is_default": true,
+        "module_id": 22389,
+        "name": "V-5B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "22644": {
+        "is_default": true,
+        "module_id": 22644,
+        "name": "85 mm ZiS S-53 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "34418": {
+        "is_default": true,
+        "module_id": 34418,
+        "name": "Titan-150",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "34675": {
+        "is_default": true,
+        "module_id": 34675,
+        "name": "Titan-150",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      }
+    },
+    "name": "Titan-150",
+    "nation": "other",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      34418
+    ],
+    "tank_id": 9329,
+    "tier": 6,
+    "turrets": [
+      34675
+    ],
+    "type": "heavyTank"
   },
   "9345": {
     "cost": null,
