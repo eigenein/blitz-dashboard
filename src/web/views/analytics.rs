@@ -4,17 +4,15 @@ use humantime::format_duration;
 use maud::{html, PreEscaped, DOCTYPE};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
-use rocket::{uri, State};
+use rocket::State;
 use tracing::instrument;
 
 use crate::aggregator::persistence::{retrieve_analytics, UPDATED_AT_KEY};
 use crate::helpers::sentry::clear_user;
 use crate::models::TankType;
 use crate::tankopedia::get_vehicle;
-use crate::wargaming::tank_id::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
-use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
 use crate::web::{DisableCaches, TrackingCode};
 
 pub mod vehicle;
@@ -94,8 +92,6 @@ pub async fn get(
                                 thead {
                                     th { "Техника" }
 
-                                    th { }
-
                                     th.has-text-centered { "Тип" }
 
                                     th.has-text-centered {
@@ -144,14 +140,6 @@ pub async fn get(
                                             @let vehicle = get_vehicle(tank_id);
 
                                             (vehicle_th(&vehicle))
-
-                                            td.has-text-centered {
-                                                a href=(uri!(get_vehicle_analytics(tank_id = tank_id))) {
-                                                    span.icon-text.is-flex-wrap-nowrap {
-                                                        span.icon { { i.fas.fa-link {} } }
-                                                    }
-                                                }
-                                            }
 
                                             td.has-text-centered {
                                                 @match vehicle.type_ {

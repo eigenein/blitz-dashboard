@@ -5,8 +5,9 @@ use phf::phf_set;
 use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
-use crate::wargaming::tank_id::to_client_id;
+use crate::wargaming::tank_id::{to_client_id, TankId};
 use crate::web::views::analytics::rocket_uri_macro_get as rocket_uri_macro_get_vehicles_analytics;
+use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
 use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 #[must_use]
@@ -233,16 +234,19 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
                 }
                 strong."mx-1".(name_class) { (vehicle.name) }
             }
+
+            a href=(uri!(get_vehicle_analytics(tank_id = vehicle.tank_id))) title="Перейти к аналитике танка" {
+                span.icon { { i.fas.fa-chart-area.has-text-grey-light {} } }
+            }
+
             @if let Ok(external_id) = to_client_id(vehicle.tank_id) {
-                span.icon {
-                    a
-                        title="Открыть в Blitz Ангар"
-                        href=(format!("https://blitzhangar.com/ru/tank/{}", external_id))
-                        target="_blank"
-                        rel="noopener noreferrer" {
-                            i.fas.fa-external-link-alt.has-text-grey-light {}
-                        }
-                }
+                a
+                    title="Открыть в Blitz Ангар"
+                    href=(format!("https://blitzhangar.com/ru/tank/{}", external_id))
+                    target="_blank"
+                    rel="noopener noreferrer" {
+                        span.icon { i.fas.fa-external-link-alt.has-text-grey-light {} }
+                    }
             }
         }
 
