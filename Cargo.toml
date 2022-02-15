@@ -29,7 +29,7 @@ log = "0.4.14"
 maud = "0.23.0"
 miniz_oxide = "0.5.0"
 phf = { version = "0.10.1", features = ["macros"] }
-rand = "0.8.4"
+rand = "0.8.5"
 rand_distr = "0.4.2"
 rmp-serde = "1.0.0"
 rocket = "0.5.0-rc.1"
