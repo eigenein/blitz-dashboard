@@ -125,7 +125,6 @@
         "name": "76 мм С-54",
         "next_modules": null,
         "next_tanks": [
-          257,
           2561
         ],
         "price_credit": 0,
@@ -229,8 +228,7 @@
     "nation": "ussr",
     "next_tanks": {
       "16641": 31000,
-      "2561": 29000,
-      "257": 7000
+      "2561": 29000
     },
     "prices_xp": {
       "2049": 11000
@@ -300,7 +298,7 @@
       "max_ammo": 87,
       "max_weight": 28800,
       "profile_id": "788-789-19219-23826",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -534,7 +532,7 @@
       "max_ammo": 104,
       "max_weight": 38500,
       "profile_id": "10277-17699-21282-257828",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 160,
@@ -895,7 +893,7 @@
       "max_ammo": 120,
       "max_weight": 48000,
       "profile_id": "5973-13140-21074",
-      "protection": 50,
+      "protection": 48,
       "shells": [
         {
           "damage": 90,
@@ -1131,7 +1129,7 @@
       "max_ammo": 44,
       "max_weight": 34000,
       "profile_id": "261-21252-23042",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 280,
@@ -1541,7 +1539,7 @@
       "max_ammo": 60,
       "max_weight": 66000,
       "profile_id": "2324-19731-19733-24338",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 220,
@@ -2197,7 +2195,7 @@
       "max_ammo": 80,
       "max_weight": 60800,
       "profile_id": "517-7172-18947-23554",
-      "protection": 28,
+      "protection": 27,
       "shells": [
         {
           "damage": 450,
@@ -2439,7 +2437,7 @@
       "max_ammo": 92,
       "max_weight": 59200,
       "profile_id": "2068-7701-20243-24850",
-      "protection": 56,
+      "protection": 55,
       "shells": [
         {
           "damage": 220,
@@ -2851,7 +2849,7 @@
       "max_ammo": 56,
       "max_weight": 32300,
       "profile_id": "36-2082-2083-3109",
-      "protection": 24,
+      "protection": 23,
       "shells": [
         {
           "damage": 140,
@@ -3091,7 +3089,7 @@
       "max_ammo": 50,
       "max_weight": 35000,
       "profile_id": "820-1074-1075-1589",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 200,
@@ -3339,7 +3337,7 @@
       "max_ammo": 30,
       "max_weight": 63500,
       "profile_id": "3844-5637-20227-24834",
-      "protection": 83,
+      "protection": 81,
       "shells": [
         {
           "damage": 400,
@@ -3574,7 +3572,7 @@
       "max_ammo": 92,
       "max_weight": 65200,
       "profile_id": "2068-12053-20755-25362",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 220,
@@ -3815,7 +3813,7 @@
       "max_ammo": 42,
       "max_weight": 60050,
       "profile_id": "13093-14116-19235-22562",
-      "protection": 71,
+      "protection": 69,
       "shells": [
         {
           "damage": 400,
@@ -3981,7 +3979,7 @@
       "max_ammo": 96,
       "max_weight": 56000,
       "profile_id": "4421-11076-17986",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 225,
@@ -4442,7 +4440,7 @@
       "max_ammo": 60,
       "max_weight": 112560,
       "profile_id": "2564-15109-20995-25602",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 320,
@@ -4689,7 +4687,7 @@
       "max_ammo": 60,
       "max_weight": 38500,
       "profile_id": "12821-22548-26386",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 310,
@@ -5108,7 +5106,7 @@
       "max_ammo": 75,
       "max_weight": 29500,
       "profile_id": "3154-3155-3668-6229",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 90,
@@ -5356,7 +5354,7 @@
       "max_ammo": 64,
       "max_weight": 59560,
       "profile_id": "6213-12100-18498",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 400,
@@ -5540,7 +5538,7 @@
       "max_ammo": 97,
       "max_weight": 44800,
       "profile_id": "1891-2146-3685-4196",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 160,
@@ -5775,7 +5773,7 @@
       "max_ammo": 54,
       "max_weight": 58800,
       "profile_id": "20996-21763-26370-257029",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 320,
@@ -5936,7 +5934,7 @@
       "max_ammo": 50,
       "max_weight": 96000,
       "profile_id": "11541-11794-14099-15380",
-      "protection": 65,
+      "protection": 64,
       "shells": [
         {
           "damage": 560,
@@ -6100,7 +6098,7 @@
       "max_ammo": 72,
       "max_weight": 76800,
       "profile_id": "9509-11300-20003-23330",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 225,
@@ -6322,7 +6320,7 @@
       "max_ammo": 40,
       "max_weight": 48300,
       "profile_id": "2676-2677-2930",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 640,
@@ -6471,7 +6469,7 @@
       "max_ammo": 102,
       "max_weight": 68000,
       "profile_id": "2933-3442-3699-3700",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 180,
@@ -6635,7 +6633,7 @@
       "max_ammo": 30,
       "max_weight": 58900,
       "profile_id": "3844-15877-22019-26626",
-      "protection": 62,
+      "protection": 60,
       "shells": [
         {
           "damage": 400,
@@ -6870,7 +6868,7 @@
       "max_ammo": 60,
       "max_weight": 36000,
       "profile_id": "1410-1667-1668-1925",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 225,
@@ -7105,7 +7103,7 @@
       "max_ammo": 50,
       "max_weight": 56000,
       "profile_id": "7444-19477-27410",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 220,
@@ -7563,7 +7561,7 @@
       "max_ammo": 160,
       "max_weight": 28400,
       "profile_id": "6981-10564-19522",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -7773,7 +7771,7 @@
       "max_ammo": 62,
       "max_weight": 55800,
       "profile_id": "1541-6916-22531-27138",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 160,
@@ -8250,7 +8248,7 @@
       "max_ammo": 65,
       "max_weight": 39140,
       "profile_id": "13349-20771-24354-256292",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 160,
@@ -8414,7 +8412,7 @@
       "max_ammo": 35,
       "max_weight": 39300,
       "profile_id": "4613-24068-27650",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 400,
@@ -8624,7 +8622,7 @@
       "max_ammo": 24,
       "max_weight": 150000,
       "profile_id": "11285-18196-28434",
-      "protection": 79,
+      "protection": 77,
       "shells": [
         {
           "damage": 800,
@@ -8775,7 +8773,7 @@
       "max_ammo": 90,
       "max_weight": 55350,
       "profile_id": "1317-4644-21283-25122",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 225,
@@ -8939,7 +8937,7 @@
       "max_ammo": 80,
       "max_weight": 59300,
       "profile_id": "4421-11332-20546",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 225,
@@ -9162,7 +9160,7 @@
       "max_ammo": 48,
       "max_weight": 67000,
       "profile_id": "15637-18452-25107-30738",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 350,
@@ -9486,7 +9484,7 @@
       "max_ammo": 51,
       "max_weight": 65900,
       "profile_id": "1797-7684-12803-15874",
-      "protection": 85,
+      "protection": 83,
       "shells": [
         {
           "damage": 350,
@@ -10046,7 +10044,7 @@
       "max_ammo": 27,
       "max_weight": 67000,
       "profile_id": "13093-19492-22563-26402",
-      "protection": 65,
+      "protection": 63,
       "shells": [
         {
           "damage": 640,
@@ -10447,7 +10445,7 @@
       "max_ammo": 87,
       "max_weight": 33000,
       "profile_id": "28179-34066-35093-258580",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 160,
@@ -10611,7 +10609,7 @@
       "max_ammo": 54,
       "max_weight": 53000,
       "profile_id": "14885-17700-22819-26658",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 225,
@@ -10775,7 +10773,7 @@
       "max_ammo": 35,
       "max_weight": 53900,
       "profile_id": "19461-26372-30978",
-      "protection": 62,
+      "protection": 61,
       "shells": [
         {
           "damage": 640,
@@ -10926,7 +10924,7 @@
       "max_ammo": 84,
       "max_weight": 43000,
       "profile_id": "850-851-1876-20309",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 160,
@@ -11312,7 +11310,7 @@
       "max_ammo": 50,
       "max_weight": 39800,
       "profile_id": "20741-26115-26884-31490",
-      "protection": 66,
+      "protection": 64,
       "shells": [
         {
           "damage": 310,
@@ -11478,7 +11476,7 @@
       "max_ammo": 73,
       "max_weight": 43000,
       "profile_id": "2068-18965-29459-35090",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 220,
@@ -11701,7 +11699,7 @@
       "max_ammo": 27,
       "max_weight": 78000,
       "profile_id": "13093-19492-27170",
-      "protection": 66,
+      "protection": 65,
       "shells": [
         {
           "damage": 640,
@@ -11855,7 +11853,7 @@
       "max_ammo": 30,
       "max_weight": 59560,
       "profile_id": "8773-14916-23618",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 560,
@@ -12022,7 +12020,7 @@
       "max_ammo": 40,
       "max_weight": 67800,
       "profile_id": "882-883-884-885",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 310,
@@ -12659,7 +12657,7 @@
       "max_ammo": 57,
       "max_weight": 50350,
       "profile_id": "16165-18724-23843-27682",
-      "protection": 63,
+      "protection": 61,
       "shells": [
         {
           "damage": 350,
@@ -13034,7 +13032,7 @@
       "max_ammo": 42,
       "max_weight": 62500,
       "profile_id": "9221-27652-32258",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 460,
@@ -13188,7 +13186,7 @@
       "max_ammo": 60,
       "max_weight": 42000,
       "profile_id": "19221-20244-30739-36626",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 350,
@@ -13354,7 +13352,7 @@
       "max_ammo": 60,
       "max_weight": 36560,
       "profile_id": "3621-20004-24611-28450",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 160,
@@ -13799,7 +13797,7 @@
       "max_ammo": 36,
       "max_weight": 58000,
       "profile_id": "17189-20516-24867-28962",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 400,
@@ -14293,7 +14291,7 @@
       "max_ammo": 48,
       "max_weight": 57500,
       "profile_id": "5157-20260-25635-29730",
-      "protection": 51,
+      "protection": 49,
       "shells": [
         {
           "damage": 225,
@@ -14513,7 +14511,7 @@
       "max_ammo": 80,
       "max_weight": 60000,
       "profile_id": "20053-21332-27987-32338",
-      "protection": 55,
+      "protection": 54,
       "shells": [
         {
           "damage": 225,
@@ -14897,7 +14895,7 @@
       "max_ammo": 55,
       "max_weight": 39000,
       "profile_id": "24069-29955-30468-35586",
-      "protection": 59,
+      "protection": 57,
       "shells": [
         {
           "damage": 310,
@@ -15270,7 +15268,7 @@
       "max_ammo": 70,
       "max_weight": 34000,
       "profile_id": "2340-3106-3107-3877",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 160,
@@ -15489,7 +15487,7 @@
       "max_ammo": 90,
       "max_weight": 60000,
       "profile_id": "20053-257106-257107-257364",
-      "protection": 64,
+      "protection": 62,
       "shells": [
         {
           "damage": 400,
@@ -15653,7 +15651,7 @@
       "max_ammo": 50,
       "max_weight": 36500,
       "profile_id": "820-1845-2098-2099",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 200,
@@ -15926,7 +15924,7 @@
       "max_ammo": 79,
       "max_weight": 45000,
       "profile_id": "22805-32787-39442-257812",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 160,
@@ -16087,7 +16085,7 @@
       "max_ammo": 57,
       "max_weight": 49500,
       "profile_id": "18981-21796-26915-31522",
-      "protection": 59,
+      "protection": 58,
       "shells": [
         {
           "damage": 350,
@@ -16434,7 +16432,7 @@
       "max_ammo": 74,
       "max_weight": 58000,
       "profile_id": "9300-20565-257362-257363",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 160,
@@ -17065,7 +17063,7 @@
       "max_ammo": 51,
       "max_weight": 40200,
       "profile_id": "16965-17220-23619-29506",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 350,
@@ -17229,7 +17227,7 @@
       "max_ammo": 92,
       "max_weight": 19500,
       "profile_id": "1893-2915-3170-6500",
-      "protection": 15,
+      "protection": 14,
       "shells": [
         {
           "damage": 95,
@@ -17463,7 +17461,7 @@
       "max_ammo": 45,
       "max_weight": 30000,
       "profile_id": "6677-22804-40210",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 460,
@@ -17838,7 +17836,7 @@
       "max_ammo": 100,
       "max_weight": 27800,
       "profile_id": "1138-1139-1140-17013",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 200,
@@ -18265,7 +18263,7 @@
       "max_ammo": 70,
       "max_weight": 21000,
       "profile_id": "2180-2434-2691-2693",
-      "protection": 12,
+      "protection": 11,
       "shells": [
         {
           "damage": 100,
@@ -18684,7 +18682,7 @@
       "max_ammo": 72,
       "max_weight": 26000,
       "profile_id": "12325-14628-28451-33570",
-      "protection": 16,
+      "protection": 15,
       "shells": [
         {
           "damage": 160,
@@ -18827,8 +18825,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          25124,
-          24868
+          24868,
+          25124
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18928,7 +18926,7 @@
       "max_ammo": 60,
       "max_weight": 75000,
       "profile_id": "2371-2628-3650-14917",
-      "protection": 53,
+      "protection": 51,
       "shells": [
         {
           "damage": 310,
@@ -19092,7 +19090,7 @@
       "max_ammo": 50,
       "max_weight": 39000,
       "profile_id": "25861-32259-38402-257284",
-      "protection": 55,
+      "protection": 54,
       "shells": [
         {
           "damage": 310,
@@ -19638,7 +19636,7 @@
       "max_ammo": 40,
       "max_weight": 50500,
       "profile_id": "19013-19780-24387-30274",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 310,
@@ -20233,7 +20231,7 @@
       "max_ammo": 48,
       "max_weight": 17840,
       "profile_id": "19525-20292-24643-30530",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 160,
@@ -20603,7 +20601,7 @@
       "max_ammo": 60,
       "max_weight": 75000,
       "profile_id": "19781-20548-24899-30786",
-      "protection": 53,
+      "protection": 51,
       "shells": [
         {
           "damage": 310,
@@ -20764,7 +20762,7 @@
       "max_ammo": 60,
       "max_weight": 70000,
       "profile_id": "22869-259666-260180",
-      "protection": 65,
+      "protection": 63,
       "shells": [
         {
           "damage": 460,
@@ -21324,7 +21322,7 @@
       "max_ammo": 90,
       "max_weight": 54000,
       "profile_id": "12373-259411-259922-260436",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 460,
@@ -21700,7 +21698,7 @@
       "max_ammo": 34,
       "max_weight": 34000,
       "profile_id": "3332-26629-35075-41730",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 280,
@@ -21764,8 +21762,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          23809,
-          7937
+          7937,
+          23809
         ],
         "price_credit": 0,
         "price_xp": 34000,
@@ -21912,7 +21910,7 @@
       "max_ammo": 46,
       "max_weight": 25700,
       "profile_id": "16677-26404-31779-37154",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 225,
@@ -22044,8 +22042,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -22149,7 +22147,7 @@
       "max_ammo": 564,
       "max_weight": 11500,
       "profile_id": "292-3619-3874-4645",
-      "protection": 6,
+      "protection": 5,
       "shells": [
         {
           "damage": 10,
@@ -22335,7 +22333,7 @@
       "max_ammo": 51,
       "max_weight": 38000,
       "profile_id": "3157-259667-260178-263508",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 200,
@@ -22557,7 +22555,7 @@
       "max_ammo": 34,
       "max_weight": 40200,
       "profile_id": "1077-2610-2611-2612",
-      "protection": 50,
+      "protection": 49,
       "shells": [
         {
           "damage": 280,
@@ -22818,7 +22816,7 @@
       "max_ammo": 60,
       "max_weight": 24000,
       "profile_id": "8964-26885-35331-42242",
-      "protection": 28,
+      "protection": 27,
       "shells": [
         {
           "damage": 200,
@@ -23040,7 +23038,7 @@
       "max_ammo": 41,
       "max_weight": 28000,
       "profile_id": "24340-27157-38163-45330",
-      "protection": 22,
+      "protection": 21,
       "shells": [
         {
           "damage": 225,
@@ -23407,7 +23405,7 @@
       "max_ammo": 40,
       "max_weight": 60000,
       "profile_id": "23125-260179-260690-261460",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 440,
@@ -23571,7 +23569,7 @@
       "max_ammo": 48,
       "max_weight": 32000,
       "profile_id": "10565-16708-23363-28994",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 225,
@@ -24082,7 +24080,7 @@
       "max_ammo": 70,
       "max_weight": 70000,
       "profile_id": "23381-260435-260946-261716",
-      "protection": 67,
+      "protection": 65,
       "shells": [
         {
           "damage": 190,
@@ -24246,7 +24244,7 @@
       "max_ammo": 65,
       "max_weight": 35000,
       "profile_id": "2917-3427-3682-4196",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 160,
@@ -24468,7 +24466,7 @@
       "max_ammo": 25,
       "max_weight": 52600,
       "profile_id": "65541-256514-257028",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 460,
@@ -24867,7 +24865,7 @@
       "max_ammo": 36,
       "max_weight": 44000,
       "profile_id": "19749-256802-256803-257060",
-      "protection": 70,
+      "protection": 69,
       "shells": [
         {
           "damage": 400,
@@ -25189,7 +25187,7 @@
       "max_ammo": 64,
       "max_weight": 48000,
       "profile_id": "23637-260691-261202-261972",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 190,
@@ -25746,7 +25744,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "28948-32533-51986",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 640,
@@ -25897,7 +25895,7 @@
       "max_ammo": 100,
       "max_weight": 70000,
       "profile_id": "20005-257058-257059-257316",
-      "protection": 61,
+      "protection": 60,
       "shells": [
         {
           "damage": 310,
@@ -26058,7 +26056,7 @@
       "max_ammo": 40,
       "max_weight": 80000,
       "profile_id": "22613-260947-261458-262484",
-      "protection": 73,
+      "protection": 71,
       "shells": [
         {
           "damage": 400,
@@ -26380,7 +26378,7 @@
       "max_ammo": 42,
       "max_weight": 76800,
       "profile_id": "20261-257314-257315-258596",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 400,
@@ -26544,7 +26542,7 @@
       "max_ammo": 48,
       "max_weight": 50000,
       "profile_id": "13141-261203-261714-262740",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 350,
@@ -26868,7 +26866,7 @@
       "max_ammo": 92,
       "max_weight": 61000,
       "profile_id": "33301-257298-257299-257300",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 220,
@@ -27029,7 +27027,7 @@
       "max_ammo": 70,
       "max_weight": 50000,
       "profile_id": "20517-257570-257571-258852",
-      "protection": 56,
+      "protection": 55,
       "shells": [
         {
           "damage": 240,
@@ -27193,7 +27191,7 @@
       "max_ammo": 68,
       "max_weight": 54000,
       "profile_id": "8276-12117-261459-261970",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 225,
@@ -27399,7 +27397,7 @@
       "max_ammo": 90,
       "max_weight": 39000,
       "profile_id": "30468-66053-257538-257539",
-      "protection": 69,
+      "protection": 68,
       "shells": [
         {
           "damage": 310,
@@ -27560,7 +27558,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "33557-257554-257555-257556",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 460,
@@ -27724,7 +27722,7 @@
       "max_ammo": 50,
       "max_weight": 35000,
       "profile_id": "16933-257826-258083-259620",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 350,
@@ -27933,7 +27931,7 @@
       "max_ammo": 80,
       "max_weight": 34000,
       "profile_id": "3413-261715-262482-262996",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 160,
@@ -28142,7 +28140,7 @@
       "max_ammo": 40,
       "max_weight": 20000,
       "profile_id": "20773-258338-258339-260132",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 560,
@@ -28305,7 +28303,7 @@
       "max_ammo": 65,
       "max_weight": 53000,
       "profile_id": "23893-261971-262994-263252",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 190,
@@ -28466,7 +28464,7 @@
       "max_ammo": 30,
       "max_weight": 58000,
       "profile_id": "66309-257794-257795-259076",
-      "protection": 92,
+      "protection": 90,
       "shells": [
         {
           "damage": 420,
@@ -28855,7 +28853,7 @@
       "max_ammo": 120,
       "max_weight": 150000,
       "profile_id": "10516-37909-258322-258323",
-      "protection": 67,
+      "protection": 66,
       "shells": [
         {
           "damage": 310,
@@ -29048,7 +29046,7 @@
       "max_ammo": 45,
       "max_weight": 60500,
       "profile_id": "21029-258594-258595-260388",
-      "protection": 67,
+      "protection": 65,
       "shells": [
         {
           "damage": 310,
@@ -29209,7 +29207,7 @@
       "max_ammo": 50,
       "max_weight": 66000,
       "profile_id": "24149-263250-263764",
-      "protection": 57,
+      "protection": 55,
       "shells": [
         {
           "damage": 330,
@@ -29361,7 +29359,7 @@
       "max_ammo": 264,
       "max_weight": 10800,
       "profile_id": "3091-3605-4370-5396",
-      "protection": 6,
+      "protection": 5,
       "shells": [
         {
           "damage": 10,
@@ -29696,7 +29694,7 @@
       "max_ammo": 50,
       "max_weight": 171000,
       "profile_id": "34325-258068-258579-258834",
-      "protection": 85,
+      "protection": 83,
       "shells": [
         {
           "damage": 460,
@@ -29902,7 +29900,7 @@
       "max_ammo": 90,
       "max_weight": 40000,
       "profile_id": "13349-258850-258851-260644",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 225,
@@ -30066,7 +30064,7 @@
       "max_ammo": 50,
       "max_weight": 48000,
       "profile_id": "1077-3122-3123-3380",
-      "protection": 73,
+      "protection": 71,
       "shells": [
         {
           "damage": 310,
@@ -30298,7 +30296,7 @@
       "max_ammo": 40,
       "max_weight": 63500,
       "profile_id": "67333-258306-258307-260868",
-      "protection": 59,
+      "protection": 57,
       "shells": [
         {
           "damage": 400,
@@ -30620,7 +30618,7 @@
       "max_ammo": 90,
       "max_weight": 43000,
       "profile_id": "21285-259106-259107-260900",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 225,
@@ -30781,7 +30779,7 @@
       "max_ammo": 50,
       "max_weight": 48000,
       "profile_id": "24661-263762-264276",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 300,
@@ -30930,7 +30928,7 @@
       "max_ammo": 26,
       "max_weight": 48200,
       "profile_id": "67589-258562-258563-261124",
-      "protection": 39,
+      "protection": 38,
       "shells": [
         {
           "damage": 400,
@@ -31091,7 +31089,7 @@
       "max_ammo": 50,
       "max_weight": 175000,
       "profile_id": "38165-259091-259602-259860",
-      "protection": 65,
+      "protection": 63,
       "shells": [
         {
           "damage": 460,
@@ -31640,7 +31638,7 @@
       "max_ammo": 100,
       "max_weight": 18000,
       "profile_id": "1637-3172-3939-4194",
-      "protection": 12,
+      "protection": 11,
       "shells": [
         {
           "damage": 65,
@@ -32015,7 +32013,7 @@
       "max_ammo": 56,
       "max_weight": 96000,
       "profile_id": "38421-259347-259858-260372",
-      "protection": 62,
+      "protection": 60,
       "shells": [
         {
           "damage": 310,
@@ -32176,7 +32174,7 @@
       "max_ammo": 24,
       "max_weight": 27800,
       "profile_id": "1906-1907-1908-1909",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 400,
@@ -32337,7 +32335,7 @@
       "max_ammo": 35,
       "max_weight": 38000,
       "profile_id": "67845-259074-259075-261636",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 400,
@@ -32715,7 +32713,7 @@
       "max_ammo": 90,
       "max_weight": 130000,
       "profile_id": "38677-259603-260114-260628",
-      "protection": 87,
+      "protection": 85,
       "shells": [
         {
           "damage": 460,
@@ -32876,7 +32874,7 @@
       "max_ammo": 40,
       "max_weight": 20000,
       "profile_id": "22821-259874-259875-261668",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 560,
@@ -33193,7 +33191,7 @@
       "max_ammo": 52,
       "max_weight": 61000,
       "profile_id": "23077-260130-260131-262180",
-      "protection": 39,
+      "protection": 38,
       "shells": [
         {
           "damage": 225,
@@ -33354,7 +33352,7 @@
       "max_ammo": 45,
       "max_weight": 74950,
       "profile_id": "68357-259586-259587-262148",
-      "protection": 88,
+      "protection": 86,
       "shells": [
         {
           "damage": 420,
@@ -33515,7 +33513,7 @@
       "max_ammo": 90,
       "max_weight": 62500,
       "profile_id": "23333-260386-260387-262436",
-      "protection": 75,
+      "protection": 73,
       "shells": [
         {
           "damage": 400,
@@ -33676,7 +33674,7 @@
       "max_ammo": 51,
       "max_weight": 29500,
       "profile_id": "39701-260882-261396",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 350,
@@ -33825,7 +33823,7 @@
       "max_ammo": 40,
       "max_weight": 65000,
       "profile_id": "23589-260642-262692",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 400,
@@ -34135,7 +34133,7 @@
       "max_ammo": 90,
       "max_weight": 61000,
       "profile_id": "39957-260627-261138-261652",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 220,
@@ -34299,7 +34297,7 @@
       "max_ammo": 45,
       "max_weight": 60050,
       "profile_id": "23845-260898-260899-263460",
-      "protection": 71,
+      "protection": 69,
       "shells": [
         {
           "damage": 300,
@@ -34639,7 +34637,7 @@
       "max_ammo": 26,
       "max_weight": 48300,
       "profile_id": "2565-4610-8196",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 640,
@@ -34846,7 +34844,7 @@
       "max_ammo": 50,
       "max_weight": 31000,
       "profile_id": "40213-260883-261394-262676",
-      "protection": 23,
+      "protection": 22,
       "shells": [
         {
           "damage": 225,
@@ -35010,7 +35008,7 @@
       "max_ammo": 60,
       "max_weight": 62500,
       "profile_id": "25381-261154-261155-263204",
-      "protection": 72,
+      "protection": 70,
       "shells": [
         {
           "damage": 300,
@@ -35060,9 +35058,9 @@
       24101
     ],
     "guns": [
-      264484,
+      264996,
       263204,
-      264996
+      264484
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -35141,8 +35139,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264484,
-          264996
+          264996,
+          264484
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -35244,7 +35242,7 @@
       "max_ammo": 55,
       "max_weight": 45000,
       "profile_id": "1044-3603-4626-24853",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 160,
@@ -35479,7 +35477,7 @@
       "max_ammo": 60,
       "max_weight": 66800,
       "profile_id": "4388-24357-261411-261666",
-      "protection": 54,
+      "protection": 53,
       "shells": [
         {
           "damage": 310,
@@ -36046,7 +36044,7 @@
       "max_ammo": 30,
       "max_weight": 32500,
       "profile_id": "40725-261395-261906-262420",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 280,
@@ -36210,7 +36208,7 @@
       "max_ammo": 75,
       "max_weight": 66800,
       "profile_id": "37-261923-262178-263972",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 310,
@@ -36553,7 +36551,7 @@
       "engine_id": 69893,
       "firepower": 53,
       "gun": {
-        "aim_time": 3.79,
+        "aim_time": 4.05,
         "caliber": 100,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -36576,7 +36574,7 @@
       "max_ammo": 50,
       "max_weight": 35000,
       "profile_id": "19460-69893-261122-261123",
-      "protection": 54,
+      "protection": 53,
       "shells": [
         {
           "damage": 280,
@@ -37428,7 +37426,7 @@
       "max_ammo": 60,
       "max_weight": 30000,
       "profile_id": "70661-261379-261634-264452",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 200,
@@ -37632,7 +37630,7 @@
       "max_ammo": 80,
       "max_weight": 36000,
       "profile_id": "41237-261907-262418-263188",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 160,
@@ -37793,7 +37791,7 @@
       "max_ammo": 36,
       "max_weight": 21800,
       "profile_id": "25125-262691-262946-264740",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 225,
@@ -37954,7 +37952,7 @@
       "max_ammo": 43,
       "max_weight": 25000,
       "profile_id": "71173-261635-262146-264708",
-      "protection": 51,
+      "protection": 49,
       "shells": [
         {
           "damage": 310,
@@ -38301,7 +38299,7 @@
       "max_ammo": 64,
       "max_weight": 65000,
       "profile_id": "41493-262163-262674-263444",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 225,
@@ -38462,7 +38460,7 @@
       "max_ammo": 40,
       "max_weight": 47000,
       "profile_id": "26661-263203-263458-265252",
-      "protection": 75,
+      "protection": 73,
       "shells": [
         {
           "damage": 380,
@@ -38626,7 +38624,7 @@
       "max_ammo": 68,
       "max_weight": 35300,
       "profile_id": "261-1540-4355-5122",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -38874,7 +38872,7 @@
       "max_ammo": 48,
       "max_weight": 32400,
       "profile_id": "5-514-1796",
-      "protection": 18,
+      "protection": 17,
       "shells": [
         {
           "damage": 170,
@@ -39007,7 +39005,6 @@
       "3585": 25000
     },
     "prices_xp": {
-      "1": 7000,
       "6913": 7000
     },
     "suspensions": [
@@ -39072,7 +39069,7 @@
       "max_ammo": 40,
       "max_weight": 41000,
       "profile_id": "4371-5394-37141-257812",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 160,
@@ -39236,7 +39233,7 @@
       "max_ammo": 63,
       "max_weight": 69050,
       "profile_id": "5155-5669-11556-24610",
-      "protection": 55,
+      "protection": 54,
       "shells": [
         {
           "damage": 310,
@@ -39619,7 +39616,7 @@
       "max_ammo": 50,
       "max_weight": 50500,
       "profile_id": "3652-3907-4418-4421",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 225,
@@ -40521,7 +40518,7 @@
       "max_ammo": 34,
       "max_weight": 71850,
       "profile_id": "5667-5922-12837-15652",
-      "protection": 68,
+      "protection": 67,
       "shells": [
         {
           "damage": 400,
@@ -40685,7 +40682,7 @@
       "max_ammo": 35,
       "max_weight": 54000,
       "profile_id": "1077-2356-4402-4403",
-      "protection": 60,
+      "protection": 58,
       "shells": [
         {
           "damage": 400,
@@ -40907,7 +40904,7 @@
       "max_ammo": 70,
       "max_weight": 25230,
       "profile_id": "4675-5186-17988-17989",
-      "protection": 27,
+      "protection": 26,
       "shells": [
         {
           "damage": 150,
@@ -41257,7 +41254,7 @@
       "max_ammo": 150,
       "max_weight": 43000,
       "profile_id": "6483-6738-7253-262228",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 50,
@@ -41648,7 +41645,7 @@
       "max_ammo": 51,
       "max_weight": 40000,
       "profile_id": "4738-4740-4741-4995",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 240,
@@ -41971,7 +41968,7 @@
       "max_ammo": 50,
       "max_weight": 29900,
       "profile_id": "6434-7716-256549",
-      "protection": 15,
+      "protection": 14,
       "shells": [
         {
           "damage": 160,
@@ -42340,7 +42337,7 @@
       "max_ammo": 72,
       "max_weight": 57000,
       "profile_id": "4421-4931-5442-22084",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 225,
@@ -42575,7 +42572,7 @@
       "max_ammo": 140,
       "max_weight": 53000,
       "profile_id": "7250-7251-7509-7764",
-      "protection": 52,
+      "protection": 51,
       "shells": [
         {
           "damage": 160,
@@ -42781,7 +42778,7 @@
       "max_ammo": 40,
       "max_weight": 59900,
       "profile_id": "4994-4996-4997-5251",
-      "protection": 58,
+      "protection": 56,
       "shells": [
         {
           "damage": 440,
@@ -43014,8 +43011,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -43151,7 +43148,7 @@
       "max_ammo": 90,
       "max_weight": 49800,
       "profile_id": "34-35-7716-8229",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 160,
@@ -43863,7 +43860,7 @@
       "max_ammo": 50,
       "max_weight": 38000,
       "profile_id": "4197-5476-6243-6754",
-      "protection": 37,
+      "protection": 36,
       "shells": [
         {
           "damage": 225,
@@ -44085,7 +44082,7 @@
       "max_ammo": 90,
       "max_weight": 29000,
       "profile_id": "5250-5253-5507-5508",
-      "protection": 54,
+      "protection": 52,
       "shells": [
         {
           "damage": 320,
@@ -44468,7 +44465,7 @@
       "max_ammo": 62,
       "max_weight": 38700,
       "profile_id": "261-1796-7170",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 170,
@@ -44835,7 +44832,7 @@
       "max_ammo": 36,
       "max_weight": 46100,
       "profile_id": "1332-5938-5939-5941",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 280,
@@ -45017,9 +45014,9 @@
           "sides": 40
         },
         "turret": {
-          "front": 50,
-          "rear": 15,
-          "sides": 30
+          "front": 70,
+          "rear": 50,
+          "sides": 50
         }
       },
       "battle_level_range_max": 11,
@@ -45057,7 +45054,7 @@
       "max_ammo": 48,
       "max_weight": 28000,
       "profile_id": "4932-5443-6722-11589",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 310,
@@ -45236,7 +45233,7 @@
       "max_ammo": 50,
       "max_weight": 40000,
       "profile_id": "4709-5732-6755-7266",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 350,
@@ -45399,7 +45396,7 @@
       "max_ammo": 32,
       "max_weight": 58000,
       "profile_id": "2421-2674-3188-3443",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 400,
@@ -45563,7 +45560,7 @@
       "max_ammo": 50,
       "max_weight": 26000,
       "profile_id": "2949-5762-5763-5764",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -45785,7 +45782,7 @@
       "max_ammo": 60,
       "max_weight": 43000,
       "profile_id": "130-387-388-389",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 350,
@@ -45951,7 +45948,7 @@
       "max_ammo": 68,
       "max_weight": 49000,
       "profile_id": "4884-7698-19477",
-      "protection": 38,
+      "protection": 37,
       "shells": [
         {
           "damage": 160,
@@ -46177,7 +46174,7 @@
       "max_ammo": 73,
       "max_weight": 66800,
       "profile_id": "37-2596-7203-7714",
-      "protection": 59,
+      "protection": 57,
       "shells": [
         {
           "damage": 225,
@@ -46411,7 +46408,7 @@
       "max_ammo": 72,
       "max_weight": 65000,
       "profile_id": "4676-5699-6213-6978",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 225,
@@ -46633,7 +46630,7 @@
       "max_ammo": 70,
       "max_weight": 63000,
       "profile_id": "3413-6484-8531-9042",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 160,
@@ -46881,7 +46878,7 @@
       "max_ammo": 50,
       "max_weight": 80000,
       "profile_id": "5221-6756-7778",
-      "protection": 61,
+      "protection": 60,
       "shells": [
         {
           "damage": 560,
@@ -47032,7 +47029,7 @@
       "max_ammo": 50,
       "max_weight": 39800,
       "profile_id": "16756-17269-28787-29042",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 310,
@@ -47196,7 +47193,7 @@
       "max_ammo": 60,
       "max_weight": 30000,
       "profile_id": "3205-6020-6274-6275",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 160,
@@ -47431,7 +47428,7 @@
       "max_ammo": 79,
       "max_weight": 43000,
       "profile_id": "1044-6419-8210-19477",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 160,
@@ -47666,7 +47663,7 @@
       "max_ammo": 40,
       "max_weight": 42000,
       "profile_id": "6453-6708-6962-6963",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 420,
@@ -47832,7 +47829,7 @@
       "max_ammo": 50,
       "max_weight": 79000,
       "profile_id": "3429-7012-8034",
-      "protection": 56,
+      "protection": 55,
       "shells": [
         {
           "damage": 460,
@@ -48029,7 +48026,7 @@
       "max_ammo": 60,
       "max_weight": 38000,
       "profile_id": "5252-6786-6787-6789",
-      "protection": 59,
+      "protection": 57,
       "shells": [
         {
           "damage": 320,
@@ -48238,7 +48235,7 @@
       "max_ammo": 58,
       "max_weight": 35300,
       "profile_id": "3076-4357-7171-8706",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 200,
@@ -48557,8 +48554,8 @@
         "name": "Kw.K. 39 L/60",
         "next_modules": null,
         "next_tanks": [
-          17425,
-          1809
+          1809,
+          17425
         ],
         "price_credit": 0,
         "price_xp": 1050,
@@ -48717,7 +48714,7 @@
       "max_ammo": 54,
       "max_weight": 60500,
       "profile_id": "37-4132-7971-8738",
-      "protection": 62,
+      "protection": 61,
       "shells": [
         {
           "damage": 225,
@@ -49153,7 +49150,7 @@
       "max_ammo": 60,
       "max_weight": 68000,
       "profile_id": "3139-8258-19269-20036",
-      "protection": 80,
+      "protection": 78,
       "shells": [
         {
           "damage": 480,
@@ -49317,7 +49314,7 @@
       "max_ammo": 65,
       "max_weight": 68000,
       "profile_id": "3413-7252-9555-10066",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 190,
@@ -49575,7 +49572,7 @@
       "max_ammo": 28,
       "max_weight": 48400,
       "profile_id": "5733-7524-7779-8546",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 400,
@@ -49736,7 +49733,7 @@
       "max_ammo": 50,
       "max_weight": 34000,
       "profile_id": "17780-17781-29554-29811",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 190,
@@ -49900,7 +49897,7 @@
       "max_ammo": 48,
       "max_weight": 48000,
       "profile_id": "6788-7043-7045-7298",
-      "protection": 65,
+      "protection": 63,
       "shells": [
         {
           "damage": 400,
@@ -50066,7 +50063,7 @@
       "max_ammo": 58,
       "max_weight": 12700,
       "profile_id": "5381-7683-9218-513028",
-      "protection": 7,
+      "protection": 6,
       "shells": [
         {
           "damage": 35,
@@ -50476,7 +50473,7 @@
       "max_ammo": 84,
       "max_weight": 43000,
       "profile_id": "3924-7253-10067-10578",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 90,
@@ -50868,7 +50865,7 @@
       "max_ammo": 96,
       "max_weight": 130000,
       "profile_id": "18036-18037-29810-30067",
-      "protection": 56,
+      "protection": 54,
       "shells": [
         {
           "damage": 90,
@@ -51029,7 +51026,7 @@
       "max_ammo": 90,
       "max_weight": 28000,
       "profile_id": "7044-7299-7301-7554",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 310,
@@ -51508,7 +51505,7 @@
       "max_ammo": 34,
       "max_weight": 39800,
       "profile_id": "50-51-52-53",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 280,
@@ -51672,7 +51669,7 @@
       "max_ammo": 48,
       "max_weight": 17840,
       "profile_id": "324-325-7491-9282",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 160,
@@ -51907,7 +51904,7 @@
       "max_ammo": 44,
       "max_weight": 20000,
       "profile_id": "852-10835-11346-21333",
-      "protection": 16,
+      "protection": 15,
       "shells": [
         {
           "damage": 90,
@@ -52071,7 +52068,7 @@
       "max_ammo": 90,
       "max_weight": 47500,
       "profile_id": "3685-8036-9058",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 310,
@@ -52439,7 +52436,7 @@
       "max_ammo": 60,
       "max_weight": 36000,
       "profile_id": "7300-7555-7557-7810",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 225,
@@ -52603,7 +52600,7 @@
       "max_ammo": 120,
       "max_weight": 70400,
       "profile_id": "7429-11267-13826-18948",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 160,
@@ -52909,7 +52906,7 @@
       "max_ammo": 36,
       "max_weight": 48400,
       "profile_id": "771-773-1026-3332",
-      "protection": 45,
+      "protection": 44,
       "shells": [
         {
           "damage": 280,
@@ -53144,7 +53141,7 @@
       "max_ammo": 72,
       "max_weight": 74000,
       "profile_id": "2324-8211-10258-20245",
-      "protection": 60,
+      "protection": 58,
       "shells": [
         {
           "damage": 220,
@@ -53544,7 +53541,7 @@
       "max_ammo": 124,
       "max_weight": 44800,
       "profile_id": "8725-10259-11028-13074",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 160,
@@ -53960,8 +53957,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          10273,
-          5409
+          5409,
+          10273
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -54314,7 +54311,7 @@
       "max_ammo": 140,
       "max_weight": 41950,
       "profile_id": "9477-12291-15106-17668",
-      "protection": 25,
+      "protection": 24,
       "shells": [
         {
           "damage": 90,
@@ -54645,7 +54642,7 @@
       "max_ammo": 92,
       "max_weight": 31000,
       "profile_id": "4899-5154-7460-8741",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 90,
@@ -54968,7 +54965,7 @@
       "max_ammo": 48,
       "max_weight": 16350,
       "profile_id": "66-67-325-7748",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 160,
@@ -55190,7 +55187,7 @@
       "max_ammo": 112,
       "max_weight": 21300,
       "profile_id": "6933-11795-14866-259604",
-      "protection": 14,
+      "protection": 13,
       "shells": [
         {
           "damage": 90,
@@ -55655,7 +55652,7 @@
       "max_ammo": 90,
       "max_weight": 44800,
       "profile_id": "2917-8548-9570",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 220,
@@ -56011,7 +56008,7 @@
       "max_ammo": 112,
       "max_weight": 33300,
       "profile_id": "7189-9748-12051-15122",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 75,
@@ -56170,7 +56167,7 @@
       "max_ammo": 90,
       "max_weight": 33300,
       "profile_id": "7716-11045-13091-14626",
-      "protection": 23,
+      "protection": 22,
       "shells": [
         {
           "damage": 160,
@@ -56331,7 +56328,7 @@
       "max_ammo": 36,
       "max_weight": 60800,
       "profile_id": "18549-18804-30322-30579",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 640,
@@ -56974,7 +56971,7 @@
       "max_ammo": 60,
       "max_weight": 70500,
       "profile_id": "10533-12836-15395-18466",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 310,
@@ -57138,7 +57135,7 @@
       "max_ammo": 60,
       "max_weight": 81000,
       "profile_id": "338-340-341",
-      "protection": 74,
+      "protection": 72,
       "shells": [
         {
           "damage": 300,
@@ -57666,7 +57663,7 @@
       "max_ammo": 92,
       "max_weight": 61000,
       "profile_id": "787-1042-2068-20245",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 220,
@@ -58049,7 +58046,7 @@
       "max_ammo": 40,
       "max_weight": 70500,
       "profile_id": "10533-15652-33059-38434",
-      "protection": 62,
+      "protection": 60,
       "shells": [
         {
           "damage": 400,
@@ -58213,7 +58210,7 @@
       "max_ammo": 60,
       "max_weight": 105000,
       "profile_id": "12549-16131-20226-20996",
-      "protection": 72,
+      "protection": 71,
       "shells": [
         {
           "damage": 320,
@@ -58703,7 +58700,7 @@
       "max_ammo": 55,
       "max_weight": 31950,
       "profile_id": "852-10581-11091-11602",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 90,
@@ -59019,7 +59016,7 @@
       "max_ammo": 28,
       "max_weight": 53900,
       "profile_id": "3588-5637-8707-10754",
-      "protection": 60,
+      "protection": 59,
       "shells": [
         {
           "damage": 400,
@@ -59655,7 +59652,7 @@
       "max_ammo": 130,
       "max_weight": 27500,
       "profile_id": "3109-3620-10275-11042",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 120,
@@ -59893,7 +59890,7 @@
       "max_ammo": 70,
       "max_weight": 68000,
       "profile_id": "9556-14165-16978",
-      "protection": 50,
+      "protection": 49,
       "shells": [
         {
           "damage": 200,
@@ -60045,7 +60042,7 @@
       "max_ammo": 44,
       "max_weight": 48000,
       "profile_id": "5685-9012-9523-9778",
-      "protection": 80,
+      "protection": 78,
       "shells": [
         {
           "damage": 420,
@@ -60358,7 +60355,7 @@
       "max_ammo": 40,
       "max_weight": 99850,
       "profile_id": "10261-13076-17171-21778",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 310,
@@ -60522,7 +60519,7 @@
       "max_ammo": 64,
       "max_weight": 44100,
       "profile_id": "15188-15701-18771-21842",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 160,
@@ -60683,7 +60680,7 @@
       "max_ammo": 50,
       "max_weight": 37000,
       "profile_id": "2628-2885-6467-8514",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 310,
@@ -61001,7 +60998,7 @@
       "max_ammo": 60,
       "max_weight": 23500,
       "profile_id": "10773-13588-17683-22546",
-      "protection": 21,
+      "protection": 20,
       "shells": [
         {
           "damage": 160,
@@ -61165,7 +61162,7 @@
       "max_ammo": 61,
       "max_weight": 34000,
       "profile_id": "3157-9812-11859-12370",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 160,
@@ -61391,7 +61388,7 @@
       "max_ammo": 30,
       "max_weight": 67400,
       "profile_id": "18181-25860-30210",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 460,
@@ -61850,7 +61847,7 @@
       "max_ammo": 48,
       "max_weight": 38000,
       "profile_id": "18805-19060-30578-30835",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 160,
@@ -62014,7 +62011,7 @@
       "max_ammo": 48,
       "max_weight": 43000,
       "profile_id": "7812-8067-8069-8322",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 310,
@@ -62498,7 +62495,7 @@
       "max_ammo": 35,
       "max_weight": 35000,
       "profile_id": "21509-27908-32002",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 400,
@@ -62650,7 +62647,7 @@
       "max_ammo": 68,
       "max_weight": 74850,
       "profile_id": "12565-14868-26130",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 220,
@@ -63140,7 +63137,7 @@
       "max_ammo": 150,
       "max_weight": 13000,
       "profile_id": "18436-25349-31747-37890",
-      "protection": 9,
+      "protection": 8,
       "shells": [
         {
           "damage": 65,
@@ -63299,7 +63296,7 @@
       "max_ammo": 60,
       "max_weight": 73000,
       "profile_id": "10533-27172-38178",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 310,
@@ -63602,7 +63599,7 @@
       "max_ammo": 45,
       "max_weight": 42000,
       "profile_id": "7218-7221-8244-9267",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 350,
@@ -63766,7 +63763,7 @@
       "max_ammo": 26,
       "max_weight": 26700,
       "profile_id": "15125-17684-30226",
-      "protection": 19,
+      "protection": 18,
       "shells": [
         {
           "damage": 310,
@@ -63918,7 +63915,7 @@
       "max_ammo": 72,
       "max_weight": 54000,
       "profile_id": "3413-7252-12371-12882",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 190,
@@ -64504,7 +64501,7 @@
       "max_ammo": 50,
       "max_weight": 45500,
       "profile_id": "8068-8323-8325-8578",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 310,
@@ -64726,7 +64723,7 @@
       "max_ammo": 82,
       "max_weight": 49000,
       "profile_id": "15893-17940-25363-30994",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 160,
@@ -64890,7 +64887,7 @@
       "max_ammo": 42,
       "max_weight": 130000,
       "profile_id": "17173-21012-28947-34834",
-      "protection": 94,
+      "protection": 92,
       "shells": [
         {
           "damage": 640,
@@ -65056,7 +65053,7 @@
       "max_ammo": 30,
       "max_weight": 54900,
       "profile_id": "28933-35332-36867-44034",
-      "protection": 68,
+      "protection": 66,
       "shells": [
         {
           "damage": 400,
@@ -65220,7 +65217,7 @@
       "max_ammo": 61,
       "max_weight": 71800,
       "profile_id": "1029-2564-9475-11778",
-      "protection": 50,
+      "protection": 49,
       "shells": [
         {
           "damage": 320,
@@ -65468,7 +65465,7 @@
       "max_ammo": 28,
       "max_weight": 48400,
       "profile_id": "27909-34308-37379-44546",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 400,
@@ -65632,7 +65629,7 @@
       "max_ammo": 92,
       "max_weight": 45050,
       "profile_id": "2340-4133-11299-12066",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 160,
@@ -65867,7 +65864,7 @@
       "max_ammo": 77,
       "max_weight": 36100,
       "profile_id": "82-85-595-596",
-      "protection": 27,
+      "protection": 26,
       "shells": [
         {
           "damage": 160,
@@ -66075,7 +66072,7 @@
       "max_ammo": 54,
       "max_weight": 39000,
       "profile_id": "53-8500-10291-10546",
-      "protection": 52,
+      "protection": 51,
       "shells": [
         {
           "damage": 225,
@@ -66425,7 +66422,7 @@
       "max_ammo": 32,
       "max_weight": 54400,
       "profile_id": "27909-34820-45058",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 400,
@@ -66736,7 +66733,7 @@
       "max_ammo": 96,
       "max_weight": 48000,
       "profile_id": "3157-7764-12883-13394",
-      "protection": 34,
+      "protection": 33,
       "shells": [
         {
           "damage": 160,
@@ -66984,7 +66981,7 @@
       "max_ammo": 34,
       "max_weight": 38700,
       "profile_id": "35076-38147-45314-72453",
-      "protection": 46,
+      "protection": 45,
       "shells": [
         {
           "damage": 280,
@@ -67145,7 +67142,7 @@
       "max_ammo": 90,
       "max_weight": 38000,
       "profile_id": "19317-19572-31090-31347",
-      "protection": 27,
+      "protection": 26,
       "shells": [
         {
           "damage": 160,
@@ -67309,7 +67306,7 @@
       "max_ammo": 40,
       "max_weight": 58400,
       "profile_id": "29445-36100-39683-46850",
-      "protection": 67,
+      "protection": 65,
       "shells": [
         {
           "damage": 400,
@@ -67473,7 +67470,7 @@
       "max_ammo": 80,
       "max_weight": 45000,
       "profile_id": "8324-8835-9090-9093",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 220,
@@ -67721,7 +67718,7 @@
       "max_ammo": 56,
       "max_weight": 49000,
       "profile_id": "24596-27669-38931-46354",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 220,
@@ -67882,7 +67879,7 @@
       "max_ammo": 30,
       "max_weight": 53560,
       "profile_id": "29189-35332-38915-46082",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 400,
@@ -68205,7 +68202,7 @@
       "max_ammo": 40,
       "max_weight": 66300,
       "profile_id": "5893-10243-12290-23812",
-      "protection": 93,
+      "protection": 91,
       "shells": [
         {
           "damage": 420,
@@ -68669,7 +68666,7 @@
       "max_ammo": 90,
       "max_weight": 38000,
       "profile_id": "53-8756-10547-10802",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 400,
@@ -68833,7 +68830,7 @@
       "max_ammo": 57,
       "max_weight": 68000,
       "profile_id": "5700-8773-9283-11330",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 400,
@@ -68999,7 +68996,7 @@
       "max_ammo": 45,
       "max_weight": 73000,
       "profile_id": "7508-12373-13395-13906",
-      "protection": 66,
+      "protection": 64,
       "shells": [
         {
           "damage": 400,
@@ -69326,7 +69323,7 @@
       "max_ammo": 48,
       "max_weight": 34500,
       "profile_id": "19573-19828-31346-31603",
-      "protection": 33,
+      "protection": 32,
       "shells": [
         {
           "damage": 160,
@@ -69490,7 +69487,7 @@
       "max_ammo": 56,
       "max_weight": 37000,
       "profile_id": "9092-9347-9602-9861",
-      "protection": 29,
+      "protection": 28,
       "shells": [
         {
           "damage": 200,
@@ -70034,7 +70031,7 @@
       "max_ammo": 72,
       "max_weight": 69700,
       "profile_id": "15893-24596-43539-50962",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 220,
@@ -70362,7 +70359,7 @@
       "max_ammo": 92,
       "max_weight": 61000,
       "profile_id": "256866-256867-256869-257124",
-      "protection": 41,
+      "protection": 40,
       "shells": [
         {
           "damage": 220,
@@ -70851,7 +70848,7 @@
       "max_ammo": 56,
       "max_weight": 35300,
       "profile_id": "256002-256003-256004-256005",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 200,
@@ -71159,7 +71156,7 @@
       "max_ammo": 63,
       "max_weight": 95200,
       "profile_id": "256274-256275-256276-256277",
-      "protection": 57,
+      "protection": 55,
       "shells": [
         {
           "damage": 310,
@@ -71336,7 +71333,7 @@
       "max_ammo": 91,
       "max_weight": 57500,
       "profile_id": "14917-15428-19011-24386",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 225,
@@ -71500,7 +71497,7 @@
       "max_ammo": 60,
       "max_weight": 36000,
       "profile_id": "386-643-645-900",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 225,
@@ -71722,7 +71719,7 @@
       "max_ammo": 87,
       "max_weight": 27800,
       "profile_id": "11027-11028-13842-36885",
-      "protection": 20,
+      "protection": 19,
       "shells": [
         {
           "damage": 160,
@@ -72050,7 +72047,7 @@
       "max_ammo": 68,
       "max_weight": 74850,
       "profile_id": "12565-14868-63506",
-      "protection": 47,
+      "protection": 46,
       "shells": [
         {
           "damage": 220,
@@ -72362,7 +72359,7 @@
       "max_ammo": 70,
       "max_weight": 36000,
       "profile_id": "256594-256595-256852-256853",
-      "protection": 30,
+      "protection": 29,
       "shells": [
         {
           "damage": 160,
@@ -72526,7 +72523,7 @@
       "max_ammo": 35,
       "max_weight": 60000,
       "profile_id": "7477-9268-11058",
-      "protection": 66,
+      "protection": 64,
       "shells": [
         {
           "damage": 640,
@@ -72680,7 +72677,7 @@
       "max_ammo": 60,
       "max_weight": 29000,
       "profile_id": "16148-22805-28690",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 160,
@@ -72829,7 +72826,7 @@
       "max_ammo": 45,
       "max_weight": 49000,
       "profile_id": "564-6965-10035-10290",
-      "protection": 62,
+      "protection": 61,
       "shells": [
         {
           "damage": 400,
@@ -73354,7 +73351,7 @@
       "max_ammo": 30,
       "max_weight": 59900,
       "profile_id": "14085-22532-64770-64771",
-      "protection": 63,
+      "protection": 62,
       "shells": [
         {
           "damage": 400,
@@ -73531,7 +73528,7 @@
       "max_ammo": 34,
       "max_weight": 71850,
       "profile_id": "256034-256035-256036-256293",
-      "protection": 68,
+      "protection": 67,
       "shells": [
         {
           "damage": 400,
@@ -73859,7 +73856,7 @@
       "max_ammo": 100,
       "max_weight": 31000,
       "profile_id": "256082-256083-256084-256085",
-      "protection": 24,
+      "protection": 23,
       "shells": [
         {
           "damage": 75,
@@ -75519,7 +75516,7 @@
       "max_ammo": 54,
       "max_weight": 43000,
       "profile_id": "9860-10371-10626-10629",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 220,
@@ -75880,7 +75877,7 @@
       "max_ammo": 68,
       "max_weight": 192900,
       "profile_id": "6421-9492-11539-14610",
-      "protection": 97,
+      "protection": 95,
       "shells": [
         {
           "damage": 460,
@@ -76280,7 +76277,7 @@
       "max_ammo": 35,
       "max_weight": 39000,
       "profile_id": "7989-10036-11570",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 400,
@@ -76432,7 +76429,7 @@
       "max_ammo": 74,
       "max_weight": 60000,
       "profile_id": "4164-4421-10307-12354",
-      "protection": 43,
+      "protection": 42,
       "shells": [
         {
           "damage": 225,
@@ -76860,7 +76857,7 @@
       "max_ammo": 90,
       "max_weight": 70000,
       "profile_id": "20085-20340-32114-32371",
-      "protection": 52,
+      "protection": 51,
       "shells": [
         {
           "damage": 350,
@@ -77021,7 +77018,7 @@
       "max_ammo": 50,
       "max_weight": 29000,
       "profile_id": "10372-10627-10882-10885",
-      "protection": 24,
+      "protection": 23,
       "shells": [
         {
           "damage": 160,
@@ -77185,7 +77182,7 @@
       "max_ammo": 40,
       "max_weight": 70950,
       "profile_id": "9221-12035-14850-14852",
-      "protection": 96,
+      "protection": 94,
       "shells": [
         {
           "damage": 460,
@@ -77351,7 +77348,7 @@
       "max_ammo": 78,
       "max_weight": 39900,
       "profile_id": "788-7445-12307-15378",
-      "protection": 35,
+      "protection": 34,
       "shells": [
         {
           "damage": 160,
@@ -77831,7 +77828,7 @@
       "max_ammo": 30,
       "max_weight": 56000,
       "profile_id": "564-6965-11826-11827",
-      "protection": 64,
+      "protection": 62,
       "shells": [
         {
           "damage": 400,
@@ -77995,7 +77992,7 @@
       "max_ammo": 72,
       "max_weight": 42500,
       "profile_id": "8532-13141-14675-15442",
-      "protection": 51,
+      "protection": 50,
       "shells": [
         {
           "damage": 350,
@@ -78171,7 +78168,7 @@
       "max_ammo": 50,
       "max_weight": 49000,
       "profile_id": "20341-20596-32370-32627",
-      "protection": 89,
+      "protection": 87,
       "shells": [
         {
           "damage": 400,
@@ -78332,7 +78329,7 @@
       "max_ammo": 40,
       "max_weight": 68000,
       "profile_id": "10628-10883-11138-11141",
-      "protection": 100,
+      "protection": 98,
       "shells": [
         {
           "damage": 600,
@@ -78731,7 +78728,7 @@
       "max_ammo": 92,
       "max_weight": 85800,
       "profile_id": "2324-7701-12819-15890",
-      "protection": 78,
+      "protection": 76,
       "shells": [
         {
           "damage": 220,
@@ -78992,7 +78989,7 @@
       "max_ammo": 90,
       "max_weight": 32000,
       "profile_id": "8501-10548-12082",
-      "protection": 26,
+      "protection": 25,
       "shells": [
         {
           "damage": 280,
@@ -79541,7 +79538,7 @@
       "max_ammo": 48,
       "max_weight": 50000,
       "profile_id": "10884-11139-11394-11653",
-      "protection": 71,
+      "protection": 70,
       "shells": [
         {
           "damage": 420,
@@ -79886,8 +79883,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          6913,
-          2049
+          2049,
+          6913
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -79967,7 +79964,7 @@
       "max_ammo": 50,
       "max_weight": 68950,
       "profile_id": "7444-7701-16914",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 220,
@@ -80866,7 +80863,7 @@
       "max_ammo": 90,
       "max_weight": 66800,
       "profile_id": "20853-21108-32882-33139",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 210,
@@ -81027,7 +81024,7 @@
       "max_ammo": 48,
       "max_weight": 65000,
       "profile_id": "11396-11651-11906-11909",
-      "protection": 57,
+      "protection": 56,
       "shells": [
         {
           "damage": 290,
@@ -81434,7 +81431,7 @@
       "max_ammo": 50,
       "max_weight": 39800,
       "profile_id": "4613-14339-17666-19460",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 280,
@@ -81685,7 +81682,7 @@
       "max_ammo": 40,
       "max_weight": 79000,
       "profile_id": "10260-18962-19477",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 460,
@@ -81883,7 +81880,7 @@
       "max_ammo": 30,
       "max_weight": 45000,
       "profile_id": "9269-11316-13106",
-      "protection": 44,
+      "protection": 43,
       "shells": [
         {
           "damage": 400,
@@ -82377,8 +82374,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -82796,7 +82793,7 @@
       "max_ammo": 80,
       "max_weight": 50000,
       "profile_id": "11908-12163-12418-12933",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 220,
@@ -83013,7 +83010,7 @@
       "max_ammo": 45,
       "max_weight": 48000,
       "profile_id": "564-565-818-819",
-      "protection": 66,
+      "protection": 64,
       "shells": [
         {
           "damage": 400,
@@ -83177,7 +83174,7 @@
       "max_ammo": 34,
       "max_weight": 50900,
       "profile_id": "5637-18178-20484",
-      "protection": 55,
+      "protection": 53,
       "shells": [
         {
           "damage": 640,
@@ -83535,7 +83532,7 @@
       "max_ammo": 72,
       "max_weight": 62450,
       "profile_id": "9509-11300-16930",
-      "protection": 50,
+      "protection": 49,
       "shells": [
         {
           "damage": 225,
@@ -83746,7 +83743,7 @@
       "max_ammo": 30,
       "max_weight": 50000,
       "profile_id": "9269-11572-13618",
-      "protection": 54,
+      "protection": 52,
       "shells": [
         {
           "damage": 460,
@@ -84229,7 +84226,7 @@
       "max_ammo": 40,
       "max_weight": 69700,
       "profile_id": "21365-21620-33394-33651",
-      "protection": 53,
+      "protection": 52,
       "shells": [
         {
           "damage": 310,
@@ -84390,7 +84387,7 @@
       "max_ammo": 45,
       "max_weight": 50500,
       "profile_id": "12164-12421-12675-12930",
-      "protection": 48,
+      "protection": 46,
       "shells": [
         {
           "damage": 225,
@@ -84610,7 +84607,7 @@
       "max_ammo": 80,
       "max_weight": 56000,
       "profile_id": "11796-16147-19477-20242",
-      "protection": 42,
+      "protection": 41,
       "shells": [
         {
           "damage": 160,
@@ -85061,7 +85058,7 @@
       "max_ammo": 40,
       "max_weight": 55000,
       "profile_id": "9781-12340-13107-14130",
-      "protection": 87,
+      "protection": 85,
       "shells": [
         {
           "damage": 460,
@@ -85222,7 +85219,7 @@
       "max_ammo": 50,
       "max_weight": 38000,
       "profile_id": "8003-14914-16964-18757",
-      "protection": 62,
+      "protection": 61,
       "shells": [
         {
           "damage": 350,
@@ -85386,7 +85383,7 @@
       "max_ammo": 70,
       "max_weight": 66000,
       "profile_id": "15957-18258-263508",
-      "protection": 52,
+      "protection": 51,
       "shells": [
         {
           "damage": 200,
@@ -85618,7 +85615,7 @@
       "max_ammo": 48,
       "max_weight": 21000,
       "profile_id": "21621-21876-33650-33907",
-      "protection": 23,
+      "protection": 22,
       "shells": [
         {
           "damage": 160,
@@ -85968,7 +85965,7 @@
       "max_ammo": 62,
       "max_weight": 91890,
       "profile_id": "9509-11556-17954",
-      "protection": 56,
+      "protection": 55,
       "shells": [
         {
           "damage": 310,
@@ -86352,7 +86349,7 @@
       "max_ammo": 96,
       "max_weight": 44000,
       "profile_id": "12884-14421-19282",
-      "protection": 24,
+      "protection": 23,
       "shells": [
         {
           "damage": 90,
@@ -86549,7 +86546,7 @@
       "max_ammo": 64,
       "max_weight": 42000,
       "profile_id": "626-627-628-1141",
-      "protection": 31,
+      "protection": 30,
       "shells": [
         {
           "damage": 225,
@@ -86710,7 +86707,7 @@
       "max_ammo": 180,
       "max_weight": 27000,
       "profile_id": "21877-22132-33906-34163",
-      "protection": 22,
+      "protection": 21,
       "shells": [
         {
           "damage": 90,
@@ -87035,7 +87032,7 @@
       "max_ammo": 60,
       "max_weight": 36900,
       "profile_id": "15875-19970-65541-258564",
-      "protection": 40,
+      "protection": 39,
       "shells": [
         {
           "damage": 200,
@@ -87434,7 +87431,7 @@
       "max_ammo": 70,
       "max_weight": 45050,
       "profile_id": "4133-14372-15907-18978",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 225,
@@ -87678,7 +87675,7 @@
       "max_ammo": 60,
       "max_weight": 35000,
       "profile_id": "10293-12852-13619-14642",
-      "protection": 32,
+      "protection": 31,
       "shells": [
         {
           "damage": 200,
@@ -88039,7 +88036,7 @@
       "max_ammo": 30,
       "max_weight": 59900,
       "profile_id": "14085-19971-22532-24578",
-      "protection": 63,
+      "protection": 62,
       "shells": [
         {
           "damage": 400,
@@ -88216,7 +88213,7 @@
       "max_ammo": 56,
       "max_weight": 43800,
       "profile_id": "4133-10532-19490",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 225,
@@ -88426,7 +88423,7 @@
       "max_ammo": 15,
       "max_weight": 64000,
       "profile_id": "13908-16213-17747-20306",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 930,
@@ -88589,7 +88586,7 @@
       "max_ammo": 90,
       "max_weight": 58800,
       "profile_id": "22389-22644-34418-34675",
-      "protection": 52,
+      "protection": 51,
       "shells": [
         {
           "damage": 200,
@@ -88914,7 +88911,7 @@
       "max_ammo": 72,
       "max_weight": 150000,
       "profile_id": "9492-11285-18451-23058",
-      "protection": 97,
+      "protection": 95,
       "shells": [
         {
           "damage": 460,
@@ -89093,7 +89090,7 @@
       "max_ammo": 60,
       "max_weight": 62500,
       "profile_id": "4388-11301-16675-20002",
-      "protection": 68,
+      "protection": 67,
       "shells": [
         {
           "damage": 310,
@@ -89325,7 +89322,7 @@
       "max_ammo": 42,
       "max_weight": 39000,
       "profile_id": "10805-13364-14131-15154",
-      "protection": 48,
+      "protection": 47,
       "shells": [
         {
           "damage": 400,
@@ -89489,7 +89486,7 @@
       "max_ammo": 120,
       "max_weight": 44500,
       "profile_id": "13140-14421-18770",
-      "protection": 58,
+      "protection": 57,
       "shells": [
         {
           "damage": 90,
@@ -89712,7 +89709,7 @@
       "max_ammo": 92,
       "max_weight": 96000,
       "profile_id": "2324-18707-20501-23314",
-      "protection": 76,
+      "protection": 74,
       "shells": [
         {
           "damage": 220,
@@ -90182,7 +90179,7 @@
       "max_ammo": 40,
       "max_weight": 26000,
       "profile_id": "10053-10308-16194",
-      "protection": 14,
+      "protection": 13,
       "shells": [
         {
           "damage": 150,
@@ -90531,7 +90528,7 @@
       "max_ammo": 36,
       "max_weight": 37500,
       "profile_id": "4357-21252-22274",
-      "protection": 36,
+      "protection": 35,
       "shells": [
         {
           "damage": 280,
