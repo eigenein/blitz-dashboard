@@ -18158,8 +18158,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21762,8 +21762,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          7937,
-          23809
+          23809,
+          7937
         ],
         "price_credit": 0,
         "price_xp": 34000,
@@ -38571,6 +38571,167 @@
     ],
     "type": "heavyTank"
   },
+  "25105": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 150,
+          "rear": 50,
+          "sides": 86
+        },
+        "turret": {
+          "front": 100,
+          "rear": 60,
+          "sides": 86
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Maybach HL 150 B",
+        "power": 450,
+        "tier": 6,
+        "weight": 850
+      },
+      "engine_id": 42261,
+      "firepower": 38,
+      "gun": {
+        "aim_time": 5.2,
+        "caliber": 88,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "fire_rate": 7.06,
+        "move_down_arc": 6,
+        "move_up_arc": 15,
+        "name": "8,8 cm Kw.K. 36 L/56 B",
+        "reload_time": 8.5,
+        "tier": 7,
+        "traverse_speed": 35.0,
+        "weight": 2050
+      },
+      "gun_id": 264212,
+      "hp": 1150,
+      "hull_hp": 856,
+      "hull_weight": 17450,
+      "is_default": true,
+      "maneuverability": 29,
+      "max_ammo": 64,
+      "max_weight": 45000,
+      "profile_id": "42261-262931-263442-264212",
+      "protection": 40,
+      "shells": [
+        {
+          "damage": 220,
+          "penetration": 150,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 190,
+          "penetration": 200,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 44,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 57,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 45,
+      "suspension": {
+        "load_limit": 45000,
+        "name": "Barkhan",
+        "tier": 6,
+        "traverse_speed": 26,
+        "weight": 13000
+      },
+      "suspension_id": 263442,
+      "turret": {
+        "hp": 294,
+        "name": "Barkhan",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 24,
+        "view_range": 240,
+        "weight": 8250
+      },
+      "turret_id": 262931,
+      "weight": 41850
+    },
+    "description": "Идеальная машина для сражений в пустыне. Прочная броня позволяет чувствовать себя уверенно в схватках лицом к лицу с противником, а мощное орудие не оставляет врагу шансов выжить в этом противостоянии.",
+    "engines": [
+      42261
+    ],
+    "guns": [
+      264212
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/G_VK3502_BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/G_VK3502_BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "262931": {
+        "is_default": true,
+        "module_id": 262931,
+        "name": "Barkhan",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "263442": {
+        "is_default": true,
+        "module_id": 263442,
+        "name": "Barkhan",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "264212": {
+        "is_default": true,
+        "module_id": 264212,
+        "name": "8,8 cm Kw.K. 36 L/56 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "42261": {
+        "is_default": true,
+        "module_id": 42261,
+        "name": "Maybach HL 150 B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Barkhan",
+    "nation": "germany",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      263442
+    ],
+    "tank_id": 25105,
+    "tier": 6,
+    "turrets": [
+      262931
+    ],
+    "type": "heavyTank"
+  },
   "2561": {
     "cost": {
       "price_credit": 915000,
@@ -43011,8 +43172,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "price_credit": 0,
         "price_xp": 500,
@@ -65970,8 +66131,8 @@
         "name": "OQF 17-pdr Gun Mk. VII",
         "next_modules": null,
         "next_tanks": [
-          5457,
-          18257
+          18257,
+          5457
         ],
         "price_credit": 0,
         "price_xp": 15000,
@@ -81516,8 +81677,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -84693,8 +84854,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2324,
-          2068
+          2068,
+          2324
         ],
         "next_tanks": [
           10257
@@ -85725,6 +85886,167 @@
       33907
     ],
     "type": "lightTank"
+  },
+  "8577": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 80,
+          "rear": 25,
+          "sides": 37
+        },
+        "turret": {
+          "front": 70,
+          "rear": 40,
+          "sides": 70
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Volvo V8B",
+        "power": 460,
+        "tier": 8,
+        "weight": 1050
+      },
+      "engine_id": 13445,
+      "firepower": 44,
+      "gun": {
+        "aim_time": 3.71,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.34,
+        "fire_rate": 5.45,
+        "move_down_arc": 10,
+        "move_up_arc": 20,
+        "name": "10.5 cm K L/53",
+        "reload_time": 11.0,
+        "tier": 8,
+        "traverse_speed": 35.0,
+        "weight": 1282
+      },
+      "gun_id": 12676,
+      "hp": 1300,
+      "hull_hp": 1030,
+      "hull_weight": 9000,
+      "is_default": true,
+      "maneuverability": 62,
+      "max_ammo": 65,
+      "max_weight": 25000,
+      "profile_id": "12676-13187-13442-13445",
+      "protection": 36,
+      "shells": [
+        {
+          "damage": 320,
+          "penetration": 202,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 280,
+          "penetration": 242,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 400,
+          "penetration": 53,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 75,
+      "signal_range": null,
+      "speed_backward": 18,
+      "speed_forward": 55,
+      "suspension": {
+        "load_limit": 25000,
+        "name": "Lansen C",
+        "tier": 8,
+        "traverse_speed": 45,
+        "weight": 6200
+      },
+      "suspension_id": 13442,
+      "turret": {
+        "hp": 270,
+        "name": "Lansen C",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 34,
+        "view_range": 260,
+        "weight": 6100
+      },
+      "turret_id": 13187,
+      "weight": 23907
+    },
+    "description": "Машина разрабатывалась шведской фирмой Landsverk для вооружённых сил Швейцарии. Танк предполагалось вооружить швейцарской копией британского 20-фунтового танкового орудия. Для проверки правильности принятых решений был построен полноразмерный макет, однако работы были свёрнуты в пользу машины тридцатитонного класса. В металле не изготавливался.",
+    "engines": [
+      13445
+    ],
+    "guns": [
+      12676
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/S26_Lancen_C.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/S26_Lancen_C.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "12676": {
+        "is_default": true,
+        "module_id": 12676,
+        "name": "10.5 cm K L/53",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "13187": {
+        "is_default": true,
+        "module_id": 13187,
+        "name": "Lansen C",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "13442": {
+        "is_default": true,
+        "module_id": 13442,
+        "name": "Lansen C",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "13445": {
+        "is_default": true,
+        "module_id": 13445,
+        "name": "Volvo V8B",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Lansen C",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      13442
+    ],
+    "tank_id": 8577,
+    "tier": 8,
+    "turrets": [
+      13187
+    ],
+    "type": "mediumTank"
   },
   "865": {
     "cost": {
@@ -87982,6 +88304,167 @@
     "tier": 4,
     "turrets": [],
     "type": "AT-SPG"
+  },
+  "9089": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 130,
+          "rear": 60,
+          "sides": 70
+        },
+        "turret": {
+          "front": 220,
+          "rear": 70,
+          "sides": 100
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "ČKD AXK",
+        "power": 575,
+        "tier": 8,
+        "weight": 1500
+      },
+      "engine_id": 13957,
+      "firepower": 39,
+      "gun": {
+        "aim_time": 7.21,
+        "caliber": 130,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.43,
+        "fire_rate": 3.53,
+        "move_down_arc": 8,
+        "move_up_arc": 15,
+        "name": "130 mm Škoda R 14",
+        "reload_time": 17.0,
+        "tier": 8,
+        "traverse_speed": 26.25,
+        "weight": 2900
+      },
+      "gun_id": 13188,
+      "hp": 1800,
+      "hull_hp": 1440,
+      "hull_weight": 22183,
+      "is_default": true,
+      "maneuverability": 28,
+      "max_ammo": 30,
+      "max_weight": 50000,
+      "profile_id": "13188-13699-13954-13957",
+      "protection": 65,
+      "shells": [
+        {
+          "damage": 450,
+          "penetration": 215,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 390,
+          "penetration": 268,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 640,
+          "penetration": 68,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 64,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 35,
+      "suspension": {
+        "load_limit": 50000,
+        "name": "T-56",
+        "tier": 8,
+        "traverse_speed": 26,
+        "weight": 10080
+      },
+      "suspension_id": 13954,
+      "turret": {
+        "hp": 360,
+        "name": "T-56",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 24,
+        "view_range": 240,
+        "weight": 11000
+      },
+      "turret_id": 13699,
+      "weight": 47938
+    },
+    "description": "В 1950-х годах в Чехословакии продолжались работы над оригинальными проектами боевых машин с широким использованием идей советской танковой школы и собственных наработок. Одним из таких проектов был танк Т-56, разработанный компанией Škoda. Работы были свёрнуты в связи с унификацией образцов вооружения стран-участниц Организации Варшавского договора. Не было выпущено ни одного образца.",
+    "engines": [
+      13957
+    ],
+    "guns": [
+      13188
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Cz14_Skoda_T-56.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Cz14_Skoda_T-56.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "13188": {
+        "is_default": true,
+        "module_id": 13188,
+        "name": "130 mm Škoda R 14",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "13699": {
+        "is_default": true,
+        "module_id": 13699,
+        "name": "T-56",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "13954": {
+        "is_default": true,
+        "module_id": 13954,
+        "name": "T-56",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "13957": {
+        "is_default": true,
+        "module_id": 13957,
+        "name": "ČKD AXK",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Škoda T 56",
+    "nation": "european",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      13954
+    ],
+    "tank_id": 9089,
+    "tier": 8,
+    "turrets": [
+      13699
+    ],
+    "type": "heavyTank"
   },
   "9217": {
     "cost": {
