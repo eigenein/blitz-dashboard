@@ -25,7 +25,7 @@ fastrand = "1.7.0"
 humantime = "2.1.0"
 itertools = "0.10.3"
 jemallocator = "0.3.2"
-log = "0.4.14"
+log = "0.4.16"
 maud = "0.23.0"
 miniz_oxide = "0.5.0"
 phf = { version = "0.10.1", features = ["macros"] }
