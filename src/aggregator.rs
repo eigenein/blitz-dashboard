@@ -52,6 +52,7 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
             &stream.entries,
             opts.charts_time_span,
             opts.charts_window_span,
+            now,
         )
         .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
         store_charts(&mut redis, charts).await?;
@@ -144,13 +145,14 @@ fn build_timelines(
     entries: &[DenormalizedStreamEntry],
     time_span: Duration,
     window_span: Duration,
+    now: DateTime,
 ) -> impl Iterator<Item = (TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
         .map(move |(tank_id, entries)| {
             (
                 tank_id,
-                build_vehicle_timeline(entries, time_span, window_span),
+                build_vehicle_timeline(entries, time_span, window_span, now),
             )
         })
 }
@@ -190,6 +192,7 @@ fn build_vehicle_timeline(
     entries: Vec<VehicleEntry>,
     time_span: Duration,
     window_span: Duration,
+    now: DateTime,
 ) -> Timeline {
     let start_time = Utc::now() - time_span;
     let mut window = VecDeque::new();
@@ -215,6 +218,17 @@ fn build_vehicle_timeline(
             ));
         }
     }
+
+    // Add the «now» entry to account for the latest trend.
+    cleanup_window(&mut window, &mut battle_counts, now, window_span);
+    timeline.push((
+        now,
+        ConfidenceInterval::wilson_score_interval(
+            battle_counts.n_battles,
+            battle_counts.n_wins,
+            Z::default(),
+        ),
+    ));
 
     timeline
 }
