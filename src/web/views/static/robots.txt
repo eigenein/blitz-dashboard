@@ -1,7 +1,0 @@
-User-agent: *
-Disallow: /*.ico$
-Disallow: /*.js$
-Disallow: /*.png$
-Disallow: /*.txt$
-Disallow: /*?*
-Disallow: /status
