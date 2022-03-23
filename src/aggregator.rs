@@ -43,25 +43,30 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
     loop {
         interval.tick().await;
         stream.refresh().await?;
+        let now = Utc::now();
 
-        let analytics = calculate_analytics(&stream.entries, &opts.time_spans);
+        let analytics = calculate_analytics(&stream.entries, &opts.time_spans, now);
         store_analytics(&mut redis, &analytics).await?;
 
         let charts = build_timelines(
             &stream.entries,
             opts.charts_time_span,
             opts.charts_window_span,
+            now,
         )
         .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
         store_charts(&mut redis, charts).await?;
 
-        redis.set(UPDATED_AT_KEY, Utc::now().timestamp()).await?;
+        redis.set(UPDATED_AT_KEY, now.timestamp()).await?;
     }
 }
 
 #[instrument(level = "info", skip_all, fields(n_entries = entries.len()))]
-fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Duration]) -> Analytics {
-    let now = Utc::now();
+fn calculate_analytics(
+    entries: &[DenormalizedStreamEntry],
+    time_spans: &[Duration],
+    now: DateTime,
+) -> Analytics {
     let deadlines = time_spans
         .iter()
         .map(|time_span| now - *time_span)
@@ -74,7 +79,7 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
                 let value = deadlines
                     .iter()
                     .map(|deadline| {
-                        if sample_entry.tank.timestamp >= *deadline {
+                        if sample_entry.tank.timestamp > *deadline {
                             sample_entry.tank.battle_counts
                         } else {
                             BattleCounts::default()
@@ -86,7 +91,7 @@ fn calculate_analytics(entries: &[DenormalizedStreamEntry], time_spans: &[Durati
 
             Entry::Occupied(mut entry) => {
                 for (value, deadline) in entry.get_mut().iter_mut().zip(&deadlines) {
-                    if sample_entry.tank.timestamp >= *deadline {
+                    if sample_entry.tank.timestamp > *deadline {
                         value.n_battles += sample_entry.tank.battle_counts.n_battles;
                         value.n_wins += sample_entry.tank.battle_counts.n_wins;
                     }
@@ -140,13 +145,14 @@ fn build_timelines(
     entries: &[DenormalizedStreamEntry],
     time_span: Duration,
     window_span: Duration,
+    now: DateTime,
 ) -> impl Iterator<Item = (TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
         .map(move |(tank_id, entries)| {
             (
                 tank_id,
-                build_vehicle_timeline(entries, time_span, window_span),
+                build_vehicle_timeline(entries, time_span, window_span, now),
             )
         })
 }
@@ -186,6 +192,7 @@ fn build_vehicle_timeline(
     entries: Vec<VehicleEntry>,
     time_span: Duration,
     window_span: Duration,
+    now: DateTime,
 ) -> Timeline {
     let start_time = Utc::now() - time_span;
     let mut window = VecDeque::new();
@@ -194,7 +201,7 @@ fn build_vehicle_timeline(
 
     for entry in entries {
         let timestamp = entry.timestamp;
-        cleanup_window(&mut window, &mut battle_counts, timestamp, window_span);
+        cleanup_window(&mut window, &mut battle_counts, now, window_span);
 
         battle_counts.n_battles += entry.battle_counts.n_battles;
         battle_counts.n_wins += entry.battle_counts.n_wins;
@@ -221,11 +228,11 @@ fn build_vehicle_timeline(
 fn cleanup_window(
     window: &mut VecDeque<VehicleEntry>,
     battle_counts: &mut BattleCounts,
-    last_timestamp: DateTime,
+    window_ends_at: DateTime,
     window_span: Duration,
 ) {
     while match window.front() {
-        Some(first) if last_timestamp - first.timestamp >= window_span => {
+        Some(first) if window_ends_at - first.timestamp >= window_span => {
             battle_counts.n_battles -= first.battle_counts.n_battles;
             battle_counts.n_wins -= first.battle_counts.n_wins;
             window.pop_front();
