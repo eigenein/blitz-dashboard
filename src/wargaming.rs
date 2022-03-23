@@ -117,7 +117,7 @@ impl WargamingApi {
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
             .with_context(|| format!("failed to get tanks stats for #{}", account_id))?
-            .unwrap_or_else(Vec::new))
+            .unwrap_or_default())
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
@@ -133,7 +133,7 @@ impl WargamingApi {
             )
             .await
             .with_context(|| format!("failed to get tanks achievements for #{}", account_id))?
-            .unwrap_or_else(Vec::new))
+            .unwrap_or_default())
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
