@@ -52,7 +52,6 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
             &stream.entries,
             opts.charts_time_span,
             opts.charts_window_span,
-            now,
         )
         .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
         store_charts(&mut redis, charts).await?;
@@ -145,14 +144,13 @@ fn build_timelines(
     entries: &[DenormalizedStreamEntry],
     time_span: Duration,
     window_span: Duration,
-    now: DateTime,
 ) -> impl Iterator<Item = (TankId, Timeline)> {
     group_entries_by_tank_id(entries)
         .into_iter()
         .map(move |(tank_id, entries)| {
             (
                 tank_id,
-                build_vehicle_timeline(entries, time_span, window_span, now),
+                build_vehicle_timeline(entries, time_span, window_span),
             )
         })
 }
@@ -192,7 +190,6 @@ fn build_vehicle_timeline(
     entries: Vec<VehicleEntry>,
     time_span: Duration,
     window_span: Duration,
-    now: DateTime,
 ) -> Timeline {
     let start_time = Utc::now() - time_span;
     let mut window = VecDeque::new();
@@ -201,7 +198,7 @@ fn build_vehicle_timeline(
 
     for entry in entries {
         let timestamp = entry.timestamp;
-        cleanup_window(&mut window, &mut battle_counts, now, window_span);
+        cleanup_window(&mut window, &mut battle_counts, timestamp, window_span);
 
         battle_counts.n_battles += entry.battle_counts.n_battles;
         battle_counts.n_wins += entry.battle_counts.n_wins;
