@@ -1121,15 +1121,15 @@
         "weight": 2300
       },
       "gun_id": 21252,
-      "hp": 970,
-      "hull_hp": 664,
+      "hp": 1150,
+      "hull_hp": 920,
       "hull_weight": 20000,
       "is_default": true,
       "maneuverability": 41,
       "max_ammo": 44,
       "max_weight": 34000,
       "profile_id": "261-21252-23042",
-      "protection": 29,
+      "protection": 32,
       "shells": [
         {
           "damage": 280,
@@ -1160,7 +1160,7 @@
       },
       "suspension_id": 23042,
       "turret": {
-        "hp": 306,
+        "hp": 230,
         "name": "СУ-100М1",
         "tier": 7,
         "traverse_left_arc": 8,
@@ -3971,15 +3971,15 @@
         "weight": 2050
       },
       "gun_id": 11076,
-      "hp": 970,
-      "hull_hp": 776,
+      "hp": 1100,
+      "hull_hp": 880,
       "hull_weight": 35200,
       "is_default": true,
       "maneuverability": 26,
       "max_ammo": 96,
       "max_weight": 56000,
       "profile_id": "4421-11076-17986",
-      "protection": 30,
+      "protection": 32,
       "shells": [
         {
           "damage": 225,
@@ -4010,7 +4010,7 @@
       },
       "suspension_id": 17986,
       "turret": {
-        "hp": 194,
+        "hp": 220,
         "name": "ARL 44",
         "tier": 7,
         "traverse_left_arc": 7,
@@ -6446,7 +6446,7 @@
       "engine_id": 2933,
       "firepower": 61,
       "gun": {
-        "aim_time": 4.88,
+        "aim_time": 4.79,
         "caliber": 80,
         "clip_capacity": 3,
         "clip_reload_time": 1.5,
@@ -6465,7 +6465,7 @@
       "hull_hp": 1240,
       "hull_weight": 26750,
       "is_default": true,
-      "maneuverability": 29,
+      "maneuverability": 28,
       "max_ammo": 102,
       "max_weight": 68000,
       "profile_id": "2933-3442-3699-3700",
@@ -6490,7 +6490,7 @@
       "shot_efficiency": 64,
       "signal_range": null,
       "speed_backward": 15,
-      "speed_forward": 32,
+      "speed_forward": 29,
       "suspension": {
         "load_limit": 68000,
         "name": "Predator",
@@ -18158,8 +18158,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          30980,
-          1540
+          1540,
+          30980
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -20906,15 +20906,15 @@
         "weight": 775
       },
       "gun_id": 24868,
-      "hp": 900,
-      "hull_hp": 720,
+      "hp": 1000,
+      "hull_hp": 800,
       "hull_weight": 9110,
       "is_default": true,
       "maneuverability": 82,
       "max_ammo": 57,
       "max_weight": 26000,
       "profile_id": "16677-24868-31011-36386",
-      "protection": 17,
+      "protection": 19,
       "shells": [
         {
           "damage": 160,
@@ -20945,7 +20945,7 @@
       },
       "suspension_id": 36386,
       "turret": {
-        "hp": 180,
+        "hp": 200,
         "name": "M41",
         "tier": 7,
         "traverse_left_arc": 180,
@@ -21762,8 +21762,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          23809,
-          7937
+          7937,
+          23809
         ],
         "price_credit": 0,
         "price_xp": 34000,
@@ -22042,8 +22042,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -23524,14 +23524,14 @@
     "default_profile": {
       "armor": {
         "hull": {
-          "front": 30,
-          "rear": 20,
-          "sides": 25
+          "front": 60,
+          "rear": 35,
+          "sides": 40
         },
         "turret": {
-          "front": 25,
-          "rear": 20,
-          "sides": 25
+          "front": 50,
+          "rear": 40,
+          "sides": 50
         }
       },
       "battle_level_range_max": 10,
@@ -23569,7 +23569,7 @@
       "max_ammo": 48,
       "max_weight": 32000,
       "profile_id": "10565-16708-23363-28994",
-      "protection": 28,
+      "protection": 33,
       "shells": [
         {
           "damage": 225,
@@ -34821,7 +34821,7 @@
       "engine_id": 40213,
       "firepower": 49,
       "gun": {
-        "aim_time": 4.46,
+        "aim_time": 4.6,
         "caliber": 90,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
@@ -34840,7 +34840,7 @@
       "hull_hp": 600,
       "hull_weight": 11130,
       "is_default": true,
-      "maneuverability": 71,
+      "maneuverability": 76,
       "max_ammo": 50,
       "max_weight": 31000,
       "profile_id": "40213-260883-261394-262676",
@@ -34870,7 +34870,7 @@
         "load_limit": 31000,
         "name": "Kunze Panzer",
         "tier": 7,
-        "traverse_speed": 42,
+        "traverse_speed": 47,
         "weight": 7000
       },
       "suspension_id": 261394,
@@ -51003,7 +51003,7 @@
       "engine_id": 18037,
       "firepower": 55,
       "gun": {
-        "aim_time": 4.94,
+        "aim_time": 4.84,
         "caliber": 57,
         "clip_capacity": 6,
         "clip_reload_time": 0.67,
@@ -51022,7 +51022,7 @@
       "hull_hp": 1240,
       "hull_weight": 33720,
       "is_default": true,
-      "maneuverability": 34,
+      "maneuverability": 32,
       "max_ammo": 96,
       "max_weight": 130000,
       "profile_id": "18036-18037-29810-30067",
@@ -51052,7 +51052,7 @@
         "load_limit": 130000,
         "name": "Тяжёлая поступь",
         "tier": 7,
-        "traverse_speed": 28,
+        "traverse_speed": 26,
         "weight": 21430
       },
       "suspension_id": 29810,
@@ -54118,8 +54118,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -66131,8 +66131,8 @@
         "name": "OQF 17-pdr Gun Mk. VII",
         "next_modules": null,
         "next_tanks": [
-          18257,
-          5457
+          5457,
+          18257
         ],
         "price_credit": 0,
         "price_xp": 15000,
@@ -81677,8 +81677,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -82535,8 +82535,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -83685,15 +83685,15 @@
         "weight": 2050
       },
       "gun_id": 11300,
-      "hp": 1150,
-      "hull_hp": 920,
+      "hp": 1450,
+      "hull_hp": 1160,
       "hull_weight": 44050,
       "is_default": true,
       "maneuverability": 7,
       "max_ammo": 72,
       "max_weight": 62450,
       "profile_id": "9509-11300-16930",
-      "protection": 49,
+      "protection": 54,
       "shells": [
         {
           "damage": 225,
@@ -83724,7 +83724,7 @@
       },
       "suspension_id": 16930,
       "turret": {
-        "hp": 230,
+        "hp": 290,
         "name": "T28",
         "tier": 8,
         "traverse_left_arc": 10,
@@ -84411,7 +84411,7 @@
       "speed_forward": 35,
       "suspension": {
         "load_limit": 69700,
-        "name": "Titan H-N",
+        "name": "Titan H-Nd",
         "tier": 7,
         "traverse_speed": 26,
         "weight": 21350
@@ -84419,7 +84419,7 @@
       "suspension_id": 33394,
       "turret": {
         "hp": 300,
-        "name": "Titan H-N",
+        "name": "Titan H-Nd",
         "tier": 7,
         "traverse_left_arc": 180,
         "traverse_right_arc": 180,
@@ -84466,7 +84466,7 @@
       "33394": {
         "is_default": true,
         "module_id": 33394,
-        "name": "Titan H-N",
+        "name": "Titan H-Nd",
         "next_modules": null,
         "next_tanks": null,
         "price_credit": 0,
@@ -84476,7 +84476,7 @@
       "33651": {
         "is_default": true,
         "module_id": 33651,
-        "name": "Titan H-N",
+        "name": "Titan H-Nd",
         "next_modules": null,
         "next_tanks": null,
         "price_credit": 0,
@@ -84484,7 +84484,7 @@
         "type": "vehicleTurret"
       }
     },
-    "name": "Titan H-N",
+    "name": "Titan H-Nd",
     "nation": "other",
     "next_tanks": null,
     "prices_xp": null,
@@ -84854,8 +84854,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -88688,15 +88688,15 @@
         "weight": 2050
       },
       "gun_id": 10532,
-      "hp": 980,
-      "hull_hp": 784,
+      "hp": 1100,
+      "hull_hp": 880,
       "hull_weight": 26500,
       "is_default": true,
       "maneuverability": 39,
       "max_ammo": 56,
       "max_weight": 43800,
       "profile_id": "4133-10532-19490",
-      "protection": 35,
+      "protection": 37,
       "shells": [
         {
           "damage": 225,
@@ -88727,7 +88727,7 @@
       },
       "suspension_id": 19490,
       "turret": {
-        "hp": 196,
+        "hp": 220,
         "name": "T25M1",
         "tier": 8,
         "traverse_left_arc": 10,
@@ -90840,7 +90840,7 @@
         "caliber": 94,
         "clip_capacity": 1,
         "clip_reload_time": 0.0,
-        "dispersion": 0.34,
+        "dispersion": 0.32,
         "fire_rate": 8.7,
         "move_down_arc": 10,
         "move_up_arc": 15,
@@ -90877,7 +90877,7 @@
           "type": "HIGH_EXPLOSIVE"
         }
       ],
-      "shot_efficiency": 78,
+      "shot_efficiency": 81,
       "signal_range": null,
       "speed_backward": 12,
       "speed_forward": 30,
