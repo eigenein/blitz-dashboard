@@ -18158,8 +18158,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18825,8 +18825,8 @@
         "module_id": 28707,
         "name": "T41 pilot number 1",
         "next_modules": [
-          24868,
-          25124
+          25124,
+          24868
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -21762,8 +21762,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          7937,
-          23809
+          23809,
+          7937
         ],
         "price_credit": 0,
         "price_xp": 34000,
@@ -25591,9 +25591,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          8065,
           1409,
-          3713,
-          8065
+          3713
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -35058,9 +35058,9 @@
       24101
     ],
     "guns": [
-      264996,
+      264484,
       263204,
-      264484
+      264996
     ],
     "images": {
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-5-Y.png",
@@ -35139,8 +35139,8 @@
         "module_id": 263204,
         "name": "105 mm T140",
         "next_modules": [
-          264996,
-          264484
+          264484,
+          264996
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -38568,6 +38568,328 @@
     "tier": 10,
     "turrets": [
       263203
+    ],
+    "type": "heavyTank"
+  },
+  "24865": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 120,
+          "rear": 50,
+          "sides": 65
+        },
+        "turret": {
+          "front": 200,
+          "rear": 50,
+          "sides": 130
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "Continental AOSI-1195-1A",
+        "power": 910,
+        "tier": 8,
+        "weight": 569
+      },
+      "engine_id": 26917,
+      "firepower": 50,
+      "gun": {
+        "aim_time": 5.0,
+        "caliber": 105,
+        "clip_capacity": 3,
+        "clip_reload_time": 2.73,
+        "dispersion": 0.36,
+        "fire_rate": 6.33,
+        "move_down_arc": 8,
+        "move_up_arc": 18,
+        "name": "105 mm Gun T254A",
+        "reload_time": 23.0,
+        "tier": 8,
+        "traverse_speed": 35.0,
+        "weight": 2400
+      },
+      "gun_id": 265508,
+      "hp": 1700,
+      "hull_hp": 1300,
+      "hull_weight": 40550,
+      "is_default": true,
+      "maneuverability": 31,
+      "max_ammo": 60,
+      "max_weight": 66800,
+      "profile_id": "26917-263459-263714-265508",
+      "protection": 55,
+      "shells": [
+        {
+          "damage": 310,
+          "penetration": 225,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 260,
+          "penetration": 253,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 350,
+          "penetration": 50,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 77,
+      "signal_range": null,
+      "speed_backward": 16,
+      "speed_forward": 35,
+      "suspension": {
+        "load_limit": 66800,
+        "name": "Scepter",
+        "tier": 8,
+        "traverse_speed": 25,
+        "weight": 11500
+      },
+      "suspension_id": 263714,
+      "turret": {
+        "hp": 400,
+        "name": "Scepter",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 25,
+        "view_range": 240,
+        "weight": 9100
+      },
+      "turret_id": 263459,
+      "weight": 64419
+    },
+    "description": "Под ослепительным внешним видом Scepter скрывается мощный M-III-Yoh, только с аварийной гусеницей! То есть в твоём арсенале остаётся топовое орудие с магазином на 3 снаряда, и к нему добавляется возможность отойти в укрытие даже при сломанной ходовой. Идеально!",
+    "engines": [
+      26917
+    ],
+    "guns": [
+      265508
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/M-3-Y-Midas.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/M-3-Y-Midas.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "263459": {
+        "is_default": true,
+        "module_id": 263459,
+        "name": "Scepter",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "263714": {
+        "is_default": true,
+        "module_id": 263714,
+        "name": "Scepter",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "265508": {
+        "is_default": true,
+        "module_id": 265508,
+        "name": "105 mm Gun T254A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "26917": {
+        "is_default": true,
+        "module_id": 26917,
+        "name": "Continental AOSI-1195-1A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Scepter",
+    "nation": "usa",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      263714
+    ],
+    "tank_id": 24865,
+    "tier": 8,
+    "turrets": [
+      263459
+    ],
+    "type": "heavyTank"
+  },
+  "25089": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 190,
+          "rear": 55,
+          "sides": 70
+        },
+        "turret": {
+          "front": 290,
+          "rear": 90,
+          "sides": 160
+        }
+      },
+      "battle_level_range_max": 10,
+      "battle_level_range_min": 9,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "В-12-6Б",
+        "power": 540,
+        "tier": 9,
+        "weight": 1024
+      },
+      "engine_id": 71941,
+      "firepower": 60,
+      "gun": {
+        "aim_time": 6.07,
+        "caliber": 122,
+        "clip_capacity": 2,
+        "clip_reload_time": 4.0,
+        "dispersion": 0.4,
+        "fire_rate": 5.33,
+        "move_down_arc": 8,
+        "move_up_arc": 10,
+        "name": "122 мм M62A",
+        "reload_time": 18.5,
+        "tier": 9,
+        "traverse_speed": 30.0,
+        "weight": 3397
+      },
+      "gun_id": 265476,
+      "hp": 2000,
+      "hull_hp": 1600,
+      "hull_weight": 21600,
+      "is_default": true,
+      "maneuverability": 29,
+      "max_ammo": 30,
+      "max_weight": 47000,
+      "profile_id": "71941-262403-262914-265476",
+      "protection": 75,
+      "shells": [
+        {
+          "damage": 430,
+          "penetration": 245,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 370,
+          "penetration": 340,
+          "type": "HOLLOW_CHARGE"
+        },
+        {
+          "damage": 530,
+          "penetration": 68,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 76,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 38,
+      "suspension": {
+        "load_limit": 47000,
+        "name": "Объект 752",
+        "tier": 10,
+        "traverse_speed": 24,
+        "weight": 7000
+      },
+      "suspension_id": 262914,
+      "turret": {
+        "hp": 400,
+        "name": "Объект 752",
+        "tier": 10,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 22,
+        "view_range": 250,
+        "weight": 9000
+      },
+      "turret_id": 262403,
+      "weight": 42321
+    },
+    "description": "Целью разработки данной машины было усилить бронезащиту, при этом не выйти за пределы условного порога веса тяжёлых танков — 50 тонн. Работы велись в СКБ-2 Челябинского Кировского завода в 1952 году. Проект получил плотную компоновку и оригинальное дифференцированное бронирование. Один из вариантов предусматривал установку качающейся башни. Вооружить танк планировалось новейшим 122-мм орудием М-62Т2 (индекс ГРАУ 2А17) с механизированной боеукладкой.",
+    "engines": [
+      71941
+    ],
+    "guns": [
+      265476
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/R172_Object_752.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/R172_Object_752.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "262403": {
+        "is_default": true,
+        "module_id": 262403,
+        "name": "Объект 752",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262914": {
+        "is_default": true,
+        "module_id": 262914,
+        "name": "Объект 752",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "265476": {
+        "is_default": true,
+        "module_id": 265476,
+        "name": "122 мм M62A",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "71941": {
+        "is_default": true,
+        "module_id": 71941,
+        "name": "В-12-6Б",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Объект 752",
+    "nation": "ussr",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      262914
+    ],
+    "tank_id": 25089,
+    "tier": 9,
+    "turrets": [
+      262403
     ],
     "type": "heavyTank"
   },
@@ -48552,8 +48874,8 @@
         "module_id": 7427,
         "name": "Т-44-100",
         "next_modules": [
-          10500,
-          3332
+          3332,
+          10500
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -54118,8 +54440,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          10273,
-          5409
+          5409,
+          10273
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -81677,8 +81999,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -91087,8 +91409,8 @@
         "module_id": 21252,
         "name": "100 мм Д-10С обр. 1944 г.",
         "next_modules": [
-          21508,
-          8708
+          8708,
+          21508
         ],
         "next_tanks": null,
         "price_credit": 0,
