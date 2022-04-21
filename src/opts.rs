@@ -23,7 +23,7 @@ pub struct Opts {
     pub sentry_dsn: Option<String>,
 
     /// Performance traces sample rate for Sentry
-    #[structopt(long, default_value = "0.05")]
+    #[structopt(long, default_value = "0.1")]
     pub traces_sample_rate: f32,
 
     /// Increases log verbosity
