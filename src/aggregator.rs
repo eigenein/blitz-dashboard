@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 
 use chrono::{Duration, Utc};
 use itertools::Itertools;
+use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
 use serde_json::json;
 use tokio::time::interval;
@@ -42,23 +43,34 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
     info!("running…");
     loop {
         interval.tick().await;
-        stream.refresh().await?;
-        let now = Utc::now();
-
-        let analytics = calculate_analytics(&stream.entries, &opts.time_spans, now);
-        store_analytics(&mut redis, &analytics).await?;
-
-        let charts = build_timelines(
-            &stream.entries,
-            opts.charts_time_span,
-            opts.charts_window_span,
-            now,
-        )
-        .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
-        store_charts(&mut redis, charts).await?;
-
-        redis.set(UPDATED_AT_KEY, now.timestamp()).await?;
+        run_iteration(&opts, &mut stream, &mut redis).await?;
     }
+}
+
+#[instrument(level = "info", skip_all)]
+async fn run_iteration(
+    opts: &AggregateOpts,
+    stream: &mut BattleStream,
+    redis: &mut MultiplexedConnection,
+) -> crate::Result {
+    stream.refresh().await?;
+    let now = Utc::now();
+
+    let analytics = calculate_analytics(&stream.entries, &opts.time_spans, now);
+    store_analytics(redis, &analytics).await?;
+
+    let charts = build_timelines(
+        &stream.entries,
+        opts.charts_time_span,
+        opts.charts_window_span,
+        now,
+    )
+    .map(|(tank_id, timeline)| (tank_id, build_timeline_chart(tank_id, timeline)));
+    store_charts(redis, charts).await?;
+
+    redis.set(UPDATED_AT_KEY, now.timestamp()).await?;
+
+    Ok(())
 }
 
 #[instrument(level = "info", skip_all, fields(n_entries = entries.len()))]
