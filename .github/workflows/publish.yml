@@ -62,7 +62,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Update release
-        uses: tubone24/update_release@v1
+        uses: tubone24/update_release@v1.3.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
