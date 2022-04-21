@@ -29,12 +29,12 @@ pub async fn run(opts: AggregateOpts) -> crate::Result {
         .await?;
     let mut stream = BattleStream::read(
         redis.clone(),
-        *opts
-            .time_spans
+        opts.time_spans
             .iter()
+            .copied()
             .max()
             .unwrap()
-            .max(&(opts.charts_time_span + opts.charts_window_span)),
+            .max(opts.charts_time_span + opts.charts_window_span),
     )
     .await?;
     let mut interval = interval(opts.interval);
