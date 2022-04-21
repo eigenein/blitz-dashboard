@@ -27,4 +27,5 @@ pub struct VehicleEntry {
     pub battle_counts: BattleCounts,
 }
 
+#[must_use]
 pub type Timeline = Vec<(DateTime, ConfidenceInterval)>;

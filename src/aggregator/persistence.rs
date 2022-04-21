@@ -30,7 +30,7 @@ pub async fn store_analytics(
 #[instrument(level = "debug", skip_all)]
 pub async fn retrieve_analytics(redis: &mut MultiplexedConnection) -> crate::Result<Analytics> {
     let blob: Vec<u8> = redis.get(ANALYTICS_KEY).await?;
-    Ok(rmp_serde::from_read_ref(&blob)?)
+    Ok(rmp_serde::from_slice(&blob)?)
 }
 
 #[instrument(level = "info", skip_all)]

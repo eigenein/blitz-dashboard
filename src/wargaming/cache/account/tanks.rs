@@ -27,7 +27,7 @@ impl AccountTanksCache {
 
         if let Some(blob) = redis.get::<_, Option<Vec<u8>>>(&cache_key).await? {
             tracing::debug!(account_id = account_id, "cache hit");
-            return Ok(rmp_serde::from_read_ref(&decompress_to_vec(blob).await?)?);
+            return Ok(rmp_serde::from_slice(&decompress_to_vec(blob).await?)?);
         }
 
         let (statistics, achievements) = {

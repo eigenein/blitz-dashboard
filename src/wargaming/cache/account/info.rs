@@ -26,7 +26,7 @@ impl AccountInfoCache {
             .await?
         {
             tracing::debug!(account_id = account_id, "cache hit");
-            return Ok(rmp_serde::from_read_ref(&blob)?);
+            return Ok(rmp_serde::from_slice(&blob)?);
         }
 
         let account_info = self
