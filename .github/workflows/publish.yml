@@ -42,18 +42,6 @@ jobs:
         env:
           REPO: ${{ github.repository }}
 
-      - name: Create a GitHub Release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: ${{steps.changelog.outputs.changelog}}
-          draft: false
-          prerelease: false
-
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
@@ -61,14 +49,14 @@ jobs:
           SENTRY_ORG: eigenein
           SENTRY_PROJECT: yastatist
         with:
-          version: ${{ github.ref }}
+          version: ${{ github.ref_name }}
 
       - name: Upload blitz-dashboard.armv7-unknown-linux-gnueabihf
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: target/armv7-unknown-linux-gnueabihf/release/blitz-dashboard
           asset_name: blitz-dashboard.armv7-unknown-linux-gnueabihf
           asset_content_type: application/octet-stream
