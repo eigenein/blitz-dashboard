@@ -15,9 +15,9 @@ jobs:
 
       - name: Set release version
         run: |
-          echo 'version = "${{ github.ref }}"'
-          sed -i -e 's/version = "0.0.0"/version = "${{ github.ref }}"/g' Cargo.toml
-          sed -i -e 's/version = "0.0.0"/version = "${{ github.ref }}"/g' Cargo.lock
+          echo 'version = "${{ github.ref_name }}"'
+          sed -i -e 's/version = "0.0.0"/version = "${{ github.ref_name }}"/g' Cargo.toml
+          sed -i -e 's/version = "0.0.0"/version = "${{ github.ref_name }}"/g' Cargo.lock
 
       - name: Rustup
         uses: actions-rs/toolchain@v1
