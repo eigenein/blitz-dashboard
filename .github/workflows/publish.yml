@@ -60,3 +60,11 @@ jobs:
           asset_path: target/armv7-unknown-linux-gnueabihf/release/blitz-dashboard
           asset_name: blitz-dashboard.armv7-unknown-linux-gnueabihf
           asset_content_type: application/octet-stream
+
+      - name: Update release
+        uses: tubone24/update_release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: false
