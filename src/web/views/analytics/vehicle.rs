@@ -12,7 +12,7 @@ use crate::web::partials::{footer, headers, home_button, vehicle_title};
 use crate::web::response::CustomResponse;
 use crate::web::{DisableCaches, TrackingCode};
 
-#[instrument(skip_all, name = "vehicle::get", fields(tank_id = tank_id))]
+#[instrument(skip_all, fields(tank_id = tank_id))]
 #[rocket::get("/analytics/vehicles/<tank_id>")]
 pub async fn get(
     tank_id: TankId,

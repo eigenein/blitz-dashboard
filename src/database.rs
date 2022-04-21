@@ -7,12 +7,11 @@ use chrono::{Duration, TimeZone, Utc};
 use futures::{StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
-use log::{Level, LevelFilter};
+use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 use tracing::instrument;
 
-use crate::metrics::Stopwatch;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
@@ -20,7 +19,7 @@ use crate::wargaming::tank_id::TankId;
 use crate::{AHashMap, DateTime};
 
 /// Open and initialize the database.
-#[instrument(name = "database::open", skip(uri))]
+#[instrument(skip(uri))]
 pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
@@ -71,12 +70,6 @@ pub async fn retrieve_latest_tank_snapshots(
         ) snapshot
     ";
 
-    let _stopwatch = Stopwatch::new(format!(
-        "retrieved latest tank snapshots for #{}",
-        account_id,
-    ))
-    .threshold_millis(250)
-    .level(Level::Debug);
     sqlx::query(QUERY)
         .bind(account_id)
         .bind(before)
@@ -202,10 +195,8 @@ pub async fn retrieve_account(
         .with_context(|| format!("failed to retrieve account #{}", account_id))
 }
 
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "debug", skip_all, fields(n_tanks = tanks.len()))]
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
-    let _stopwatch = Stopwatch::new("Inserted tanks").threshold_millis(1000);
-
     // language=SQL
     const QUERY: &str = "
         INSERT INTO tank_snapshots (

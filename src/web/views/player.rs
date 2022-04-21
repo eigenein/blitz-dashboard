@@ -33,7 +33,7 @@ use crate::web::TrackingCode;
 pub mod partials;
 
 #[allow(clippy::too_many_arguments)]
-#[instrument(skip_all, name = "player::get", fields(account_id = account_id, period = period.as_deref()))]
+#[instrument(skip_all, fields(account_id = account_id, period = period.as_deref()))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
     account_id: i32,

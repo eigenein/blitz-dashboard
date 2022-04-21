@@ -21,7 +21,6 @@ mod database;
 mod export_stream;
 mod helpers;
 mod math;
-mod metrics;
 mod models;
 mod opts;
 mod tankopedia;
