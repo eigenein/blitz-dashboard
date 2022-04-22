@@ -52,7 +52,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> crate::Result {
 
     let crawler = Crawler::new(&opts.shared, Some(opts.stream_duration)).await?;
 
-    tracing::info!("running…");
+    tracing::warn!("running…");
     let batches =
         get_batch_stream(crawler.database(), opts.batch_select_limit, opts.max_offset).await;
     crawler.run(batches, &opts.shared.buffering).await
@@ -126,7 +126,7 @@ impl Crawler {
 
     #[tracing::instrument(
         skip_all,
-        level = "debug",
+        level = "info",
         fields(account_id = account.id, n_tanks = tanks.len()),
     )]
     async fn update_account(
@@ -176,7 +176,7 @@ impl Crawler {
     }
 }
 
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "info", skip_all)]
 async fn crawl_batch(
     api: WargamingApi,
     batch: Batch,
@@ -199,7 +199,7 @@ async fn crawl_batch(
 /// When the crawler is being run in the normal incremental mode (and not `crawl-accounts`),
 /// it pushes the tanks' differences to the Redis stream, which is used to build
 /// the aggregated statistics.
-#[instrument(level = "debug", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
+#[instrument(level = "info", skip_all, fields(account_id = account_id, n_tanks = tanks.len()))]
 async fn push_incremental_updates(
     database: &PgPool,
     redis: &mut MultiplexedConnection,
@@ -218,7 +218,7 @@ async fn push_incremental_updates(
 
 /// Converts the account info and tank statistics to the battle stream entry.
 #[tracing::instrument(
-    level = "debug",
+    level = "info",
     skip_all,
     fields(account_id = account_id, n_tanks = tanks.len()),
 )]
@@ -270,7 +270,7 @@ async fn prepare_stream_entry(
 /// # Returns
 ///
 /// Vector of matched pairs.
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "info", skip_all)]
 fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,
@@ -294,7 +294,7 @@ fn match_account_infos(
 ///
 /// The tanks statistics as returned by the API.
 #[instrument(
-    level = "debug",
+    level = "info",
     skip_all,
     fields(account_id = account_id, since = since.to_rfc3339().as_str()),
 )]
@@ -318,7 +318,7 @@ async fn get_updated_tanks_statistics(
 ///
 /// Updated account information and account's tanks.
 #[instrument(
-    level = "debug",
+    level = "info",
     skip_all,
     fields(account_id = account.id, last_battle_time = account.last_battle_time.to_rfc3339().as_str()),
 )]

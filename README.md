@@ -27,10 +27,10 @@ These are the versions I'm running with. Lower versions may work, but I haven't 
 
 Blitz Dashboard consists of a single executable `blitz-dashboard`, which serves multiple sub-commands:
 
-- Web application
-- [Account crawler](src/crawler): the service process and the one-off tool
-- Analytics aggregator
-- Tankopedia importer
+- [Web application](src/web.rs)
+- [Account crawler](src/crawler.rs): the service process and the one-off tool
+- [Analytics aggregator](src/aggregator.rs)
+- [Tankopedia importer](src/tankopedia.rs)
 
 ### Wargaming.net API considerations
 
@@ -39,6 +39,7 @@ TODO
 ## Monitoring
 
 I use the following free accounts:
+
 - [Sentry](https://sentry.io/): to keep track of errors and get the alerts
 - [Better Uptime](https://betteruptime.com/): to track the website status
 - [Redsmin](https://www.redsmin.com/): to edit the runtime configuration in Redis

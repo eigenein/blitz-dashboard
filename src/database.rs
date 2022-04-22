@@ -85,7 +85,7 @@ pub async fn retrieve_latest_tank_snapshots(
 }
 
 #[instrument(
-    level = "debug",
+    level = "info",
     skip_all,
     fields(account_id = account_id),
 )]
@@ -135,7 +135,7 @@ pub async fn retrieve_latest_tank_battle_counts(
     result
 }
 
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "info", skip_all)]
 pub async fn replace_account(
     connection: &mut PgConnection,
     account: &BaseAccountInfo,
@@ -181,7 +181,7 @@ pub async fn insert_account_if_not_exists(
 }
 
 #[allow(dead_code)]
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "info", skip_all)]
 pub async fn retrieve_account(
     connection: &PgPool,
     account_id: i32,
@@ -195,7 +195,7 @@ pub async fn retrieve_account(
         .with_context(|| format!("failed to retrieve account #{}", account_id))
 }
 
-#[instrument(level = "debug", skip_all, fields(n_tanks = tanks.len()))]
+#[instrument(level = "info", skip_all, fields(n_tanks = tanks.len()))]
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
     // language=SQL
     const QUERY: &str = "
