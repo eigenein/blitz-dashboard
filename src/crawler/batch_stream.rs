@@ -29,7 +29,7 @@ pub async fn get_batch_stream(
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(skip_all, level = "debug")]
+#[instrument(skip_all, level = "info")]
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,
