@@ -114,7 +114,14 @@ impl Crawler {
         buffering: &BufferingOpts,
     ) -> crate::Result {
         batches
-            .map_ok(|batch| crawl_batch(self.api.clone(), batch, self.metrics.clone()))
+            .map_ok(|batch| {
+                crawl_batch(
+                    self.api.clone(),
+                    batch,
+                    self.metrics.clone(),
+                    self.log_interval,
+                )
+            })
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
             .try_for_each_concurrent(Some(buffering.n_accounts), |(account, new_info, tanks)| {
@@ -168,19 +175,17 @@ impl Crawler {
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
-        if metrics.start_instant.elapsed() >= self.log_interval {
-            *metrics = metrics.finalise(&self.api.request_counter).await;
-        }
 
         Ok(())
     }
 }
 
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "info", skip_all, fields(n_accounts = batch.len()))]
 async fn crawl_batch(
     api: WargamingApi,
     batch: Batch,
     metrics: Arc<Mutex<CrawlerMetrics>>,
+    log_interval: StdDuration,
 ) -> crate::Result<impl Stream<Item = crate::Result<(BaseAccountInfo, AccountInfo, Vec<Tank>)>>> {
     let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
     let new_infos = api.get_account_info(&account_ids).await?;
@@ -193,6 +198,14 @@ async fn crawl_batch(
         let (new_info, tanks) = crawl_account(&api, &account, new_info).await?;
         crawled.push((account, new_info, tanks));
     }
+
+    {
+        let mut metrics = metrics.lock().await;
+        if metrics.start_instant.elapsed() >= log_interval {
+            *metrics = metrics.finalise(&api.request_counter).await;
+        }
+    }
+
     Ok(stream::iter(crawled.into_iter().map(Ok)))
 }
 
@@ -270,7 +283,7 @@ async fn prepare_stream_entry(
 /// # Returns
 ///
 /// Vector of matched pairs.
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "debug", skip_all)]
 fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,

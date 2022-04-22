@@ -2,6 +2,7 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use futures::{stream, Stream};
+use humantime::format_duration;
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
 use tracing::{instrument, warn};
@@ -20,6 +21,7 @@ pub async fn get_batch_stream(
         loop {
             let batch = { retrieve_batch(&database, inner_limit, max_offset).await? };
             if !batch.is_empty() {
+                tracing::info!(n_accounts = batch.len(), "retrieved");
                 break Ok(Some((batch, database)));
             }
             warn!("no accounts matched, sleeping…");
@@ -29,7 +31,11 @@ pub async fn get_batch_stream(
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(skip_all, level = "info")]
+#[instrument(
+    skip_all,
+    level = "info",
+    fields(inner_limit = inner_limit, max_offset = %format_duration(max_offset)),
+)]
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,

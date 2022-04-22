@@ -40,7 +40,7 @@ type Result<T = ()> = anyhow::Result<T>;
 #[tracing::instrument]
 async fn main() -> crate::Result {
     let opts = Opts::from_args();
-    logging::init(opts.verbosity)?;
+    logging::init(opts.verbosity, opts.no_journald)?;
     info!(
         version = CRATE_VERSION,
         args = std::env::args().skip(1).join(" ").as_str(),

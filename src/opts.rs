@@ -36,6 +36,10 @@ pub struct Opts {
 
     #[structopt(subcommand)]
     pub subcommand: Subcommand,
+
+    /// Disable journald log levels and enable the timestamps
+    #[structopt(long)]
+    pub no_journald: bool,
 }
 
 #[derive(StructOpt)]
