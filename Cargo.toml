@@ -63,7 +63,7 @@ default-features = false
 features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "tracing"]
 
 [dependencies.serde]
-version = "1.0.136"
+version = "1.0.137"
 features = ["derive"]
 
 [dependencies.sqlx]
