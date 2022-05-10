@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use maud::Markup;
 use rocket::http::{ContentType, Status};
-use rocket::response::content::Html;
+use rocket::response::content::RawHtml;
 use rocket::response::{Redirect, Responder};
 use rocket::{Request, Response};
 
@@ -20,14 +20,14 @@ pub enum CustomResponse {
 impl<'r> Responder<'r, 'static> for CustomResponse {
     fn respond_to(self, request: &'r Request) -> Result<Response<'static>, Status> {
         match self {
-            CustomResponse::Html(content) => Html(content).respond_to(request),
+            CustomResponse::Html(content) => RawHtml(content).respond_to(request),
             CustomResponse::Redirect(redirect) => redirect.respond_to(request),
             CustomResponse::CachedMarkup(cache_control, markup) => Response::build()
-                .merge(Html(markup.into_string()).respond_to(request)?)
+                .merge(RawHtml(markup.into_string()).respond_to(request)?)
                 .raw_header("Cache-Control", cache_control)
                 .ok(),
             CustomResponse::CachedHtml(cache_control, content) => Response::build()
-                .merge(Html(content).respond_to(request)?)
+                .merge(RawHtml(content).respond_to(request)?)
                 .raw_header("Cache-Control", cache_control)
                 .ok(),
             CustomResponse::Static(content_type, blob) => Response::build()

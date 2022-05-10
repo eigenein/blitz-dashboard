@@ -30,7 +30,7 @@ pub async fn run(opts: WebOpts) -> crate::Result {
     let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
         .get_multiplexed_async_connection()
         .await?;
-    rocket::custom(to_config(&opts)?)
+    let _ = rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
         .manage(api)
