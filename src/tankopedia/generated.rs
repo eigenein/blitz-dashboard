@@ -223,7 +223,7 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
     },
     11281_u16 => Vehicle {
         tank_id: 11281,
-        name: Cow::Borrowed("KpfPz 70"),
+        name: Cow::Borrowed("Kampfpanzer 70"),
         tier: 9,
         is_premium: true,
         nation: Nation::Germany,
@@ -1085,6 +1085,14 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
         nation: Nation::Usa,
         type_: TankType::Heavy,
     },
+    19265_u16 => Vehicle {
+        tank_id: 19265,
+        name: Cow::Borrowed("Шарль"),
+        tier: 6,
+        is_premium: true,
+        nation: Nation::France,
+        type_: TankType::AT,
+    },
     19281_u16 => Vehicle {
         tank_id: 19281,
         name: Cow::Borrowed("Super Conqueror"),
@@ -1687,7 +1695,7 @@ pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
     },
     24577_u16 => Vehicle {
         tank_id: 24577,
-        name: Cow::Borrowed("Объект 268/4"),
+        name: Cow::Borrowed("Объект 268 Вариант 4"),
         tier: 10,
         is_premium: true,
         nation: Nation::Ussr,
