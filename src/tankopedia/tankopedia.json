@@ -394,8 +394,8 @@
         "module_id": 19475,
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          1300,
-          5908
+          5908,
+          1300
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -2345,8 +2345,8 @@
         "module_id": 7172,
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -18158,8 +18158,8 @@
         "module_id": 31491,
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -22042,8 +22042,8 @@
         "module_id": 32035,
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -25591,9 +25591,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          8065,
           1409,
-          3713,
-          8065
+          3713
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -41164,8 +41164,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "price_credit": 0,
         "price_xp": 5310,
@@ -79440,8 +79440,8 @@
         "module_id": 8708,
         "name": "122 мм Д-25С обр. 1944 г.",
         "next_modules": [
-          17924,
-          18180
+          18180,
+          17924
         ],
         "next_tanks": [
           8193
@@ -80676,8 +80676,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          2049,
-          6913
+          6913,
+          2049
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -82309,8 +82309,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -83167,8 +83167,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "price_credit": 0,
         "price_xp": 6840,
@@ -85486,8 +85486,8 @@
         "module_id": 16403,
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -88462,8 +88462,8 @@
         "module_id": 14372,
         "name": "90 mm Gun M36",
         "next_modules": [
-          7972,
-          10276
+          10276,
+          7972
         ],
         "next_tanks": null,
         "price_credit": 0,
