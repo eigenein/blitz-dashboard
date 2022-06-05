@@ -2,12 +2,12 @@ use std::time::Duration as StdDuration;
 
 use anyhow::Context;
 use futures::{stream, Stream};
-use humantime::format_duration;
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
 use tracing::{instrument, warn};
 
 use crate::models::BaseAccountInfo;
+use crate::prelude::*;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
@@ -16,7 +16,7 @@ pub async fn get_batch_stream(
     database: PgPool,
     inner_limit: usize,
     max_offset: StdDuration,
-) -> impl Stream<Item = crate::Result<Batch>> {
+) -> impl Stream<Item = Result<Batch>> {
     stream::try_unfold(database, move |database| async move {
         loop {
             let batch = { retrieve_batch(&database, inner_limit, max_offset).await? };
@@ -31,16 +31,12 @@ pub async fn get_batch_stream(
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(
-    skip_all,
-    level = "info",
-    fields(inner_limit = inner_limit, max_offset = %format_duration(max_offset)),
-)]
+#[instrument(skip_all, fields(inner_limit, ?max_offset))]
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,
     max_offset: StdDuration,
-) -> crate::Result<Batch> {
+) -> Result<Batch> {
     // language=SQL
     const QUERY: &str = r#"
         -- CREATE EXTENSION tsm_system_rows;

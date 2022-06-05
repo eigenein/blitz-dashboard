@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use crate::prelude::*;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
@@ -21,7 +22,7 @@ mod result;
 mod views;
 
 /// Run the web app.
-pub async fn run(opts: WebOpts) -> crate::Result {
+pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     info!(host = opts.host.as_str(), port = opts.port);
 
@@ -90,7 +91,7 @@ fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::s
     rocket::response::status::Custom(status, ())
 }
 
-fn to_config(opts: &WebOpts) -> crate::Result<rocket::Config> {
+fn to_config(opts: &WebOpts) -> Result<rocket::Config> {
     Ok(rocket::Config {
         address: IpAddr::from_str(&opts.host)?,
         port: opts.port,

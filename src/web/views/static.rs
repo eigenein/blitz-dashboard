@@ -28,26 +28,17 @@ pub async fn get_favicon_32x32() -> CustomResponse {
 
 #[get("/android-chrome-192x192.png")]
 pub async fn get_android_chrome_192x192() -> CustomResponse {
-    CustomResponse::Static(
-        ContentType::PNG,
-        include_bytes!("static/android-chrome-192x192.png"),
-    )
+    CustomResponse::Static(ContentType::PNG, include_bytes!("static/android-chrome-192x192.png"))
 }
 
 #[get("/android-chrome-512x512.png")]
 pub async fn get_android_chrome_512x512() -> CustomResponse {
-    CustomResponse::Static(
-        ContentType::PNG,
-        include_bytes!("static/android-chrome-512x512.png"),
-    )
+    CustomResponse::Static(ContentType::PNG, include_bytes!("static/android-chrome-512x512.png"))
 }
 
 #[get("/apple-touch-icon.png")]
 pub async fn get_apple_touch_icon() -> CustomResponse {
-    CustomResponse::Static(
-        ContentType::PNG,
-        include_bytes!("static/apple-touch-icon.png"),
-    )
+    CustomResponse::Static(ContentType::PNG, include_bytes!("static/apple-touch-icon.png"))
 }
 
 #[get("/static/table.js")]

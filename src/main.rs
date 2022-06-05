@@ -1,10 +1,9 @@
 #![warn(clippy::all)]
 #![cfg_attr(nightly, feature(test))]
 
-pub use std::result::Result as StdResult;
-pub use std::time::Duration as StdDuration;
 use std::time::Instant;
 
+use crate::prelude::*;
 use helpers::logging;
 use itertools::Itertools;
 use sentry::integrations::anyhow::capture_anyhow;
@@ -14,14 +13,13 @@ use tracing::info;
 use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
-mod battle_stream;
 mod crawler;
 mod database;
-mod export_stream;
 mod helpers;
 mod math;
 mod models;
 mod opts;
+mod prelude;
 mod tankopedia;
 mod wargaming;
 mod web;
@@ -31,19 +29,12 @@ static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
-type DateTime = chrono::DateTime<chrono::Utc>;
-type Result<T = ()> = anyhow::Result<T>;
-
 #[tokio::main]
 #[tracing::instrument]
-async fn main() -> crate::Result {
+async fn main() -> Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity, opts.no_journald)?;
-    info!(
-        version = CRATE_VERSION,
-        args = std::env::args().skip(1).join(" ").as_str(),
-    );
+    info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str(),);
     let _sentry_guard = opts
         .sentry_dsn
         .as_ref()
@@ -56,12 +47,11 @@ async fn main() -> crate::Result {
     result
 }
 
-async fn run_subcommand(opts: Opts) -> crate::Result {
+async fn run_subcommand(opts: Opts) -> Result {
     let start_instant = Instant::now();
     let result = match opts.subcommand {
         Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
-        Subcommand::ExportStream(opts) => export_stream::run(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
         Subcommand::InitializeDatabase(opts) => {

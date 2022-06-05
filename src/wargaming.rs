@@ -1,5 +1,6 @@
 //! Wargaming.net API.
 
+use crate::prelude::*;
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -9,18 +10,15 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use humantime::format_duration;
 use itertools::Itertools;
-use reqwest::header;
 use reqwest::header::HeaderValue;
-use reqwest::Url;
+use reqwest::{header, Url};
 use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
-use crate::helpers::time::format_elapsed;
-use crate::models;
 use crate::wargaming::response::Response;
-use crate::StdDuration;
+use crate::{models, StdDuration};
 
 pub mod cache;
 pub mod response;
@@ -42,17 +40,11 @@ impl WargamingApi {
     const USER_AGENT: &'static str =
         concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-    pub fn new(application_id: &str, timeout: StdDuration) -> crate::Result<WargamingApi> {
+    pub fn new(application_id: &str, timeout: StdDuration) -> Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            HeaderValue::from_static(Self::USER_AGENT),
-        );
+        headers.insert(header::USER_AGENT, HeaderValue::from_static(Self::USER_AGENT));
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
-        headers.insert(
-            header::ACCEPT_ENCODING,
-            HeaderValue::from_static("br, deflate, gzip"),
-        );
+        headers.insert(header::ACCEPT_ENCODING, HeaderValue::from_static("br, deflate, gzip"));
         headers.insert(header::CONNECTION, HeaderValue::from_static("keep-alive"));
         let this = Self {
             application_id: Arc::new(application_id.to_string()),
@@ -71,8 +63,8 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    #[instrument(level = "debug", skip_all, fields(query = query))]
-    pub async fn search_accounts(&self, query: &str) -> crate::Result<Vec<models::FoundAccount>> {
+    #[instrument(skip_all, fields(query))]
+    pub async fn search_accounts(&self, query: &str) -> Result<Vec<models::FoundAccount>> {
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
@@ -86,11 +78,11 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    #[instrument(level = "debug", skip_all, fields(n_accounts = account_ids.len()))]
+    #[instrument(skip_all, fields(n_accounts = account_ids.len()))]
     pub async fn get_account_info(
         &self,
         account_ids: &[i32],
-    ) -> crate::Result<HashMap<String, Option<models::AccountInfo>>> {
+    ) -> Result<HashMap<String, Option<models::AccountInfo>>> {
         if account_ids.is_empty() {
             return Ok(HashMap::new());
         }
@@ -108,11 +100,8 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
-    pub async fn get_tanks_stats(
-        &self,
-        account_id: i32,
-    ) -> crate::Result<Vec<models::TankStatistics>> {
+    #[instrument(skip_all, fields(account_id))]
+    pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<models::TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
@@ -121,16 +110,13 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
-    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
+    #[instrument(skip_all, fields(account_id))]
     pub async fn get_tanks_achievements(
         &self,
         account_id: i32,
-    ) -> crate::Result<Vec<models::TankAchievements>> {
+    ) -> Result<Vec<models::TankAchievements>> {
         Ok(self
-            .call_by_account(
-                "https://api.wotblitz.ru/wotb/tanks/achievements/",
-                account_id,
-            )
+            .call_by_account("https://api.wotblitz.ru/wotb/tanks/achievements/", account_id)
             .await
             .with_context(|| format!("failed to get tanks achievements for #{}", account_id))?
             .unwrap_or_default())
@@ -138,7 +124,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     #[tracing::instrument(skip_all)]
-    pub async fn get_tankopedia(&self) -> crate::Result<Tankopedia> {
+    pub async fn get_tankopedia(&self) -> Result<Tankopedia> {
         tracing::info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
@@ -149,12 +135,12 @@ impl WargamingApi {
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
-    #[instrument(level = "debug", skip_all, fields(account_id = account_id))]
+    #[instrument(skip_all, fields(account_id))]
     async fn call_by_account<T: DeserializeOwned>(
         &self,
         url: &str,
         account_id: i32,
-    ) -> crate::Result<Option<T>> {
+    ) -> Result<Option<T>> {
         let account_id = account_id.to_string();
         let mut map: HashMap<String, Option<T>> = self
             .call(Url::parse_with_params(
@@ -168,8 +154,8 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(path = url.path()))]
-    async fn call<T: DeserializeOwned>(&self, url: Url) -> crate::Result<T> {
+    #[instrument(skip_all, fields(path = url.path()))]
+    async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
         let mut backoff = Backoff::new(100, 25600);
         loop {
             match self.call_once(url.clone()).await {
@@ -203,12 +189,7 @@ impl WargamingApi {
                 }
                 Err(error) => {
                     // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
-                    warn!(
-                        path = url.path(),
-                        n_attempts = backoff.n_attempts(),
-                        "{:#}",
-                        error,
-                    );
+                    warn!(path = url.path(), n_attempts = backoff.n_attempts(), "{:#}", error,);
                     if backoff.n_attempts() >= 10 {
                         // 🥅 Don't know what to do.
                         return Err(error).context("all attempts have failed");
@@ -243,20 +224,13 @@ impl WargamingApi {
             }
         };
 
-        tracing::debug!(request_id = request_id, status = response.status().as_u16());
+        debug!(request_id, status = response.status().as_u16());
         let response = response.error_for_status()?;
 
-        tracing::debug!(
-            request_id = request_id,
-            type_name = std::any::type_name::<T>(),
-        );
+        debug!(request_id, type_name = std::any::type_name::<T>());
         let result = response.json::<Response<T>>().await;
 
-        tracing::debug!(
-            request_id = request_id,
-            elapsed = %format_elapsed(&start_instant),
-            "done",
-        );
+        debug!(request_id, elapsed = ?start_instant.elapsed(), "done");
         result
     }
 }

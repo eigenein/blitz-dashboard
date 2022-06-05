@@ -4,13 +4,13 @@
 
 use std::time::Instant;
 
+use crate::prelude::*;
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use futures::future::try_join;
 use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
-use maud::Markup;
-use maud::{html, PreEscaped, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
@@ -20,8 +20,7 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{format_elapsed, from_days, from_hours, from_months};
 use crate::math::statistics::{ConfidenceInterval, Z};
-use crate::models::TankType;
-use crate::models::{subtract_tanks, Statistics, Tank};
+use crate::models::{subtract_tanks, Statistics, Tank, TankType};
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
@@ -523,10 +522,8 @@ pub async fn get(
         }
     };
 
-    let result = Ok(CustomResponse::CachedMarkup(
-        "max-age=60, stale-while-revalidate=3600",
-        markup,
-    ));
+    let result =
+        Ok(CustomResponse::CachedMarkup("max-age=60, stale-while-revalidate=3600", markup));
     tracing::info!(
         account_id = account_id,
         elapsed = %format_elapsed(&start_instant),
@@ -535,7 +532,7 @@ pub async fn get(
     result
 }
 
-fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> crate::Result<Markup> {
+fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(tank.statistics.base.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();

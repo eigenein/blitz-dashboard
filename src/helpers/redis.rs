@@ -29,10 +29,9 @@ pub struct TwoTuple<T1, T2>(pub T1, pub T2);
 impl<T1: FromRedisValue, T2: FromRedisValue> FromRedisValue for TwoTuple<T1, T2> {
     fn from_redis_value(value: &Value) -> RedisResult<Self> {
         match value {
-            Value::Bulk(entries) if entries.len() == 2 => Ok(Self(
-                from_redis_value(&entries[0])?,
-                from_redis_value(&entries[1])?,
-            )),
+            Value::Bulk(entries) if entries.len() == 2 => {
+                Ok(Self(from_redis_value(&entries[0])?, from_redis_value(&entries[1])?))
+            }
             _ => Err(RedisError::from((
                 ErrorKind::TypeError,
                 "Response was of incompatible type",

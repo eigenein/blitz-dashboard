@@ -6,6 +6,7 @@ use std::path::Path;
 
 use crate::models::{Nation, TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
+use crate::prelude::*;
 use crate::wargaming::tank_id::TankId;
 use crate::wargaming::{Tankopedia, WargamingApi};
 use crate::StdDuration;
@@ -21,7 +22,7 @@ pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
 }
 
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
-pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
+pub async fn import(opts: ImportTankopediaOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
     let api = WargamingApi::new(&opts.application_id, StdDuration::from_secs(30))?;
@@ -53,23 +54,13 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
     writeln!(&mut file)?;
     writeln!(&mut file, "use std::borrow::Cow;")?;
     writeln!(&mut file)?;
-    writeln!(
-        &mut file,
-        "use crate::models::{{Nation, TankType, Vehicle}};"
-    )?;
+    writeln!(&mut file, "use crate::models::{{Nation, TankType, Vehicle}};")?;
     writeln!(&mut file)?;
-    writeln!(
-        &mut file,
-        "pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {{"
-    )?;
+    writeln!(&mut file, "pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {{")?;
     for (_, vehicle) in vehicles.into_iter() {
         writeln!(&mut file, "    {}_u16 => Vehicle {{", vehicle.tank_id)?;
         writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
-        writeln!(
-            &mut file,
-            "        name: Cow::Borrowed({:?}),",
-            vehicle.name,
-        )?;
+        writeln!(&mut file, "        name: Cow::Borrowed({:?}),", vehicle.name,)?;
         writeln!(&mut file, "        tier: {:?},", vehicle.tier)?;
         writeln!(&mut file, "        is_premium: {:?},", vehicle.is_premium)?;
         writeln!(&mut file, "        nation: Nation::{:?},", vehicle.nation)?;
@@ -82,7 +73,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> crate::Result {
 }
 
 /// Inserts the hand-coded tanks that are somehow missing from the Tankopedia.
-fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> crate::Result {
+fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> Result {
     for vehicle in [
         Vehicle {
             tank_id: 20817,

@@ -15,12 +15,12 @@ use tracing::instrument;
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
+use crate::prelude::*;
 use crate::wargaming::tank_id::TankId;
-use crate::{AHashMap, DateTime};
 
 /// Open and initialize the database.
 #[instrument(skip(uri))]
-pub async fn open(uri: &str, initialize_schema: bool) -> crate::Result<PgPool> {
+pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
     options.log_statements(LevelFilter::Trace);
@@ -54,7 +54,7 @@ pub async fn retrieve_latest_tank_snapshots(
     account_id: i32,
     before: DateTime,
     tank_ids: &[TankId],
-) -> crate::Result<HashMap<TankId, Tank>> {
+) -> Result<HashMap<TankId, Tank>> {
     // language=SQL
     const QUERY: &str = "
         SELECT snapshot.*
@@ -84,16 +84,12 @@ pub async fn retrieve_latest_tank_snapshots(
         .context("failed to retrieve the latest tank snapshots")
 }
 
-#[instrument(
-    level = "info",
-    skip_all,
-    fields(account_id = account_id),
-)]
+#[instrument(skip_all, fields(account_id))]
 pub async fn retrieve_latest_tank_battle_counts(
     connection: &PgPool,
     account_id: i32,
     tank_ids: impl IntoIterator<Item = TankId>,
-) -> crate::Result<AHashMap<TankId, (i32, i32)>> {
+) -> Result<AHashMap<TankId, (i32, i32)>> {
     let tank_ids = tank_ids
         .into_iter()
         .map(|tank_id| tank_id as i32)
@@ -135,11 +131,8 @@ pub async fn retrieve_latest_tank_battle_counts(
     result
 }
 
-#[instrument(level = "info", skip_all)]
-pub async fn replace_account(
-    connection: &mut PgConnection,
-    account: &BaseAccountInfo,
-) -> crate::Result {
+#[instrument(skip_all, fields(account_id = account.id))]
+pub async fn replace_account(connection: &mut PgConnection, account: &BaseAccountInfo) -> Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO accounts (account_id, last_battle_time)
@@ -157,11 +150,11 @@ pub async fn replace_account(
     Ok(())
 }
 
-#[instrument(level = "debug", skip_all, fields(account_id = account_id))]
+#[instrument(skip_all, fields(account_id))]
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     account_id: i32,
-) -> crate::Result<Option<DateTime>> {
+) -> Result<Option<DateTime>> {
     // language=SQL
     const QUERY: &str = r#"
         WITH existing AS (
@@ -181,11 +174,11 @@ pub async fn insert_account_if_not_exists(
 }
 
 #[allow(dead_code)]
-#[instrument(level = "info", skip_all)]
+#[instrument(skip_all, fields(account_id))]
 pub async fn retrieve_account(
     connection: &PgPool,
     account_id: i32,
-) -> crate::Result<Option<BaseAccountInfo>> {
+) -> Result<Option<BaseAccountInfo>> {
     // language=SQL
     const QUERY: &str = "SELECT * FROM accounts WHERE account_id = $1";
     sqlx::query_as(QUERY)
@@ -195,8 +188,8 @@ pub async fn retrieve_account(
         .with_context(|| format!("failed to retrieve account #{}", account_id))
 }
 
-#[instrument(level = "info", skip_all, fields(n_tanks = tanks.len()))]
-pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> crate::Result {
+#[instrument(skip_all, fields(n_tanks = tanks.len()))]
+pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> Result {
     // language=SQL
     const QUERY: &str = "
         INSERT INTO tank_snapshots (

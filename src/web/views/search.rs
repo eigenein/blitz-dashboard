@@ -49,9 +49,10 @@ pub async fn get(
     if accounts.len() == 1 {
         let account_info = accounts.first().unwrap();
         account_info_cache.put(account_info).await?;
-        return Ok(CustomResponse::Redirect(Redirect::temporary(uri!(
-            get_player(account_id = account_info.base.id, period = _,)
-        ))));
+        return Ok(CustomResponse::Redirect(Redirect::temporary(uri!(get_player(
+            account_id = account_info.base.id,
+            period = _,
+        )))));
     }
     let exact_match = accounts
         .iter()

@@ -3,6 +3,7 @@ use redis::AsyncCommands;
 use tracing::instrument;
 
 use crate::models::AccountInfo;
+use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 
 pub struct AccountInfoCache {
@@ -18,7 +19,7 @@ impl AccountInfoCache {
     }
 
     #[instrument(skip_all, fields(account_id))]
-    pub async fn get(&self, account_id: i32) -> crate::Result<Option<AccountInfo>> {
+    pub async fn get(&self, account_id: i32) -> Result<Option<AccountInfo>> {
         let mut redis = self.redis.clone();
 
         if let Some(blob) = redis
@@ -42,13 +43,9 @@ impl AccountInfoCache {
     }
 
     #[instrument(skip_all, fields(account_id = account_info.base.id))]
-    pub async fn put(&self, account_info: &AccountInfo) -> crate::Result {
+    pub async fn put(&self, account_info: &AccountInfo) -> Result {
         let blob = rmp_serde::to_vec(&account_info)?;
-        tracing::debug!(
-            account_id = account_info.base.id,
-            n_bytes = blob.len(),
-            "caching",
-        );
+        tracing::debug!(account_id = account_info.base.id, n_bytes = blob.len(), "caching",);
         self.redis
             .clone()
             .set_ex(Self::cache_key(account_info.base.id), blob, Self::TTL_SECS)

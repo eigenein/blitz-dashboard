@@ -4,6 +4,7 @@ use redis::AsyncCommands;
 use tracing::{debug, instrument};
 
 use crate::models::{merge_tanks, Tank};
+use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 
 #[derive(Clone)]
@@ -20,7 +21,7 @@ impl AccountTanksCache {
     }
 
     #[instrument(skip_all, fields(account_id))]
-    pub async fn get(&self, account_id: i32) -> crate::Result<Vec<Tank>> {
+    pub async fn get(&self, account_id: i32) -> Result<Vec<Tank>> {
         let mut redis = self.redis.clone();
         let cache_key = Self::cache_key(account_id);
 

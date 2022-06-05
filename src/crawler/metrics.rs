@@ -6,7 +6,7 @@ use chrono::Utc;
 use humantime::format_duration;
 
 use crate::helpers::average::Average;
-use crate::DateTime;
+use crate::prelude::*;
 
 pub struct CrawlerMetrics {
     pub average_batch_size: Average,
@@ -41,7 +41,7 @@ impl CrawlerMetrics {
         self.last_account_id = account_id;
     }
 
-    pub fn add_lag_from(&mut self, last_battle_time: DateTime) -> crate::Result {
+    pub fn add_lag_from(&mut self, last_battle_time: DateTime) -> Result {
         self.lags
             .push((Utc::now() - last_battle_time).num_seconds().try_into()?);
         Ok(())

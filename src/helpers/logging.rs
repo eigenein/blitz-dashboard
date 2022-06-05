@@ -1,6 +1,6 @@
-use chrono::Local;
 use std::io::Write;
 
+use chrono::Local;
 use log::{Level, LevelFilter, Log, Metadata, Record};
 
 /// Initialises logging.

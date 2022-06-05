@@ -5,7 +5,6 @@ mod parsers;
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
-use chrono::Duration;
 use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -53,8 +52,6 @@ pub enum Subcommand {
 
     CrawlAccounts(CrawlAccountsOpts),
 
-    ExportStream(ExportStreamOpts),
-
     InitializeDatabase(InitializeDatabaseOpts),
 }
 
@@ -94,10 +91,6 @@ pub struct CrawlerOpts {
     /// Maximum last battle time offset
     #[structopt(long, default_value = "3years", parse(try_from_str = humantime::parse_duration))]
     pub max_offset: StdDuration,
-
-    /// Maximum battle stream duration
-    #[structopt(long, default_value = "1day", parse(try_from_str = parsers::duration))]
-    pub stream_duration: Duration,
 
     /// Limit for the inner query when retrieving a batch from the database.
     /// Lower is faster, larger keeps the mean batch size closer to the maximum (which is better).
@@ -165,20 +158,6 @@ pub struct SharedCrawlerOpts {
 
     #[structopt(long, default_value = "50", parse(try_from_str = parsers::non_zero_usize))]
     pub lag_percentile: usize,
-}
-
-/// Exports the battle stream into JSONL format
-#[derive(Clone, StructOpt)]
-pub struct ExportStreamOpts {
-    /// Redis URI
-    #[structopt(long, default_value = "redis://127.0.0.1/0")]
-    pub redis_uri: String,
-
-    #[structopt(long = "time-span", parse(try_from_str = parsers::duration))]
-    pub time_span: Duration,
-
-    #[structopt(long)]
-    pub sort_by_timestamp: bool,
 }
 
 /// Initializes the database schema
