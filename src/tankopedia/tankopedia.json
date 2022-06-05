@@ -9780,8 +9780,8 @@
         "module_id": 2323,
         "name": "Pz.Kpfw. Panther Schmalturm",
         "next_modules": [
-          11796,
-          2068
+          2068,
+          11796
         ],
         "next_tanks": null,
         "price_credit": 0,
@@ -25591,9 +25591,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          8065,
           1409,
-          3713
+          3713,
+          8065
         ],
         "price_credit": 0,
         "price_xp": 5000,
@@ -32285,6 +32285,167 @@
     ],
     "type": "heavyTank"
   },
+  "21585": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 135,
+          "rear": 51,
+          "sides": 86
+        },
+        "turret": {
+          "front": 140,
+          "rear": 53,
+          "sides": 100
+        }
+      },
+      "battle_level_range_max": 7,
+      "battle_level_range_min": 6,
+      "engine": {
+        "fire_chance": 0.15,
+        "name": "Paxman 12TP",
+        "power": 750,
+        "tier": 5,
+        "weight": 3000
+      },
+      "engine_id": 25173,
+      "firepower": 38,
+      "gun": {
+        "aim_time": 4.82,
+        "caliber": 76,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "fire_rate": 7.79,
+        "move_down_arc": 5,
+        "move_up_arc": 20,
+        "name": "OQF 17-pdr Gun Mk. VII",
+        "reload_time": 7.7,
+        "tier": 7,
+        "traverse_speed": 40.25,
+        "weight": 826
+      },
+      "gun_id": 264788,
+      "hp": 1550,
+      "hull_hp": 1240,
+      "hull_weight": 49118,
+      "is_default": true,
+      "maneuverability": 14,
+      "max_ammo": 144,
+      "max_weight": 85000,
+      "profile_id": "25173-263251-264274-264788",
+      "protection": 44,
+      "shells": [
+        {
+          "damage": 200,
+          "penetration": 171,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 175,
+          "penetration": 239,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 270,
+          "penetration": 20,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 65,
+      "signal_range": null,
+      "speed_backward": 12,
+      "speed_forward": 20,
+      "suspension": {
+        "load_limit": 85000,
+        "name": "Blasteroid",
+        "tier": 6,
+        "traverse_speed": 20,
+        "weight": 20000
+      },
+      "suspension_id": 264274,
+      "turret": {
+        "hp": 310,
+        "name": "Blasteroid",
+        "tier": 6,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 32,
+        "view_range": 240,
+        "weight": 8000
+      },
+      "turret_id": 263251,
+      "weight": 81244
+    },
+    "description": "Версия тяжёлого танка TOG II*, вдохновлённая старыми видеоиграми и уютной ретро-атмосферой залов аркадных автоматов. Blasteroid неторопливый, но очень живучий и скорострельный — отличный выбор, чтобы поставить очередной игровой рекорд!",
+    "engines": [
+      25173
+    ],
+    "guns": [
+      264788
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/GB63_TOG_II_BP.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/GB63_TOG_II_BP.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "25173": {
+        "is_default": true,
+        "module_id": 25173,
+        "name": "Paxman 12TP",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      },
+      "263251": {
+        "is_default": true,
+        "module_id": 263251,
+        "name": "Blasteroid",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "264274": {
+        "is_default": true,
+        "module_id": 264274,
+        "name": "Blasteroid",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "264788": {
+        "is_default": true,
+        "module_id": 264788,
+        "name": "OQF 17-pdr Gun Mk. VII",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      }
+    },
+    "name": "Blasteroid",
+    "nation": "uk",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      264274
+    ],
+    "tank_id": 21585,
+    "tier": 6,
+    "turrets": [
+      263251
+    ],
+    "type": "heavyTank"
+  },
   "2161": {
     "cost": null,
     "default_profile": {
@@ -38719,6 +38880,167 @@
     "tier": 10,
     "turrets": [],
     "type": "AT-SPG"
+  },
+  "24593": {
+    "cost": null,
+    "default_profile": {
+      "armor": {
+        "hull": {
+          "front": 150,
+          "rear": 80,
+          "sides": 100
+        },
+        "turret": {
+          "front": 200,
+          "rear": 100,
+          "sides": 120
+        }
+      },
+      "battle_level_range_max": 9,
+      "battle_level_range_min": 8,
+      "engine": {
+        "fire_chance": 0.2,
+        "name": "GT 101",
+        "power": 880,
+        "tier": 8,
+        "weight": 1300
+      },
+      "engine_id": 41749,
+      "firepower": 46,
+      "gun": {
+        "aim_time": 5.29,
+        "caliber": 105,
+        "clip_capacity": 1,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.35,
+        "fire_rate": 5.22,
+        "move_down_arc": 8,
+        "move_up_arc": 15,
+        "name": "10,5 cm Kw.K. L/52 Ausf. A2",
+        "reload_time": 11.5,
+        "tier": 8,
+        "traverse_speed": 21.88,
+        "weight": 3000
+      },
+      "gun_id": 263700,
+      "hp": 1850,
+      "hull_hp": 1480,
+      "hull_weight": 41300,
+      "is_default": true,
+      "maneuverability": 26,
+      "max_ammo": 52,
+      "max_weight": 85000,
+      "profile_id": "41749-262419-262930-263700",
+      "protection": 63,
+      "shells": [
+        {
+          "damage": 350,
+          "penetration": 225,
+          "type": "ARMOR_PIERCING"
+        },
+        {
+          "damage": 300,
+          "penetration": 283,
+          "type": "ARMOR_PIERCING_CR"
+        },
+        {
+          "damage": 450,
+          "penetration": 60,
+          "type": "HIGH_EXPLOSIVE"
+        }
+      ],
+      "shot_efficiency": 79,
+      "signal_range": null,
+      "speed_backward": 15,
+      "speed_forward": 40,
+      "suspension": {
+        "load_limit": 85000,
+        "name": "E 75 Keiler",
+        "tier": 8,
+        "traverse_speed": 24,
+        "weight": 20000
+      },
+      "suspension_id": 262930,
+      "turret": {
+        "hp": 370,
+        "name": "E 75 Keiler",
+        "tier": 8,
+        "traverse_left_arc": 180,
+        "traverse_right_arc": 180,
+        "traverse_speed": 22,
+        "view_range": 250,
+        "weight": 14000
+      },
+      "turret_id": 262419,
+      "weight": 79900
+    },
+    "description": "Один из проектов возможного развития и модернизации танка Е 75. Планировалось использование газотурбинного двигателя и литой башни с экранированием. Работы над танком были прекращены на стадии эскизного проектирования.",
+    "engines": [
+      41749
+    ],
+    "guns": [
+      263700
+    ],
+    "images": {
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/G_E-75RT.png",
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/G_E-75RT.png"
+    },
+    "is_premium": true,
+    "modules_tree": {
+      "262419": {
+        "is_default": true,
+        "module_id": 262419,
+        "name": "E 75 Keiler",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleTurret"
+      },
+      "262930": {
+        "is_default": true,
+        "module_id": 262930,
+        "name": "E 75 Keiler",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleChassis"
+      },
+      "263700": {
+        "is_default": true,
+        "module_id": 263700,
+        "name": "10,5 cm Kw.K. L/52 Ausf. A2",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleGun"
+      },
+      "41749": {
+        "is_default": true,
+        "module_id": 41749,
+        "name": "GT 101",
+        "next_modules": null,
+        "next_tanks": null,
+        "price_credit": 0,
+        "price_xp": 0,
+        "type": "vehicleEngine"
+      }
+    },
+    "name": "Keiler",
+    "nation": "germany",
+    "next_tanks": null,
+    "prices_xp": null,
+    "suspensions": [
+      262930
+    ],
+    "tank_id": 24593,
+    "tier": 8,
+    "turrets": [
+      262419
+    ],
+    "type": "heavyTank"
   },
   "24609": {
     "cost": null,
@@ -80676,8 +80998,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          6913,
-          2049
+          2049,
+          6913
         ],
         "price_credit": 0,
         "price_xp": 1250,
@@ -82309,8 +82631,8 @@
         "module_id": 14595,
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          27396,
-          19972
+          19972,
+          27396
         ],
         "next_tanks": null,
         "price_credit": 0,
