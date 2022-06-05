@@ -28,9 +28,6 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v1
-
       - name: Install Cross
         run: |
           wget --quiet https://github.com/rust-embedded/cross/releases/download/v0.2.1/cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
