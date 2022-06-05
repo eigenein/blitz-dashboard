@@ -4,7 +4,7 @@ use anyhow::Context;
 use futures::{stream, Stream};
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
-use tracing::{instrument, warn};
+use tracing::{info, instrument, warn};
 
 use crate::models::BaseAccountInfo;
 use crate::prelude::*;
@@ -19,9 +19,9 @@ pub async fn get_batch_stream(
 ) -> impl Stream<Item = Result<Batch>> {
     stream::try_unfold(database, move |database| async move {
         loop {
-            let batch = { retrieve_batch(&database, inner_limit, max_offset).await? };
+            let batch = retrieve_batch(&database, inner_limit, max_offset).await?;
             if !batch.is_empty() {
-                tracing::info!(n_accounts = batch.len(), "retrieved");
+                info!(n_accounts = batch.len(), "retrieved");
                 break Ok(Some((batch, database)));
             }
             warn!("no accounts matched, sleeping…");

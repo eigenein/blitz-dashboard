@@ -6,7 +6,7 @@ use anyhow::Context;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use sqlx::PgPool;
 use tokio::sync::Mutex;
-use tracing::{debug, debug_span, instrument, trace};
+use tracing::{debug, debug_span, instrument, trace, warn};
 use tracing_futures::Instrument;
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
@@ -39,7 +39,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
 
     let crawler = Crawler::new(&opts.shared).await?;
 
-    tracing::warn!("running…");
+    warn!("running…");
     let batches =
         get_batch_stream(crawler.database(), opts.batch_select_limit, opts.max_offset).await;
     crawler.run(batches, &opts.shared.buffering).await
