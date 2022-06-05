@@ -1,5 +1,3 @@
-use std::time::Duration as StdDuration;
-
 use anyhow::Context;
 use futures::{stream, Stream};
 use sqlx::PgPool;
@@ -15,11 +13,12 @@ pub type Batch = Vec<BaseAccountInfo>;
 pub async fn get_batch_stream(
     database: PgPool,
     inner_limit: usize,
+    min_offset: StdDuration,
     max_offset: StdDuration,
 ) -> impl Stream<Item = Result<Batch>> {
     stream::try_unfold(database, move |database| async move {
         loop {
-            let batch = retrieve_batch(&database, inner_limit, max_offset).await?;
+            let batch = retrieve_batch(&database, inner_limit, min_offset, max_offset).await?;
             if !batch.is_empty() {
                 info!(n_accounts = batch.len(), "retrieved");
                 break Ok(Some((batch, database)));
@@ -35,6 +34,7 @@ pub async fn get_batch_stream(
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,
+    min_offset: StdDuration,
     max_offset: StdDuration,
 ) -> Result<Batch> {
     // language=SQL
@@ -42,11 +42,14 @@ async fn retrieve_batch(
         -- CREATE EXTENSION tsm_system_rows;
         SELECT account_id, last_battle_time
         FROM accounts TABLESAMPLE system_rows($1)
-        WHERE last_battle_time IS NULL OR (last_battle_time >= NOW() - $2)
+        WHERE
+            last_battle_time IS NULL
+            OR last_battle_time BETWEEN now() - $3 AND now() - $2
         LIMIT 100
     "#;
     let query = sqlx::query_as(QUERY)
         .bind(inner_limit as i32)
+        .bind(min_offset)
         .bind(max_offset);
     timeout(StdDuration::from_secs(60), query.fetch_all(database))
         .await

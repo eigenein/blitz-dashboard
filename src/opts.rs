@@ -88,6 +88,10 @@ pub struct CrawlerOpts {
     #[structopt(flatten)]
     pub shared: SharedCrawlerOpts,
 
+    /// Minimum last battle time offset
+    #[structopt(long, default_value = "12hours", parse(try_from_str = humantime::parse_duration))]
+    pub min_offset: StdDuration,
+
     /// Maximum last battle time offset
     #[structopt(long, default_value = "3years", parse(try_from_str = humantime::parse_duration))]
     pub max_offset: StdDuration,

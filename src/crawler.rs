@@ -40,8 +40,13 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     let crawler = Crawler::new(&opts.shared).await?;
 
     warn!("running…");
-    let batches =
-        get_batch_stream(crawler.database(), opts.batch_select_limit, opts.max_offset).await;
+    let batches = get_batch_stream(
+        crawler.database(),
+        opts.batch_select_limit,
+        opts.min_offset,
+        opts.max_offset,
+    )
+    .await;
     crawler.run(batches, &opts.shared.buffering).await
 }
 
