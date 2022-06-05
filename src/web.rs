@@ -60,8 +60,6 @@ pub async fn run(opts: WebOpts) -> crate::Result {
         .mount("/", routes![views::index::get])
         .mount("/", routes![views::search::get])
         .mount("/", routes![views::player::get])
-        .mount("/", routes![views::analytics::get])
-        .mount("/", routes![views::analytics::vehicle::get])
         .mount("/", routes![views::error::get_error])
         .register("/", rocket::catchers![default_catcher])
         .attach(fairings::SecurityHeaders)

@@ -6,7 +6,7 @@ use rocket::response::content::RawHtml;
 use rocket::response::{Redirect, Responder};
 use rocket::{Request, Response};
 
-#[allow(clippy::large_enum_variant)]
+#[allow(clippy::large_enum_variant, dead_code)]
 pub enum CustomResponse {
     Html(String),
     CachedMarkup(&'static str, Markup),

@@ -14,7 +14,6 @@ use tracing::info;
 use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 
-mod aggregator;
 mod battle_stream;
 mod crawler;
 mod database;
@@ -60,7 +59,6 @@ async fn main() -> crate::Result {
 async fn run_subcommand(opts: Opts) -> crate::Result {
     let start_instant = Instant::now();
     let result = match opts.subcommand {
-        Subcommand::Aggregate(opts) => aggregator::run(opts).await,
         Subcommand::Crawl(opts) => crawler::run_crawler(opts).await,
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::ExportStream(opts) => export_stream::run(opts).await,

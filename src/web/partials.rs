@@ -2,12 +2,9 @@ use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
 use phf::phf_set;
-use rocket::uri;
 
 use crate::models::{Nation, TankType, Vehicle};
-use crate::wargaming::tank_id::{to_client_id, TankId};
-use crate::web::views::analytics::rocket_uri_macro_get as rocket_uri_macro_get_vehicles_analytics;
-use crate::web::views::analytics::vehicle::rocket_uri_macro_get as rocket_uri_macro_get_vehicle_analytics;
+use crate::wargaming::tank_id::to_client_id;
 use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 #[must_use]
@@ -157,16 +154,6 @@ pub fn footer() -> Markup {
                             }
                         }
                     }
-
-                    div.column."is-2" {
-                        p.title."is-6" { "Аналитика" }
-                        p."mt-1" {
-                            span.icon-text.is-flex-wrap-nowrap {
-                                span.icon { i.fas.fa-truck-monster.has-text-info {} }
-                                span { a href=(uri!(get_vehicles_analytics())) { "Танки" } }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -235,12 +222,6 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
                 strong."mx-1".(name_class) { (vehicle.name) }
             }
 
-            span.icon {
-                a href=(uri!(get_vehicle_analytics(tank_id = vehicle.tank_id))) title="Перейти к аналитике танка" {
-                    i.fas.fa-chart-area.has-text-grey-light {}
-                }
-            }
-
             @if let Ok(external_id) = to_client_id(vehicle.tank_id) {
                 span.icon {
                     a
@@ -279,17 +260,6 @@ pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
     9_i32 => "Ⅸ",
     10_i32 => "Ⅹ",
 };
-
-#[must_use]
-pub fn tier_td(tier: i32, class: Option<&str>) -> Markup {
-    html! {
-        td.has-text-centered.(class.unwrap_or("")) data-sort="tier" data-value=(tier) {
-            @if let Some(markup) = TIER_MARKUP.get(&tier) {
-                strong { (markup) }
-            }
-        }
-    }
-}
 
 static COLLECTIBLE_VEHICLE_IDS: phf::Set<u16> = phf_set! {
     113_u16,
