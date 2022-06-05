@@ -125,7 +125,6 @@ pub async fn get(
         nav.tabs.is-boxed {
             div.container {
                 ul {
-                    (render_period_li(period, from_hours(12), "12 часов"))
                     (render_period_li(period, from_days(1), "24 часа"))
                     (render_period_li(period, from_days(2), "2 дня"))
                     (render_period_li(period, from_days(3), "3 дня"))
