@@ -30,7 +30,7 @@ pub async fn get_batch_stream(
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(skip_all, fields(inner_limit, ?max_offset))]
+#[instrument(skip_all, fields(inner_limit = inner_limit, max_offset = ?max_offset))]
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,

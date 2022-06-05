@@ -76,10 +76,6 @@ pub struct WebOpts {
     /// Google Analytics measurement ID
     #[structopt(long)]
     pub gtag: Option<String>,
-
-    /// Disable the caches, do not use on production
-    #[structopt(long)]
-    pub disable_caches: bool,
 }
 
 /// Runs the account crawler
@@ -191,6 +187,10 @@ pub struct InternalConnectionOpts {
     /// Redis URI
     #[structopt(long, default_value = "redis://127.0.0.1/0")]
     pub redis_uri: String,
+
+    /// Redis connection pool size
+    #[structopt(long, default_value = "5")]
+    pub redis_pool_size: usize,
 }
 
 impl FromStr for Z {

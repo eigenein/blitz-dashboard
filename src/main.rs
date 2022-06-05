@@ -3,7 +3,6 @@
 
 use std::time::Instant;
 
-use crate::prelude::*;
 use helpers::logging;
 use itertools::Itertools;
 use sentry::integrations::anyhow::capture_anyhow;
@@ -12,6 +11,7 @@ use tracing::info;
 
 use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
+use crate::prelude::*;
 
 mod crawler;
 mod database;
@@ -29,12 +29,18 @@ static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[tokio::main]
-#[tracing::instrument]
-async fn main() -> Result {
+fn main() -> Result {
+    tokio::runtime::Builder::new_multi_thread()
+        .thread_stack_size(4 * 1024 * 1024)
+        .enable_all()
+        .build()?
+        .block_on(async_main())
+}
+
+async fn async_main() -> Result {
     let opts = Opts::from_args();
     logging::init(opts.verbosity, opts.no_journald)?;
-    info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str(),);
+    info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str());
     let _sentry_guard = opts
         .sentry_dsn
         .as_ref()

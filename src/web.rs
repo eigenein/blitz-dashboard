@@ -1,14 +1,15 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use crate::prelude::*;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
-use tracing::info;
+use tracing::warn;
 use views::r#static;
 
+use crate::helpers::redis;
 use crate::opts::WebOpts;
+use crate::prelude::*;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::cache::account::tanks::AccountTanksCache;
 use crate::wargaming::WargamingApi;
@@ -24,13 +25,15 @@ mod views;
 /// Run the web app.
 pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
-    info!(host = opts.host.as_str(), port = opts.port);
+    warn!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
     let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
     let database = crate::database::open(&opts.connections.internal.database_uri, false).await?;
-    let redis = redis::Client::open(opts.connections.internal.redis_uri.as_str())?
-        .get_multiplexed_async_connection()
-        .await?;
+    let redis = redis::connect(
+        &opts.connections.internal.redis_uri,
+        opts.connections.internal.redis_pool_size,
+    )
+    .await?;
     let _ = rocket::custom(to_config(&opts)?)
         .manage(AccountInfoCache::new(api.clone(), redis.clone()))
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
@@ -38,7 +41,6 @@ pub async fn run(opts: WebOpts) -> Result {
         .manage(database)
         .manage(TrackingCode::new(&opts))
         .manage(redis)
-        .manage(DisableCaches(opts.disable_caches))
         .mount("/", routes![r#static::get_site_manifest])
         .mount("/", routes![r#static::get_favicon])
         .mount("/", routes![r#static::get_favicon_16x16])
@@ -121,5 +123,3 @@ impl TrackingCode {
         Self(PreEscaped(extra_html_headers.join("")))
     }
 }
-
-pub struct DisableCaches(bool);

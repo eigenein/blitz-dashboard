@@ -10,7 +10,7 @@ use itertools::Itertools;
 use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
-use tracing::instrument;
+use tracing::{instrument, warn};
 
 use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
@@ -19,7 +19,7 @@ use crate::prelude::*;
 use crate::wargaming::tank_id::TankId;
 
 /// Open and initialize the database.
-#[instrument(skip(uri))]
+#[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "warn")]
 pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
     tracing::info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
@@ -40,14 +40,13 @@ pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
             .context("failed to run the script")?;
     }
 
-    tracing::info!("ready");
+    warn!("ready");
     Ok(inner)
 }
 
 #[instrument(
-    level = "debug",
     skip_all,
-    fields(account_id = account_id, before = %before, n_tanks = tank_ids.len()),
+    fields(account_id = account_id, before = ?before, n_tanks = tank_ids.len()),
 )]
 pub async fn retrieve_latest_tank_snapshots(
     connection: &PgPool,
@@ -84,7 +83,7 @@ pub async fn retrieve_latest_tank_snapshots(
         .context("failed to retrieve the latest tank snapshots")
 }
 
-#[instrument(skip_all, fields(account_id))]
+#[instrument(skip_all, fields(account_id = account_id))]
 pub async fn retrieve_latest_tank_battle_counts(
     connection: &PgPool,
     account_id: i32,
@@ -150,7 +149,7 @@ pub async fn replace_account(connection: &mut PgConnection, account: &BaseAccoun
     Ok(())
 }
 
-#[instrument(skip_all, fields(account_id))]
+#[instrument(skip_all, fields(account_id = account_id))]
 pub async fn insert_account_if_not_exists(
     connection: &PgPool,
     account_id: i32,
@@ -174,7 +173,7 @@ pub async fn insert_account_if_not_exists(
 }
 
 #[allow(dead_code)]
-#[instrument(skip_all, fields(account_id))]
+#[instrument(skip_all, fields(account_id = account_id))]
 pub async fn retrieve_account(
     connection: &PgPool,
     account_id: i32,

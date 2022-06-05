@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-use crate::prelude::*;
 use anyhow::anyhow;
 use log::LevelFilter;
+
+use crate::prelude::*;
 
 pub fn verbosity(n_occurences: u64) -> LevelFilter {
     match n_occurences {

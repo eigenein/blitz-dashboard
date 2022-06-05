@@ -1,6 +1,5 @@
 //! Wargaming.net API.
 
-use crate::prelude::*;
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result as StdResult;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -17,6 +16,7 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
+use crate::prelude::*;
 use crate::wargaming::response::Response;
 use crate::{models, StdDuration};
 
@@ -63,7 +63,7 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    #[instrument(skip_all, fields(query))]
+    #[instrument(skip_all, fields(query = query))]
     pub async fn search_accounts(&self, query: &str) -> Result<Vec<models::FoundAccount>> {
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
@@ -100,7 +100,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    #[instrument(skip_all, fields(account_id))]
+    #[instrument(skip_all, fields(account_id = account_id))]
     pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<models::TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
@@ -110,7 +110,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
-    #[instrument(skip_all, fields(account_id))]
+    #[instrument(skip_all, fields(account_id = account_id))]
     pub async fn get_tanks_achievements(
         &self,
         account_id: i32,
@@ -135,7 +135,7 @@ impl WargamingApi {
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
-    #[instrument(skip_all, fields(account_id))]
+    #[instrument(skip_all, fields(account_id = account_id))]
     async fn call_by_account<T: DeserializeOwned>(
         &self,
         url: &str,
@@ -212,7 +212,7 @@ impl WargamingApi {
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        tracing::debug!(request_id = request_id, path = url.path(), "get");
+        debug!(request_id, path = url.path(), "get");
 
         let start_instant = Instant::now();
         let result = self.client.get(url).send().await;

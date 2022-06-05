@@ -194,7 +194,7 @@ fn match_account_infos(
 /// # Returns
 ///
 /// The tanks statistics as returned by the API.
-#[instrument(skip_all, fields(account_id, ?since))]
+#[instrument(skip_all, fields(account_id = account_id, since = ?since))]
 async fn get_updated_tanks_statistics(
     api: &WargamingApi,
     account_id: i32,

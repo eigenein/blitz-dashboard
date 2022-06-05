@@ -5,18 +5,22 @@ use log::{Level, LevelFilter, Log, Metadata, Record};
 
 /// Initialises logging.
 pub fn init(max_level: LevelFilter, no_journald: bool) -> anyhow::Result<()> {
-    log::set_boxed_logger(Box::new(JournaldLogger { no_journald }))?;
+    log::set_boxed_logger(Box::new(JournaldLogger {
+        max_level,
+        no_journald,
+    }))?;
     log::set_max_level(max_level);
     Ok(())
 }
 
 struct JournaldLogger {
+    max_level: LevelFilter,
     no_journald: bool,
 }
 
 impl Log for JournaldLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.target().starts_with("blitz_dashboard")
+        self.max_level == LevelFilter::Trace || metadata.target().starts_with("blitz_dashboard")
     }
 
     fn log(&self, record: &Record) {
