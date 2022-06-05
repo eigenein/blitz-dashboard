@@ -71,3 +71,32 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.changelog }}
           prerelease: false
+
+      - name: Set up Tailscale
+        uses: tailscale/github-action@v1
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          version: "1.24.2"
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: unnecessary
+          config: |
+            Host yastatist
+              User pi
+              StrictHostKeyChecking no
+
+      - name: Rsync
+        working-directory: ./target/armv7-unknown-linux-gnueabihf/release
+        run: |
+          rsync -az blitz-dashboard yastatist:/home/pi/bin/blitz-dashboard
+
+      - name: Restart web
+        run: |
+          ssh yastatist "sudo systemctl restart web; systemctl status --lines=0 web"
+
+      - name: Restart crawler
+        run: |
+          ssh yastatist "sudo systemctl restart crawler; systemctl status --lines=0 crawler"
