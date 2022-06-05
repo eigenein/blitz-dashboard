@@ -25,6 +25,8 @@ jobs:
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
 
       - name: Test
         uses: actions-rs/cargo@v1
