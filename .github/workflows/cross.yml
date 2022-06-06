@@ -26,6 +26,11 @@ jobs:
         with:
           cache-on-failure: true
 
+      - name: Install Cross
+        run: |
+          wget --quiet https://github.com/rust-embedded/cross/releases/download/v0.2.1/cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvzf cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
+
       - name: Build for Raspberry Pi 4 (64-bit)
         run: ./cross build --target aarch64-unknown-linux-gnueabihf --release
 
