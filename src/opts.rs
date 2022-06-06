@@ -164,7 +164,11 @@ pub struct SharedCrawlerOpts {
 #[derive(Clone, StructOpt)]
 pub struct InitializeDatabaseOpts {
     /// PostgreSQL database URI
-    #[structopt(short, long = "database")]
+    #[structopt(
+        short,
+        long = "database",
+        default_value = "postgres://localhost/yastatist"
+    )]
     pub database_uri: String,
 }
 
@@ -181,7 +185,11 @@ pub struct ConnectionOpts {
 #[derive(StructOpt)]
 pub struct InternalConnectionOpts {
     /// PostgreSQL database URI
-    #[structopt(short, long = "database")]
+    #[structopt(
+        short,
+        long = "database",
+        default_value = "postgres://localhost/yastatist"
+    )]
     pub database_uri: String,
 
     /// Redis URI
