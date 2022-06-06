@@ -19,11 +19,11 @@ use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapsho
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{format_elapsed, from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, Z};
-use crate::models::{subtract_tanks, Statistics, Tank, TankType};
+use crate::models::{subtract_tanks, Tank, TankType};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
-use crate::wargaming::cache::account::info::AccountInfoCache;
-use crate::wargaming::cache::account::tanks::AccountTanksCache;
+use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
+use crate::wargaming::models::Statistics;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;

@@ -12,9 +12,9 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
 use tracing::{instrument, warn};
 
-use crate::models::{BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics};
+use crate::models::{BaseTankStatistics, Tank, TankAchievements, TankStatistics};
 use crate::prelude::*;
-use crate::wargaming::models::{BaseAccountInfo, TankId};
+use crate::wargaming::models::{BaseAccountInfo, Statistics, TankId};
 
 /// Open and initialize the database.
 #[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "warn")]

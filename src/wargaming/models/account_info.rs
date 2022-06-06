@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::Statistics;
 use crate::prelude::*;
+use crate::wargaming::models::Statistics;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct BaseAccountInfo {
