@@ -2,7 +2,8 @@
 
 use std::borrow::Cow;
 
-use crate::models::{Nation, TankType, Vehicle};
+use crate::models::{TankType, Vehicle};
+use crate::wargaming::models::Nation;
 
 pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {
     1_u16 => Vehicle {

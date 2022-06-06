@@ -16,13 +16,13 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
+use crate::models::{AccountInfo, TankAchievements, TankStatistics};
 use crate::prelude::*;
 use crate::wargaming::response::Response;
-use crate::{models, StdDuration};
 
 pub mod cache;
+pub mod models;
 pub mod response;
-pub mod tank_id;
 
 #[derive(Clone)]
 pub struct WargamingApi {
@@ -82,7 +82,7 @@ impl WargamingApi {
     pub async fn get_account_info(
         &self,
         account_ids: &[i32],
-    ) -> Result<HashMap<String, Option<models::AccountInfo>>> {
+    ) -> Result<HashMap<String, Option<AccountInfo>>> {
         if account_ids.is_empty() {
             return Ok(HashMap::new());
         }
@@ -101,7 +101,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
     #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<models::TankStatistics>> {
+    pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
@@ -111,10 +111,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
     #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get_tanks_achievements(
-        &self,
-        account_id: i32,
-    ) -> Result<Vec<models::TankAchievements>> {
+    pub async fn get_tanks_achievements(&self, account_id: i32) -> Result<Vec<TankAchievements>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/achievements/", account_id)
             .await

@@ -16,7 +16,7 @@ use crate::models::{
     BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankStatistics,
 };
 use crate::prelude::*;
-use crate::wargaming::tank_id::TankId;
+use crate::wargaming::models::TankId;
 
 /// Open and initialize the database.
 #[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "warn")]

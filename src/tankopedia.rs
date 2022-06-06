@@ -6,10 +6,10 @@ use std::path::Path;
 
 use tracing::instrument;
 
-use crate::models::{Nation, TankType, Vehicle};
+use crate::models::{TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
 use crate::prelude::*;
-use crate::wargaming::tank_id::TankId;
+use crate::wargaming::models::{Nation, TankId};
 use crate::wargaming::{Tankopedia, WargamingApi};
 use crate::StdDuration;
 

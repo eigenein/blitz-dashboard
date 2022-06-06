@@ -1,6 +1,8 @@
 pub use std::result::Result as StdResult;
 pub use std::time::Duration as StdDuration;
 
+pub use anyhow::anyhow;
+
 #[allow(dead_code)]
 pub type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 

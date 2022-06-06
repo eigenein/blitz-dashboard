@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::iter::Sum;
 use std::ops::Sub;
 
-use anyhow::anyhow;
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use itertools::{merge_join_by, EitherOrBoth};
 use serde::{Deserialize, Serialize};
@@ -11,16 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::helpers::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::prelude::*;
-use crate::wargaming::tank_id::TankId;
-
-/// Search accounts item.
-#[derive(Deserialize, Debug, PartialEq)]
-pub struct FoundAccount {
-    pub nickname: String,
-
-    #[serde(rename = "account_id")]
-    pub id: i32,
-}
+use crate::wargaming::models::{Nation, TankId};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct BaseAccountInfo {
@@ -180,12 +170,6 @@ pub struct TankAchievements {
     pub max_series: HashMap<String, i32>,
 }
 
-#[derive(Default, Copy, Clone, Serialize, Deserialize)]
-pub struct BattleCounts {
-    pub n_wins: i32,
-    pub n_battles: i32,
-}
-
 /// Represents a generic vehicle from the tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
@@ -209,78 +193,6 @@ impl Vehicle {
             is_premium: false,
             type_: TankType::Unknown,
             nation: Nation::from_tank_id(tank_id).unwrap_or(Nation::Other),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
-pub enum Nation {
-    #[serde(rename = "ussr")]
-    Ussr,
-
-    #[serde(rename = "germany")]
-    Germany,
-
-    #[serde(rename = "usa")]
-    Usa,
-
-    #[serde(rename = "china")]
-    China,
-
-    #[serde(rename = "france")]
-    France,
-
-    #[serde(rename = "uk")]
-    Uk,
-
-    #[serde(rename = "japan")]
-    Japan,
-
-    #[serde(rename = "european")]
-    Europe,
-
-    #[serde(other, rename = "other")]
-    Other,
-}
-
-impl Nation {
-    /// Construct `Nation` from the API tank ID.
-    pub fn from_tank_id(tank_id: TankId) -> Result<Nation> {
-        let tank_id = tank_id;
-        const NATIONS: &[Nation] = &[
-            Nation::Ussr,
-            Nation::Germany,
-            Nation::Usa,
-            Nation::China,
-            Nation::France,
-            Nation::Uk,
-            Nation::Japan,
-            Nation::Other,
-            Nation::Europe,
-        ];
-
-        const COMPONENT_VEHICLE: u16 = 1;
-        debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
-
-        let nation = ((tank_id >> 4) & 0xF) as usize;
-        NATIONS
-            .get(nation)
-            .copied()
-            .ok_or_else(|| anyhow!("unexpected nation {} for tank {}", nation, tank_id))
-    }
-
-    /// Get the client nation ID.
-    pub fn get_id(&self) -> u32 {
-        match self {
-            Nation::Ussr => 20000,
-            Nation::Germany => 30000,
-            Nation::Usa => 10000,
-            Nation::China => 60000,
-            Nation::France => 70000,
-            Nation::Uk => 40000,
-            Nation::Japan => 50000,
-            Nation::Other => 100000,
-            Nation::Europe => 80000,
         }
     }
 }

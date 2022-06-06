@@ -1,5 +1,5 @@
-use crate::models::Nation;
 use crate::prelude::*;
+use crate::wargaming::models::Nation;
 
 pub type TankId = u16;
 
