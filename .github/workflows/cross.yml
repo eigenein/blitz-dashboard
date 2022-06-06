@@ -1,0 +1,33 @@
+name: Cross
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Build for Raspberry Pi 4 (64-bit)
+        run: ./cross build --target aarch64-unknown-linux-gnueabihf --release
+
+      - name: List files
+        run: ls -lah target/aarch64-unknown-linux-gnueabihf/release/blitz-dashboard
