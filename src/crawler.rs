@@ -12,10 +12,9 @@ use tracing_futures::Instrument;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{insert_tank_snapshots, open as open_database, replace_account};
-use crate::models::{merge_tanks, Tank};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
-use crate::wargaming::models::{AccountInfo, BaseAccountInfo, TankStatistics};
+use crate::wargaming::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::wargaming::WargamingApi;
 
 pub mod batch_stream;

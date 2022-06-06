@@ -4,16 +4,13 @@ use std::str::FromStr;
 use maud::PreEscaped;
 use rocket::http::{Status, StatusClass};
 use rocket::{routes, Request};
-use tracing::warn;
 use views::r#static;
 
 use crate::helpers::redis;
 use crate::opts::WebOpts;
 use crate::prelude::*;
-use crate::wargaming::cache::account::info::AccountInfoCache;
-use crate::wargaming::cache::account::tanks::AccountTanksCache;
+use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
-use crate::StdDuration;
 
 mod error;
 mod fairings;

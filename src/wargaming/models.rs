@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 pub use account_info::*;
+use itertools::{merge_join_by, EitherOrBoth};
 pub use nation::*;
 use serde::Deserialize;
 pub use statistics::*;
+pub use tank::*;
 pub use tank_id::*;
 pub use tank_statistics::*;
 pub use vehicle::*;
@@ -11,6 +13,7 @@ pub use vehicle::*;
 pub mod account_info;
 pub mod nation;
 pub mod statistics;
+pub mod tank;
 pub mod tank_id;
 pub mod tank_statistics;
 pub mod vehicle;
@@ -28,4 +31,25 @@ pub struct FoundAccount {
 
     #[serde(rename = "account_id")]
     pub id: i32,
+}
+
+/// Merges tank statistics and tank achievements into a single tank structure.
+pub fn merge_tanks(
+    account_id: i32,
+    mut statistics: Vec<TankStatistics>,
+    mut achievements: Vec<TankAchievements>,
+) -> Vec<Tank> {
+    statistics.sort_unstable_by_key(|snapshot| snapshot.base.tank_id);
+    achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
+
+    merge_join_by(statistics, achievements, |left, right| left.base.tank_id.cmp(&right.tank_id))
+        .filter_map(|item| match item {
+            EitherOrBoth::Both(statistics, achievements) => Some(Tank {
+                account_id,
+                statistics,
+                achievements,
+            }),
+            _ => None,
+        })
+        .collect()
 }

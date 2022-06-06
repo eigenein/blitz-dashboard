@@ -17,7 +17,6 @@ mod crawler;
 mod database;
 mod helpers;
 mod math;
-mod models;
 mod opts;
 mod prelude;
 mod tankopedia;

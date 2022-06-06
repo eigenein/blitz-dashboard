@@ -1,4 +1,5 @@
 use std::iter::Sum;
+use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
@@ -60,5 +61,25 @@ impl Sum for Statistics {
             sum.win_and_survived += component.win_and_survived;
         }
         sum
+    }
+}
+
+impl Sub for Statistics {
+    type Output = Statistics;
+
+    #[must_use]
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            battles: self.battles - rhs.battles,
+            wins: self.wins - rhs.wins,
+            survived_battles: self.survived_battles - rhs.survived_battles,
+            win_and_survived: self.win_and_survived - rhs.win_and_survived,
+            damage_dealt: self.damage_dealt - rhs.damage_dealt,
+            damage_received: self.damage_received - rhs.damage_received,
+            shots: self.shots - rhs.shots,
+            hits: self.hits - rhs.hits,
+            frags: self.frags - rhs.frags,
+            xp: self.xp - rhs.xp,
+        }
     }
 }

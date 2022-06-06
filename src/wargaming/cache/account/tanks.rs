@@ -4,8 +4,8 @@ use fred::types::RedisKey;
 use futures::future::try_join;
 use tracing::{debug, instrument};
 
-use crate::models::{merge_tanks, Tank};
 use crate::prelude::*;
+use crate::wargaming::models::{merge_tanks, Tank};
 use crate::wargaming::WargamingApi;
 
 #[derive(Clone)]
