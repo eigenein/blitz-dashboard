@@ -1,7 +1,7 @@
 pub use std::result::Result as StdResult;
 pub use std::time::Duration as StdDuration;
 
-pub use anyhow::anyhow;
+pub use anyhow::{anyhow, Context};
 pub use chrono::{Datelike, Duration, TimeZone, Utc};
 pub use tracing::{debug, error, info, instrument, trace, warn};
 

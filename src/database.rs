@@ -10,7 +10,6 @@ use itertools::Itertools;
 use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
-use tracing::{instrument, warn};
 
 use crate::prelude::*;
 use crate::wargaming::models::{
@@ -18,10 +17,12 @@ use crate::wargaming::models::{
     TankStatistics,
 };
 
+pub mod mongodb;
+
 /// Open and initialize the database.
 #[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "warn")]
 pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
-    tracing::info!("connecting…");
+    info!("connecting…");
     let mut options = PgConnectOptions::from_str(uri)?;
     options.log_statements(LevelFilter::Trace);
     options.log_slow_statements(LevelFilter::Warn, StdDuration::from_millis(500));
@@ -33,7 +34,7 @@ pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
         .context("failed to connect")?;
 
     if initialize_schema {
-        tracing::info!("initializing the schema…");
+        info!("initializing the schema…");
         inner
             .execute(include_str!("database/script.sql"))
             .await

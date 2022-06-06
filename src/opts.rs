@@ -1,15 +1,12 @@
 //! CLI options.
 
-mod parsers;
-
-use std::str::FromStr;
-use std::time::Duration as StdDuration;
-
 use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
-use crate::math::statistics::Z;
+use crate::prelude::*;
+
+mod parsers;
 
 #[derive(StructOpt)]
 #[structopt(
@@ -199,15 +196,11 @@ pub struct InternalConnectionOpts {
     /// Redis connection pool size
     #[structopt(long, default_value = "5")]
     pub redis_pool_size: usize,
-}
 
-impl FromStr for Z {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "95" | "95%" => Ok(Self::Z95),
-            _ => Err(format!("`{}` is not a valid confidence level", s)),
-        }
-    }
+    /// MongoDB connection URI
+    #[structopt(
+        long = "mongodb",
+        default_value = "mongodb://localhost/yastatist?compressors=zstd"
+    )]
+    pub mongodb_uri: String,
 }

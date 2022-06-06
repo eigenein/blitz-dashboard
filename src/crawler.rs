@@ -26,6 +26,7 @@ const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
 pub struct Crawler {
     api: WargamingApi,
     database: PgPool,
+    mongodb: mongodb::Database,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     log_interval: StdDuration,
 }
@@ -72,6 +73,7 @@ impl Crawler {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
         let database = open_database(&internal.database_uri, false).await?;
+        let mongodb = crate::database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
@@ -80,6 +82,7 @@ impl Crawler {
             ))),
             api,
             database,
+            mongodb,
             log_interval: opts.log_interval,
         };
         Ok(this)
@@ -133,6 +136,10 @@ impl Crawler {
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
+
+        crate::database::mongodb::models::Account::from(account)
+            .upsert(&self.mongodb)
+            .await?;
 
         Ok(())
     }
