@@ -33,8 +33,8 @@ jobs:
           wget --quiet https://github.com/rust-embedded/cross/releases/download/v0.2.1/cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
           tar -xvzf cross-v0.2.1-x86_64-unknown-linux-gnu.tar.gz
 
-      - name: Build for ARMv7 (Raspberry Pi 2/3/4)
-        run: ./cross build --target armv7-unknown-linux-gnueabihf --release
+      - name: Build for Raspberry Pi 4 (64-bit)
+        run: ./cross build --target aarch64-unknown-linux-gnu --release
 
       - name: Build Changelog
         id: changelog
@@ -57,8 +57,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: target/armv7-unknown-linux-gnueabihf/release/blitz-dashboard
-          asset_name: blitz-dashboard.armv7-unknown-linux-gnueabihf
+          asset_path: target/aarch64-unknown-linux-gnu/release/blitz-dashboard
+          asset_name: blitz-dashboard.aarch64-unknown-linux-gnu
           asset_content_type: application/octet-stream
 
       - name: Update release
@@ -86,14 +86,16 @@ jobs:
               StrictHostKeyChecking no
 
       - name: Rsync
-        working-directory: ./target/armv7-unknown-linux-gnueabihf/release
+        working-directory: ./target/aarch64-unknown-linux-gnu/release
         run: |
           rsync -avz blitz-dashboard yastatist:/home/pi/bin/blitz-dashboard
 
       - name: Restart web
+        if: ${{ false }}
         run: |
           ssh yastatist "sudo systemctl restart web; systemctl status --lines=0 web"
 
       - name: Restart crawler
+        if: ${{ false }}
         run: |
           ssh yastatist "sudo systemctl restart crawler; systemctl status --lines=0 crawler"
