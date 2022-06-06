@@ -3,9 +3,8 @@ use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup};
 use phf::phf_set;
 
-use crate::models::{TankType, Vehicle};
 use crate::wargaming::models::tank_id::to_client_id;
-use crate::wargaming::models::Nation;
+use crate::wargaming::models::{Nation, TankType, Vehicle};
 use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 #[must_use]

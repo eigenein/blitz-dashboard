@@ -6,10 +6,9 @@ use std::path::Path;
 
 use tracing::instrument;
 
-use crate::models::{TankType, Vehicle};
 use crate::opts::ImportTankopediaOpts;
 use crate::prelude::*;
-use crate::wargaming::models::{Nation, TankId};
+use crate::wargaming::models::{Nation, TankId, TankType, Vehicle};
 use crate::wargaming::{Tankopedia, WargamingApi};
 use crate::StdDuration;
 
@@ -57,7 +56,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
     writeln!(&mut file)?;
     writeln!(&mut file, "use std::borrow::Cow;")?;
     writeln!(&mut file)?;
-    writeln!(&mut file, "use crate::models::{{Nation, TankType, Vehicle}};")?;
+    writeln!(&mut file, "use crate::wargaming::models::{{Nation, TankType, Vehicle}};")?;
     writeln!(&mut file)?;
     writeln!(&mut file, "pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {{")?;
     for (_, vehicle) in vehicles.into_iter() {
