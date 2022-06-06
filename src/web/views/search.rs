@@ -8,8 +8,8 @@ use rocket::{uri, State};
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
-use crate::models::AccountInfo;
 use crate::wargaming::cache::account::info::AccountInfoCache;
+use crate::wargaming::models::AccountInfo;
 use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::response::CustomResponse;

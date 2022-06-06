@@ -3,8 +3,8 @@ use fred::prelude::*;
 use fred::types::RedisKey;
 use tracing::{debug, instrument};
 
-use crate::models::AccountInfo;
 use crate::prelude::*;
+use crate::wargaming::models::AccountInfo;
 use crate::wargaming::WargamingApi;
 
 pub struct AccountInfoCache {

@@ -16,8 +16,9 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
-use crate::models::{AccountInfo, TankAchievements, TankStatistics};
+use crate::models::{TankAchievements, TankStatistics};
 use crate::prelude::*;
+use crate::wargaming::models::AccountInfo;
 use crate::wargaming::response::Response;
 
 pub mod cache;

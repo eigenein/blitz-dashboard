@@ -4,8 +4,8 @@ use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
 use tracing::{info, instrument, warn};
 
-use crate::models::BaseAccountInfo;
 use crate::prelude::*;
+use crate::wargaming::models::BaseAccountInfo;
 
 pub type Batch = Vec<BaseAccountInfo>;
 
