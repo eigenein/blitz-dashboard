@@ -45,7 +45,7 @@ impl AccountInfoCache {
     #[instrument(skip_all, fields(account_id = account_info.base.id))]
     pub async fn put(&self, account_info: &AccountInfo) -> Result {
         let blob = rmp_serde::to_vec(&account_info)?;
-        debug!(account_id = account_info.base.id, n_bytes = blob.len(), "caching");
+        debug!(account_id = account_info.base.id, n_bytes = blob.len(), "set cache");
         self.redis
             .set(
                 Self::cache_key(account_info.base.id),
@@ -60,6 +60,6 @@ impl AccountInfoCache {
 
     #[inline]
     fn cache_key(account_id: i32) -> RedisKey {
-        RedisKey::from(format!("cache:a:i:ru:{}", account_id))
+        RedisKey::from(format!("cache:1:a:i:ru:{}", account_id))
     }
 }

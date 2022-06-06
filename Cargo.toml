@@ -20,6 +20,7 @@ split-debuginfo = "unpacked"
 [dependencies]
 ahash = "0.7.6"
 anyhow = "1.0.56"
+async-compression = { version = "0.3.14", features = ["zstd"] }
 chrono-humanize = "0.2.1"
 fastrand = "1.7.0"
 fred = { version = "5.0.0", default-features = false, features = ["partial-tracing"] }

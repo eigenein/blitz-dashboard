@@ -4,6 +4,7 @@ use fred::types::RedisKey;
 use futures::future::try_join;
 use tracing::{debug, instrument};
 
+use crate::helpers::compression::{compress, decompress};
 use crate::prelude::*;
 use crate::wargaming::models::{merge_tanks, Tank};
 use crate::wargaming::WargamingApi;
@@ -27,7 +28,7 @@ impl AccountTanksCache {
 
         if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
             debug!(account_id, "cache hit");
-            return Ok(rmp_serde::from_slice(&blob)?);
+            return Ok(rmp_serde::from_slice(&decompress(&blob).await?)?);
         }
 
         let (statistics, achievements) = {
@@ -36,8 +37,8 @@ impl AccountTanksCache {
             try_join(get_statistics, get_achievements).await?
         };
         let tanks = merge_tanks(account_id, statistics, achievements);
-        let blob = rmp_serde::to_vec(&tanks)?;
-        debug!(account_id, size = blob.len(), "set cache");
+        let blob = compress(&rmp_serde::to_vec(&tanks)?).await?;
+        debug!(account_id, n_bytes = blob.len(), "set cache");
         self.redis
             .set(&cache_key, blob.as_slice(), Self::EXPIRE, None, false)
             .await?;
@@ -46,6 +47,6 @@ impl AccountTanksCache {
 
     #[inline]
     fn cache_key(account_id: i32) -> RedisKey {
-        RedisKey::from(format!("cache:a:t2:ru:{}", account_id))
+        RedisKey::from(format!("cache:2:a:t:ru:{}", account_id))
     }
 }
