@@ -89,12 +89,13 @@ pub struct RatingStatistics {
     #[serde(flatten)]
     pub basic: BasicStatistics,
 
-    pub mm_rating: f64,
+    #[serde(default)]
+    pub mm_rating: Option<f64>,
 }
 
 impl RatingStatistics {
     #[allow(dead_code)]
-    pub fn client_rating(&self) -> f64 {
-        self.mm_rating * 10.0 + 3000.0
+    pub fn client_rating(&self) -> Option<f64> {
+        self.mm_rating.map(|mm_rating| mm_rating * 10.0 + 3000.0)
     }
 }
