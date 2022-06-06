@@ -22,7 +22,7 @@ use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::wargaming::models::{subtract_tanks, Statistics, Tank, TankType};
+use crate::wargaming::models::{subtract_tanks, BasicStatistics, Tank, TankType};
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -65,7 +65,7 @@ pub async fn get(
     insert_account_if_not_exists(database, account_id).await?;
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
-    let stats_delta: Statistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
+    let stats_delta: BasicStatistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|tank| tank.statistics.battle_life_time.num_seconds())

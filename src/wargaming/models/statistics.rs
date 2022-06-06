@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::math::statistics::{ConfidenceInterval, Z};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
-pub struct Statistics {
+pub struct BasicStatistics {
     pub battles: i32,
     pub wins: i32,
     pub survived_battles: i32,
@@ -19,7 +19,7 @@ pub struct Statistics {
     pub xp: i32,
 }
 
-impl Statistics {
+impl BasicStatistics {
     pub fn damage_per_battle(&self) -> f64 {
         self.damage_dealt as f64 / self.battles as f64
     }
@@ -45,7 +45,7 @@ impl Statistics {
     }
 }
 
-impl Sum for Statistics {
+impl Sum for BasicStatistics {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let mut sum = Self::default();
         for component in iter {
@@ -64,8 +64,8 @@ impl Sum for Statistics {
     }
 }
 
-impl Sub for Statistics {
-    type Output = Statistics;
+impl Sub for BasicStatistics {
+    type Output = BasicStatistics;
 
     #[must_use]
     fn sub(self, rhs: Self) -> Self::Output {
@@ -81,5 +81,20 @@ impl Sub for Statistics {
             frags: self.frags - rhs.frags,
             xp: self.xp - rhs.xp,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
+pub struct RatingStatistics {
+    #[serde(flatten)]
+    pub basic: BasicStatistics,
+
+    pub mm_rating: f64,
+}
+
+impl RatingStatistics {
+    #[allow(dead_code)]
+    pub fn client_rating(&self) -> f64 {
+        self.mm_rating * 10.0 + 3000.0
     }
 }

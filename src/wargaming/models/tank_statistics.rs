@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::helpers::serde::{deserialize_duration_seconds, serialize_duration_seconds};
 use crate::prelude::*;
-use crate::wargaming::models::{Statistics, TankId};
+use crate::wargaming::models::{BasicStatistics, TankId};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct BaseTankStatistics {
@@ -29,7 +29,7 @@ pub struct TankStatistics {
     pub battle_life_time: Duration,
 
     #[serde(rename = "all")]
-    pub all: Statistics,
+    pub all: BasicStatistics,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]

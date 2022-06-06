@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
-use crate::wargaming::models::Statistics;
+use crate::wargaming::models::{BasicStatistics, RatingStatistics};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct BaseAccountInfo {
@@ -56,17 +56,17 @@ impl AccountInfo {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct AccountInfoStatistics {
-    pub all: Statistics,
-    pub rating: Statistics,
+    pub all: BasicStatistics,
+    pub rating: RatingStatistics,
 }
 
 impl AccountInfoStatistics {
     pub fn n_battles(&self) -> i32 {
-        self.all.battles + self.rating.battles
+        self.all.battles + self.rating.basic.battles
     }
 
     pub fn n_wins(&self) -> i32 {
-        self.all.wins + self.rating.wins
+        self.all.wins + self.rating.basic.wins
     }
 }
 

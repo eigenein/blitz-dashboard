@@ -14,7 +14,8 @@ use tracing::{instrument, warn};
 
 use crate::prelude::*;
 use crate::wargaming::models::{
-    BaseAccountInfo, BaseTankStatistics, Statistics, Tank, TankAchievements, TankId, TankStatistics,
+    BaseAccountInfo, BaseTankStatistics, BasicStatistics, Tank, TankAchievements, TankId,
+    TankStatistics,
 };
 
 /// Open and initialize the database.
@@ -314,7 +315,7 @@ impl<'r> FromRow<'r, PgRow> for TankStatistics {
         Ok(Self {
             base: BaseTankStatistics::from_row(row)?,
             battle_life_time: Duration::seconds(battle_life_time),
-            all: Statistics::from_row(row)?,
+            all: BasicStatistics::from_row(row)?,
         })
     }
 }
@@ -349,7 +350,7 @@ impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for Statistics {
+impl<'r> FromRow<'r, PgRow> for BasicStatistics {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             battles: row.try_get("battles")?,
