@@ -8,12 +8,11 @@ use sqlx::PgPool;
 use tokio::sync::Mutex;
 use tokio::task;
 use tokio::time::timeout;
-use tracing::{debug, debug_span, instrument, trace, warn};
 use tracing_futures::Instrument;
 
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::database::{insert_tank_snapshots, open as open_database, replace_account};
+use crate::database::{insert_tank_snapshots, replace_account};
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
@@ -74,7 +73,7 @@ impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
-        let database = open_database(&internal.database_uri, false).await?;
+        let database = crate::database::open(&internal.database_uri, false).await?;
         let mongodb = crate::database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
