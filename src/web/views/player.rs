@@ -15,6 +15,7 @@ use rocket::{uri, State};
 use sqlx::PgPool;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
+use crate::format_elapsed;
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, Z};
@@ -521,7 +522,7 @@ pub async fn get(
 
     let result =
         Ok(CustomResponse::CachedMarkup("max-age=60, stale-while-revalidate=3600", markup));
-    info!(elapsed = ?start_instant.elapsed(), "finished");
+    info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
     result
 }
 

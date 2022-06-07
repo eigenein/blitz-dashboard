@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use crate::helpers::average::Average;
 use crate::prelude::*;
+use crate::tracing::format_duration;
 
 pub struct CrawlerMetrics {
     pub average_batch_size: Average,
@@ -59,7 +60,7 @@ impl CrawlerMetrics {
             batch_size = %format!("{:.1}", self.average_batch_size.average()),
             batch_fill = %format!("{:.2}%", self.average_batch_fill_level.average() * 100.0),
             apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
-            ?lag,
+            lag = format_duration(lag).as_str(),
             account_id = self.last_account_id,
         );
 

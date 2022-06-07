@@ -6,6 +6,7 @@ use mongodb::results::UpdateResult;
 use mongodb::Database;
 use serde::{Deserialize, Serialize};
 
+use crate::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::BaseAccountInfo;
 
@@ -45,7 +46,11 @@ impl Account {
             )
             .await
             .with_context(|| format!("failed to upsert the account #{}", self.id))?;
-        debug!(account_id = self.id, elapsed = ?start_instant.elapsed(), "upserted");
+        debug!(
+            account_id = self.id,
+            elapsed = format_elapsed(start_instant).as_str(),
+            "upserted",
+        );
         Ok(result)
     }
 }

@@ -5,11 +5,11 @@ use std::time::{Duration as StdDuration, Instant};
 use anyhow::Context;
 use chrono::{Duration, TimeZone, Utc};
 use futures::{StreamExt, TryStreamExt};
-use humantime::format_duration;
 use itertools::Itertools;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{Error, Executor, FromRow, PgConnection, PgPool, Row};
 
+use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::{
     BaseAccountInfo, BaseTankStatistics, BasicStatistics, Tank, TankAchievements, TankId,
@@ -124,7 +124,7 @@ pub async fn retrieve_latest_tank_battle_counts(
         .try_collect::<AHashMap<TankId, (i32, i32)>>()
         .await
         .context("failed to retrieve the latest tank battle counts");
-    tracing::debug!(account_id = account_id, elapsed = %format_duration(start_instant.elapsed()));
+    debug!(account_id = account_id, elapsed = format_elapsed(start_instant).as_str());
     result
 }
 

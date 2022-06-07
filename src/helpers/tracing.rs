@@ -20,6 +20,8 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
         },
     ));
 
+    let sentry_filter = EnvFilter::try_from_env("BLITZ_DASHBOARD_SENTRY_LOG")
+        .or_else(|_| EnvFilter::try_new("blitz_dashboard=trace"))?;
     let sentry_layer = sentry::integrations::tracing::layer()
         .event_filter(|metadata| match metadata.level() {
             &Level::ERROR | &Level::WARN => EventFilter::Event,
@@ -27,7 +29,8 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
         })
         .span_filter(|metadata| {
             matches!(metadata.level(), &Level::ERROR | &Level::WARN | &Level::INFO | &Level::DEBUG)
-        });
+        })
+        .with_filter(sentry_filter);
 
     let format_filter = EnvFilter::try_from_env("BLITZ_DASHBOARD_LOG")
         .or_else(|_| EnvFilter::try_new("blitz_dashboard=info"))?;
@@ -41,4 +44,12 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
         .init();
 
     Ok(guard)
+}
+
+pub fn format_duration(duration: StdDuration) -> String {
+    humantime::format_duration(duration).to_string()
+}
+
+pub fn format_elapsed(instant: Instant) -> String {
+    format_duration(instant.elapsed())
 }

@@ -7,6 +7,7 @@ use itertools::Itertools;
 
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
+use crate::tracing::format_elapsed;
 
 mod crawler;
 mod database;
@@ -55,6 +56,6 @@ async fn run_subcommand(opts: Opts) -> Result {
             Ok(())
         }
     };
-    info!(elapsed = ?start_instant.elapsed(), "finished");
+    info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
     result
 }

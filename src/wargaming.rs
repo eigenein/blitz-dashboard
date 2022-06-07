@@ -15,6 +15,7 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
+use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::{AccountInfo, TankAchievements, TankStatistics};
 use crate::wargaming::response::Response;
@@ -225,7 +226,7 @@ impl WargamingApi {
         debug!(request_id, type_name = std::any::type_name::<T>());
         let result = response.json::<Response<T>>().await;
 
-        debug!(request_id, elapsed = ?start_instant.elapsed(), "done");
+        debug!(request_id, elapsed = format_elapsed(start_instant).as_str(), "done");
         result
     }
 }

@@ -13,6 +13,7 @@ use tracing_futures::Instrument;
 use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::database::{insert_tank_snapshots, replace_account};
+use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
@@ -132,7 +133,11 @@ impl Crawler {
             .instrument(debug_span!("commit"))
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        debug!(account_id = account.id, elapsed = ?start_instant.elapsed(), "updated");
+        debug!(
+            account_id = account.id,
+            elapsed = format_elapsed(start_instant).as_str(),
+            "updated",
+        );
 
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
