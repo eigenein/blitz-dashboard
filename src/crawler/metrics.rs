@@ -13,7 +13,6 @@ pub struct CrawlerMetrics {
     pub average_batch_fill_level: Average,
     pub start_instant: Instant,
     pub lag_percentile: usize,
-    pub n_battles: i32,
 
     start_request_count: u32,
     n_accounts: u32,
@@ -26,7 +25,6 @@ impl CrawlerMetrics {
         Self {
             start_request_count: request_counter.load(Ordering::Relaxed),
             n_accounts: 0,
-            n_battles: 0,
             last_account_id: 0,
             start_instant: Instant::now(),
             lags: Vec::new(),
@@ -64,12 +62,11 @@ impl CrawlerMetrics {
         formatted_lag.truncate(11);
 
         log::warn!(
-            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | APM: {:>3.0} | BPM: {:>4.0} | L{}: {:>11} | #A: {}",
+            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | APM: {:>3.0} | L{}: {:>11} | #A: {}",
             n_requests as f64 / elapsed_secs,
             self.average_batch_size.average(),
             self.average_batch_fill_level.average() * 100.0,
             self.n_accounts as f64 / elapsed_mins,
-            self.n_battles as f64 / elapsed_mins,
             self.lag_percentile,
             formatted_lag,
             self.last_account_id,
