@@ -3,7 +3,6 @@
 
 use clap::Parser;
 use helpers::tracing;
-use itertools::Itertools;
 
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
@@ -35,7 +34,7 @@ fn main() -> Result {
 async fn async_main() -> Result {
     let opts: Opts = Opts::parse();
     let _sentry_guard = crate::tracing::init(opts.sentry_dsn.clone(), opts.traces_sample_rate)?;
-    info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str());
+    info!(version = CRATE_VERSION);
 
     let result = run_subcommand(opts).await;
     if let Err(error) = &result {
