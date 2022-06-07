@@ -2,7 +2,6 @@ use anyhow::Context;
 use futures::{stream, Stream};
 use sqlx::PgPool;
 use tokio::time::{sleep, timeout};
-use tracing::{info, instrument, warn};
 
 use crate::prelude::*;
 use crate::wargaming::models::BaseAccountInfo;
@@ -20,17 +19,17 @@ pub async fn get_batch_stream(
         loop {
             let batch = retrieve_batch(&database, inner_limit, min_offset, max_offset).await?;
             if !batch.is_empty() {
-                info!(n_accounts = batch.len(), "retrieved");
+                debug!(n_accounts = batch.len(), "retrieved");
                 break Ok(Some((batch, database)));
             }
-            warn!("no accounts matched, sleeping…");
+            info!("no accounts matched, sleeping…");
             sleep(StdDuration::from_secs(1)).await;
         }
     })
 }
 
 /// Retrieves a single account batch from the database.
-#[instrument(skip_all, fields(inner_limit = inner_limit, max_offset = ?max_offset))]
+#[instrument(skip_all, level = "debug", fields(inner_limit = inner_limit, max_offset = ?max_offset))]
 async fn retrieve_batch(
     database: &PgPool,
     inner_limit: usize,

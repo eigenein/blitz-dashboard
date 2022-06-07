@@ -1,9 +1,5 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
-use std::time::{Duration as StdDuration, Instant};
-
-use chrono::Utc;
-use humantime::format_duration;
 
 use crate::helpers::average::Average;
 use crate::prelude::*;
@@ -56,20 +52,15 @@ impl CrawlerMetrics {
         let elapsed_secs = self.start_instant.elapsed().as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter.load(Ordering::Relaxed) - self.start_request_count;
-
         let lag = self.lag();
-        let mut formatted_lag = format_duration(lag).to_string();
-        formatted_lag.truncate(11);
 
-        warn!(
-            "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | APM: {:>3.0} | L{}: {:>11} | #A: {}",
-            n_requests as f64 / elapsed_secs,
-            self.average_batch_size.average(),
-            self.average_batch_fill_level.average() * 100.0,
-            self.n_accounts as f64 / elapsed_mins,
-            self.lag_percentile,
-            formatted_lag,
-            self.last_account_id,
+        info!(
+            rps = %format!("{:.1}", n_requests as f64 / elapsed_secs),
+            batch_size = %format!("{:.1}", self.average_batch_size.average()),
+            batch_fill = %format!("{:.2}%", self.average_batch_fill_level.average() * 100.0),
+            apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
+            ?lag,
+            account_id = self.last_account_id,
         );
 
         Self::new(request_counter, self.lag_percentile)

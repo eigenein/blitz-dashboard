@@ -1,18 +1,8 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use log::LevelFilter;
 
 use crate::prelude::*;
-
-pub fn verbosity(n_occurences: u64) -> LevelFilter {
-    match n_occurences {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    }
-}
 
 pub fn account_id(value: &str) -> Result<i32> {
     match i32::from_str(value)? {

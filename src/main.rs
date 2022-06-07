@@ -1,13 +1,9 @@
 #![warn(clippy::all)]
 #![cfg_attr(nightly, feature(test))]
 
-use std::time::Instant;
-
-use helpers::logging;
+use helpers::tracing;
 use itertools::Itertools;
-use sentry::integrations::anyhow::capture_anyhow;
 use structopt::StructOpt;
-use tracing::info;
 
 use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
@@ -38,16 +34,12 @@ fn main() -> Result {
 
 async fn async_main() -> Result {
     let opts = Opts::from_args();
-    logging::init(opts.verbosity, opts.no_journald)?;
+    let _sentry_guard = crate::tracing::init(opts.sentry_dsn.clone(), opts.traces_sample_rate)?;
     info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str());
-    let _sentry_guard = opts
-        .sentry_dsn
-        .as_ref()
-        .map(|dsn| crate::helpers::sentry::init(dsn, opts.verbosity, opts.traces_sample_rate));
 
     let result = run_subcommand(opts).await;
-    if let Err(ref error) = result {
-        capture_anyhow(error);
+    if let Err(error) = &result {
+        error!("fatal error: {:#}", error);
     }
     result
 }

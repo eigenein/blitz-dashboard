@@ -1,6 +1,5 @@
 //! CLI options.
 
-use log::LevelFilter;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
@@ -22,20 +21,8 @@ pub struct Opts {
     #[structopt(long, default_value = "0.1")]
     pub traces_sample_rate: f32,
 
-    /// Increases log verbosity
-    #[structopt(
-        short = "v",
-        long = "verbose",
-        parse(from_occurrences = parsers::verbosity),
-    )]
-    pub verbosity: LevelFilter,
-
     #[structopt(subcommand)]
     pub subcommand: Subcommand,
-
-    /// Disable journald log levels and enable the timestamps
-    #[structopt(long)]
-    pub no_journald: bool,
 }
 
 #[derive(StructOpt)]

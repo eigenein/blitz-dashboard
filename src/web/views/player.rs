@@ -13,7 +13,6 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
-use tracing::{instrument, warn};
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::sentry::set_user;
@@ -31,7 +30,7 @@ use crate::web::TrackingCode;
 pub mod partials;
 
 #[allow(clippy::too_many_arguments)]
-#[instrument(skip_all, level = "warn", fields(account_id = account_id, period = ?period))]
+#[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?period))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
     account_id: i32,
@@ -522,11 +521,7 @@ pub async fn get(
 
     let result =
         Ok(CustomResponse::CachedMarkup("max-age=60, stale-while-revalidate=3600", markup));
-    warn!(
-        account_id = account_id,
-        elapsed = %format_elapsed(&start_instant),
-        "finished",
-    );
+    info!(elapsed = %format_elapsed(&start_instant), "finished");
     result
 }
 

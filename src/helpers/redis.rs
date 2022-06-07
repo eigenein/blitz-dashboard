@@ -2,11 +2,10 @@ use anyhow::Context;
 use fred::pool::RedisPool;
 use fred::prelude::*;
 use fred::types::PerformanceConfig;
-use tracing::{instrument, warn};
 
 use crate::prelude::*;
 
-#[instrument(level = "warn")]
+#[instrument(level = "info")]
 pub async fn connect(url: &str, pool_size: usize) -> Result<RedisPool> {
     let mut config = RedisConfig::from_url(url)?;
     config.blocking = Blocking::Error;
@@ -22,6 +21,6 @@ pub async fn connect(url: &str, pool_size: usize) -> Result<RedisPool> {
         .await
         .context("failed to connect to Redis")?;
     pool.client_setname(env!("CARGO_BIN_NAME")).await?;
-    warn!("connected");
+    info!("connected");
     Ok(pool)
 }

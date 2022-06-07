@@ -7,9 +7,8 @@ use chrono::{Duration, TimeZone, Utc};
 use futures::{StreamExt, TryStreamExt};
 use humantime::format_duration;
 use itertools::Itertools;
-use log::LevelFilter;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{ConnectOptions, Error, Executor, FromRow, PgConnection, PgPool, Row};
+use sqlx::{Error, Executor, FromRow, PgConnection, PgPool, Row};
 
 use crate::prelude::*;
 use crate::wargaming::models::{
@@ -20,12 +19,10 @@ use crate::wargaming::models::{
 pub mod mongodb;
 
 /// Open and initialize the database.
-#[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "warn")]
+#[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "info")]
 pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
     info!("connecting…");
-    let mut options = PgConnectOptions::from_str(uri)?;
-    options.log_statements(LevelFilter::Trace);
-    options.log_slow_statements(LevelFilter::Warn, StdDuration::from_millis(500));
+    let options = PgConnectOptions::from_str(uri)?;
     let inner = PgPoolOptions::new()
         .connect_timeout(StdDuration::from_secs(5))
         .max_connections(50)
@@ -41,7 +38,7 @@ pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
             .context("failed to run the script")?;
     }
 
-    warn!("ready");
+    info!("ready");
     Ok(inner)
 }
 

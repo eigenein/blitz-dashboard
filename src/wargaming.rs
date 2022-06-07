@@ -11,7 +11,6 @@ use humantime::format_duration;
 use itertools::Itertools;
 use reqwest::header::HeaderValue;
 use reqwest::{header, Url};
-use sentry::{capture_message, Level};
 use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
@@ -78,7 +77,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    #[instrument(skip_all, fields(n_accounts = account_ids.len()))]
+    #[instrument(skip_all, level = "debug", fields(n_accounts = account_ids.len()))]
     pub async fn get_account_info(
         &self,
         account_ids: &[i32],
@@ -100,7 +99,7 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    #[instrument(skip_all, fields(account_id = account_id))]
+    #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
     pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
@@ -170,7 +169,6 @@ impl WargamingApi {
                                     code = error.code,
                                     n_attempts = backoff.n_attempts(),
                                 );
-                                capture_message(message, Level::Warning);
                             }
 
                             _ => {

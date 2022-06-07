@@ -22,7 +22,7 @@ mod views;
 /// Run the web app.
 pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
-    warn!(host = opts.host.as_str(), port = opts.port, "starting up…");
+    info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
     let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
     let database = crate::database::open(&opts.connections.internal.database_uri, false).await?;
@@ -72,7 +72,7 @@ pub async fn run(opts: WebOpts) -> Result {
 fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::status::Custom<()> {
     match status.class() {
         StatusClass::ClientError => {
-            tracing::warn!(
+            warn!(
                 method = %request.method(),
                 uri = %request.uri(),
                 status = status.code,

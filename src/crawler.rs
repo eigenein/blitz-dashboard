@@ -42,7 +42,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
 
     let crawler = Crawler::new(&opts.shared).await?;
 
-    warn!("running…");
+    info!("running…");
     let batches = get_batch_stream(
         crawler.database(),
         opts.batch_select_limit,
@@ -155,7 +155,7 @@ impl Crawler {
     }
 }
 
-#[instrument(skip_all, fields(n_accounts = batch.len()))]
+#[instrument(skip_all, level="debug", fields(n_accounts = batch.len()))]
 async fn crawl_batch(
     api: WargamingApi,
     batch: Batch,
@@ -190,7 +190,7 @@ async fn crawl_batch(
 /// # Returns
 ///
 /// Vector of matched pairs.
-#[instrument(skip_all)]
+#[instrument(skip_all, level = "trace")]
 fn match_account_infos(
     batch: Batch,
     mut new_infos: HashMap<String, Option<AccountInfo>>,
