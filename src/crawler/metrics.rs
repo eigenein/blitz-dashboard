@@ -61,7 +61,7 @@ impl CrawlerMetrics {
         let mut formatted_lag = format_duration(lag).to_string();
         formatted_lag.truncate(11);
 
-        log::warn!(
+        warn!(
             "RPS: {:>4.1} | BS: {:>5.1}% | F: {:>5.2}% | APM: {:>3.0} | L{}: {:>11} | #A: {}",
             n_requests as f64 / elapsed_secs,
             self.average_batch_size.average(),
