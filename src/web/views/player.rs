@@ -16,7 +16,7 @@ use sqlx::PgPool;
 
 use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
 use crate::helpers::sentry::set_user;
-use crate::helpers::time::{format_elapsed, from_days, from_months};
+use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, Z};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
@@ -521,7 +521,7 @@ pub async fn get(
 
     let result =
         Ok(CustomResponse::CachedMarkup("max-age=60, stale-while-revalidate=3600", markup));
-    info!(elapsed = %format_elapsed(&start_instant), "finished");
+    info!(elapsed = ?start_instant.elapsed(), "finished");
     result
 }
 

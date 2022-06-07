@@ -5,7 +5,6 @@ use helpers::tracing;
 use itertools::Itertools;
 use structopt::StructOpt;
 
-use crate::helpers::time::format_elapsed;
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
 
@@ -56,9 +55,6 @@ async fn run_subcommand(opts: Opts) -> Result {
             Ok(())
         }
     };
-    info!(
-        elapsed = %format_elapsed(&start_instant),
-        "finished",
-    );
+    info!(elapsed = ?start_instant.elapsed(), "finished");
     result
 }

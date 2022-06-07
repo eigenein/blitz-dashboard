@@ -1,7 +1,3 @@
-use std::time::Instant;
-
-use humantime::{format_duration, FormattedDuration};
-
 use crate::StdDuration;
 
 pub const fn from_minutes(minutes: u64) -> StdDuration {
@@ -23,8 +19,4 @@ pub const fn from_months(months: u64) -> StdDuration {
 #[allow(dead_code)]
 pub const fn from_years(years: u64) -> StdDuration {
     StdDuration::from_secs(years * 31557600)
-}
-
-pub fn format_elapsed(instant: &Instant) -> FormattedDuration {
-    format_duration(instant.elapsed())
 }
