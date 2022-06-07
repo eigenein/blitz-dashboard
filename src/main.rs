@@ -1,9 +1,9 @@
 #![warn(clippy::all)]
 #![cfg_attr(nightly, feature(test))]
 
+use clap::Parser;
 use helpers::tracing;
 use itertools::Itertools;
-use structopt::StructOpt;
 
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
@@ -32,7 +32,7 @@ fn main() -> Result {
 }
 
 async fn async_main() -> Result {
-    let opts = Opts::from_args();
+    let opts: Opts = Opts::parse();
     let _sentry_guard = crate::tracing::init(opts.sentry_dsn.clone(), opts.traces_sample_rate)?;
     info!(version = CRATE_VERSION, args = std::env::args().skip(1).join(" ").as_str());
 
