@@ -31,7 +31,7 @@ impl Account {
     pub const COLLECTION_NAME: &'static str = "accounts";
     pub const LAST_BATTLE_TIME_FIELD_NAME: &'static str = "lbts";
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id, result))]
+    #[instrument(skip_all, level = "info", fields(account_id = self.id, result))]
     pub async fn upsert(&self, to: &Database) -> Result<UpdateResult> {
         let start_instant = Instant::now();
         let result = to

@@ -122,7 +122,7 @@ impl WargamingApi {
     /// See <https://developers.wargaming.net/reference/all/wotb/encyclopedia/vehicles/>.
     #[tracing::instrument(skip_all)]
     pub async fn get_tankopedia(&self) -> Result<Tankopedia> {
-        tracing::info!("retrieving the tankopedia…");
+        info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
             &[("application_id", self.application_id.as_str())],
@@ -132,7 +132,7 @@ impl WargamingApi {
     }
 
     /// Convenience method for endpoints that return data in the form of a map by account ID.
-    #[instrument(skip_all, fields(account_id = account_id))]
+    #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
     async fn call_by_account<T: DeserializeOwned>(
         &self,
         url: &str,
@@ -151,7 +151,7 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    #[instrument(skip_all, fields(path = url.path()))]
+    #[instrument(skip_all, level = "debug", fields(path = url.path()))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
         let mut backoff = Backoff::new(100, 25600);
         loop {
