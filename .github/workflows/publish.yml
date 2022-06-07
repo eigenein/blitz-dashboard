@@ -16,6 +16,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Build Changelog
+        id: changelog
+        uses: Bullrich/generate-release-changelog@master
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: Update release
+        uses: tubone24/update_release@v1.3.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: false
+
       - name: Set release version
         run: |
           echo 'version = "${{ github.ref_name }}"'
@@ -36,12 +50,6 @@ jobs:
       - name: Build for Raspberry Pi 4 (64-bit)
         run: ./cross build --target aarch64-unknown-linux-gnu --release
 
-      - name: Build Changelog
-        id: changelog
-        uses: Bullrich/generate-release-changelog@master
-        env:
-          REPO: ${{ github.repository }}
-
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
@@ -60,14 +68,6 @@ jobs:
           asset_path: target/aarch64-unknown-linux-gnu/release/blitz-dashboard
           asset_name: blitz-dashboard.aarch64-unknown-linux-gnu
           asset_content_type: application/octet-stream
-
-      - name: Update release
-        uses: tubone24/update_release@v1.3.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          body: ${{ steps.changelog.outputs.changelog }}
-          prerelease: false
 
       - name: Set up Tailscale
         uses: tailscale/github-action@v1
