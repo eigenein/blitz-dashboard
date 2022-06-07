@@ -6,6 +6,8 @@ use anyhow::Context;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use sqlx::PgPool;
 use tokio::sync::Mutex;
+use tokio::task;
+use tokio::time::timeout;
 use tracing::{debug, debug_span, instrument, trace, warn};
 use tracing_futures::Instrument;
 
@@ -137,9 +139,17 @@ impl Crawler {
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
 
-        crate::database::mongodb::models::Account::from(account)
-            .upsert(&self.mongodb)
-            .await?;
+        // FIXME: `Account::upsert` silently gets stuck.
+        timeout(
+            StdDuration::from_secs(10),
+            task::spawn(async move {
+                crate::database::mongodb::models::Account::from(account)
+                    .upsert(&self.mongodb)
+                    .await
+            }),
+        )
+        .await
+        .context("`Account::upsert` has timed out")???;
 
         Ok(())
     }
