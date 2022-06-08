@@ -97,10 +97,16 @@ impl Crawler {
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
             .instrument(debug_span!("sampled_batch"))
-            .map_ok(|batch| {
-                crawl_batch(self.api.clone(), batch, self.metrics.clone(), self.log_interval)
+            .enumerate()
+            .map(|(batch_number, batch)| {
+                Ok(crawl_batch(
+                    self.api.clone(),
+                    batch?,
+                    batch_number,
+                    self.metrics.clone(),
+                    self.log_interval,
+                ))
             })
-            .instrument(debug_span!("crawled_batch"))
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
             .instrument(debug_span!("crawled_account"))
@@ -111,16 +117,14 @@ impl Crawler {
             .context("crawler stream has failed")
     }
 
-    #[instrument(
-        skip_all,
-        fields(account_id = account.id, n_tanks = tanks.len()),
-    )]
+    #[instrument(skip_all, fields(account_id = account.id))]
     async fn update_account(
         self,
         account: database::Account,
         new_info: wargaming::AccountInfo,
         tanks: Vec<wargaming::Tank>,
     ) -> Result {
+        debug!(n_tanks = tanks.len(), "updating account…");
         let start_instant = Instant::now();
         let mut transaction = self.database.begin().await?;
         insert_tank_snapshots(&mut transaction, &tanks).await?;
@@ -130,11 +134,7 @@ impl Crawler {
             .instrument(debug_span!("commit"))
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        debug!(
-            account_id = account.id,
-            elapsed = format_elapsed(start_instant).as_str(),
-            "updated",
-        );
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "updated");
 
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
@@ -148,10 +148,11 @@ impl Crawler {
     }
 }
 
-#[instrument(skip_all, level="debug", fields(n_accounts = batch.len()))]
+#[instrument(skip_all, level = "debug", fields(batch_number = _batch_number))]
 async fn crawl_batch(
     api: WargamingApi,
     batch: Vec<database::Account>,
+    _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     log_interval: StdDuration,
 ) -> Result<
@@ -161,10 +162,13 @@ async fn crawl_batch(
     let new_infos = api.get_account_info(&account_ids).await?;
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
+    let matched_len = matched.len();
+    debug!(len = matched_len, "matched account infos");
     metrics.lock().await.add_batch(batch_len, matched.len());
 
     let mut crawled = Vec::new();
-    for (account, new_info) in matched.into_iter() {
+    for (i, (account, new_info)) in matched.into_iter().enumerate() {
+        debug!(i = i + 1, of = matched_len, account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
         let tanks = crawl_account(&api, &account).await?;
         crawled.push((account, new_info, tanks));
     }
@@ -176,6 +180,7 @@ async fn crawl_batch(
         }
     }
 
+    debug!("batch crawled");
     Ok(stream::iter(crawled.into_iter().map(Ok)))
 }
 
@@ -185,7 +190,7 @@ async fn crawl_batch(
 /// # Returns
 ///
 /// Vector of matched pairs.
-#[instrument(skip_all)]
+#[instrument(skip_all, level = "debug")]
 fn match_account_infos(
     batch: Vec<database::Account>,
     mut new_infos: HashMap<String, Option<wargaming::AccountInfo>>,
@@ -228,7 +233,8 @@ async fn get_updated_tanks_statistics(
 /// Updated account information and account's tanks.
 #[instrument(
     skip_all,
-    fields(account_id = account.id, last_battle_time = ?account.last_battle_time),
+    level = "debug",
+    fields(account_id = account.id),
 )]
 async fn crawl_account(
     api: &WargamingApi,
@@ -237,13 +243,13 @@ async fn crawl_account(
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
-        debug!(account_id = account.id, n_updated_tanks = statistics.len());
+        debug!(n_updated_tanks = statistics.len());
         let achievements = api.get_tanks_achievements(account.id).await?;
         let tanks = wargaming::merge_tanks(account.id, statistics, achievements);
-        debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
+        debug!(n_tanks = tanks.len(), "crawled");
         Ok(tanks)
     } else {
-        trace!(account_id = account.id, "no updated tanks");
+        trace!("no updated tanks");
         Ok(Vec::new())
     }
 }

@@ -69,15 +69,16 @@ impl Account {
         let options = UpdateOptions::builder().upsert(true).build();
 
         let start_instant = Instant::now();
+        debug!("upserting…");
         Self::collection(to)
             .update_one(query, update, options)
             .await
             .with_context(|| format!("failed to upsert the account #{}", self.id))?;
-        debug!(account_id = self.id, elapsed = format_elapsed(start_instant).as_str(), "upserted");
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
     }
 
-    #[instrument(skip_all, fields(batch_size, %min_offset, %max_offset))]
+    #[instrument(skip_all, level = "debug")]
     pub async fn retrieve_sample(
         from: &Database,
         sample_size: u32,
@@ -98,6 +99,7 @@ impl Account {
         ];
 
         let start_instant = Instant::now();
+        debug!("retrieving a sample…");
         let account_stream = Self::collection(from)
             .aggregate(pipeline, None)
             .instrument(debug_span!("aggregate"))
@@ -114,7 +116,7 @@ impl Account {
             })
             .instrument(debug_span!("sampled_account"));
 
-        debug!(elapsed = format_elapsed(start_instant).as_str());
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(account_stream)
     }
 }
