@@ -101,14 +101,14 @@ impl Crawler {
         accounts
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
-            .instrument(info_span!("sampled_batch"))
+            .instrument(debug_span!("sampled_batch"))
             .map_ok(|batch| {
                 crawl_batch(self.api.clone(), batch, self.metrics.clone(), self.log_interval)
             })
-            .instrument(info_span!("crawled_batch"))
+            .instrument(debug_span!("crawled_batch"))
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
-            .instrument(info_span!("crawled_account"))
+            .instrument(debug_span!("crawled_account"))
             .try_for_each_concurrent(Some(buffering.n_accounts), |(account, new_info, tanks)| {
                 self.clone().update_account(account, new_info, tanks)
             })

@@ -109,7 +109,7 @@ impl Account {
                 ],
                 None,
             )
-            .instrument(info_span!("aggregate"))
+            .instrument(debug_span!("aggregate"))
             .await
             .context("failed to query a sample of accounts")?
             .map_err(|error| anyhow!(error))
@@ -121,7 +121,7 @@ impl Account {
                         .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
                 )
             })
-            .instrument(info_span!("sampled_account"));
+            .instrument(debug_span!("sampled_account"));
 
         debug!(elapsed = format_elapsed(start_instant).as_str());
         Ok(account_stream)
