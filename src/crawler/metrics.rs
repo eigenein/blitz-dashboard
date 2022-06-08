@@ -1,5 +1,7 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
+use chrono::DurationRound;
+
 use crate::helpers::average::Average;
 use crate::prelude::*;
 use crate::tracing::format_duration;
@@ -13,7 +15,7 @@ pub struct CrawlerMetrics {
     start_request_count: u32,
     n_accounts: u32,
     last_account_id: i32,
-    lags: Vec<u64>,
+    lags: Vec<StdDuration>,
 }
 
 impl CrawlerMetrics {
@@ -40,8 +42,10 @@ impl CrawlerMetrics {
     }
 
     pub fn add_lag_from(&mut self, last_battle_time: DateTime) -> Result {
-        self.lags
-            .push((Utc::now() - last_battle_time).num_seconds().try_into()?);
+        let round = Duration::minutes(1);
+        let now = Utc::now().duration_round(round)?;
+        let last_battle_time = last_battle_time.duration_round(round)?;
+        self.lags.push((now - last_battle_time).to_std()?);
         Ok(())
     }
 
@@ -89,7 +93,7 @@ impl CrawlerMetrics {
         }
 
         let index = self.lag_percentile * self.lags.len() / 100;
-        let (_, secs, _) = self.lags.select_nth_unstable(index);
-        StdDuration::from_secs(*secs)
+        let (_, lag, _) = self.lags.select_nth_unstable(index);
+        *lag
     }
 }
