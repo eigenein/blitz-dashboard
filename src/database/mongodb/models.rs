@@ -83,18 +83,18 @@ impl Account {
     }
 
     #[instrument(skip_all, fields(batch_size, ?min_offset, ?max_offset))]
-    pub async fn retrieve_samples(
+    pub async fn retrieve_sample(
         database: &Database,
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
-    ) -> Result<impl Stream<Item = Result<Vec<Account>>>> {
+    ) -> Result<impl Stream<Item = Result<Account>>> {
         let now = Utc::now();
         let min_timestamp = now - max_offset;
         let max_timestamp = now - min_offset;
         let start_instant = Instant::now();
 
-        let sample_stream = Self::collection(database)
+        let account_stream = Self::collection(database)
             .aggregate(
                 [
                     doc! { "$sample": { "size": sample_size } },
@@ -113,7 +113,6 @@ impl Account {
             .await
             .context("failed to query a sample of accounts")?
             .map_err(|error| anyhow!(error))
-            .instrument(info_span!("sampled_account"))
             .try_filter_map(|document| {
                 trace!(?document);
                 ready(
@@ -122,11 +121,9 @@ impl Account {
                         .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
                 )
             })
-            .try_chunks(100)
-            .map_err(|error| anyhow!(error))
-            .instrument(info_span!("accounts_sample"));
+            .instrument(info_span!("sampled_account"));
 
         debug!(elapsed = format_elapsed(start_instant).as_str());
-        Ok(sample_stream)
+        Ok(account_stream)
     }
 }

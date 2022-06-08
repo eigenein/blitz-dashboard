@@ -10,8 +10,8 @@ use tokio::task;
 use tokio::time::timeout;
 use tracing_futures::Instrument;
 
+use crate::crawler::account_stream::get_account_stream;
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::crawler::sample_stream::get_sample_stream;
 use crate::database::{insert_tank_snapshots, replace_account};
 use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
@@ -19,8 +19,8 @@ use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 use crate::{database, wargaming};
 
+mod account_stream;
 mod metrics;
-mod sample_stream;
 
 const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
 
@@ -43,13 +43,13 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     let crawler = Crawler::new(&opts.shared).await?;
 
     info!("running…");
-    let batches = get_sample_stream(
+    let accounts = get_account_stream(
         crawler.mongodb.clone(),
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,
         Duration::from_std(opts.max_offset)?,
     );
-    crawler.run(batches, &opts.shared.buffering).await
+    crawler.run(accounts, &opts.shared.buffering).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -61,12 +61,11 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
 pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
-    let batches = stream::iter(opts.start_id..opts.end_id)
+    let accounts = stream::iter(opts.start_id..opts.end_id)
         .map(database::Account::fake)
-        .chunks(100)
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
-    crawler.run(batches, &opts.shared.buffering).await
+    crawler.run(accounts, &opts.shared.buffering).await
 }
 
 impl Crawler {
@@ -92,20 +91,25 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         self,
-        batches: impl Stream<Item = Result<Vec<database::Account>>>,
+        accounts: impl Stream<Item = Result<database::Account>>,
         buffering: &BufferingOpts,
     ) -> Result {
-        batches
+        accounts
+            .try_chunks(100)
+            .map_err(|error| anyhow!(error))
+            .instrument(info_span!("sampled_batch"))
             .map_ok(|batch| {
                 crawl_batch(self.api.clone(), batch, self.metrics.clone(), self.log_interval)
             })
+            .instrument(info_span!("crawled_batch"))
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
+            .instrument(info_span!("crawled_account"))
             .try_for_each_concurrent(Some(buffering.n_accounts), |(account, new_info, tanks)| {
                 self.clone().update_account(account, new_info, tanks)
             })
             .await
-            .context("the main crawler stream has failed")
+            .context("crawler stream has failed")
     }
 
     #[instrument(
