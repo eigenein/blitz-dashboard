@@ -1,7 +1,7 @@
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::{response, Request, Response};
-use sentry::integrations::anyhow::capture_anyhow;
+use tracing::error;
 
 /// [`anyhow::Error`] wrapper that allows to use the `?` operator in routes.
 #[derive(Debug)]
@@ -16,17 +16,7 @@ impl<E: Into<anyhow::Error>> From<E> for Error {
 #[rocket::async_trait]
 impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
-        let sentry_id = capture_anyhow(&self.0).as_simple().to_string();
-        tracing::error!(
-            "{} {}: {:#} (https://sentry.io/eigenein/blitz-dashboard/events/{})",
-            request.method(),
-            request.uri(),
-            self.0,
-            sentry_id,
-        );
-        Response::build()
-            .status(Status::InternalServerError)
-            .raw_header("x-sentry-id", sentry_id)
-            .ok()
+        error!("{} {}: {:#}", request.method(), request.uri(), self.0);
+        Response::build().status(Status::InternalServerError).ok()
     }
 }

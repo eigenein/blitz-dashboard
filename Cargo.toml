@@ -60,7 +60,7 @@ features = ["serde"]
 [dependencies.sentry]
 version = "0.26.0"
 default-features = false
-features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "anyhow", "tracing"]
+features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "tracing"]
 
 [dependencies.serde]
 version = "1.0.136"
