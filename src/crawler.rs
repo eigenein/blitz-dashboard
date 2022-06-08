@@ -178,7 +178,7 @@ async fn crawl_batch(
 
     let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
     if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
-        let _ = reqwest::get(heartbeat_url).await;
+        tokio::spawn(reqwest::get(heartbeat_url.clone()));
     }
 
     debug!("batch crawled");
