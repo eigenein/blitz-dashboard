@@ -37,6 +37,7 @@ pub async fn get(
     account_id: i32,
     period: Option<String>,
     database: &State<PgPool>,
+    mongodb: &State<mongodb::Database>,
     info_cache: &State<AccountInfoCache>,
     tracking_code: &State<TrackingCode>,
     tanks_cache: &State<AccountTanksCache>,
@@ -62,7 +63,11 @@ pub async fn get(
         let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
         retrieve_latest_tank_snapshots(database, account_id, before, &tank_ids).await?
     };
+
     insert_account_if_not_exists(database, account_id).await?;
+    crate::database::Account::fake(account_id)
+        .insert_or_ignore(mongodb)
+        .await?;
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
     let stats_delta: BasicStatistics = tanks_delta.iter().map(|tank| tank.statistics.all).sum();

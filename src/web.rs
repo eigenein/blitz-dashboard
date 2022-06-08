@@ -26,6 +26,7 @@ pub async fn run(opts: WebOpts) -> Result {
 
     let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
     let database = crate::database::open(&opts.connections.internal.database_uri, false).await?;
+    let mongodb = crate::database::mongodb::open(&opts.connections.internal.mongodb_uri).await?;
     let redis = redis::connect(
         &opts.connections.internal.redis_uri,
         opts.connections.internal.redis_pool_size,
@@ -36,6 +37,7 @@ pub async fn run(opts: WebOpts) -> Result {
         .manage(AccountTanksCache::new(api.clone(), redis.clone()))
         .manage(api)
         .manage(database)
+        .manage(mongodb)
         .manage(TrackingCode::new(&opts))
         .manage(redis)
         .mount("/", routes![r#static::get_site_manifest])

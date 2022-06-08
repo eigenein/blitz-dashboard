@@ -3,6 +3,7 @@ use std::time::Instant;
 use futures::future::ready;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, from_document};
+use mongodb::error::{ErrorKind, WriteError, WriteFailure};
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
@@ -60,22 +61,43 @@ impl Account {
         in_.collection(Self::COLLECTION_NAME)
     }
 
-    #[instrument(skip_all, fields(account_id = self.id))]
+    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
     pub async fn upsert(self, to: &Database) -> Result {
-        let query = doc! { "_id": self.id };
-        let update = UpdateModifications::Document(
-            doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
-        );
-        let options = UpdateOptions::builder().upsert(true).build();
-
         let start_instant = Instant::now();
         debug!("upserting…");
         Self::collection(to)
-            .update_one(query, update, options)
+            .update_one(
+                doc! { "_id": self.id },
+                UpdateModifications::Document(
+                    doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
+                ),
+                UpdateOptions::builder().upsert(true).build(),
+            )
             .await
             .with_context(|| format!("failed to upsert the account #{}", self.id))?;
+
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
+    }
+
+    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
+    pub async fn insert_or_ignore(self, to: &Database) -> Result {
+        match Self::collection(to).insert_one(&self, None).await {
+            Ok(_) => Ok(()),
+            Err(error) => {
+                match *error.kind {
+                    ErrorKind::Write(WriteFailure::WriteError(WriteError {
+                        code: 11000, ..
+                    })) => {
+                        // Ignore duplicate key error.
+                        Ok(())
+                    }
+                    _ => {
+                        Err(error).with_context(|| format!("failed to insert account #{}", self.id))
+                    }
+                }
+            }
+        }
     }
 
     #[instrument(skip_all, level = "debug")]
