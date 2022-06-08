@@ -140,9 +140,11 @@ impl Crawler {
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
 
+        info!(account_id = account.id, "about to upsert…");
         database::Account::from(new_info.base)
-            .upsert(self.mongodb.clone())
+            .upsert(&self.mongodb)
             .await?;
+        info!(account_id = account.id, "upserted");
 
         Ok(())
     }

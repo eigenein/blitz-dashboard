@@ -6,7 +6,6 @@ use mongodb::bson::{doc, from_document};
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
-use tokio::spawn;
 
 use crate::format_elapsed;
 use crate::prelude::*;
@@ -62,29 +61,25 @@ impl Account {
     }
 
     #[instrument(skip_all, fields(account_id = self.id))]
-    pub async fn upsert(self, to: Database) -> Result {
+    pub async fn upsert(self, to: &Database) -> Result {
         let query = doc! { "_id": self.id };
         let update = UpdateModifications::Document(
             doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
         );
         let options = UpdateOptions::builder().upsert(true).build();
 
-        let handle = spawn(async move {
-            Self::collection(&to)
-                .update_one(query, update, options)
-                .await
-                .with_context(|| format!("failed to upsert the account #{}", self.id))
-        });
-
         let start_instant = Instant::now();
-        handle.await??;
+        Self::collection(to)
+            .update_one(query, update, options)
+            .await
+            .with_context(|| format!("failed to upsert the account #{}", self.id))?;
         debug!(account_id = self.id, elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
     }
 
     #[instrument(skip_all, fields(batch_size, %min_offset, %max_offset))]
     pub async fn retrieve_sample(
-        from: Database,
+        from: &Database,
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
@@ -102,16 +97,11 @@ impl Account {
             },
         ];
 
-        let handle = spawn(async move {
-            Self::collection(&from)
-                .aggregate(pipeline, None)
-                .instrument(debug_span!("aggregate"))
-                .await
-        });
-
         let start_instant = Instant::now();
-        let account_stream = handle
-            .await?
+        let account_stream = Self::collection(from)
+            .aggregate(pipeline, None)
+            .instrument(debug_span!("aggregate"))
+            .await
             .context("failed to query a sample of accounts")?
             .map_err(|error| anyhow!(error))
             .try_filter_map(|document| {
@@ -123,6 +113,7 @@ impl Account {
                 )
             })
             .instrument(debug_span!("sampled_account"));
+
         debug!(elapsed = format_elapsed(start_instant).as_str());
         Ok(account_stream)
     }
