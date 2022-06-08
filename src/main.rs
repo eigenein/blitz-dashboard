@@ -1,5 +1,4 @@
 #![warn(clippy::all)]
-#![cfg_attr(nightly, feature(test))]
 
 use clap::Parser;
 use helpers::tracing;

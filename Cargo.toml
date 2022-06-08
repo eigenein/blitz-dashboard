@@ -73,6 +73,3 @@ features = ["runtime-tokio-rustls", "postgres", "chrono"]
 
 [dev-dependencies]
 serde_json = "1.0.81"
-
-[build-dependencies]
-rustversion = "1.0.6"
