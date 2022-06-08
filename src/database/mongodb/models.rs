@@ -4,7 +4,6 @@ use futures::future::ready;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::{UpdateModifications, UpdateOptions};
-use mongodb::results::UpdateResult;
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::spawn;
@@ -63,7 +62,7 @@ impl Account {
     }
 
     #[instrument(skip_all, fields(account_id = self.id))]
-    pub async fn upsert(self, to: Database) -> Result<UpdateResult> {
+    pub async fn upsert(self, to: Database) -> Result {
         let query = doc! { "_id": self.id };
         let update = UpdateModifications::Document(
             doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
@@ -78,9 +77,9 @@ impl Account {
         });
 
         let start_instant = Instant::now();
-        let result = handle.await??;
+        handle.await??;
         debug!(account_id = self.id, elapsed = format_elapsed(start_instant).as_str(), "upserted");
-        Ok(result)
+        Ok(())
     }
 
     #[instrument(skip_all, fields(batch_size, %min_offset, %max_offset))]
