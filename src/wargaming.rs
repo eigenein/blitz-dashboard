@@ -202,13 +202,13 @@ impl WargamingApi {
         }
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(path = url.path()))]
+    #[tracing::instrument(skip_all, level = "trace", fields(path = url.path()))]
     async fn call_once<T: DeserializeOwned>(
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        debug!(request_id, path = url.path(), "get");
+        trace!(request_id, path = url.path(), "get");
 
         let start_instant = Instant::now();
         let result = self.client.get(url).send().await;
@@ -220,13 +220,13 @@ impl WargamingApi {
             }
         };
 
-        debug!(request_id, status = response.status().as_u16());
+        trace!(request_id, status = response.status().as_u16());
         let response = response.error_for_status()?;
 
-        debug!(request_id, type_name = std::any::type_name::<T>());
+        trace!(request_id, type_name = std::any::type_name::<T>());
         let result = response.json::<Response<T>>().await;
 
-        debug!(request_id, elapsed = format_elapsed(start_instant).as_str(), "done");
+        trace!(request_id, elapsed = format_elapsed(start_instant).as_str(), "done");
         result
     }
 }

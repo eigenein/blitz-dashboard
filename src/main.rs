@@ -24,7 +24,7 @@ const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> Result {
     tokio::runtime::Builder::new_multi_thread()
-        .thread_stack_size(4 * 1024 * 1024)
+        .thread_stack_size(8 * 1024 * 1024)
         .enable_all()
         .build()?
         .block_on(async_main())
