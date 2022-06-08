@@ -27,6 +27,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          release_name: ${{ github.ref_name }
           body: ${{ steps.changelog.outputs.changelog }}
           prerelease: false
 
