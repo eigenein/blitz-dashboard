@@ -1,9 +1,9 @@
 use std::time::Instant;
 
-use mongodb::bson::{doc, Document};
+use mongodb::bson::doc;
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::results::UpdateResult;
-use mongodb::Database;
+use mongodb::{Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::format_elapsed;
@@ -32,11 +32,28 @@ impl Account {
     pub const COLLECTION_NAME: &'static str = "accounts";
     pub const LAST_BATTLE_TIME_FIELD_NAME: &'static str = "lbts";
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id, result))]
+    #[instrument(skip_all)]
+    pub async fn create_indexes(on: &Database) -> Result {
+        Self::collection(on)
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { Self::LAST_BATTLE_TIME_FIELD_NAME: -1 })
+                    .build(),
+                None,
+            )
+            .await
+            .context("failed to create `accounts.lbts` index")?;
+        Ok(())
+    }
+
+    fn collection(in_: &Database) -> Collection<Self> {
+        in_.collection(Self::COLLECTION_NAME)
+    }
+
+    #[instrument(skip_all, fields(account_id = self.id))]
     pub async fn upsert(&self, to: &Database) -> Result<UpdateResult> {
         let start_instant = Instant::now();
-        let result = to
-            .collection::<Document>(Self::COLLECTION_NAME)
+        let result = Self::collection(to)
             .update_one(
                 doc! { "_id": self.id },
                 UpdateModifications::Document(
