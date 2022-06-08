@@ -97,6 +97,7 @@ impl Account {
         let sample_stream = Self::collection(database)
             .aggregate(
                 [
+                    doc! { "$sample": { "size": sample_size } },
                     doc! {
                         "$match": {
                             Self::LAST_BATTLE_TIME_KEY: {
@@ -105,7 +106,6 @@ impl Account {
                             },
                         },
                     },
-                    doc! { "$sample": { "size": sample_size } },
                 ],
                 None,
             )
