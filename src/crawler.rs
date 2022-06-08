@@ -6,8 +6,6 @@ use anyhow::Context;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use sqlx::PgPool;
 use tokio::sync::Mutex;
-use tokio::task;
-use tokio::time::timeout;
 use tracing_futures::Instrument;
 
 use crate::crawler::account_stream::get_account_stream;
@@ -94,10 +92,7 @@ impl Crawler {
         accounts: impl Stream<Item = Result<database::Account>>,
         buffering: &BufferingOpts,
     ) -> Result {
-        info!(
-            n_buffered_batches = buffering.n_batches,
-            n_buffered_accounts = buffering.n_accounts,
-        );
+        info!(n_buffered_batches = buffering.n_batches, n_buffered_accounts = buffering.n_accounts,);
         accounts
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
@@ -145,17 +140,9 @@ impl Crawler {
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
 
-        // FIXME: `Account::upsert` silently gets stuck when `n_buffered_accounts` > 1.
-        timeout(
-            StdDuration::from_secs(10),
-            task::spawn(async move {
-                database::Account::from(new_info.base)
-                    .upsert(&self.mongodb)
-                    .await
-            }),
-        )
-        .await
-        .context("`Account::upsert` has timed out")???;
+        database::Account::from(new_info.base)
+            .upsert(self.mongodb.clone())
+            .await?;
 
         Ok(())
     }

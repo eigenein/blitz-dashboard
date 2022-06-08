@@ -47,13 +47,7 @@ impl AccountInfoCache {
         let blob = rmp_serde::to_vec(&account_info)?;
         debug!(account_id = account_info.base.id, n_bytes = blob.len(), "set cache");
         self.redis
-            .set(
-                Self::cache_key(account_info.base.id),
-                blob.as_slice(),
-                Self::EXPIRE,
-                None,
-                false,
-            )
+            .set(Self::cache_key(account_info.base.id), blob.as_slice(), Self::EXPIRE, None, false)
             .await?;
         Ok(())
     }
