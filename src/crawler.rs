@@ -134,16 +134,18 @@ impl Crawler {
             .instrument(debug_span!("commit"))
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "updated");
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "committed");
 
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
+        drop(metrics);
 
         database::Account::from(new_info.base)
             .upsert(&self.mongodb)
             .await?;
 
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "updated");
         Ok(())
     }
 }

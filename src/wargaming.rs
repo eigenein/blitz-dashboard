@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
-use humantime::format_duration;
 use itertools::Itertools;
 pub use models::*;
 use reqwest::header::HeaderValue;
@@ -16,7 +15,7 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
-use crate::helpers::tracing::format_elapsed;
+use crate::helpers::tracing::{format_duration, format_elapsed};
 use crate::prelude::*;
 use crate::wargaming::response::Response;
 
@@ -158,6 +157,7 @@ impl WargamingApi {
             match self.call_once(url.clone()).await {
                 Ok(response) => match response {
                     Response::Data { data } => {
+                        trace!("ok");
                         return Ok(data);
                     }
                     Response::Error { error } => {
@@ -185,7 +185,7 @@ impl WargamingApi {
                 }
                 Err(error) => {
                     // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
-                    warn!(path = url.path(), n_attempts = backoff.n_attempts(), "{:#}", error,);
+                    warn!(path = url.path(), n_attempts = backoff.n_attempts(), "{:#}", error);
                     if backoff.n_attempts() >= 10 {
                         // 🥅 Don't know what to do.
                         return Err(error).context("all attempts have failed");
@@ -194,7 +194,7 @@ impl WargamingApi {
             };
             let sleep_duration = backoff.next();
             debug!(
-                sleep_duration = %format_duration(sleep_duration),
+                sleep_duration = format_duration(sleep_duration).as_str(),
                 nr_attempt = backoff.n_attempts(),
                 "retrying…",
             );
@@ -208,7 +208,7 @@ impl WargamingApi {
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        trace!(request_id, path = url.path(), "get");
+        trace!(request_id, path = url.path(), "sending the request…");
 
         let start_instant = Instant::now();
         let result = self.client.get(url).send().await;
