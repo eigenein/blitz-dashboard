@@ -175,12 +175,11 @@ async fn crawl_batch(
         crawled.push((account, new_info, tanks));
     }
 
-    {
-        let mut metrics = metrics.lock().await;
-        if metrics.start_instant.elapsed() >= log_interval {
-            *metrics = metrics.finalise(&api.request_counter).await;
-        }
+    let mut metrics = metrics.lock().await;
+    if metrics.start_instant.elapsed() >= log_interval {
+        *metrics = metrics.finalise(&api.request_counter).await;
     }
+    drop(metrics);
 
     debug!("batch crawled");
     Ok(stream::iter(crawled.into_iter().map(Ok)))
