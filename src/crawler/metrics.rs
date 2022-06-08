@@ -1,15 +1,15 @@
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
 
 use crate::helpers::average::Average;
 use crate::prelude::*;
 use crate::tracing::format_duration;
 
 pub struct CrawlerMetrics {
-    pub average_batch_fill_level: Average,
-    pub start_instant: Instant,
-    pub lag_percentile: usize,
+    lag_percentile: usize,
+    log_interval: StdDuration,
 
+    reset_instant: Instant,
+    average_batch_fill_level: Average,
     start_request_count: u32,
     n_accounts: u32,
     last_account_id: i32,
@@ -17,15 +17,20 @@ pub struct CrawlerMetrics {
 }
 
 impl CrawlerMetrics {
-    pub fn new(request_counter: &Arc<AtomicU32>, lag_percentile: usize) -> Self {
+    pub fn new(
+        request_counter: &AtomicU32,
+        lag_percentile: usize,
+        log_interval: StdDuration,
+    ) -> Self {
         Self {
             start_request_count: request_counter.load(Ordering::Relaxed),
             n_accounts: 0,
             last_account_id: 0,
-            start_instant: Instant::now(),
+            reset_instant: Instant::now(),
             lags: Vec::new(),
             lag_percentile,
             average_batch_fill_level: Average::default(),
+            log_interval,
         }
     }
 
@@ -45,10 +50,20 @@ impl CrawlerMetrics {
             .push(matched_len as f64 / batch_len as f64);
     }
 
-    pub async fn finalise(&mut self, request_counter: &Arc<AtomicU32>) -> Self {
-        let elapsed_secs = self.start_instant.elapsed().as_secs_f64();
+    pub fn check(&mut self, request_counter: &AtomicU32) {
+        let now = Instant::now();
+        let elapsed = now - self.reset_instant;
+        if elapsed >= self.log_interval {
+            let request_counter = request_counter.load(Ordering::Relaxed);
+            self.log(request_counter, elapsed);
+            self.reset(request_counter, now);
+        }
+    }
+
+    fn log(&mut self, request_counter: u32, elapsed: StdDuration) {
+        let elapsed_secs = elapsed.as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
-        let n_requests = request_counter.load(Ordering::Relaxed) - self.start_request_count;
+        let n_requests = request_counter - self.start_request_count;
         let lag = self.lag();
 
         info!(
@@ -58,8 +73,14 @@ impl CrawlerMetrics {
             lag = format_duration(lag).as_str(),
             aid = self.last_account_id,
         );
+    }
 
-        Self::new(request_counter, self.lag_percentile)
+    fn reset(&mut self, request_counter: u32, now: Instant) {
+        self.reset_instant = now;
+        self.average_batch_fill_level = Default::default();
+        self.start_request_count = request_counter;
+        self.n_accounts = 0;
+        self.lags.clear();
     }
 
     fn lag(&mut self) -> StdDuration {

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
@@ -28,7 +27,6 @@ pub struct Crawler {
     database: PgPool,
     mongodb: mongodb::Database,
     metrics: Arc<Mutex<CrawlerMetrics>>,
-    log_interval: StdDuration,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -77,11 +75,11 @@ impl Crawler {
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
                 &api.request_counter,
                 opts.lag_percentile,
+                opts.log_interval,
             ))),
             api,
             database,
             mongodb,
-            log_interval: opts.log_interval,
         };
         Ok(this)
     }
@@ -99,13 +97,7 @@ impl Crawler {
             .instrument(debug_span!("sampled_batch"))
             .enumerate()
             .map(|(batch_number, batch)| {
-                Ok(crawl_batch(
-                    self.api.clone(),
-                    batch?,
-                    batch_number,
-                    self.metrics.clone(),
-                    self.log_interval,
-                ))
+                Ok(crawl_batch(self.api.clone(), batch?, batch_number, self.metrics.clone()))
             })
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
@@ -156,7 +148,6 @@ async fn crawl_batch(
     batch: Vec<database::Account>,
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
-    log_interval: StdDuration,
 ) -> Result<
     impl Stream<Item = Result<(database::Account, wargaming::AccountInfo, Vec<wargaming::Tank>)>>,
 > {
@@ -175,11 +166,7 @@ async fn crawl_batch(
         crawled.push((account, new_info, tanks));
     }
 
-    let mut metrics = metrics.lock().await;
-    if metrics.start_instant.elapsed() >= log_interval {
-        *metrics = metrics.finalise(&api.request_counter).await;
-    }
-    drop(metrics);
+    metrics.lock().await.check(&api.request_counter);
 
     debug!("batch crawled");
     Ok(stream::iter(crawled.into_iter().map(Ok)))
