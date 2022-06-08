@@ -166,12 +166,11 @@ impl WargamingApi {
                             "REQUEST_LIMIT_EXCEEDED" | "SOURCE_NOT_AVAILABLE" => {
                                 // ♻️ Retrying for these particular errors.
                                 warn!(
-                                    message = message,
                                     code = error.code,
                                     n_attempts = backoff.n_attempts(),
+                                    message,
                                 );
                             }
-
                             _ => {
                                 // 🥅 This is an unexpected API error.
                                 return Err(anyhow!("{}/{}", error.code, error.message));
