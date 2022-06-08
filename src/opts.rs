@@ -92,6 +92,9 @@ pub struct CrawlerOpts {
         env = "BLITZ_DASHBOARD_CRAWLER_SAMPLE_SIZE",
     )]
     pub sample_size: u32,
+
+    #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_HEARTBEAT_URL")]
+    pub heartbeat_url: Option<String>,
 }
 
 /// Updates the bundled Tankopedia module.

@@ -45,7 +45,9 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         Duration::from_std(opts.min_offset)?,
         Duration::from_std(opts.max_offset)?,
     );
-    crawler.run(accounts, &opts.shared.buffering).await
+    crawler
+        .run(accounts, &opts.shared.buffering, opts.heartbeat_url)
+        .await
 }
 
 /// Performs a very slow one-time account scan.
@@ -61,7 +63,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
         .map(database::Account::fake)
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
-    crawler.run(accounts, &opts.shared.buffering).await
+    crawler.run(accounts, &opts.shared.buffering, None).await
 }
 
 impl Crawler {
@@ -89,15 +91,22 @@ impl Crawler {
         self,
         accounts: impl Stream<Item = Result<database::Account>>,
         buffering: &BufferingOpts,
+        heartbeat_url: Option<String>,
     ) -> Result {
-        info!(n_buffered_batches = buffering.n_batches, n_buffered_accounts = buffering.n_accounts,);
+        info!(n_buffered_batches = buffering.n_batches, n_buffered_accounts = buffering.n_accounts);
         accounts
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
             .instrument(debug_span!("sampled_batch"))
             .enumerate()
             .map(|(batch_number, batch)| {
-                Ok(crawl_batch(self.api.clone(), batch?, batch_number, self.metrics.clone()))
+                Ok(crawl_batch(
+                    self.api.clone(),
+                    batch?,
+                    batch_number,
+                    self.metrics.clone(),
+                    &heartbeat_url,
+                ))
             })
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
@@ -148,6 +157,7 @@ async fn crawl_batch(
     batch: Vec<database::Account>,
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
+    heartbeat_url: &Option<String>,
 ) -> Result<
     impl Stream<Item = Result<(database::Account, wargaming::AccountInfo, Vec<wargaming::Tank>)>>,
 > {
@@ -166,7 +176,10 @@ async fn crawl_batch(
         crawled.push((account, new_info, tanks));
     }
 
-    metrics.lock().await.check(&api.request_counter);
+    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
+    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
+        let _ = reqwest::get(heartbeat_url).await;
+    }
 
     debug!("batch crawled");
     Ok(stream::iter(crawled.into_iter().map(Ok)))

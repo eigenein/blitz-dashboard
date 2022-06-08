@@ -54,13 +54,16 @@ impl CrawlerMetrics {
             .push(matched_len as f64 / batch_len as f64);
     }
 
-    pub fn check(&mut self, request_counter: &AtomicU32) {
+    pub fn check(&mut self, request_counter: &AtomicU32) -> bool {
         let now = Instant::now();
         let elapsed = now - self.reset_instant;
         if elapsed >= self.log_interval {
             let request_counter = request_counter.load(Ordering::Relaxed);
             self.log(request_counter, elapsed);
             self.reset(request_counter, now);
+            true
+        } else {
+            false
         }
     }
 
