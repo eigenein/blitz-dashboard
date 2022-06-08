@@ -10,7 +10,7 @@ pub fn get_account_stream(
     min_offset: Duration,
     max_offset: Duration,
 ) -> impl Stream<Item = Result<Account>> {
-    info!(sample_size, ?min_offset, ?max_offset);
+    info!(sample_size, %min_offset, %max_offset);
     stream::try_unfold(database, move |database| async move {
         let samples =
             Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;

@@ -82,7 +82,7 @@ impl Account {
         Ok(result)
     }
 
-    #[instrument(skip_all, fields(batch_size, ?min_offset, ?max_offset))]
+    #[instrument(skip_all, fields(batch_size, %min_offset, %max_offset))]
     pub async fn retrieve_sample(
         database: &Database,
         sample_size: u32,
