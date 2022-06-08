@@ -20,6 +20,7 @@ cargo install --git 'https://github.com/eigenein/blitz-dashboard.git' --branch m
 
 - PostgreSQL ≥ `13.4`
 - Redis ≥ `6.2.6`
+- MongoDB ≥ `4.4.14`
 
 These are the versions I'm running with. Lower versions may work, but I haven't tested them.
 

@@ -9,6 +9,7 @@ use itertools::Itertools;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
 use sqlx::{Error, Executor, FromRow, PgConnection, PgPool, Row};
 
+pub use crate::database::mongodb::models::*;
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::{

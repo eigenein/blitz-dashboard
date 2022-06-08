@@ -1,21 +1,25 @@
 use std::time::Instant;
 
+use futures::future::ready;
+use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::results::UpdateResult;
-use mongodb::{Collection, Database, IndexModel};
+use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::BaseAccountInfo;
 
+#[serde_with::serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct Account {
     #[serde(rename = "_id")]
     pub id: i32,
 
     #[serde(rename = "lbts")]
+    #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
 }
 
@@ -30,14 +34,21 @@ impl From<BaseAccountInfo> for Account {
 
 impl Account {
     pub const COLLECTION_NAME: &'static str = "accounts";
-    pub const LAST_BATTLE_TIME_FIELD_NAME: &'static str = "lbts";
+    pub const LAST_BATTLE_TIME_KEY: &'static str = "lbts";
+
+    pub fn fake(account_id: i32) -> Self {
+        Self {
+            id: account_id,
+            last_battle_time: Utc.timestamp(0, 0),
+        }
+    }
 
     #[instrument(skip_all)]
-    pub async fn create_indexes(on: &Database) -> Result {
+    pub async fn ensure_indexes(on: &Database) -> Result {
         Self::collection(on)
             .create_index(
                 IndexModel::builder()
-                    .keys(doc! { Self::LAST_BATTLE_TIME_FIELD_NAME: -1 })
+                    .keys(doc! { Self::LAST_BATTLE_TIME_KEY: -1 })
                     .build(),
                 None,
             )
@@ -57,7 +68,7 @@ impl Account {
             .update_one(
                 doc! { "_id": self.id },
                 UpdateModifications::Document(
-                    doc! { "$set": { Self::LAST_BATTLE_TIME_FIELD_NAME: self.last_battle_time } },
+                    doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
                 ),
                 UpdateOptions::builder().upsert(true).build(),
             )
@@ -69,5 +80,53 @@ impl Account {
             "upserted",
         );
         Ok(result)
+    }
+
+    #[instrument(skip_all, fields(batch_size, ?min_offset, ?max_offset))]
+    pub async fn retrieve_samples(
+        database: &Database,
+        sample_size: u32,
+        min_offset: Duration,
+        max_offset: Duration,
+    ) -> Result<impl Stream<Item = Result<Vec<Account>>>> {
+        let now = Utc::now();
+        let min_timestamp = now - max_offset;
+        let max_timestamp = now - min_offset;
+        let start_instant = Instant::now();
+
+        let sample_stream = Self::collection(database)
+            .aggregate(
+                [
+                    doc! {
+                        "$match": {
+                            Self::LAST_BATTLE_TIME_KEY: {
+                                "$gt": min_timestamp,
+                                "$lte": max_timestamp,
+                            },
+                        },
+                    },
+                    doc! { "$sample": { "size": sample_size } },
+                ],
+                None,
+            )
+            .instrument(info_span!("aggregate"))
+            .await
+            .context("failed to query a sample of accounts")?
+            .map_err(|error| anyhow!(error))
+            .instrument(info_span!("sampled_account"))
+            .try_filter_map(|document| {
+                trace!(?document);
+                ready(
+                    bson::from_document::<Account>(document)
+                        .map(Some)
+                        .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
+                )
+            })
+            .try_chunks(100)
+            .map_err(|error| anyhow!(error))
+            .instrument(info_span!("accounts_sample"));
+
+        debug!(elapsed = format_elapsed(start_instant).as_str());
+        Ok(sample_stream)
     }
 }

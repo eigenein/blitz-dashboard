@@ -34,7 +34,7 @@ WantedBy = multi-user.target
 
 ## Tuning
 
-Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilise 19-20 RPS for the crawler service by tuning the few options:
+Wargaming.net API is limited at 20 requests per second for a server-side application. For the optimal performance try and utilize 19-20 RPS for the crawler service by tuning the few options:
 
 ### `--n-buffered-batches`
 
@@ -51,7 +51,7 @@ In order to run the crawler, you'd need to fill in the database with some accoun
 For example:
 
 ```shell
-blitz-dashboard -v crawl-accounts --initialize-schema -d postgres://pi@localhost/yastatist -a <application-ID> --start-id 1 --end-id 150000000
+blitz-dashboard crawl-accounts … --start-id=1 --end-id=150000000
 ```
 
 This is a **very** slow process. On average, you'll be importing around 1M accounts per day.

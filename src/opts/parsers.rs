@@ -13,16 +13,14 @@ pub fn account_id(value: &str) -> Result<i32> {
 
 pub fn non_zero_usize(value: &str) -> Result<usize> {
     match FromStr::from_str(value)? {
-        limit if limit >= 1 => Ok(limit),
+        value if value >= 1 => Ok(value),
         _ => Err(anyhow!("expected a positive number")),
     }
 }
 
-#[allow(dead_code)]
-pub fn duration_as_secs<T>(value: &str) -> Result<T>
-where
-    T: TryFrom<u64>,
-    T::Error: std::error::Error + Send + Sync + 'static,
-{
-    Ok(humantime::parse_duration(value)?.as_secs().try_into()?)
+pub fn non_zero_u32(value: &str) -> Result<u32> {
+    match FromStr::from_str(value)? {
+        value if value >= 1 => Ok(value),
+        _ => Err(anyhow!("expected a positive number")),
+    }
 }

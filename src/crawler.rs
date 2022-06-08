@@ -10,17 +10,17 @@ use tokio::task;
 use tokio::time::timeout;
 use tracing_futures::Instrument;
 
-use crate::crawler::batch_stream::{get_batch_stream, Batch};
 use crate::crawler::metrics::CrawlerMetrics;
+use crate::crawler::sample_stream::get_sample_stream;
 use crate::database::{insert_tank_snapshots, replace_account};
 use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
-use crate::wargaming::models::{merge_tanks, AccountInfo, BaseAccountInfo, Tank, TankStatistics};
 use crate::wargaming::WargamingApi;
+use crate::{database, wargaming};
 
-pub mod batch_stream;
 mod metrics;
+mod sample_stream;
 
 const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
 
@@ -43,13 +43,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     let crawler = Crawler::new(&opts.shared).await?;
 
     info!("running…");
-    let batches = get_batch_stream(
-        crawler.database(),
-        opts.batch_select_limit,
-        opts.min_offset,
-        opts.max_offset,
-    )
-    .await;
+    let batches = get_sample_stream(
+        crawler.mongodb.clone(),
+        opts.sample_size,
+        Duration::from_std(opts.min_offset)?,
+        Duration::from_std(opts.max_offset)?,
+    );
     crawler.run(batches, &opts.shared.buffering).await
 }
 
@@ -63,7 +62,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let batches = stream::iter(opts.start_id..opts.end_id)
-        .map(BaseAccountInfo::empty)
+        .map(database::Account::fake)
         .chunks(100)
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
@@ -74,8 +73,8 @@ impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
-        let database = crate::database::open(&internal.database_uri, false).await?;
-        let mongodb = crate::database::mongodb::open(&internal.mongodb_uri).await?;
+        let database = database::open(&internal.database_uri, false).await?;
+        let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
@@ -90,15 +89,10 @@ impl Crawler {
         Ok(this)
     }
 
-    #[must_use]
-    pub fn database(&self) -> PgPool {
-        self.database.clone()
-    }
-
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         self,
-        batches: impl Stream<Item = Result<Batch>>,
+        batches: impl Stream<Item = Result<Vec<database::Account>>>,
         buffering: &BufferingOpts,
     ) -> Result {
         batches
@@ -120,9 +114,9 @@ impl Crawler {
     )]
     async fn update_account(
         self,
-        account: BaseAccountInfo,
-        new_info: AccountInfo,
-        tanks: Vec<Tank>,
+        account: database::Account,
+        new_info: wargaming::AccountInfo,
+        tanks: Vec<wargaming::Tank>,
     ) -> Result {
         let start_instant = Instant::now();
         let mut transaction = self.database.begin().await?;
@@ -147,7 +141,7 @@ impl Crawler {
         timeout(
             StdDuration::from_secs(10),
             task::spawn(async move {
-                crate::database::mongodb::models::Account::from(account)
+                database::Account::from(new_info.base)
                     .upsert(&self.mongodb)
                     .await
             }),
@@ -162,10 +156,12 @@ impl Crawler {
 #[instrument(skip_all, level="debug", fields(n_accounts = batch.len()))]
 async fn crawl_batch(
     api: WargamingApi,
-    batch: Batch,
+    batch: Vec<database::Account>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     log_interval: StdDuration,
-) -> Result<impl Stream<Item = Result<(BaseAccountInfo, AccountInfo, Vec<Tank>)>>> {
+) -> Result<
+    impl Stream<Item = Result<(database::Account, wargaming::AccountInfo, Vec<wargaming::Tank>)>>,
+> {
     let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
     let new_infos = api.get_account_info(&account_ids).await?;
     let batch_len = batch.len();
@@ -194,11 +190,11 @@ async fn crawl_batch(
 /// # Returns
 ///
 /// Vector of matched pairs.
-#[instrument(skip_all, level = "trace")]
+#[instrument(skip_all)]
 fn match_account_infos(
-    batch: Batch,
-    mut new_infos: HashMap<String, Option<AccountInfo>>,
-) -> Vec<(BaseAccountInfo, AccountInfo)> {
+    batch: Vec<database::Account>,
+    mut new_infos: HashMap<String, Option<wargaming::AccountInfo>>,
+) -> Vec<(database::Account, wargaming::AccountInfo)> {
     batch
         .into_iter()
         .filter_map(move |account| match new_infos.remove(&account.id.to_string()).flatten() {
@@ -220,7 +216,7 @@ async fn get_updated_tanks_statistics(
     api: &WargamingApi,
     account_id: i32,
     since: DateTime,
-) -> Result<Vec<TankStatistics>> {
+) -> Result<Vec<wargaming::TankStatistics>> {
     let statistics = api
         .get_tanks_stats(account_id)
         .await?
@@ -241,15 +237,15 @@ async fn get_updated_tanks_statistics(
 )]
 async fn crawl_account(
     api: &WargamingApi,
-    account: &BaseAccountInfo,
-    new_info: AccountInfo,
-) -> Result<(AccountInfo, Vec<Tank>)> {
+    account: &database::Account,
+    new_info: wargaming::AccountInfo,
+) -> Result<(wargaming::AccountInfo, Vec<wargaming::Tank>)> {
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
         debug!(account_id = account.id, n_updated_tanks = statistics.len());
         let achievements = api.get_tanks_achievements(account.id).await?;
-        let tanks = merge_tanks(account.id, statistics, achievements);
+        let tanks = wargaming::merge_tanks(account.id, statistics, achievements);
         debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
         Ok((new_info, tanks))
     } else {

@@ -6,7 +6,6 @@ use crate::prelude::*;
 use crate::tracing::format_duration;
 
 pub struct CrawlerMetrics {
-    pub average_batch_size: Average,
     pub average_batch_fill_level: Average,
     pub start_instant: Instant,
     pub lag_percentile: usize,
@@ -26,7 +25,6 @@ impl CrawlerMetrics {
             start_instant: Instant::now(),
             lags: Vec::new(),
             lag_percentile,
-            average_batch_size: Average::default(),
             average_batch_fill_level: Average::default(),
         }
     }
@@ -43,10 +41,8 @@ impl CrawlerMetrics {
     }
 
     pub fn add_batch(&mut self, batch_len: usize, matched_len: usize) {
-        let batch_len = batch_len as f64;
-        self.average_batch_size.push(batch_len);
         self.average_batch_fill_level
-            .push(matched_len as f64 / batch_len);
+            .push(matched_len as f64 / batch_len as f64);
     }
 
     pub async fn finalise(&mut self, request_counter: &Arc<AtomicU32>) -> Self {
@@ -57,7 +53,6 @@ impl CrawlerMetrics {
 
         info!(
             rps = %format!("{:.1}", n_requests as f64 / elapsed_secs),
-            batch_size = %format!("{:.1}", self.average_batch_size.average()),
             batch_fill = %format!("{:.2}%", self.average_batch_fill_level.average() * 100.0),
             apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
             lag = format_duration(lag).as_str(),

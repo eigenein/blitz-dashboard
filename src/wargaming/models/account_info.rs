@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::database;
 use crate::prelude::*;
 use crate::wargaming::models::{BasicStatistics, RatingStatistics};
 
@@ -12,11 +13,11 @@ pub struct BaseAccountInfo {
     pub last_battle_time: DateTime,
 }
 
-impl BaseAccountInfo {
-    pub fn empty(account_id: i32) -> Self {
+impl From<database::Account> for BaseAccountInfo {
+    fn from(account: database::Account) -> Self {
         Self {
-            id: account_id,
-            last_battle_time: Utc.timestamp(0, 0),
+            id: account.id,
+            last_battle_time: account.last_battle_time,
         }
     }
 }

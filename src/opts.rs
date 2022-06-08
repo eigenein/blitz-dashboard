@@ -27,16 +27,11 @@ pub struct Opts {
 
 #[derive(Parser)]
 pub enum Subcommand {
-    Web(WebOpts),
-
-    #[clap(alias = "crawler")]
     Crawl(CrawlerOpts),
-
-    ImportTankopedia(ImportTankopediaOpts),
-
     CrawlAccounts(CrawlAccountsOpts),
-
+    ImportTankopedia(ImportTankopediaOpts),
     InitializeDatabase(InitializeDatabaseOpts),
+    Web(WebOpts),
 }
 
 /// Runs the web application.
@@ -86,16 +81,14 @@ pub struct CrawlerOpts {
     )]
     pub max_offset: StdDuration,
 
-    /// Limit for the inner query when retrieving a batch from the database.
-    /// Lower is faster, larger keeps the mean batch size closer to the maximum (which is better).
-    /// Aim for `100` in the `BS` metric. See also `crate::crawler::batch_stream::retrieve_batch`.
+    /// Number of accounts to sample from the database in one aggregation query.
     #[clap(
         long,
         default_value = "1000",
-        parse(try_from_str = parsers::non_zero_usize),
-        env = "BLITZ_DASHBOARD_CRAWLER_BATCH_SELECT_LIMIT",
+        parse(try_from_str = parsers::non_zero_u32),
+        env = "BLITZ_DASHBOARD_CRAWLER_SAMPLE_SIZE",
     )]
-    pub batch_select_limit: usize,
+    pub sample_size: u32,
 }
 
 /// Updates the bundled Tankopedia module.
@@ -123,7 +116,7 @@ pub struct CrawlAccountsOpts {
 
 #[derive(Parser)]
 pub struct BufferingOpts {
-    /// Number of buffered batches in the stream.
+    /// Number of batches for which the crawler should buffer the account information.
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
@@ -132,7 +125,7 @@ pub struct BufferingOpts {
     )]
     pub n_batches: usize,
 
-    /// Number of buffered accounts in the stream.
+    /// Number of accounts for which the crawler should buffer the tanks information.
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",

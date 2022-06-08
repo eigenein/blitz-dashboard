@@ -13,7 +13,7 @@ pub async fn open(uri: &str) -> Result<Database> {
         .default_database()
         .ok_or_else(|| anyhow!("MongoDB database name is not specified"))?;
     info!("ensuring indexes…");
-    models::Account::create_indexes(&database)
+    models::Account::ensure_indexes(&database)
         .await
         .context("failed to create the account indexes")?;
     info!("connected");
