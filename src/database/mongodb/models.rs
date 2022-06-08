@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use futures::future::ready;
 use futures::{Stream, TryStreamExt};
-use mongodb::bson::doc;
+use mongodb::bson::{doc, from_document};
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
@@ -84,45 +84,45 @@ impl Account {
 
     #[instrument(skip_all, fields(batch_size, %min_offset, %max_offset))]
     pub async fn retrieve_sample(
-        from: &Database,
+        from: Database,
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
     ) -> Result<impl Stream<Item = Result<Account>>> {
         let now = Utc::now();
-        let min_timestamp = now - max_offset;
-        let max_timestamp = now - min_offset;
-        let start_instant = Instant::now();
-
-        let account_stream = Self::collection(from)
-            .aggregate(
-                [
-                    doc! { "$sample": { "size": sample_size } },
-                    doc! {
-                        "$match": {
-                            Self::LAST_BATTLE_TIME_KEY: {
-                                "$gt": min_timestamp,
-                                "$lte": max_timestamp,
-                            },
-                        },
+        let pipeline = [
+            doc! { "$sample": { "size": sample_size } },
+            doc! {
+                "$match": {
+                    Self::LAST_BATTLE_TIME_KEY: {
+                        "$gt": now - max_offset,
+                        "$lte": now - min_offset,
                     },
-                ],
-                None,
-            )
-            .instrument(debug_span!("aggregate"))
-            .await
+                },
+            },
+        ];
+
+        let handle = spawn(async move {
+            Self::collection(&from)
+                .aggregate(pipeline, None)
+                .instrument(debug_span!("aggregate"))
+                .await
+        });
+
+        let start_instant = Instant::now();
+        let account_stream = handle
+            .await?
             .context("failed to query a sample of accounts")?
             .map_err(|error| anyhow!(error))
             .try_filter_map(|document| {
                 trace!(?document);
                 ready(
-                    bson::from_document::<Account>(document)
+                    from_document::<Account>(document)
                         .map(Some)
                         .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
                 )
             })
             .instrument(debug_span!("sampled_account"));
-
         debug!(elapsed = format_elapsed(start_instant).as_str());
         Ok(account_stream)
     }
