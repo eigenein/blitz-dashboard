@@ -94,6 +94,10 @@ impl Crawler {
         accounts: impl Stream<Item = Result<database::Account>>,
         buffering: &BufferingOpts,
     ) -> Result {
+        info!(
+            n_buffered_batches = buffering.n_batches,
+            n_buffered_accounts = buffering.n_accounts,
+        );
         accounts
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
