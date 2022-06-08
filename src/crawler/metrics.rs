@@ -53,10 +53,10 @@ impl CrawlerMetrics {
 
         info!(
             rps = %format!("{:.1}", n_requests as f64 / elapsed_secs),
-            batch_fill = %format!("{:.2}%", self.average_batch_fill_level.average() * 100.0),
+            fill = %format!("{:.1}%", self.average_batch_fill_level.average() * 100.0),
             apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
             lag = format_duration(lag).as_str(),
-            account_id = self.last_account_id,
+            aid = self.last_account_id,
         );
 
         Self::new(request_counter, self.lag_percentile)

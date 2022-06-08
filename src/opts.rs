@@ -131,7 +131,6 @@ pub struct BufferingOpts {
     pub n_batches: usize,
 
     /// Number of accounts being concurrently updated in the database.
-    /// WARNING: value greater than 1 causes MongoDB to get stuck.
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",
