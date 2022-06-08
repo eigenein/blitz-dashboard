@@ -20,9 +20,9 @@ use crate::wargaming::models::{
 pub mod mongodb;
 
 /// Open and initialize the database.
-#[instrument(skip_all, fields(initialize_schema = initialize_schema), level = "info")]
+#[instrument(skip_all, fields(initialize_schema), level = "debug")]
 pub async fn open(uri: &str, initialize_schema: bool) -> Result<PgPool> {
-    info!("connecting…");
+    info!(uri, initialize_schema, "connecting…");
     let options = PgConnectOptions::from_str(uri)?;
     let inner = PgPoolOptions::new()
         .connect_timeout(StdDuration::from_secs(5))

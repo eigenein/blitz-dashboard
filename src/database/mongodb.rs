@@ -4,8 +4,9 @@ use crate::prelude::*;
 
 pub mod models;
 
-#[instrument]
+#[instrument(level = "debug")]
 pub async fn open(uri: &str) -> Result<Database> {
+    info!(uri, "connecting…");
     let client = mongodb::Client::with_uri_str(uri)
         .await
         .context("failed to parse the specified MongoDB URI")?;
