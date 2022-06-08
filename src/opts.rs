@@ -119,7 +119,9 @@ pub struct CrawlAccountsOpts {
 
 #[derive(Parser)]
 pub struct BufferingOpts {
-    /// Number of batches for which the crawler should buffer the account information.
+    /// Number of account batches which should get concurrently crawled and buffered.
+    /// A batch is 100 accounts – the maximum for Wargaming.net API.
+    /// Crawled batch contains all the account information which is prepared for updating the database.
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
@@ -128,7 +130,8 @@ pub struct BufferingOpts {
     )]
     pub n_batches: usize,
 
-    /// Number of accounts for which the crawler should buffer the tanks information.
+    /// Number of accounts being concurrently updated in the database.
+    /// WARNING: value greater than 1 causes MongoDB to get stuck.
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",

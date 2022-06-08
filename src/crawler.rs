@@ -145,7 +145,7 @@ impl Crawler {
         metrics.add_account(account.id);
         metrics.add_lag_from(new_info.base.last_battle_time)?;
 
-        // FIXME: `Account::upsert` silently gets stuck.
+        // FIXME: `Account::upsert` silently gets stuck when `n_buffered_accounts` > 1.
         timeout(
             StdDuration::from_secs(10),
             task::spawn(async move {
@@ -178,7 +178,7 @@ async fn crawl_batch(
 
     let mut crawled = Vec::new();
     for (account, new_info) in matched.into_iter() {
-        let (new_info, tanks) = crawl_account(&api, &account, new_info).await?;
+        let tanks = crawl_account(&api, &account).await?;
         crawled.push((account, new_info, tanks));
     }
 
@@ -246,8 +246,7 @@ async fn get_updated_tanks_statistics(
 async fn crawl_account(
     api: &WargamingApi,
     account: &database::Account,
-    new_info: wargaming::AccountInfo,
-) -> Result<(wargaming::AccountInfo, Vec<wargaming::Tank>)> {
+) -> Result<Vec<wargaming::Tank>> {
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
@@ -255,9 +254,9 @@ async fn crawl_account(
         let achievements = api.get_tanks_achievements(account.id).await?;
         let tanks = wargaming::merge_tanks(account.id, statistics, achievements);
         debug!(account_id = account.id, n_tanks = tanks.len(), "crawled");
-        Ok((new_info, tanks))
+        Ok(tanks)
     } else {
         trace!(account_id = account.id, "no updated tanks");
-        Ok((new_info, Vec::new()))
+        Ok(Vec::new())
     }
 }
