@@ -16,7 +16,7 @@ impl<E: Into<anyhow::Error>> From<E> for Error {
 #[rocket::async_trait]
 impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
-        error!("{} {}: {:#}", request.method(), request.uri(), self.0);
+        error!(method = ?request.method(), uri = ?request.uri(), "{:#}", self.0);
         Response::build().status(Status::InternalServerError).ok()
     }
 }

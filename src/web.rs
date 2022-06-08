@@ -78,15 +78,17 @@ fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::s
                 method = %request.method(),
                 uri = %request.uri(),
                 status = status.code,
-                "client error",
+                "client error {}",
+                status.code,
             );
         }
         StatusClass::ServerError => {
-            tracing::error!(
+            error!(
                 method = %request.method(),
                 uri = %request.uri(),
                 status = status.code,
-                "server error",
+                "server error {}",
+                status.code,
             );
         }
         _ => {}
