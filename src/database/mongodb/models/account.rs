@@ -29,10 +29,12 @@ impl From<wargaming::AccountInfo> for Account {
 }
 
 impl Account {
-    const COLLECTION_NAME: &'static str = "accounts";
-    const LAST_BATTLE_TIME_KEY: &'static str = "lbts";
     pub const OPERATION_SET: &'static str = "$set";
     pub const OPERATION_SET_ON_INSERT: &'static str = "$setOnInsert";
+
+    fn collection(in_: &Database) -> Collection<Self> {
+        in_.collection("accounts")
+    }
 
     pub fn fake(account_id: i32) -> Self {
         Self {
@@ -43,28 +45,19 @@ impl Account {
 
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
+        let indexes = [IndexModel::builder().keys(doc! { "lbts": -1 }).build()];
         Self::collection(on)
-            .create_index(
-                IndexModel::builder()
-                    .keys(doc! { Self::LAST_BATTLE_TIME_KEY: -1 })
-                    .build(),
-                None,
-            )
+            .create_indexes(indexes, None)
             .await
-            .context("failed to create `accounts.lbts` index")?;
+            .context("failed to create the indexes on accounts")?;
         Ok(())
-    }
-
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection(Self::COLLECTION_NAME)
     }
 
     #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
     pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
         let query = doc! { "_id": self.id };
-        let update = UpdateModifications::Document(
-            doc! { operation: { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
-        );
+        let update =
+            UpdateModifications::Document(doc! { operation: { "lbts": self.last_battle_time } });
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
@@ -91,9 +84,9 @@ impl Account {
             doc! {
                 "$match": {
                     "$or": [
-                        { Self::LAST_BATTLE_TIME_KEY: null },
-                        { Self::LAST_BATTLE_TIME_KEY: bson::DateTime::from_millis(0) }, // FIXME: remove.
-                        { Self::LAST_BATTLE_TIME_KEY: { "$gt": now - max_offset, "$lte": now - min_offset } },
+                        { "lbts": null },
+                        { "lbts": bson::DateTime::from_millis(0) }, // FIXME: remove.
+                        { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
                     ],
                 },
             },

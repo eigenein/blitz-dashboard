@@ -171,11 +171,7 @@ pub fn home_button() -> Markup {
 
 #[must_use]
 pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
-    if condition {
-        class
-    } else {
-        ""
-    }
+    if condition { class } else { "" }
 }
 
 #[must_use]

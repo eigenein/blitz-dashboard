@@ -129,6 +129,7 @@ impl Crawler {
         tanks: Vec<wargaming::Tank>,
     ) -> Result {
         debug!(n_tanks = tanks.len(), "updating account…");
+
         let start_instant = Instant::now();
         let mut transaction = self.database.begin().await?;
         insert_tank_snapshots(&mut transaction, &tanks).await?;
@@ -137,19 +138,27 @@ impl Crawler {
             .instrument(debug_span!("commit"))
             .await
             .with_context(|| format!("failed to commit account #{}", account.id))?;
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "committed");
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "committed to PostgreSQL");
+
+        for tank in tanks.into_iter() {
+            database::TankSnapshot::from(tank)
+                .upsert(&self.mongodb)
+                .await?;
+        }
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
 
         let last_battle_time = new_info.last_battle_time;
         database::Account::from(new_info)
             .upsert(&self.mongodb, database::Account::OPERATION_SET)
             .await?;
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
         let mut metrics = self.metrics.lock().await;
         metrics.add_account(account.id);
         metrics.add_lag_from(last_battle_time)?;
         drop(metrics);
 
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "updated");
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(())
     }
 }
