@@ -100,6 +100,7 @@ pub fn footer() -> Markup {
                 div.columns {
                     div.column."is-3" {
                         p.title."is-6" { "О проекте" }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-home.has-text-info {} }
@@ -111,11 +112,17 @@ pub fn footer() -> Markup {
                                     a href=(format!("https://github.com/eigenein/blitz-dashboard/releases/tag/{}", crate::CRATE_VERSION)) {
                                         (crate::CRATE_VERSION)
                                     }
-                                    " © "
-                                    a href="https://github.com/eigenein" { "@eigenein" }
                                 }
                             }
                         }
+
+                        p."mt-1" {
+                            span.icon-text.is-flex-wrap-nowrap {
+                                span.icon { i.fa-regular.fa-copyright.has-text-warning {} }
+                                span { a href="https://github.com/eigenein" { "@eigenein" } }
+                            }
+                        }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-heart.has-text-danger {} }
@@ -125,6 +132,7 @@ pub fn footer() -> Markup {
                                 }
                             }
                         }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-id-badge.has-text-success {} }
@@ -135,18 +143,21 @@ pub fn footer() -> Markup {
 
                     div.column."is-2" {
                         p.title."is-6" { "Поддержка" }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-comments.has-text-info {} }
                                 span { a href="https://github.com/eigenein/blitz-dashboard/discussions" { "Обсуждения" } }
                             }
                         }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fab.fa-github.has-text-danger {} }
                                 span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Задачи и баги" } }
                             }
                         }
+
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-code-branch.has-text-success {} }
