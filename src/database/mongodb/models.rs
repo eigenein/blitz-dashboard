@@ -8,9 +8,8 @@ use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-use crate::format_elapsed;
 use crate::prelude::*;
-use crate::wargaming::models::BaseAccountInfo;
+use crate::{format_elapsed, wargaming};
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize)]
@@ -23,8 +22,8 @@ pub struct Account {
     pub last_battle_time: DateTime,
 }
 
-impl From<BaseAccountInfo> for Account {
-    fn from(account_info: BaseAccountInfo) -> Self {
+impl From<wargaming::AccountInfo> for Account {
+    fn from(account_info: wargaming::AccountInfo) -> Self {
         Self {
             id: account_info.id,
             last_battle_time: account_info.last_battle_time,

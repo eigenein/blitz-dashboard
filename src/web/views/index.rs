@@ -60,5 +60,8 @@ pub async fn get(
         }
     };
 
-    Ok(CustomResponse::CachedMarkup("max-age=604800, stale-while-revalidate=86400", markup))
+    Ok(CustomResponse::CachedMarkup(
+        "max-age=604800, stale-while-revalidate=86400",
+        markup,
+    ))
 }

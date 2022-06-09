@@ -1,32 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use crate::database;
 use crate::prelude::*;
 use crate::wargaming::models::{BasicStatistics, RatingStatistics};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct BaseAccountInfo {
+/// Wargaming.net account information.
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
+pub struct AccountInfo {
     #[serde(rename = "account_id")]
     pub id: i32,
 
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime,
-}
-
-impl From<database::Account> for BaseAccountInfo {
-    fn from(account: database::Account) -> Self {
-        Self {
-            id: account.id,
-            last_battle_time: account.last_battle_time,
-        }
-    }
-}
-
-/// Wargaming.net account information.
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
-pub struct AccountInfo {
-    #[serde(flatten)]
-    pub base: BaseAccountInfo,
 
     pub nickname: String,
 
@@ -38,11 +22,11 @@ pub struct AccountInfo {
 
 impl AccountInfo {
     pub fn is_active(&self) -> bool {
-        self.base.last_battle_time > (Utc::now() - Duration::days(365))
+        self.last_battle_time > (Utc::now() - Duration::days(365))
     }
 
     pub fn has_recently_played(&self) -> bool {
-        self.base.last_battle_time > (Utc::now() - Duration::hours(1))
+        self.last_battle_time > (Utc::now() - Duration::hours(1))
     }
 
     pub fn is_account_birthday(&self) -> bool {

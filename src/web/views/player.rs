@@ -88,9 +88,9 @@ pub async fn get(
 
                     div.navbar-item title="Последний бой" {
                         time.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" })
-                            datetime=(current_info.base.last_battle_time.to_rfc3339())
-                            title=(current_info.base.last_battle_time) {
-                                (datetime(current_info.base.last_battle_time, Tense::Past))
+                            datetime=(current_info.last_battle_time.to_rfc3339())
+                            title=(current_info.last_battle_time) {
+                                (datetime(current_info.last_battle_time, Tense::Past))
                             }
                     }
 
@@ -494,7 +494,7 @@ pub async fn get(
                             article.message.is-warning {
                                 div.message-body {
                                     p { "Пользователь не играл в случайных боях за этот период времени." }
-                                    p { "Последний бой закончился " strong { (datetime(current_info.base.last_battle_time, Tense::Present)) } " назад." }
+                                    p { "Последний бой закончился " strong { (datetime(current_info.last_battle_time, Tense::Present)) } " назад." }
                                 }
                             }
                         }
@@ -532,7 +532,7 @@ pub async fn get(
 
 fn render_tank_tr(tank: &Tank, account_win_rate: &ConfidenceInterval) -> Result<Markup> {
     let markup = html! {
-        @let vehicle = get_vehicle(tank.statistics.base.tank_id);
+        @let vehicle = get_vehicle(tank.statistics.basic.tank_id);
         @let true_win_rate = tank.statistics.all.true_win_rate();
         @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
 

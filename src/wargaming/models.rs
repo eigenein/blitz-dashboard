@@ -39,10 +39,10 @@ pub fn merge_tanks(
     mut statistics: Vec<TankStatistics>,
     mut achievements: Vec<TankAchievements>,
 ) -> Vec<Tank> {
-    statistics.sort_unstable_by_key(|snapshot| snapshot.base.tank_id);
+    statistics.sort_unstable_by_key(|snapshot| snapshot.basic.tank_id);
     achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
 
-    merge_join_by(statistics, achievements, |left, right| left.base.tank_id.cmp(&right.tank_id))
+    merge_join_by(statistics, achievements, |left, right| left.basic.tank_id.cmp(&right.tank_id))
         .filter_map(|item| match item {
             EitherOrBoth::Both(statistics, achievements) => Some(Tank {
                 account_id,

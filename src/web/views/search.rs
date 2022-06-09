@@ -50,7 +50,7 @@ pub async fn get(
         let account_info = accounts.first().unwrap();
         account_info_cache.put(account_info).await?;
         return Ok(CustomResponse::Redirect(Redirect::temporary(uri!(get_player(
-            account_id = account_info.base.id,
+            account_id = account_info.id,
             period = _,
         )))));
     }
@@ -61,9 +61,7 @@ pub async fn get(
     if let Some(exact_match) = &exact_match {
         account_info_cache.put(exact_match).await?;
     }
-    accounts.sort_unstable_by(|left, right| {
-        right.base.last_battle_time.cmp(&left.base.last_battle_time)
-    });
+    accounts.sort_unstable_by(|left, right| right.last_battle_time.cmp(&left.last_battle_time));
 
     let markup = html! {
         (DOCTYPE)
@@ -130,12 +128,12 @@ fn account_card(account_info: &AccountInfo) -> Markup {
     html! {
         div.box {
             p.title."is-5" {
-                a href=(uri!(get_player(account_id = account_info.base.id, period = _))) { (account_info.nickname) }
+                a href=(uri!(get_player(account_id = account_info.id, period = _))) { (account_info.nickname) }
             }
             p.subtitle."is-6" {
                 span.icon-text.has-text-grey {
                     span.icon { i.far.fa-dot-circle {} }
-                    span { (datetime(account_info.base.last_battle_time, Tense::Past)) }
+                    span { (datetime(account_info.last_battle_time, Tense::Past)) }
                 }
             }
         }

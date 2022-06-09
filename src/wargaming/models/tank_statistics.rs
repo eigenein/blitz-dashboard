@@ -8,7 +8,7 @@ use crate::prelude::*;
 use crate::wargaming::models::{BasicStatistics, TankId};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
-pub struct BaseTankStatistics {
+pub struct BasicTankStatistics {
     pub tank_id: TankId,
 
     /// The moment in time when the related state is actual.
@@ -20,7 +20,7 @@ pub struct BaseTankStatistics {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 pub struct TankStatistics {
     #[serde(flatten)]
-    pub base: BaseTankStatistics,
+    pub basic: BasicTankStatistics,
 
     #[serde(
         serialize_with = "serialize_duration_seconds",
@@ -44,7 +44,7 @@ impl Sub for TankStatistics {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
-            base: self.base,
+            basic: self.basic,
             battle_life_time: self.battle_life_time - rhs.battle_life_time,
             all: self.all - rhs.all,
         }

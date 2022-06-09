@@ -3,7 +3,6 @@ use std::str::FromStr;
 use std::time::{Duration as StdDuration, Instant};
 
 use anyhow::Context;
-use chrono::{Duration, TimeZone, Utc};
 use futures::{StreamExt, TryStreamExt};
 use itertools::Itertools;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgRow};
@@ -13,8 +12,7 @@ pub use crate::database::mongodb::models::*;
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::models::{
-    BaseAccountInfo, BaseTankStatistics, BasicStatistics, Tank, TankAchievements, TankId,
-    TankStatistics,
+    BasicStatistics, BasicTankStatistics, Tank, TankAchievements, TankId, TankStatistics,
 };
 
 pub mod mongodb;
@@ -160,13 +158,13 @@ pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]
         .bind(
             &tanks
                 .iter()
-                .map(|tank| tank.statistics.base.tank_id as i32)
+                .map(|tank| tank.statistics.basic.tank_id as i32)
                 .collect_vec(),
         )
         .bind(
             &tanks
                 .iter()
-                .map(|tank| tank.statistics.base.last_battle_time)
+                .map(|tank| tank.statistics.basic.last_battle_time)
                 .collect_vec(),
         )
         .bind(
@@ -255,14 +253,14 @@ impl<'r> FromRow<'r, PgRow> for TankStatistics {
     fn from_row(row: &'r PgRow) -> Result<Self, Error> {
         let battle_life_time: i64 = row.try_get("battle_life_time")?;
         Ok(Self {
-            base: BaseTankStatistics::from_row(row)?,
+            basic: BasicTankStatistics::from_row(row)?,
             battle_life_time: Duration::seconds(battle_life_time),
             all: BasicStatistics::from_row(row)?,
         })
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for BaseTankStatistics {
+impl<'r> FromRow<'r, PgRow> for BasicTankStatistics {
     fn from_row(row: &'r PgRow) -> Result<Self, Error> {
         Ok(Self {
             tank_id: try_convert::<i32, _>(row.try_get("tank_id")?)?,
@@ -281,19 +279,8 @@ impl<'r> FromRow<'r, PgRow> for TankAchievements {
     }
 }
 
-impl<'r> FromRow<'r, PgRow> for BaseAccountInfo {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        Ok(Self {
-            id: row.try_get("account_id")?,
-            last_battle_time: row
-                .try_get::<'_, Option<DateTime>, _>("last_battle_time")?
-                .unwrap_or_else(|| Utc.timestamp(0, 0)),
-        })
-    }
-}
-
 impl<'r> FromRow<'r, PgRow> for BasicStatistics {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+    fn from_row(row: &PgRow) -> Result<Self, Error> {
         Ok(Self {
             battles: row.try_get("battles")?,
             wins: row.try_get("wins")?,

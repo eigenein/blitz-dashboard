@@ -1,5 +1,5 @@
 edition = "2021"
-fn_call_width = 100
+fn_call_width = 80
 format_code_in_doc_comments = true
 group_imports = "StdExternalCrate"
 reorder_impl_items = true

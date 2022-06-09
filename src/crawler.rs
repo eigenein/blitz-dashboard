@@ -93,7 +93,10 @@ impl Crawler {
         buffering: &BufferingOpts,
         heartbeat_url: Option<String>,
     ) -> Result {
-        info!(n_buffered_batches = buffering.n_batches, n_buffered_accounts = buffering.n_accounts);
+        info!(
+            n_buffered_batches = buffering.n_batches,
+            n_buffered_accounts = buffering.n_accounts
+        );
         accounts
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
@@ -136,8 +139,8 @@ impl Crawler {
             .with_context(|| format!("failed to commit account #{}", account.id))?;
         debug!(elapsed = format_elapsed(start_instant).as_str(), "committed");
 
-        let last_battle_time = new_info.base.last_battle_time;
-        database::Account::from(new_info.base)
+        let last_battle_time = new_info.last_battle_time;
+        database::Account::from(new_info)
             .upsert(&self.mongodb)
             .await?;
 
@@ -199,7 +202,7 @@ fn match_account_infos(
     batch
         .into_iter()
         .filter_map(move |account| match new_infos.remove(&account.id.to_string()).flatten() {
-            Some(new_info) if account.last_battle_time != new_info.base.last_battle_time => {
+            Some(new_info) if account.last_battle_time != new_info.last_battle_time => {
                 Some((account, new_info))
             }
             _ => None,
@@ -222,7 +225,7 @@ async fn get_updated_tanks_statistics(
         .get_tanks_stats(account_id)
         .await?
         .into_iter()
-        .filter(|tank| tank.base.last_battle_time > since)
+        .filter(|tank| tank.basic.last_battle_time > since)
         .collect();
     Ok(statistics)
 }
