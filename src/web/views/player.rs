@@ -18,7 +18,7 @@ use crate::database::retrieve_latest_tank_snapshots;
 use crate::format_elapsed;
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
-use crate::math::statistics::{ConfidenceInterval, Z};
+use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -77,7 +77,7 @@ pub async fn get(
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
-        Z::default(),
+        ConfidenceLevel::default(),
     );
 
     let navbar = html! {
@@ -459,7 +459,7 @@ pub async fn get(
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::wilson_score_interval(
-                                                                stats_delta.battles, stats_delta.survived_battles, Z::default());
+                                                                stats_delta.battles, stats_delta.survived_battles, ConfidenceLevel::default());
                                                             (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }

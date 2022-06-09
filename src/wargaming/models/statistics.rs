@@ -3,7 +3,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::math::statistics::{ConfidenceInterval, Z};
+use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct BasicStatistics {
@@ -41,7 +41,11 @@ impl BasicStatistics {
     }
 
     pub fn true_win_rate(&self) -> ConfidenceInterval {
-        ConfidenceInterval::wilson_score_interval(self.battles, self.wins, Z::default())
+        ConfidenceInterval::wilson_score_interval(
+            self.battles,
+            self.wins,
+            ConfidenceLevel::default(),
+        )
     }
 }
 

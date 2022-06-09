@@ -12,8 +12,8 @@ pub struct ConfidenceInterval {
 
 impl ConfidenceInterval {
     /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
-    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, z: Z) -> Self {
-        let z = z.z();
+    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, level: ConfidenceLevel) -> Self {
+        let z = level.z_value();
         let n_trials = n_trials as f64;
         let n_successes = n_successes as f64;
 
@@ -98,7 +98,7 @@ impl PartialOrd for ConfidenceInterval {
 }
 
 #[derive(Copy, Clone)]
-pub enum Z {
+pub enum ConfidenceLevel {
     Z80,
     Z85,
     Z87,
@@ -106,17 +106,21 @@ pub enum Z {
     Z89,
     Z90,
     Z95,
+    Z96,
+    Z97,
+    Z98,
     Z99,
+    Z99_99,
 }
 
-impl Default for Z {
+impl Default for ConfidenceLevel {
     fn default() -> Self {
-        Self::Z95
+        Self::Z96
     }
 }
 
-impl Z {
-    pub const fn z(&self) -> f64 {
+impl ConfidenceLevel {
+    pub const fn z_value(&self) -> f64 {
         match self {
             Self::Z80 => 1.28,
             Self::Z85 => 1.440,
@@ -125,7 +129,11 @@ impl Z {
             Self::Z89 => 1.598,
             Self::Z90 => 1.645,
             Self::Z95 => 1.960,
+            Self::Z96 => 2.054,
+            Self::Z97 => 2.17009,
+            Self::Z98 => 2.326,
             Self::Z99 => 2.576,
+            Self::Z99_99 => 3.29053,
         }
     }
 }
