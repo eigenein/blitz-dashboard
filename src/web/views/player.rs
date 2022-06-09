@@ -65,7 +65,7 @@ pub async fn get(
     };
 
     crate::database::Account::fake(account_id)
-        .insert_or_ignore(mongodb)
+        .upsert(mongodb, crate::database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
     let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);

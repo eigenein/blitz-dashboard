@@ -1,7 +1,6 @@
 use futures::future::ready;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, from_document};
-use mongodb::error::{ErrorKind, WriteError, WriteFailure};
 use mongodb::options::{UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
@@ -30,8 +29,10 @@ impl From<wargaming::AccountInfo> for Account {
 }
 
 impl Account {
-    pub const COLLECTION_NAME: &'static str = "accounts";
-    pub const LAST_BATTLE_TIME_KEY: &'static str = "lbts";
+    const COLLECTION_NAME: &'static str = "accounts";
+    const LAST_BATTLE_TIME_KEY: &'static str = "lbts";
+    pub const OPERATION_SET: &'static str = "$set";
+    pub const OPERATION_SET_ON_INSERT: &'static str = "$setOnInsert";
 
     pub fn fake(account_id: i32) -> Self {
         Self {
@@ -58,43 +59,23 @@ impl Account {
         in_.collection(Self::COLLECTION_NAME)
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
-    pub async fn upsert(&self, to: &Database) -> Result {
-        let start_instant = Instant::now();
+    #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
+    pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
+        let query = doc! { "_id": self.id };
+        let update = UpdateModifications::Document(
+            doc! { operation: { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
+        );
+        let options = UpdateOptions::builder().upsert(true).build();
+
         debug!("upserting…");
+        let start_instant = Instant::now();
         Self::collection(to)
-            .update_one(
-                doc! { "_id": self.id },
-                UpdateModifications::Document(
-                    doc! { "$set": { Self::LAST_BATTLE_TIME_KEY: self.last_battle_time } },
-                ),
-                UpdateOptions::builder().upsert(true).build(),
-            )
+            .update_one(query, update, options)
             .await
             .with_context(|| format!("failed to upsert the account #{}", self.id))?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
-    }
-
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
-    pub async fn insert_or_ignore(&self, to: &Database) -> Result {
-        match Self::collection(to).insert_one(self, None).await {
-            Ok(_) => Ok(()),
-            Err(error) => {
-                match *error.kind {
-                    ErrorKind::Write(WriteFailure::WriteError(WriteError {
-                        code: 11000, ..
-                    })) => {
-                        // Ignore duplicate key error.
-                        Ok(())
-                    }
-                    _ => {
-                        Err(error).with_context(|| format!("failed to insert account #{}", self.id))
-                    }
-                }
-            }
-        }
     }
 
     #[instrument(skip_all, level = "debug")]
@@ -109,16 +90,17 @@ impl Account {
             doc! { "$sample": { "size": sample_size } },
             doc! {
                 "$match": {
-                    Self::LAST_BATTLE_TIME_KEY: {
-                        "$gt": now - max_offset,
-                        "$lte": now - min_offset,
-                    },
+                    "$or": [
+                        { Self::LAST_BATTLE_TIME_KEY: null },
+                        { Self::LAST_BATTLE_TIME_KEY: bson::DateTime::from_millis(0) }, // FIXME: remove.
+                        { Self::LAST_BATTLE_TIME_KEY: { "$gt": now - max_offset, "$lte": now - min_offset } },
+                    ],
                 },
             },
         ];
 
         let start_instant = Instant::now();
-        debug!("retrieving a sample…");
+        debug!(sample_size, "retrieving a sample…");
         let account_stream = Self::collection(from)
             .aggregate(pipeline, None)
             .instrument(debug_span!("aggregate"))

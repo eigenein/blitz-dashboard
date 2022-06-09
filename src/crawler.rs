@@ -141,7 +141,7 @@ impl Crawler {
 
         let last_battle_time = new_info.last_battle_time;
         database::Account::from(new_info)
-            .upsert(&self.mongodb)
+            .upsert(&self.mongodb, database::Account::OPERATION_SET)
             .await?;
 
         let mut metrics = self.metrics.lock().await;
