@@ -39,7 +39,7 @@ pub fn account_search(
                     autocorrect="off"
                     aria-label="search"
                     aria-haspopup="false"
-                    size=(&(MAX_QUERY_LENGTH + 2))
+                    size="20"
                     autofocus[has_autofocus]
                     required;
                 span.icon.is-left.(class) { i class="fas fa-user" {} }
@@ -76,7 +76,7 @@ pub fn headers() -> Markup {
         link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png";
         link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png";
         link rel="manifest" href="/site.webmanifest";
-        link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
+        link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-prefers-dark@0.1.0-beta.1/css/bulma-prefers-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer";
         link rel="stylesheet" href=(concat!("/static/theme.css?v", clap::crate_version!()));
         link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer";
