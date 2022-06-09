@@ -14,7 +14,7 @@ use rocket::http::Status;
 use rocket::{uri, State};
 use sqlx::PgPool;
 
-use crate::database::{insert_account_if_not_exists, retrieve_latest_tank_snapshots};
+use crate::database::retrieve_latest_tank_snapshots;
 use crate::format_elapsed;
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
@@ -64,7 +64,6 @@ pub async fn get(
         retrieve_latest_tank_snapshots(database, account_id, before, &tank_ids).await?
     };
 
-    insert_account_if_not_exists(database, account_id).await?;
     crate::database::Account::fake(account_id)
         .insert_or_ignore(mongodb)
         .await?;

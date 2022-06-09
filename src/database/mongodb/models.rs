@@ -62,7 +62,7 @@ impl Account {
     }
 
     #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
-    pub async fn upsert(self, to: &Database) -> Result {
+    pub async fn upsert(&self, to: &Database) -> Result {
         let start_instant = Instant::now();
         debug!("upserting…");
         Self::collection(to)
@@ -81,8 +81,8 @@ impl Account {
     }
 
     #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
-    pub async fn insert_or_ignore(self, to: &Database) -> Result {
-        match Self::collection(to).insert_one(&self, None).await {
+    pub async fn insert_or_ignore(&self, to: &Database) -> Result {
+        match Self::collection(to).insert_one(self, None).await {
             Ok(_) => Ok(()),
             Err(error) => {
                 match *error.kind {

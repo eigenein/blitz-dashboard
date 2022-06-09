@@ -9,7 +9,7 @@ use tracing_futures::Instrument;
 
 use crate::crawler::account_stream::get_account_stream;
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::database::{insert_tank_snapshots, replace_account};
+use crate::database::insert_tank_snapshots;
 use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
@@ -129,7 +129,6 @@ impl Crawler {
         let start_instant = Instant::now();
         let mut transaction = self.database.begin().await?;
         insert_tank_snapshots(&mut transaction, &tanks).await?;
-        replace_account(&mut transaction, &new_info.base).await?;
         transaction
             .commit()
             .instrument(debug_span!("commit"))
@@ -137,14 +136,15 @@ impl Crawler {
             .with_context(|| format!("failed to commit account #{}", account.id))?;
         debug!(elapsed = format_elapsed(start_instant).as_str(), "committed");
 
-        let mut metrics = self.metrics.lock().await;
-        metrics.add_account(account.id);
-        metrics.add_lag_from(new_info.base.last_battle_time)?;
-        drop(metrics);
-
+        let last_battle_time = new_info.base.last_battle_time;
         database::Account::from(new_info.base)
             .upsert(&self.mongodb)
             .await?;
+
+        let mut metrics = self.metrics.lock().await;
+        metrics.add_account(account.id);
+        metrics.add_lag_from(last_battle_time)?;
+        drop(metrics);
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "updated");
         Ok(())

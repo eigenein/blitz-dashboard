@@ -129,63 +129,6 @@ pub async fn retrieve_latest_tank_battle_counts(
     result
 }
 
-#[instrument(skip_all, fields(account_id = account.id))]
-pub async fn replace_account(connection: &mut PgConnection, account: &BaseAccountInfo) -> Result {
-    // language=SQL
-    const QUERY: &str = "
-        INSERT INTO accounts (account_id, last_battle_time)
-        VALUES ($1, $2)
-        ON CONFLICT (account_id) DO UPDATE SET
-            last_battle_time = excluded.last_battle_time
-    ";
-    let account_id = account.id;
-    sqlx::query(QUERY)
-        .bind(account.id)
-        .bind(account.last_battle_time)
-        .execute(connection)
-        .await
-        .with_context(|| format!("failed to replace the account #{}", account_id))?;
-    Ok(())
-}
-
-#[instrument(skip_all, fields(account_id = account_id))]
-pub async fn insert_account_if_not_exists(
-    connection: &PgPool,
-    account_id: i32,
-) -> Result<Option<DateTime>> {
-    // language=SQL
-    const QUERY: &str = r#"
-        WITH existing AS (
-            INSERT INTO accounts (account_id, last_battle_time)
-            VALUES ($1, NULL)
-            ON CONFLICT (account_id) DO NOTHING
-            RETURNING last_battle_time
-        )
-        SELECT last_battle_time FROM existing
-        UNION SELECT last_battle_time FROM accounts WHERE account_id = $1;
-    "#;
-    sqlx::query_scalar(QUERY)
-        .bind(account_id)
-        .fetch_one(connection)
-        .await
-        .context("failed to insert the account if not exists")
-}
-
-#[allow(dead_code)]
-#[instrument(skip_all, fields(account_id = account_id))]
-pub async fn retrieve_account(
-    connection: &PgPool,
-    account_id: i32,
-) -> Result<Option<BaseAccountInfo>> {
-    // language=SQL
-    const QUERY: &str = "SELECT * FROM accounts WHERE account_id = $1";
-    sqlx::query_as(QUERY)
-        .bind(account_id)
-        .fetch_optional(connection)
-        .await
-        .with_context(|| format!("failed to retrieve account #{}", account_id))
-}
-
 #[instrument(skip_all, fields(n_tanks = tanks.len()))]
 pub async fn insert_tank_snapshots(connection: &mut PgConnection, tanks: &[Tank]) -> Result {
     // language=SQL
