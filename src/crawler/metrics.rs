@@ -1,6 +1,8 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use chrono::DurationRound;
+use circular_queue::CircularQueue;
+use itertools::Itertools;
 
 use crate::helpers::average::Average;
 use crate::prelude::*;
@@ -15,13 +17,14 @@ pub struct CrawlerMetrics {
     start_request_count: u32,
     n_accounts: u32,
     last_account_id: i32,
-    lags: Vec<StdDuration>,
+    lags: CircularQueue<StdDuration>,
 }
 
 impl CrawlerMetrics {
     pub fn new(
         request_counter: &AtomicU32,
         lag_percentile: usize,
+        lag_window_size: usize,
         log_interval: StdDuration,
     ) -> Self {
         Self {
@@ -29,7 +32,7 @@ impl CrawlerMetrics {
             n_accounts: 0,
             last_account_id: 0,
             reset_instant: Instant::now(),
-            lags: Vec::new(),
+            lags: CircularQueue::with_capacity(lag_window_size),
             lag_percentile,
             average_batch_fill_level: Average::default(),
             log_interval,
@@ -67,7 +70,7 @@ impl CrawlerMetrics {
         }
     }
 
-    fn log(&mut self, request_counter: u32, elapsed: StdDuration) {
+    fn log(&self, request_counter: u32, elapsed: StdDuration) {
         let elapsed_secs = elapsed.as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter - self.start_request_count;
@@ -87,16 +90,16 @@ impl CrawlerMetrics {
         self.average_batch_fill_level = Default::default();
         self.start_request_count = request_counter;
         self.n_accounts = 0;
-        self.lags.clear();
     }
 
-    fn lag(&mut self) -> StdDuration {
+    fn lag(&self) -> StdDuration {
         if self.lags.is_empty() {
             return StdDuration::new(0, 0);
         }
 
-        let index = self.lag_percentile * self.lags.len() / 100;
-        let (_, lag, _) = self.lags.select_nth_unstable(index);
+        let mut lags = self.lags.iter().copied().collect_vec();
+        let index = self.lag_percentile * lags.len() / 100;
+        let (_, lag, _) = lags.select_nth_unstable(index);
         *lag
     }
 }

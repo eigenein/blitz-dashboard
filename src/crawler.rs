@@ -77,6 +77,7 @@ impl Crawler {
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
                 &api.request_counter,
                 opts.lag_percentile,
+                opts.lag_window_size,
                 opts.log_interval,
             ))),
             api,
