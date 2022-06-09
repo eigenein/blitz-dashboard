@@ -15,15 +15,15 @@ pub struct Account {
     pub id: i32,
 
     #[serde(rename = "lbts")]
-    #[serde_as(as = "bson::DateTime")]
-    pub last_battle_time: DateTime,
+    #[serde_as(as = "Option<bson::DateTime>")]
+    pub last_battle_time: Option<DateTime>,
 }
 
 impl From<wargaming::AccountInfo> for Account {
     fn from(account_info: wargaming::AccountInfo) -> Self {
         Self {
             id: account_info.id,
-            last_battle_time: account_info.last_battle_time,
+            last_battle_time: Some(account_info.last_battle_time),
         }
     }
 }
@@ -37,7 +37,7 @@ impl Account {
     pub fn fake(account_id: i32) -> Self {
         Self {
             id: account_id,
-            last_battle_time: Utc.timestamp(0, 0),
+            last_battle_time: None,
         }
     }
 

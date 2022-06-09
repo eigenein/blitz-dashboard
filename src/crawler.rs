@@ -202,7 +202,7 @@ fn match_account_infos(
     batch
         .into_iter()
         .filter_map(move |account| match new_infos.remove(&account.id.to_string()).flatten() {
-            Some(new_info) if account.last_battle_time != new_info.last_battle_time => {
+            Some(new_info) if account.last_battle_time != Some(new_info.last_battle_time) => {
                 Some((account, new_info))
             }
             _ => None,
@@ -219,14 +219,16 @@ fn match_account_infos(
 async fn get_updated_tanks_statistics(
     api: &WargamingApi,
     account_id: i32,
-    since: DateTime,
+    since: Option<DateTime>,
 ) -> Result<Vec<wargaming::TankStatistics>> {
-    let statistics = api
-        .get_tanks_stats(account_id)
-        .await?
-        .into_iter()
-        .filter(|tank| tank.basic.last_battle_time > since)
-        .collect();
+    let statistics = api.get_tanks_stats(account_id).await?;
+    let statistics = match since {
+        Some(since) => statistics
+            .into_iter()
+            .filter(|tank| tank.basic.last_battle_time > since)
+            .collect(),
+        None => statistics,
+    };
     Ok(statistics)
 }
 
