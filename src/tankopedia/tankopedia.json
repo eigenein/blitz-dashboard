@@ -265,8 +265,8 @@
       "19475": {
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          1300,
-          5908
+          5908,
+          1300
         ],
         "next_tanks": null,
         "is_default": false,
@@ -2253,8 +2253,8 @@
       "7172": {
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "is_default": true,
@@ -17236,18 +17236,6 @@
         "module_id": 2149,
         "type": "vehicleEngine"
       },
-      "3428": {
-        "name": "Tank Type 99",
-        "next_modules": null,
-        "next_tanks": [
-          5473
-        ],
-        "is_default": false,
-        "price_xp": 3000,
-        "price_credit": 0,
-        "module_id": 3428,
-        "type": "vehicleGun"
-      },
       "3426": {
         "name": "Type 2 Ho-I",
         "next_modules": null,
@@ -17257,19 +17245,6 @@
         "price_credit": 0,
         "module_id": 3426,
         "type": "vehicleChassis"
-      },
-      "3171": {
-        "name": "Type 2 Ho-I",
-        "next_modules": [
-          3684,
-          3428
-        ],
-        "next_tanks": null,
-        "is_default": false,
-        "price_xp": 3500,
-        "price_credit": 0,
-        "module_id": 3171,
-        "type": "vehicleTurret"
       },
       "3684": {
         "name": "Experimental Tank Shin",
@@ -17281,6 +17256,31 @@
         "price_xp": 3500,
         "price_credit": 0,
         "module_id": 3684,
+        "type": "vehicleGun"
+      },
+      "3171": {
+        "name": "Type 2 Ho-I",
+        "next_modules": [
+          3428,
+          3684
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 3500,
+        "price_credit": 0,
+        "module_id": 3171,
+        "type": "vehicleTurret"
+      },
+      "3428": {
+        "name": "Tank Type 99",
+        "next_modules": null,
+        "next_tanks": [
+          5473
+        ],
+        "is_default": false,
+        "price_xp": 3000,
+        "price_credit": 0,
+        "module_id": 3428,
         "type": "vehicleGun"
       },
       "1893": {
@@ -17402,8 +17402,8 @@
     "type": "mediumTank",
     "guns": [
       6500,
-      3428,
-      3684
+      3684,
+      3428
     ],
     "turrets": [
       2915,
@@ -21737,8 +21737,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          23809,
-          7937
+          7937,
+          23809
         ],
         "is_default": false,
         "price_xp": 34000,
@@ -24637,8 +24637,8 @@
         "name": "90 mm Mecar mit Mehrladeeinrichtung",
         "next_modules": null,
         "next_tanks": [
-          13841,
-          18449
+          18449,
+          13841
         ],
         "is_default": false,
         "price_xp": 12500,
@@ -25557,9 +25557,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          8065,
           1409,
-          3713
+          3713,
+          8065
         ],
         "is_default": false,
         "price_xp": 5000,
@@ -41434,8 +41434,8 @@
       "5123": {
         "name": "КВ-85",
         "next_modules": [
-          3588,
-          2820
+          2820,
+          3588
         ],
         "next_tanks": null,
         "is_default": false,
@@ -83349,8 +83349,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "is_default": false,
         "price_xp": 6840,
@@ -88766,8 +88766,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          7972,
-          10276
+          10276,
+          7972
         ],
         "next_tanks": null,
         "is_default": true,
