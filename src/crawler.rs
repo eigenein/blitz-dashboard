@@ -3,13 +3,11 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
-use sqlx::PgPool;
 use tokio::sync::Mutex;
 use tracing_futures::Instrument;
 
 use crate::crawler::account_stream::get_account_stream;
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::database::insert_tank_snapshots;
 use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
@@ -24,7 +22,6 @@ const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
 #[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
-    database: PgPool,
     mongodb: mongodb::Database,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 }
@@ -70,7 +67,6 @@ impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
         let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
         let internal = &opts.connections.internal;
-        let database = database::open(&internal.database_uri, false).await?;
         let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
@@ -81,7 +77,6 @@ impl Crawler {
                 opts.log_interval,
             ))),
             api,
-            database,
             mongodb,
         };
         Ok(this)
@@ -130,16 +125,7 @@ impl Crawler {
         tanks: Vec<wargaming::Tank>,
     ) -> Result {
         debug!(n_tanks = tanks.len(), "updating account…");
-
         let start_instant = Instant::now();
-        let mut transaction = self.database.begin().await?;
-        insert_tank_snapshots(&mut transaction, &tanks).await?;
-        transaction
-            .commit()
-            .instrument(debug_span!("commit"))
-            .await
-            .with_context(|| format!("failed to commit account #{}", account.id))?;
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "committed to PostgreSQL");
 
         for tank in tanks.into_iter() {
             database::TankSnapshot::from(tank)
@@ -159,7 +145,7 @@ impl Crawler {
         metrics.add_lag_from(last_battle_time)?;
         drop(metrics);
 
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
         Ok(())
     }
 }

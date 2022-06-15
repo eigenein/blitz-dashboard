@@ -7,7 +7,7 @@ use crate::wargaming::models::{Nation, TankId};
 /// Represents a generic vehicle from the tankopedia.
 #[derive(Deserialize, Clone)]
 pub struct Vehicle {
-    pub tank_id: u16,
+    pub tank_id: TankId,
     pub name: Cow<'static, str>,
     pub tier: i32,
     pub is_premium: bool,

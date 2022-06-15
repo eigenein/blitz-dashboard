@@ -30,7 +30,6 @@ pub enum Subcommand {
     Crawl(CrawlerOpts),
     CrawlAccounts(CrawlAccountsOpts),
     ImportTankopedia(ImportTankopediaOpts),
-    InitializeDatabase(InitializeDatabaseOpts),
     Web(WebOpts),
 }
 
@@ -177,18 +176,6 @@ pub struct SharedCrawlerOpts {
     pub lag_window_size: usize,
 }
 
-/// Initializes the database schema.
-#[derive(Clone, Parser)]
-pub struct InitializeDatabaseOpts {
-    /// PostgreSQL database URI.
-    #[clap(
-        long = "postgres-uri",
-        default_value = "postgres://localhost/yastatist",
-        env = "BLITZ_DASHBOARD_POSTGRES_URI"
-    )]
-    pub database_uri: String,
-}
-
 #[derive(Parser)]
 pub struct ConnectionOpts {
     #[clap(flatten)]
@@ -201,14 +188,6 @@ pub struct ConnectionOpts {
 
 #[derive(Parser)]
 pub struct InternalConnectionOpts {
-    /// PostgreSQL database URI.
-    #[clap(
-        long = "postgres-uri",
-        default_value = "postgres://localhost/yastatist",
-        env = "BLITZ_DASHBOARD_POSTGRES_URI"
-    )]
-    pub database_uri: String,
-
     /// Redis URI
     #[structopt(
         long,

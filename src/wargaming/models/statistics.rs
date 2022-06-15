@@ -3,6 +3,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
+use crate::database;
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
@@ -17,6 +18,23 @@ pub struct BasicStatistics {
     pub hits: i32,
     pub frags: i32,
     pub xp: i32,
+}
+
+impl From<&database::TankSnapshot> for BasicStatistics {
+    fn from(snapshot: &database::TankSnapshot) -> Self {
+        Self {
+            battles: snapshot.n_battles,
+            wins: snapshot.n_wins,
+            survived_battles: snapshot.n_survived_battles,
+            win_and_survived: snapshot.n_win_and_survived,
+            damage_dealt: snapshot.damage_dealt,
+            damage_received: snapshot.damage_received,
+            shots: snapshot.n_shots,
+            hits: snapshot.n_hits,
+            frags: snapshot.n_frags,
+            xp: snapshot.xp,
+        }
+    }
 }
 
 impl BasicStatistics {

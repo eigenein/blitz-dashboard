@@ -103,7 +103,7 @@ impl Account {
             .try_filter_map(|document| {
                 trace!(?document);
                 ready(
-                    from_document::<Account>(document)
+                    from_document::<Self>(document)
                         .map(Some)
                         .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
                 )

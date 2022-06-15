@@ -3,8 +3,8 @@
 ```unit file (systemd)
 [Unit]
 Description = Blitz Dashboard Crawler
-BindsTo = network-online.target postgresql.service redis.service
-After = network-online.target postgresql.service redis.service
+BindsTo = network-online.target mongod.service redis.service
+After = network-online.target mongod.service redis.service
 
 [Service]
 ExecStart = /home/pi/bin/blitz-dashboard \
@@ -12,7 +12,6 @@ ExecStart = /home/pi/bin/blitz-dashboard \
     -v \
     crawl \
     -a=<application-ID> \
-    -d=postgres://user@host/database \
     --min-offset=4h \
     --auto-min-offset \
     --n-buffered-batches=18 \

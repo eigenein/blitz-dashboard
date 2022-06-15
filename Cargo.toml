@@ -67,10 +67,5 @@ features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "tracing"]
 version = "1.0.136"
 features = ["derive"]
 
-[dependencies.sqlx]
-version = "0.5.13"
-default-features = false
-features = ["runtime-tokio-rustls", "postgres", "chrono"]
-
 [dev-dependencies]
 serde_json = "1.0.81"

@@ -58,9 +58,9 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
     writeln!(&mut file)?;
     writeln!(&mut file, "use crate::wargaming::models::{{Nation, TankType, Vehicle}};")?;
     writeln!(&mut file)?;
-    writeln!(&mut file, "pub static GENERATED: phf::Map<u16, Vehicle> = phf::phf_map! {{")?;
+    writeln!(&mut file, "pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {{")?;
     for (_, vehicle) in vehicles.into_iter() {
-        writeln!(&mut file, "    {}_u16 => Vehicle {{", vehicle.tank_id)?;
+        writeln!(&mut file, "    {}_u32 => Vehicle {{", vehicle.tank_id)?;
         writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
         writeln!(&mut file, "        name: Cow::Borrowed({:?}),", vehicle.name,)?;
         writeln!(&mut file, "        tier: {:?},", vehicle.tier)?;

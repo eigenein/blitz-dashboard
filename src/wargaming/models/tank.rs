@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
+use crate::database::TankSnapshot;
 use crate::wargaming::models::{TankAchievements, TankId, TankStatistics};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
@@ -15,52 +15,40 @@ pub struct Tank {
 
 impl Tank {
     #[must_use]
-    pub fn tank_id(&self) -> u16 {
+    pub fn tank_id(&self) -> TankId {
         self.statistics.basic.tank_id
     }
-
-    #[must_use]
-    pub fn wins_per_hour(&self) -> f64 {
-        self.statistics.all.wins as f64 / self.statistics.battle_life_time.num_seconds() as f64
-            * 3600.0
-    }
-
-    #[must_use]
-    pub fn battles_per_hour(&self) -> f64 {
-        self.statistics.all.battles as f64 / self.statistics.battle_life_time.num_seconds() as f64
-            * 3600.0
-    }
-
-    #[must_use]
-    pub fn damage_per_minute(&self) -> f64 {
-        self.statistics.all.damage_dealt as f64
-            / self.statistics.battle_life_time.num_seconds() as f64
-            * 60.0
-    }
 }
 
-impl Sub for Tank {
-    type Output = Tank;
-
-    #[must_use]
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self::Output {
-            account_id: self.account_id,
-            statistics: self.statistics - rhs.statistics,
-            achievements: self.achievements - rhs.achievements,
-        }
-    }
-}
-
-pub fn subtract_tanks(left: Vec<Tank>, mut right: HashMap<TankId, Tank>) -> Vec<Tank> {
+pub fn subtract_tanks(
+    left: Vec<Tank>,
+    mut right: HashMap<TankId, TankSnapshot>,
+) -> Vec<TankSnapshot> {
     left.into_iter()
         .filter_map(|left_tank| match right.remove(&left_tank.statistics.basic.tank_id) {
-            Some(right_tank)
-                if left_tank.statistics.all.battles > right_tank.statistics.all.battles =>
-            {
-                Some(left_tank - right_tank)
+            Some(right_tank) if left_tank.statistics.all.battles > right_tank.n_battles => {
+                Some(TankSnapshot {
+                    last_battle_time: left_tank.statistics.basic.last_battle_time,
+                    account_id: right_tank.account_id,
+                    tank_id: right_tank.tank_id,
+                    battle_life_time: left_tank.statistics.battle_life_time
+                        - right_tank.battle_life_time,
+                    n_battles: left_tank.statistics.all.battles - right_tank.n_battles,
+                    n_wins: left_tank.statistics.all.wins - right_tank.n_wins,
+                    n_survived_battles: left_tank.statistics.all.survived_battles
+                        - right_tank.n_survived_battles,
+                    n_win_and_survived: left_tank.statistics.all.win_and_survived
+                        - right_tank.n_win_and_survived,
+                    damage_dealt: left_tank.statistics.all.damage_dealt - right_tank.damage_dealt,
+                    damage_received: left_tank.statistics.all.damage_received
+                        - right_tank.damage_received,
+                    n_shots: left_tank.statistics.all.shots - right_tank.n_shots,
+                    n_hits: left_tank.statistics.all.hits - right_tank.n_hits,
+                    n_frags: left_tank.statistics.all.frags - right_tank.n_frags,
+                    xp: left_tank.statistics.all.xp - right_tank.xp,
+                })
             }
-            None if left_tank.statistics.all.battles != 0 => Some(left_tank),
+            None if left_tank.statistics.all.battles != 0 => Some(TankSnapshot::from(left_tank)),
             _ => None,
         })
         .collect()

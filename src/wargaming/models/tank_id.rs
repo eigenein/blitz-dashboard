@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::wargaming::models::Nation;
 
-pub type TankId = u16;
+pub type TankId = u32;
 
 /// Converts the API tank ID to the client tank ID.
 pub fn to_client_id(tank_id: TankId) -> Result<u32> {

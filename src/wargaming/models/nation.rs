@@ -49,7 +49,7 @@ impl Nation {
             Nation::Europe,
         ];
 
-        const COMPONENT_VEHICLE: u16 = 1;
+        const COMPONENT_VEHICLE: TankId = 1;
         debug_assert_eq!(tank_id & COMPONENT_VEHICLE, COMPONENT_VEHICLE);
 
         let nation = ((tank_id >> 4) & 0xF) as usize;

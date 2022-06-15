@@ -49,10 +49,6 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
-        Subcommand::InitializeDatabase(opts) => {
-            database::open(&opts.database_uri, true).await?;
-            Ok(())
-        }
     };
     info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
     result
