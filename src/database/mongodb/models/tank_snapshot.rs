@@ -142,6 +142,10 @@ impl TankSnapshot {
         before: DateTime,
         tank_ids: &[wargaming::TankId],
     ) -> Result<HashMap<wargaming::TankId, Self>> {
+        if tank_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
         let pipeline = [
             doc! {
                 "$match": {

@@ -55,8 +55,13 @@ pub async fn get(
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&current_info.nickname);
-    let old_tank_snapshots = {
-        let before = Utc::now() - Duration::from_std(period)?;
+
+    let before = Utc::now() - Duration::from_std(period)?;
+    let tanks = tanks
+        .into_iter()
+        .filter(|tank| tank.statistics.basic.last_battle_time >= before)
+        .collect_vec();
+    let tank_snapshots = {
         let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
         database::TankSnapshot::retrieve_latest_tank_snapshots(
             mongodb, account_id, before, &tank_ids,
@@ -68,7 +73,7 @@ pub async fn get(
         .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
-    let tanks_delta = subtract_tanks(tanks, old_tank_snapshots);
+    let tanks_delta = subtract_tanks(tanks, tank_snapshots);
     let stats_delta: BasicStatistics = tanks_delta.iter().map(BasicStatistics::from).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
