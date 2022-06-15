@@ -23,7 +23,7 @@ anyhow = "1.0.56"
 async-compression = { version = "0.3.14", features = ["zstd"] }
 circular-queue = "0.2.6"
 chrono-humanize = "0.2.1"
-clap = { version = "3.1.12", features = ["cargo", "derive", "env"] }
+clap = { version = "3.2.5", features = ["cargo", "derive", "env"] }
 fastrand = "1.7.0"
 fred = { version = "5.0.0", default-features = false, features = ["partial-tracing"] }
 humantime = "2.1.0"
