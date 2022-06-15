@@ -3,9 +3,10 @@ use std::str::FromStr;
 use anyhow::anyhow;
 
 use crate::prelude::*;
+use crate::wargaming;
 
-pub fn account_id(value: &str) -> Result<i32> {
-    match i32::from_str(value)? {
+pub fn account_id(value: &str) -> Result<wargaming::AccountId> {
+    match wargaming::AccountId::from_str(value)? {
         account_id if account_id >= 1 => Ok(account_id),
         account_id => Err(anyhow!("{} is an invalid account ID", account_id)),
     }

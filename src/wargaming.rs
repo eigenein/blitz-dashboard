@@ -80,7 +80,7 @@ impl WargamingApi {
     #[instrument(skip_all, level = "debug", fields(n_accounts = account_ids.len()))]
     pub async fn get_account_info(
         &self,
-        account_ids: &[i32],
+        account_ids: &[AccountId],
     ) -> Result<HashMap<String, Option<AccountInfo>>> {
         if account_ids.is_empty() {
             return Ok(HashMap::new());
@@ -100,7 +100,7 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
     #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
-    pub async fn get_tanks_stats(&self, account_id: i32) -> Result<Vec<TankStatistics>> {
+    pub async fn get_tanks_stats(&self, account_id: AccountId) -> Result<Vec<TankStatistics>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
@@ -110,7 +110,10 @@ impl WargamingApi {
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/achievements/>.
     #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get_tanks_achievements(&self, account_id: i32) -> Result<Vec<TankAchievements>> {
+    pub async fn get_tanks_achievements(
+        &self,
+        account_id: AccountId,
+    ) -> Result<Vec<TankAchievements>> {
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/achievements/", account_id)
             .await
@@ -135,7 +138,7 @@ impl WargamingApi {
     async fn call_by_account<T: DeserializeOwned>(
         &self,
         url: &str,
-        account_id: i32,
+        account_id: AccountId,
     ) -> Result<Option<T>> {
         let account_id = account_id.to_string();
         let mut map: HashMap<String, Option<T>> = self

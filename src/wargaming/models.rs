@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+pub use account_id::*;
 pub use account_info::*;
 use itertools::{merge_join_by, EitherOrBoth};
 pub use nation::*;
@@ -10,6 +11,7 @@ pub use tank_id::*;
 pub use tank_statistics::*;
 pub use vehicle::*;
 
+pub mod account_id;
 pub mod account_info;
 pub mod nation;
 pub mod statistics;
@@ -30,12 +32,12 @@ pub struct FoundAccount {
     pub nickname: String,
 
     #[serde(rename = "account_id")]
-    pub id: i32,
+    pub id: AccountId,
 }
 
 /// Merges tank statistics and tank achievements into a single tank structure.
 pub fn merge_tanks(
-    account_id: i32,
+    account_id: AccountId,
     mut statistics: Vec<TankStatistics>,
     mut achievements: Vec<TankAchievements>,
 ) -> Vec<Tank> {

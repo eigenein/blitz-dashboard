@@ -160,7 +160,7 @@ async fn crawl_batch(
 ) -> Result<
     impl Stream<Item = Result<(database::Account, wargaming::AccountInfo, Vec<wargaming::Tank>)>>,
 > {
-    let account_ids: Vec<i32> = batch.iter().map(|account| account.id).collect();
+    let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
     let new_infos = api.get_account_info(&account_ids).await?;
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
@@ -214,7 +214,7 @@ fn match_account_infos(
 #[instrument(skip_all, fields(account_id = account_id, since = ?since))]
 async fn get_updated_tanks_statistics(
     api: &WargamingApi,
-    account_id: i32,
+    account_id: wargaming::AccountId,
     since: Option<DateTime>,
 ) -> Result<Vec<wargaming::TankStatistics>> {
     let statistics = api.get_tanks_stats(account_id).await?;

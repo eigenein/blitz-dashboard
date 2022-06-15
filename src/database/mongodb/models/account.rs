@@ -12,7 +12,7 @@ use crate::{format_elapsed, wargaming};
 #[derive(Serialize, Deserialize)]
 pub struct Account {
     #[serde(rename = "_id")]
-    pub id: i32,
+    pub id: wargaming::AccountId,
 
     #[serde(rename = "lbts")]
     #[serde_as(as = "Option<bson::DateTime>")]
@@ -36,7 +36,7 @@ impl Account {
         in_.collection("accounts")
     }
 
-    pub fn fake(account_id: i32) -> Self {
+    pub fn fake(account_id: wargaming::AccountId) -> Self {
         Self {
             id: account_id,
             last_battle_time: None,

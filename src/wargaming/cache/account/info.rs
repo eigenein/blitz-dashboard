@@ -5,7 +5,7 @@ use tracing::{debug, instrument};
 
 use crate::prelude::*;
 use crate::wargaming::models::AccountInfo;
-use crate::wargaming::WargamingApi;
+use crate::wargaming::{AccountId, WargamingApi};
 
 pub struct AccountInfoCache {
     api: WargamingApi,
@@ -20,7 +20,7 @@ impl AccountInfoCache {
     }
 
     #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get(&self, account_id: i32) -> Result<Option<AccountInfo>> {
+    pub async fn get(&self, account_id: AccountId) -> Result<Option<AccountInfo>> {
         if let Some(blob) = self
             .redis
             .get::<Option<Vec<u8>>, _>(Self::cache_key(account_id))
@@ -53,7 +53,7 @@ impl AccountInfoCache {
     }
 
     #[inline]
-    fn cache_key(account_id: i32) -> RedisKey {
+    fn cache_key(account_id: AccountId) -> RedisKey {
         RedisKey::from(format!("cache:1:a:i:ru:{}", account_id))
     }
 }

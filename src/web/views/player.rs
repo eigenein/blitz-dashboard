@@ -24,7 +24,7 @@ use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
-use crate::{database, format_elapsed};
+use crate::{database, format_elapsed, wargaming};
 
 pub mod partials;
 
@@ -32,7 +32,7 @@ pub mod partials;
 #[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?period))]
 #[rocket::get("/ru/<account_id>?<period>")]
 pub async fn get(
-    account_id: i32,
+    account_id: wargaming::AccountId,
     period: Option<String>,
     mongodb: &State<mongodb::Database>,
     info_cache: &State<AccountInfoCache>,

@@ -21,7 +21,7 @@ pub struct TankSnapshot {
     pub last_battle_time: DateTime,
 
     #[serde(rename = "aid")]
-    pub account_id: i32,
+    pub account_id: wargaming::AccountId,
 
     #[serde(rename = "tid")]
     pub tank_id: u32,
@@ -138,7 +138,7 @@ impl TankSnapshot {
     )]
     pub async fn retrieve_latest_tank_snapshots(
         from: &Database,
-        account_id: i32,
+        account_id: wargaming::AccountId,
         before: DateTime,
         tank_ids: &[wargaming::TankId],
     ) -> Result<HashMap<wargaming::TankId, Self>> {

@@ -3,6 +3,7 @@
 use clap::Parser;
 
 use crate::prelude::*;
+use crate::wargaming;
 
 mod parsers;
 
@@ -112,11 +113,11 @@ pub struct CrawlAccountsOpts {
 
     /// Starting account ID.
     #[clap(long, parse(try_from_str = parsers::account_id))]
-    pub start_id: i32,
+    pub start_id: wargaming::AccountId,
 
     /// Ending account ID (non-inclusive).
     #[clap(long, parse(try_from_str = parsers::account_id))]
-    pub end_id: i32,
+    pub end_id: wargaming::AccountId,
 }
 
 #[derive(Parser)]

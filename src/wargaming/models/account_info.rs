@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
-use crate::wargaming::models::{BasicStatistics, RatingStatistics};
+use crate::wargaming::{AccountId, BasicStatistics, RatingStatistics};
 
 /// Wargaming.net account information.
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct AccountInfo {
     #[serde(rename = "account_id")]
-    pub id: i32,
+    pub id: AccountId,
 
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime,

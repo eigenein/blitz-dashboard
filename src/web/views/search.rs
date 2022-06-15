@@ -8,6 +8,7 @@ use rocket::{uri, State};
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
+use crate::wargaming;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::models::AccountInfo;
 use crate::wargaming::WargamingApi;
@@ -34,7 +35,7 @@ pub async fn get(
         return Ok(CustomResponse::Status(Status::BadRequest));
     }
 
-    let account_ids: Vec<i32> = api
+    let account_ids: Vec<wargaming::AccountId> = api
         .search_accounts(&query)
         .await?
         .iter()

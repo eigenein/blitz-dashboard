@@ -7,6 +7,7 @@ use itertools::Itertools;
 use crate::helpers::average::Average;
 use crate::prelude::*;
 use crate::tracing::format_duration;
+use crate::wargaming;
 
 pub struct CrawlerMetrics {
     lag_percentile: usize,
@@ -16,7 +17,7 @@ pub struct CrawlerMetrics {
     average_batch_fill_level: Average,
     start_request_count: u32,
     n_accounts: u32,
-    last_account_id: i32,
+    last_account_id: wargaming::AccountId,
     lags: CircularQueue<StdDuration>,
 }
 
@@ -39,7 +40,7 @@ impl CrawlerMetrics {
         }
     }
 
-    pub fn add_account(&mut self, account_id: i32) {
+    pub fn add_account(&mut self, account_id: wargaming::AccountId) {
         self.n_accounts += 1;
         self.last_account_id = account_id;
     }
