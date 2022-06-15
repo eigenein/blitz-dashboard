@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use futures::future::ready;
-use futures::{Stream, TryStreamExt};
+use futures::TryStreamExt;
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
@@ -139,7 +141,7 @@ impl TankSnapshot {
         account_id: i32,
         before: DateTime,
         tank_ids: &[wargaming::TankId],
-    ) -> Result<impl Stream<Item = Result<Self>>> {
+    ) -> Result<HashMap<wargaming::TankId, Self>> {
         let pipeline = [
             doc! {
                 "$match": {
@@ -165,10 +167,12 @@ impl TankSnapshot {
                 trace!(?document);
                 ready(
                     from_document::<Root<Self>>(document)
-                        .map(|document| Some(document.root))
+                        .map(|document| Some((document.root.tank_id, document.root)))
                         .map_err(|error| anyhow!("failed to deserialize a snapshot: {}", error)),
                 )
-            });
+            })
+            .try_collect::<HashMap<wargaming::TankId, Self>>()
+            .await?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(stream)

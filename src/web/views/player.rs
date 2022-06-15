@@ -2,13 +2,11 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
-use std::collections::HashMap;
 use std::time::Instant;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
-use futures::future::{ready, try_join};
-use futures::TryStreamExt;
+use futures::future::try_join;
 use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
@@ -22,7 +20,6 @@ use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::models::{subtract_tanks, BasicStatistics, Tank, TankType};
-use crate::wargaming::TankId;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -64,9 +61,6 @@ pub async fn get(
         database::TankSnapshot::retrieve_latest_tank_snapshots(
             mongodb, account_id, before, &tank_ids,
         )
-        .await?
-        .try_filter_map(|snapshot| ready(Ok(Some((snapshot.tank_id, snapshot)))))
-        .try_collect::<HashMap<TankId, database::TankSnapshot>>()
         .await?
     };
 
