@@ -265,8 +265,8 @@
       "19475": {
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          5908,
-          1300
+          1300,
+          5908
         ],
         "next_tanks": null,
         "is_default": false,
@@ -21737,8 +21737,8 @@
         "name": "В-14",
         "next_modules": null,
         "next_tanks": [
-          7937,
-          23809
+          23809,
+          7937
         ],
         "is_default": false,
         "price_xp": 34000,
@@ -25557,9 +25557,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
+          8065,
           1409,
-          3713,
-          8065
+          3713
         ],
         "is_default": false,
         "price_xp": 5000,
@@ -44050,8 +44050,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          9793,
-          1089
+          1089,
+          9793
         ],
         "is_default": false,
         "price_xp": 500,
@@ -83349,8 +83349,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "is_default": false,
         "price_xp": 6840,
@@ -88766,8 +88766,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          10276,
-          7972
+          7972,
+          10276
         ],
         "next_tanks": null,
         "is_default": true,
