@@ -50,7 +50,7 @@ version = "0.3.19"
 default-features = false
 
 [dependencies.reqwest]
-version = "0.11.10"
+version = "0.11.11"
 default-features = false
 features = ["rustls-tls", "gzip", "brotli", "deflate", "json"]
 
