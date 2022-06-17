@@ -13,11 +13,11 @@ pub fn get_account_stream(
     info!(sample_size, %min_offset, %max_offset);
     stream::try_unfold((1, database), move |(sample_number, database)| async move {
         debug!(sample_number, "retrieving a sample…");
-        let samples =
+        let sample =
             Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
 
         debug!(sample_number, "retrieved");
-        Ok::<_, anyhow::Error>(Some((samples, (sample_number + 1, database))))
+        Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, database))))
     })
     .try_flatten()
 }
