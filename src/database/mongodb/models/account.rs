@@ -1,4 +1,3 @@
-use futures::future::ready;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{UpdateModifications, UpdateOptions};
@@ -100,13 +99,9 @@ impl Account {
             .await
             .context("failed to query a sample of accounts")?
             .map_err(|error| anyhow!(error))
-            .try_filter_map(|document| {
+            .try_filter_map(|document| async move {
                 trace!(?document);
-                ready(
-                    from_document::<Self>(document)
-                        .map(Some)
-                        .map_err(|error| anyhow!("failed to deserialize an account: {}", error)),
-                )
+                Ok(Some(from_document::<Self>(document)?))
             })
             .instrument(debug_span!("sampled_account"));
 

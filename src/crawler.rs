@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{Context, Error};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use tokio::sync::Mutex;
 use tracing_futures::Instrument;
@@ -98,19 +98,20 @@ impl Crawler {
         accounts
             // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
-            .map_err(|error| anyhow!(error))
+            .map_err(Error::from)
             .instrument(debug_span!("sampled_batch"))
             .enumerate()
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
             .map(|(batch_number, batch)| {
-                Ok(crawl_batch(
+                let future = crawl_batch(
                     self.api.clone(),
                     batch?,
                     batch_number,
                     self.metrics.clone(),
                     &heartbeat_url,
-                ))
+                );
+                Ok(future)
             })
             // Here we have the stream of batches of accounts that need to be crawled.
             .instrument(debug_span!("crawled_batch"))

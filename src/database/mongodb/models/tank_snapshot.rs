@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use futures::future::ready;
 use futures::TryStreamExt;
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
@@ -167,13 +166,10 @@ impl TankSnapshot {
                 format!("failed to retrieve the latest tank snapshots for #{}", account_id)
             })?
             .map_err(|error| anyhow!(error))
-            .try_filter_map(|document| {
+            .try_filter_map(|document| async move {
                 trace!(?document);
-                ready(
-                    from_document::<Root<Self>>(document)
-                        .map(|document| Some((document.root.tank_id, document.root)))
-                        .map_err(|error| anyhow!("failed to deserialize a snapshot: {}", error)),
-                )
+                let document = from_document::<Root<Self>>(document)?;
+                Ok(Some((document.root.tank_id, document.root)))
             })
             .try_collect::<HashMap<wargaming::TankId, Self>>()
             .await?;
