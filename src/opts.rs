@@ -127,6 +127,8 @@ pub struct BufferingOpts {
     /// Each batch needs one API call (basic account information).
     /// A buffered batch contains accounts which last battle timestamp has changed,
     /// they are ready to be crawled.
+    /// Note, that buffered batches are not necessarily full – they may even be empty
+    /// (if no account in the batch has played since the last update).
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
