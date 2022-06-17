@@ -91,7 +91,7 @@ impl Crawler {
     ) -> Result {
         info!(
             n_buffered_batches = buffering.n_batches,
-            n_buffered_accounts = buffering.n_accounts
+            n_buffered_accounts = buffering.n_accounts,
         );
         accounts
             .try_chunks(100)
@@ -107,12 +107,24 @@ impl Crawler {
                     &heartbeat_url,
                 ))
             })
+            .instrument(debug_span!("crawled_batch"))
             .try_buffer_unordered(buffering.n_batches)
             .try_flatten()
-            .instrument(debug_span!("crawled_account"))
-            .try_for_each_concurrent(Some(buffering.n_accounts), |(account, new_info, tanks)| {
-                self.clone().update_account(account, new_info, tanks)
+            .instrument(debug_span!("uncrawled_account"))
+            .try_filter_map(|(account, account_info)| {
+                let api = self.api.clone();
+                async move {
+                    debug!(account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
+                    let tanks = crawl_account(&api, &account).await?;
+                    Ok(Some((account, account_info, tanks)))
+                }
             })
+            .instrument(debug_span!("crawled_account"))
+            .try_for_each_concurrent(
+                Some(buffering.n_accounts),
+                // TODO: only clone the database and metrics.
+                |(account, new_info, tanks)| self.clone().update_account(account, new_info, tanks),
+            )
             .await
             .context("crawler stream has failed")
     }
@@ -157,31 +169,21 @@ async fn crawl_batch(
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     heartbeat_url: &Option<String>,
-) -> Result<
-    impl Stream<Item = Result<(database::Account, wargaming::AccountInfo, Vec<wargaming::Tank>)>>,
-> {
+) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
-    let new_infos = api.get_account_info(&account_ids).await?;
+    let new_infos = api.get_account_info(&account_ids).await?; // TODO: iterator.
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
-    let matched_len = matched.len();
-    debug!(len = matched_len, "matched account infos");
-    metrics.lock().await.add_batch(batch_len, matched.len());
 
-    let mut crawled = Vec::new();
-    for (i, (account, new_info)) in matched.into_iter().enumerate() {
-        debug!(i = i + 1, of = matched_len, account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
-        let tanks = crawl_account(&api, &account).await?;
-        crawled.push((account, new_info, tanks));
-    }
+    debug!(matched_len = matched.len(), "batch crawled");
+    metrics.lock().await.add_batch(batch_len, matched.len());
 
     let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
     if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
         tokio::spawn(reqwest::get(heartbeat_url.clone()));
     }
 
-    debug!("batch crawled");
-    Ok(stream::iter(crawled.into_iter().map(Ok)))
+    Ok(stream::iter(matched.into_iter()).map(Ok))
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.

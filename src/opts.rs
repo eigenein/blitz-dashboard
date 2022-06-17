@@ -124,7 +124,7 @@ pub struct CrawlAccountsOpts {
 pub struct BufferingOpts {
     /// Number of account batches which should get concurrently crawled and buffered.
     /// A batch is 100 accounts – the maximum for Wargaming.net API.
-    /// Crawled batch contains all the account information which is prepared for updating the database.
+    /// Each batch needs one API call.
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
@@ -133,7 +133,8 @@ pub struct BufferingOpts {
     )]
     pub n_batches: usize,
 
-    /// Number of accounts being concurrently updated in the database.
+    /// Number of accounts being concurrently crawled and updated in the database.
+    /// Each account needs 2 API calls.
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",
