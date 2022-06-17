@@ -129,6 +129,7 @@ pub struct BufferingOpts {
     /// they are ready to be crawled.
     /// Note, that buffered batches are not necessarily full – they may even be empty
     /// (if no account in the batch has played since the last update).
+    /// Use this to adjust the API load (requests per second).
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
@@ -140,6 +141,7 @@ pub struct BufferingOpts {
     /// Number of accounts being concurrently crawled.
     /// Each account needs 2 API calls (tanks statistics and achievements).
     /// Buffered account contains all the information needed to update it in the database.
+    /// Use this to adjust the API load (requests per second).
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",
@@ -149,7 +151,7 @@ pub struct BufferingOpts {
     pub n_buffered_accounts: usize,
 
     /// Number of already crawled accounts being concurrently updated in the database.
-    /// This is the last step, it updates fully crawled accounts in the database.
+    /// This configures the last step in the crawling pipeline – use it to adjust the database load.
     #[structopt(
         long = "n-updated-accounts",
         default_value = "1",
