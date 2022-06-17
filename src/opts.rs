@@ -124,7 +124,7 @@ pub struct CrawlAccountsOpts {
 pub struct BufferingOpts {
     /// Number of account batches which should get concurrently crawled and buffered.
     /// A batch is 100 accounts – the maximum for Wargaming.net API.
-    /// Each batch needs one API call.
+    /// Each batch needs one API call (basic account information).
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
@@ -133,15 +133,24 @@ pub struct BufferingOpts {
     )]
     pub n_batches: usize,
 
-    /// Number of accounts being concurrently crawled and updated in the database.
-    /// Each account needs 2 API calls.
+    /// Number of accounts being concurrently crawled.
+    /// Each account needs 2 API calls (tanks statistics and achievements).
     #[structopt(
         long = "n-buffered-accounts",
         default_value = "1",
         parse(try_from_str = parsers::non_zero_usize),
         env = "BLITZ_DASHBOARD_CRAWLER_BUFFERED_ACCOUNTS",
     )]
-    pub n_accounts: usize,
+    pub n_buffered_accounts: usize,
+
+    /// Number of already crawled accounts being concurrently updated in the database.
+    #[structopt(
+        long = "n-updated-accounts",
+        default_value = "1",
+        parse(try_from_str = parsers::non_zero_usize),
+        env = "BLITZ_DASHBOARD_CRAWLER_UPDATED_ACCOUNTS",
+    )]
+    pub n_updated_accounts: usize,
 }
 
 #[derive(Parser)]

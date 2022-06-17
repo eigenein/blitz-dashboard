@@ -92,13 +92,17 @@ impl Crawler {
     ) -> Result {
         info!(
             n_buffered_batches = buffering.n_batches,
-            n_buffered_accounts = buffering.n_accounts,
+            n_buffered_accounts = buffering.n_buffered_accounts,
+            n_updated_accounts = buffering.n_updated_accounts,
         );
         accounts
+            // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
             .map_err(|error| anyhow!(error))
             .instrument(debug_span!("sampled_batch"))
             .enumerate()
+            // For each batch request basic account information.
+            // We need the accounts' last battle timestamps.
             .map(|(batch_number, batch)| {
                 Ok(crawl_batch(
                     self.api.clone(),
@@ -108,21 +112,30 @@ impl Crawler {
                     &heartbeat_url,
                 ))
             })
+            // Here we have the stream of batches of accounts that need to be crawled.
             .instrument(debug_span!("crawled_batch"))
+            // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
+            // Flatten the stream of batches into the stream of non-crawled accounts.
             .try_flatten()
             .instrument(debug_span!("uncrawled_account"))
-            .try_filter_map(|(account, account_info)| {
+            // Crawl the accounts.
+            .map(|item| {
+                let (account, account_info) = item?;
                 let api = self.api.clone();
-                async move {
+                let future = async move {
                     debug!(account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
                     let tanks = crawl_account(&api, &account).await?;
-                    Ok(Some((account, account_info, tanks)))
-                }
+                    Ok((account, account_info, tanks))
+                };
+                Ok(future)
             })
             .instrument(debug_span!("crawled_account"))
+            // Buffer the accounts.
+            .try_buffer_unordered(buffering.n_buffered_accounts)
+            // Make the database updates concurrent.
             .try_for_each_concurrent(
-                Some(buffering.n_accounts),
+                Some(buffering.n_updated_accounts),
                 |(account, new_info, tanks)| update_account(self.mongodb.clone(), account, new_info, tanks, self.metrics.clone()),
             )
             .await
