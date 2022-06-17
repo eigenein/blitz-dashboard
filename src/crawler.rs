@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -122,43 +123,10 @@ impl Crawler {
             .instrument(debug_span!("crawled_account"))
             .try_for_each_concurrent(
                 Some(buffering.n_accounts),
-                // TODO: only clone the database and metrics.
-                |(account, new_info, tanks)| self.clone().update_account(account, new_info, tanks),
+                |(account, new_info, tanks)| update_account(self.mongodb.clone(), account, new_info, tanks, self.metrics.clone()),
             )
             .await
             .context("crawler stream has failed")
-    }
-
-    #[instrument(skip_all, fields(account_id = account.id))]
-    async fn update_account(
-        self,
-        account: database::Account,
-        new_info: wargaming::AccountInfo,
-        tanks: Vec<wargaming::Tank>,
-    ) -> Result {
-        debug!(n_tanks = tanks.len(), "updating account…");
-        let start_instant = Instant::now();
-
-        for tank in tanks.into_iter() {
-            database::TankSnapshot::from(tank)
-                .upsert(&self.mongodb)
-                .await?;
-        }
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
-
-        let last_battle_time = new_info.last_battle_time;
-        database::Account::from(new_info)
-            .upsert(&self.mongodb, database::Account::OPERATION_SET)
-            .await?;
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
-
-        let mut metrics = self.metrics.lock().await;
-        metrics.add_account(account.id);
-        metrics.add_lag_from(last_battle_time)?;
-        drop(metrics);
-
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
-        Ok(())
     }
 }
 
@@ -171,7 +139,7 @@ async fn crawl_batch(
     heartbeat_url: &Option<String>,
 ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
-    let new_infos = api.get_account_info(&account_ids).await?; // TODO: iterator.
+    let new_infos = api.get_account_info(&account_ids).await?;
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
 
@@ -256,4 +224,39 @@ async fn crawl_account(
         trace!("no updated tanks");
         Ok(Vec::new())
     }
+}
+
+#[instrument(skip_all, fields(account_id = account.id))]
+async fn update_account(
+    connection: impl Borrow<mongodb::Database>,
+    account: database::Account,
+    new_info: wargaming::AccountInfo,
+    tanks: Vec<wargaming::Tank>,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
+) -> Result {
+    let connection = connection.borrow();
+
+    debug!(n_tanks = tanks.len(), "updating account…");
+    let start_instant = Instant::now();
+
+    for tank in tanks.into_iter() {
+        database::TankSnapshot::from(tank)
+            .upsert(connection)
+            .await?;
+    }
+    debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
+
+    let last_battle_time = new_info.last_battle_time;
+    database::Account::from(new_info)
+        .upsert(connection, database::Account::OPERATION_SET)
+        .await?;
+    debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
+
+    let mut metrics = metrics.lock().await;
+    metrics.add_account(account.id);
+    metrics.add_lag_from(last_battle_time)?;
+    drop(metrics);
+
+    debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
+    Ok(())
 }
