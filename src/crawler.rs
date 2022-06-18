@@ -5,7 +5,6 @@ use std::sync::Arc;
 use anyhow::{Context, Error};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use tokio::sync::Mutex;
-use tracing_futures::Instrument;
 
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::helpers::tracing::format_elapsed;
@@ -92,11 +91,16 @@ impl Crawler {
             n_updated_accounts = buffering.n_updated_accounts,
         );
         accounts
+            .inspect_ok(|account| {
+                trace!(account.id, "sampled_account");
+            })
             // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
             .map_err(Error::from)
-            .instrument(debug_span!("sampled_batch"))
             .enumerate()
+            .inspect(|(batch_number, batch)| {
+                trace!(batch_number, is_ok = batch.is_ok(), "batch is about to be crawled");
+            })
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
             .map(|(batch_number, batch)| {
@@ -109,12 +113,13 @@ impl Crawler {
                 Ok(future)
             })
             // Here we have the stream of batches of accounts that need to be crawled.
-            .instrument(debug_span!("crawled_batch"))
             // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
             // Flatten the stream of batches into the stream of non-crawled accounts.
             .try_flatten()
-            .instrument(debug_span!("uncrawled_account"))
+            .inspect_ok(|(account, _account_info)| {
+                trace!(account.id, "account is about to get crawled");
+            })
             // Crawl the accounts.
             .map(|item| {
                 let (account, account_info) = item?;
@@ -123,7 +128,6 @@ impl Crawler {
                 let heartbeat_url = heartbeat_url.clone();
 
                 let future = async move {
-                    trace!("checking the metrics…");
                     let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
                     if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
                         tokio::spawn(reqwest::get(heartbeat_url));
@@ -136,9 +140,11 @@ impl Crawler {
                 };
                 Ok(future)
             })
-            .instrument(debug_span!("crawled_account"))
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
+            .inspect_ok(|(account, _account_info, tanks)| {
+                trace!(account.id, n_tanks = tanks.len(), "crawled account");
+            })
             // Make the database updates concurrent.
             .try_for_each_concurrent(
                 Some(buffering.n_updated_accounts),
