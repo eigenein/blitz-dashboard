@@ -190,6 +190,15 @@ pub struct SharedCrawlerOpts {
         env = "BLITZ_DASHBOARD_CRAWLER_LAG_WINDOW_SIZE",
     )]
     pub lag_window_size: usize,
+
+    /// Wargaming.net API timeout.
+    #[structopt(
+        long,
+        default_value = "10sec",
+        parse(try_from_str = humantime::parse_duration),
+        env = "BLITZ_DASHBOARD_CRAWLER_API_TIMEOUT",
+    )]
+    pub api_timeout: StdDuration,
 }
 
 #[derive(Parser)]

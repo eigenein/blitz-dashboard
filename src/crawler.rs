@@ -16,8 +16,6 @@ use crate::{database, wargaming};
 
 mod metrics;
 
-const API_TIMEOUT: StdDuration = StdDuration::from_secs(10);
-
 #[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
@@ -64,7 +62,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
 
 impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
-        let api = WargamingApi::new(&opts.connections.application_id, API_TIMEOUT)?;
+        let api = WargamingApi::new(&opts.connections.application_id, opts.api_timeout)?;
         let internal = &opts.connections.internal;
         let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
 
