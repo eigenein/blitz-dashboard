@@ -64,13 +64,14 @@ impl Account {
         max_offset: Duration,
     ) -> impl Stream<Item = Result<Self>> {
         info!(sample_size, %min_offset, %max_offset);
-        try_unfold((1, database), move |(sample_number, database)| async move {
+        let rng = fastrand::Rng::with_seed(Utc::now().timestamp_millis() as u64);
+        try_unfold((1, rng, database), move |(sample_number, rng, database)| async move {
             debug!(sample_number, "retrieving a sample…");
             let sample =
-                Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
-
+                Account::retrieve_sample(&database, sample_size, &rng, min_offset, max_offset)
+                    .await?;
             debug!(sample_number, "retrieved");
-            Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, database))))
+            Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, rng, database))))
         })
         .try_flatten()
     }
@@ -97,12 +98,13 @@ impl Account {
     pub async fn retrieve_sample(
         from: &Database,
         sample_size: u32,
+        rng: &fastrand::Rng,
         min_offset: Duration,
         max_offset: Duration,
     ) -> Result<impl Stream<Item = Result<Account>>> {
         let now = Utc::now();
         let filter = doc! {
-            "random": { "$gt": fastrand::f64() },
+            "random": { "$gt": rng.f64() },
             "$or": [
                 { "lbts": null },
                 { "lbts": bson::DateTime::from_millis(0) }, // FIXME: remove.
