@@ -1,3 +1,4 @@
+use anyhow::Error;
 use futures::stream::try_unfold;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
@@ -113,11 +114,10 @@ impl Account {
         debug!(sample_size, "retrieving a sample…");
         let account_stream = Self::collection(from)
             .find(filter, None)
-            .instrument(debug_span!("aggregate"))
             .await
             .context("failed to query a sample of accounts")?
-            .map_err(|error| anyhow!(error))
-            .instrument(debug_span!("sampled_account"));
+            .map_err(Error::from)
+            .inspect_ok(|account| trace!(account.id, "sampled account (database)"));
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(account_stream)
