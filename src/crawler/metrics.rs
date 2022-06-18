@@ -1,12 +1,10 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use chrono::DurationRound;
 use circular_queue::CircularQueue;
 use itertools::Itertools;
 
 use crate::helpers::average::Average;
 use crate::prelude::*;
-use crate::tracing::format_duration;
 use crate::wargaming;
 
 pub struct CrawlerMetrics {
@@ -18,7 +16,7 @@ pub struct CrawlerMetrics {
     start_request_count: u32,
     n_accounts: u32,
     last_account_id: wargaming::AccountId,
-    lags: CircularQueue<StdDuration>,
+    lags_secs: CircularQueue<i64>,
 }
 
 impl CrawlerMetrics {
@@ -34,7 +32,7 @@ impl CrawlerMetrics {
             n_accounts: 0,
             last_account_id: 0,
             reset_instant: Instant::now(),
-            lags: CircularQueue::with_capacity(lag_window_size),
+            lags_secs: CircularQueue::with_capacity(lag_window_size),
             lag_percentile,
             average_batch_fill_level: Average::default(),
             log_interval,
@@ -46,12 +44,9 @@ impl CrawlerMetrics {
         self.last_account_id = account_id;
     }
 
-    pub fn add_lag_from(&mut self, last_battle_time: DateTime) -> Result {
-        let round = Duration::minutes(1);
-        let now = Utc::now().duration_round(round)?;
-        let last_battle_time = last_battle_time.duration_round(round)?;
-        self.lags.push((now - last_battle_time).to_std()?);
-        Ok(())
+    pub fn add_lag_from(&mut self, last_battle_time: DateTime) {
+        self.lags_secs
+            .push((Utc::now() - last_battle_time).num_seconds());
     }
 
     pub fn add_batch(&mut self, batch_len: usize, matched_len: usize) {
@@ -76,13 +71,13 @@ impl CrawlerMetrics {
         let elapsed_secs = elapsed.as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter - self.start_request_count;
-        let lag = self.lag();
+        let lag_hours = self.lag_hours();
 
         info!(
             rps = %format!("{:.1}", n_requests as f64 / elapsed_secs),
             fill = %format!("{:.1}%", self.average_batch_fill_level.average() * 100.0),
             apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
-            lag = format_duration(lag).as_str(),
+            lag_hrs = %format!("{:.1}", lag_hours),
             aid = self.last_account_id,
         );
     }
@@ -94,14 +89,14 @@ impl CrawlerMetrics {
         self.n_accounts = 0;
     }
 
-    fn lag(&self) -> StdDuration {
-        if self.lags.is_empty() {
-            return StdDuration::new(0, 0);
+    fn lag_hours(&self) -> f64 {
+        if self.lags_secs.is_empty() {
+            return 0f64;
         }
 
-        let mut lags = self.lags.iter().copied().collect_vec();
+        let mut lags = self.lags_secs.iter().copied().collect_vec();
         let index = self.lag_percentile * lags.len() / 100;
         let (_, lag, _) = lags.select_nth_unstable(index);
-        *lag
+        *lag as f64 / 86400_f64
     }
 }
