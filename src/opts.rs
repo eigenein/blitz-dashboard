@@ -81,13 +81,10 @@ pub struct CrawlerOpts {
     )]
     pub max_offset: StdDuration,
 
-    /// Number of accounts to sample from the database in one aggregation query.
-    /// Note, that the sampling is the first step in query.
-    /// Sample gets then filtered with minimum/maximum last battle time offset,
-    /// so the final sample that is passed down the stream is smaller.
+    /// Number of accounts to sample from the database in one query.
     #[clap(
         long,
-        default_value = "1000",
+        default_value = "100",
         parse(try_from_str = parsers::non_zero_u32),
         env = "BLITZ_DASHBOARD_CRAWLER_SAMPLE_SIZE",
     )]
