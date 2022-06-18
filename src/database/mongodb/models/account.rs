@@ -1,6 +1,6 @@
 use anyhow::Error;
 use futures::stream::try_unfold;
-use futures::{stream, Stream, TryStreamExt};
+use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::UpdateOptions;
 use mongodb::{bson, Collection, Database, IndexModel};
@@ -69,11 +69,8 @@ impl Account {
             debug!(sample_number, "retrieving a sample…");
             let sample =
                 Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
-            debug!(sample_number, sample_len = sample.len(), "retrieved");
-            Ok::<_, Error>(Some((
-                stream::iter(sample.into_iter().map(Ok)),
-                (sample_number + 1, database),
-            )))
+            debug!(sample_number, "retrieved");
+            Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, database))))
         })
         .try_flatten()
     }
@@ -102,7 +99,7 @@ impl Account {
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
-    ) -> Result<Vec<Account>> {
+    ) -> Result<impl Stream<Item = Result<Account>>> {
         let now = Utc::now();
         let filter = doc! {
             "random": { "$gt": fastrand::f64() },
@@ -115,19 +112,14 @@ impl Account {
 
         let start_instant = Instant::now();
         debug!(sample_size, "retrieving a sample…");
-        let accounts: Vec<Account> = Self::collection(from)
+        let account_stream = Self::collection(from)
             .find(filter, None)
             .await
             .context("failed to query a sample of accounts")?
-            .try_collect()
-            .await
-            .context("failed to collect the sample")?;
+            .map_err(Error::from)
+            .inspect_ok(|account| trace!(account.id, "sampled account (database)"));
 
-        debug!(
-            n_accounts = accounts.len(),
-            elapsed = format_elapsed(start_instant).as_str(),
-            "done",
-        );
-        Ok(accounts)
+        debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
+        Ok(account_stream)
     }
 }
