@@ -123,6 +123,7 @@ impl Crawler {
                 let heartbeat_url = heartbeat_url.clone();
 
                 let future = async move {
+                    trace!("checking the metrics…");
                     let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
                     if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
                         tokio::spawn(reqwest::get(heartbeat_url));
