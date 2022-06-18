@@ -16,7 +16,7 @@ use crate::{database, wargaming};
 
 mod metrics;
 
-const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
+const API_TIMEOUT: StdDuration = StdDuration::from_secs(10);
 
 #[derive(Clone)]
 pub struct Crawler {
