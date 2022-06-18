@@ -2,7 +2,7 @@ use anyhow::Error;
 use futures::stream::try_unfold;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::options::UpdateOptions;
+use mongodb::options::{FindOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
@@ -113,7 +113,7 @@ impl Account {
         let start_instant = Instant::now();
         debug!(sample_size, "retrieving a sample…");
         let account_stream = Self::collection(from)
-            .find(filter, None)
+            .find(filter, FindOptions::builder().limit(sample_size as i64).build())
             .await
             .context("failed to query a sample of accounts")?
             .map_err(Error::from)

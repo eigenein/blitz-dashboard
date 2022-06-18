@@ -100,13 +100,24 @@ impl Crawler {
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
             .map(|(batch_number, batch)| {
-                let future = crawl_batch(
-                    self.api.clone(),
-                    batch?,
-                    batch_number,
-                    self.metrics.clone(),
-                );
-                Ok(future)
+                let batch = batch?;
+                let api = self.api.clone();
+                let metrics = self.metrics.clone();
+                let heartbeat_url = heartbeat_url.clone();
+
+                Ok(async move {
+                    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
+                    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
+                        tokio::spawn(reqwest::get(heartbeat_url));
+                    }
+
+                    crawl_batch(
+                        api,
+                        batch,
+                        batch_number,
+                        metrics,
+                    ).await
+                })
             })
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
@@ -118,18 +129,10 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 let api = self.api.clone();
-                let metrics = self.metrics.clone();
-                let heartbeat_url = heartbeat_url.clone();
 
                 Ok(async move {
-                    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
-                    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
-                        tokio::spawn(reqwest::get(heartbeat_url));
-                    }
-
                     debug!(account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
                     let tanks = crawl_account(&api, &account).await?;
-
                     Ok((account, account_info, tanks))
                 })
             })
