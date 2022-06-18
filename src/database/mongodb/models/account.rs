@@ -69,8 +69,11 @@ impl Account {
             debug!(sample_number, "retrieving a sample…");
             let sample =
                 Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
-            debug!(sample_number, "retrieved");
-            Ok::<_, Error>(Some((sample, (sample_number + 1, database))))
+            debug!(sample_number, sample_len = sample.len(), "retrieved");
+            Ok::<_, Error>(Some((
+                stream::iter(sample.into_iter().map(Ok)),
+                (sample_number + 1, database),
+            )))
         })
         .try_flatten()
     }
@@ -99,7 +102,7 @@ impl Account {
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
-    ) -> Result<impl Stream<Item = Result<Account>>> {
+    ) -> Result<Vec<Account>> {
         let now = Utc::now();
         let filter = doc! {
             "random": { "$gt": fastrand::f64() },
@@ -112,7 +115,7 @@ impl Account {
 
         let start_instant = Instant::now();
         debug!(sample_size, "retrieving a sample…");
-        let accounts: Vec<Self> = Self::collection(from)
+        let accounts: Vec<Account> = Self::collection(from)
             .find(filter, None)
             .await
             .context("failed to query a sample of accounts")?
@@ -125,6 +128,6 @@ impl Account {
             elapsed = format_elapsed(start_instant).as_str(),
             "done",
         );
-        Ok(stream::iter(accounts.into_iter().map(Ok)))
+        Ok(accounts)
     }
 }
