@@ -1,6 +1,5 @@
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::bson::Bson::Document;
 use mongodb::options::UpdateOptions;
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
