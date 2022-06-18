@@ -14,7 +14,6 @@ pub struct CrawlerMetrics {
     log_interval: StdDuration,
 
     reset_instant: Instant,
-    next_instant: Instant,
     average_batch_fill_level: Average,
     start_request_count: u32,
     n_accounts: u32,
@@ -35,7 +34,6 @@ impl CrawlerMetrics {
             n_accounts: 0,
             last_account_id: 0,
             reset_instant: Instant::now(),
-            next_instant: Instant::now() + log_interval,
             lags: CircularQueue::with_capacity(lag_window_size),
             lag_percentile,
             average_batch_fill_level: Average::default(),
@@ -63,9 +61,10 @@ impl CrawlerMetrics {
 
     pub fn check(&mut self, request_counter: &AtomicU32) -> bool {
         let now = Instant::now();
-        if now >= self.next_instant {
+        let elapsed = self.reset_instant.elapsed();
+        if elapsed >= self.log_interval {
             let request_counter = request_counter.load(Ordering::Relaxed);
-            self.log(request_counter, now);
+            self.log(request_counter, elapsed);
             self.reset(request_counter, now);
             true
         } else {
@@ -73,8 +72,7 @@ impl CrawlerMetrics {
         }
     }
 
-    fn log(&self, request_counter: u32, now: Instant) {
-        let elapsed = now - self.reset_instant;
+    fn log(&self, request_counter: u32, elapsed: StdDuration) {
         let elapsed_secs = elapsed.as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter - self.start_request_count;
@@ -91,9 +89,6 @@ impl CrawlerMetrics {
 
     fn reset(&mut self, request_counter: u32, now: Instant) {
         self.reset_instant = now;
-        while self.next_instant <= now {
-            self.next_instant += self.log_interval;
-        }
         self.average_batch_fill_level = Default::default();
         self.start_request_count = request_counter;
         self.n_accounts = 0;

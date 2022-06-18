@@ -105,7 +105,6 @@ impl Crawler {
                     batch?,
                     batch_number,
                     self.metrics.clone(),
-                    &heartbeat_url,
                 );
                 Ok(future)
             })
@@ -120,9 +119,18 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 let api = self.api.clone();
+                let metrics = self.metrics.clone();
+                let heartbeat_url = heartbeat_url.clone();
+
                 let future = async move {
+                    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
+                    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
+                        tokio::spawn(reqwest::get(heartbeat_url));
+                    }
+
                     debug!(account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
                     let tanks = crawl_account(&api, &account).await?;
+
                     Ok((account, account_info, tanks))
                 };
                 Ok(future)
@@ -146,7 +154,6 @@ async fn crawl_batch(
     batch: Vec<database::Account>,
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
-    heartbeat_url: &Option<String>,
 ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
     let new_infos = api.get_account_info(&account_ids).await?;
@@ -155,11 +162,6 @@ async fn crawl_batch(
 
     debug!(matched_len = matched.len(), "batch crawled");
     metrics.lock().await.add_batch(batch_len, matched.len());
-
-    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
-    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
-        tokio::spawn(reqwest::get(heartbeat_url.clone()));
-    }
 
     Ok(stream::iter(matched.into_iter()).map(Ok))
 }
