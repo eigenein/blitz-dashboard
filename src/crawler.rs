@@ -7,7 +7,6 @@ use futures::{stream, Stream, StreamExt, TryStreamExt};
 use tokio::sync::Mutex;
 use tracing_futures::Instrument;
 
-use crate::crawler::account_stream::get_account_stream;
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
@@ -15,7 +14,6 @@ use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 use crate::{database, wargaming};
 
-mod account_stream;
 mod metrics;
 
 const API_TIMEOUT: StdDuration = StdDuration::from_secs(30);
@@ -37,7 +35,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     let crawler = Crawler::new(&opts.shared).await?;
 
     info!("running…");
-    let accounts = get_account_stream(
+    let accounts = database::Account::get_sampled_stream(
         crawler.mongodb.clone(),
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,

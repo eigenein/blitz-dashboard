@@ -29,6 +29,7 @@ impl CrawlerMetrics {
         lag_window_size: usize,
         log_interval: StdDuration,
     ) -> Self {
+        info!(lag_percentile, lag_window_size, ?log_interval);
         Self {
             start_request_count: request_counter.load(Ordering::Relaxed),
             n_accounts: 0,

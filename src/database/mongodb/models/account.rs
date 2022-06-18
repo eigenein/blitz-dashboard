@@ -1,3 +1,4 @@
+use futures::stream::try_unfold;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::UpdateOptions;
@@ -53,6 +54,25 @@ impl Account {
             .await
             .context("failed to create the indexes on accounts")?;
         Ok(())
+    }
+
+    #[instrument(skip_all, level = "debug")]
+    pub fn get_sampled_stream(
+        database: Database,
+        sample_size: u32,
+        min_offset: Duration,
+        max_offset: Duration,
+    ) -> impl Stream<Item = Result<Self>> {
+        info!(sample_size, %min_offset, %max_offset);
+        try_unfold((1, database), move |(sample_number, database)| async move {
+            debug!(sample_number, "retrieving a sample…");
+            let sample =
+                Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
+
+            debug!(sample_number, "retrieved");
+            Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, database))))
+        })
+        .try_flatten()
     }
 
     #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
