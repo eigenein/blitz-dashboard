@@ -97,6 +97,6 @@ impl CrawlerMetrics {
         let mut lags = self.lags_secs.iter().copied().collect_vec();
         let index = self.lag_percentile * lags.len() / 100;
         let (_, lag, _) = lags.select_nth_unstable(index);
-        *lag as f64 / 86400_f64
+        *lag as f64 / 3600_f64
     }
 }
