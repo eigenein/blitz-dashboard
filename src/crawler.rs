@@ -264,10 +264,8 @@ async fn update_account(
         .await?;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
-    let mut metrics = metrics.lock().await;
-    metrics.add_account(account.id);
-    metrics.add_lag_from(last_battle_time)?;
-    drop(metrics);
+    metrics.lock().await.add_account(account.id);
+    metrics.lock().await.add_lag_from(last_battle_time)?;
 
     debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
     Ok(())
