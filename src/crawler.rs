@@ -99,15 +99,12 @@ impl Crawler {
             .inspect(|(batch_number, batch)| trace!(batch_number, is_ok = batch.is_ok(), "sampled batch"))
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
-            .map(|(batch_number, batch)| {
-                let future = crawl_batch(
-                    self.api.clone(),
-                    batch?,
-                    batch_number,
-                    self.metrics.clone(),
-                );
-                Ok(future)
-            })
+            .map(|(batch_number, batch)| Ok(crawl_batch(
+                self.api.clone(),
+                batch?,
+                batch_number,
+                self.metrics.clone(),
+            )))
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
