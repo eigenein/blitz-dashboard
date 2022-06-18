@@ -1,5 +1,6 @@
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
+use mongodb::bson::Bson::Document;
 use mongodb::options::UpdateOptions;
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
@@ -58,10 +59,8 @@ impl Account {
     #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
     pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
         let query = doc! { "_id": self.id };
-        let update = vec![
-            doc! { operation: { "lbts": self.last_battle_time } },
-            doc! { "$set": { "random": { "$rand": {} } } },
-        ];
+        let update =
+            doc! { operation: { "lbts": self.last_battle_time, "random": fastrand::f64() } };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
