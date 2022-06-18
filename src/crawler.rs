@@ -123,7 +123,10 @@ impl Crawler {
                 let heartbeat_url = heartbeat_url.clone();
 
                 let future = async move {
-                    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
+                    let is_metrics_logged = {
+                        let mut metrics = metrics.lock().await;
+                        metrics.check(&api.request_counter)
+                    };
                     if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
                         tokio::spawn(reqwest::get(heartbeat_url));
                     }
@@ -161,7 +164,10 @@ async fn crawl_batch(
     let matched = match_account_infos(batch, new_infos);
 
     debug!(matched_len = matched.len(), "batch crawled");
-    metrics.lock().await.add_batch(batch_len, matched.len());
+    {
+        let mut metrics = metrics.lock().await;
+        metrics.add_batch(batch_len, matched.len());
+    }
 
     Ok(stream::iter(matched.into_iter()).map(Ok))
 }
@@ -264,8 +270,11 @@ async fn update_account(
         .await?;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
-    metrics.lock().await.add_account(account.id);
-    metrics.lock().await.add_lag_from(last_battle_time);
+    {
+        let mut metrics = metrics.lock().await;
+        metrics.add_account(account.id);
+        metrics.add_lag_from(last_battle_time);
+    }
 
     debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
     Ok(())
