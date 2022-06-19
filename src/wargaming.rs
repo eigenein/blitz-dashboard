@@ -59,6 +59,7 @@ impl WargamingApi {
                 .default_headers(headers)
                 .https_only(true)
                 .timeout(timeout)
+                .connect_timeout(timeout)
                 .brotli(true)
                 .gzip(true)
                 .deflate(true)
