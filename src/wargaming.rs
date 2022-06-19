@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-use anyhow::{anyhow, Context};
+use anyhow::{bail, Context};
 use governor::clock::DefaultClock;
 use governor::state::{InMemoryState, NotKeyed};
 use governor::{Jitter, Quota, RateLimiter};
@@ -17,8 +17,7 @@ use reqwest::{header, Url};
 use serde::de::DeserializeOwned;
 use tracing::{debug, instrument, warn};
 
-use crate::helpers::backoff::Backoff;
-use crate::helpers::tracing::{format_duration, format_elapsed};
+use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming::response::Response;
 
@@ -73,7 +72,7 @@ impl WargamingApi {
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
     #[instrument(skip_all, fields(query = query))]
-    pub async fn search_accounts(&self, query: &str) -> Result<Vec<models::FoundAccount>> {
+    pub async fn search_accounts(&self, query: &str) -> Result<Vec<FoundAccount>> {
         self.call(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/account/list/",
             &[
@@ -170,8 +169,7 @@ impl WargamingApi {
     #[instrument(skip_all, level = "debug", fields(path = url.path()))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
         trace!("entered");
-        let mut backoff = Backoff::new(100, 25600);
-        loop {
+        for nr_attempt in 1..=10 {
             match self.call_once(url.clone()).await {
                 Ok(response) => match response {
                     Response::Data { data } => {
@@ -183,40 +181,25 @@ impl WargamingApi {
                         match message {
                             "REQUEST_LIMIT_EXCEEDED" | "SOURCE_NOT_AVAILABLE" => {
                                 // ♻️ Retrying for these particular errors.
-                                warn!(
-                                    code = error.code,
-                                    n_attempts = backoff.n_attempts(),
-                                    message,
-                                );
+                                warn!(error.code, nr_attempt, message);
                             }
                             _ => {
                                 // 🥅 This is an unexpected API error.
-                                return Err(anyhow!("{}/{}", error.code, error.message));
+                                bail!("{}/{}", error.code, error.message);
                             }
                         }
                     }
                 },
                 Err(error) if error.is_timeout() => {
-                    // ♻️ The HTTP request has timed out. No action needed, retrying…
-                    warn!(path = url.path(), "request timeout");
+                    warn!(path = url.path(), nr_attempt, "request timeout");
                 }
                 Err(error) => {
-                    // ♻️ The TCP/HTTP request has failed for a different reason. Keep retrying for a while.
-                    warn!(path = url.path(), n_attempts = backoff.n_attempts(), "{:#}", error);
-                    if backoff.n_attempts() >= 10 {
-                        // 🥅 Don't know what to do.
-                        return Err(error).context("all attempts have failed");
-                    }
+                    warn!(path = url.path(), nr_attempt, "{:#}", error);
                 }
             };
-            let sleep_duration = backoff.next();
-            debug!(
-                sleep_duration = format_duration(sleep_duration).as_str(),
-                nr_attempt = backoff.n_attempts(),
-                "retrying…",
-            );
-            tokio::time::sleep(sleep_duration).await;
+            debug!(nr_attempt, "retrying…",);
         }
+        bail!("all attempts have failed")
     }
 
     #[tracing::instrument(skip_all, level = "trace", fields(path = url.path()))]
