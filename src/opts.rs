@@ -210,14 +210,9 @@ pub struct ConnectionOpts {
     )]
     pub api_timeout: StdDuration,
 
-    /// Maximum number of simultaneous API requests.
-    #[clap(
-        short,
-        long,
-        env = "BLITZ_DASHBOARD_MAX_API_PERMITS",
-        default_value = "20"
-    )]
-    pub max_api_permits: usize,
+    /// Maximum number of requests per second for the API.
+    #[clap(short, long, env = "BLITZ_DASHBOARD_MAX_API_RPS", default_value = "20")]
+    pub max_api_rps: u64,
 }
 
 #[derive(Parser)]

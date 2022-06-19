@@ -8,10 +8,12 @@ use std::time::Instant;
 use anyhow::{anyhow, Context};
 use itertools::Itertools;
 pub use models::*;
+use raliguard::Semaphore;
 use reqwest::header::HeaderValue;
 use reqwest::{header, Url};
 use serde::de::DeserializeOwned;
-use tokio::sync::Semaphore;
+use tokio::sync::Mutex;
+use tokio::time::sleep;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
@@ -29,7 +31,7 @@ pub struct WargamingApi {
 
     application_id: Arc<String>,
     client: reqwest::Client,
-    semaphore: Arc<Semaphore>,
+    semaphore: Arc<Mutex<Semaphore>>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -40,11 +42,7 @@ impl WargamingApi {
     const USER_AGENT: &'static str =
         concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-    pub fn new(
-        application_id: &str,
-        timeout: StdDuration,
-        max_permits: usize,
-    ) -> Result<WargamingApi> {
+    pub fn new(application_id: &str, timeout: StdDuration, max_rps: u64) -> Result<WargamingApi> {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::USER_AGENT, HeaderValue::from_static(Self::USER_AGENT));
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
@@ -62,7 +60,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
-            semaphore: Arc::new(Semaphore::new(max_permits)),
+            semaphore: Arc::new(Mutex::new(Semaphore::new(max_rps, StdDuration::from_secs(1)))),
         };
         Ok(this)
     }
@@ -215,14 +213,16 @@ impl WargamingApi {
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
+        if let Some(delay) = self.semaphore.lock().await.calc_delay() {
+            trace!(?delay);
+            sleep(delay).await;
+        }
+
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         trace!(request_id, path = url.path(), "sending the request…");
 
         let start_instant = Instant::now();
-        let result = {
-            let _permit = self.semaphore.acquire().await.unwrap();
-            self.client.get(url).send().await
-        };
+        let result = self.client.get(url).send().await;
 
         let response = match result {
             Ok(result) => result,

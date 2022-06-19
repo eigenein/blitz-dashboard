@@ -65,7 +65,7 @@ impl Crawler {
         let api = WargamingApi::new(
             &opts.connections.application_id,
             opts.connections.api_timeout,
-            opts.connections.max_api_permits,
+            opts.connections.max_api_rps,
         )?;
         let internal = &opts.connections.internal;
         let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;

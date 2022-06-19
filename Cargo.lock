@@ -241,6 +241,7 @@ dependencies = [
  "maud",
  "mongodb",
  "phf",
+ "raliguard",
  "rand",
  "reqwest",
  "rmp-serde",
@@ -1957,6 +1958,12 @@ checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "raliguard"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3537c1264604022db9cb48084594831189f0c3ce85108be51f37b6f7e6405c06"
 
 [[package]]
 name = "rand"

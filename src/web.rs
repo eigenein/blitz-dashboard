@@ -27,7 +27,7 @@ pub async fn run(opts: WebOpts) -> Result {
     let api = WargamingApi::new(
         &opts.connections.application_id,
         opts.connections.api_timeout,
-        opts.connections.max_api_permits,
+        opts.connections.max_api_rps,
     )?;
     let mongodb = crate::database::mongodb::open(&opts.connections.internal.mongodb_uri).await?;
     let redis = redis::connect(
