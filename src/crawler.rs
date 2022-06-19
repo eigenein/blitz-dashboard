@@ -225,6 +225,7 @@ async fn get_updated_tanks_statistics(
 ) -> Result<Vec<wargaming::TankStatistics>> {
     debug!(?since);
     let statistics = api.get_tanks_stats(account_id).await?;
+    debug!(statistics.len = statistics.len());
     let statistics = match since {
         Some(since) => statistics
             .into_iter()

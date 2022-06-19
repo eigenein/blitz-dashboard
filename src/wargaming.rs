@@ -105,6 +105,7 @@ impl WargamingApi {
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
     #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
     pub async fn get_tanks_stats(&self, account_id: AccountId) -> Result<Vec<TankStatistics>> {
+        trace!("entered");
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
             .await
