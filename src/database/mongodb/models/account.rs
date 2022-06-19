@@ -1,5 +1,5 @@
 use anyhow::Error;
-use futures::stream::try_unfold;
+use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::{FindOptions, UpdateOptions};
@@ -70,7 +70,7 @@ impl Account {
             let sample =
                 Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
             debug!(sample_number, "retrieved");
-            Ok::<_, anyhow::Error>(Some((sample, (sample_number + 1, database))))
+            Ok::<_, Error>(Some((iter(sample.into_iter().map(Ok)), (sample_number + 1, database))))
         })
         .try_flatten()
     }
@@ -99,7 +99,7 @@ impl Account {
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
-    ) -> Result<impl Stream<Item = Result<Account>>> {
+    ) -> Result<Vec<Account>> {
         let now = Utc::now();
         let filter = doc! {
             "random": { "$gt": fastrand::f64() },
@@ -112,14 +112,18 @@ impl Account {
 
         let start_instant = Instant::now();
         debug!(sample_size, "retrieving a sample…");
-        let account_stream = Self::collection(from)
+        let accounts: Vec<Account> = Self::collection(from)
             .find(filter, FindOptions::builder().limit(sample_size as i64).build())
             .await
             .context("failed to query a sample of accounts")?
-            .map_err(Error::from)
-            .inspect_ok(|account| trace!(account.id, "sampled account (database)"));
+            .try_collect()
+            .await?;
 
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
-        Ok(account_stream)
+        debug!(
+            n_accounts = accounts.len(),
+            elapsed = format_elapsed(start_instant).as_str(),
+            "done",
+        );
+        Ok(accounts)
     }
 }

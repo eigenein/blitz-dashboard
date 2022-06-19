@@ -86,6 +86,7 @@ impl WargamingApi {
         &self,
         account_ids: &[AccountId],
     ) -> Result<HashMap<String, Option<AccountInfo>>> {
+        trace!("entered");
         if account_ids.is_empty() {
             return Ok(HashMap::new());
         }
@@ -119,6 +120,7 @@ impl WargamingApi {
         &self,
         account_id: AccountId,
     ) -> Result<Vec<TankAchievements>> {
+        trace!("entered");
         Ok(self
             .call_by_account("https://api.wotblitz.ru/wotb/tanks/achievements/", account_id)
             .await
@@ -234,8 +236,6 @@ impl WargamingApi {
 
         trace!(request_id, status = response.status().as_u16());
         let response = response.error_for_status()?;
-
-        trace!(request_id, type_name = std::any::type_name::<T>());
         let result = response.json::<Response<T>>().await;
 
         trace!(request_id, elapsed = format_elapsed(start_instant).as_str(), "done");
