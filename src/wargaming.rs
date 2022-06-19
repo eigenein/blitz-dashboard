@@ -1,19 +1,20 @@
 //! Wargaming.net API.
 
 use std::collections::{BTreeMap, HashMap};
+use std::num::NonZeroU32;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Context};
+use governor::clock::DefaultClock;
+use governor::state::{InMemoryState, NotKeyed};
+use governor::{Jitter, Quota, RateLimiter};
 use itertools::Itertools;
 pub use models::*;
-use raliguard::Semaphore;
 use reqwest::header::HeaderValue;
 use reqwest::{header, Url};
 use serde::de::DeserializeOwned;
-use tokio::sync::Mutex;
-use tokio::time::sleep;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::backoff::Backoff;
@@ -31,7 +32,7 @@ pub struct WargamingApi {
 
     application_id: Arc<String>,
     client: reqwest::Client,
-    semaphore: Arc<Mutex<Semaphore>>,
+    rate_limiter: Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock>>,
 }
 
 /// Represents the bundled `tankopedia.json` file.
@@ -42,7 +43,11 @@ impl WargamingApi {
     const USER_AGENT: &'static str =
         concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-    pub fn new(application_id: &str, timeout: StdDuration, max_rps: u64) -> Result<WargamingApi> {
+    pub fn new(
+        application_id: &str,
+        timeout: StdDuration,
+        max_rps: NonZeroU32,
+    ) -> Result<WargamingApi> {
         info!(max_rps);
         let mut headers = header::HeaderMap::new();
         headers.insert(header::USER_AGENT, HeaderValue::from_static(Self::USER_AGENT));
@@ -61,7 +66,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
-            semaphore: Arc::new(Mutex::new(Semaphore::new(max_rps, StdDuration::from_secs(1)))),
+            rate_limiter: Arc::new(RateLimiter::direct(Quota::per_second(max_rps))),
         };
         Ok(this)
     }
@@ -219,11 +224,10 @@ impl WargamingApi {
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
-        let delay = self.semaphore.lock().await.calc_delay();
-        trace!(?delay, "entered");
-        if let Some(delay) = delay {
-            sleep(delay).await;
-        }
+        trace!("entered");
+        self.rate_limiter
+            .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
+            .await;
 
         let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
         trace!(request_id, path = url.path(), "sending the request…");
