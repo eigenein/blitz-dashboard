@@ -1,5 +1,6 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
 use anyhow::{Context, Error};
@@ -96,47 +97,55 @@ impl Crawler {
             .try_chunks(100)
             .map_err(Error::from)
             .enumerate()
-            .inspect(|(batch_number, batch)| trace!(batch_number, is_ok = batch.is_ok(), "sampled batch"))
+            .inspect(|(batch_number, batch)| {
+                trace!(batch_number, is_ok = batch.is_ok(), "sampled batch")
+            })
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
-            .map(|(batch_number, batch)| Ok(crawl_batch(
-                self.api.clone(),
-                batch?,
-                batch_number,
-                self.metrics.clone(),
-            )))
+            .map(|(batch_number, batch)| {
+                Ok(crawl_batch(
+                    self.api.clone(),
+                    batch?,
+                    batch_number,
+                    self.metrics.clone(),
+                    heartbeat_url.clone(),
+                ))
+            })
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
             // Flatten the stream of batches into the stream of non-crawled accounts.
             .try_flatten()
-            .inspect_ok(|(account, _account_info)| trace!(account.id, "account is about to get crawled"))
+            .inspect_ok(|(account, _account_info)| {
+                trace!(account.id, "account is about to get crawled")
+            })
             // Crawl the accounts.
             .map(|item| {
                 let (account, account_info) = item?;
                 let api = self.api.clone();
-                let heartbeat_url = heartbeat_url.clone();
-                let metrics = self.metrics.clone();
 
                 Ok(async move {
-                    // TODO: extract the metrics tracing.
-                    let is_metrics_logged = metrics.lock().await.check(&api.request_counter);
-                    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
-                        tokio::spawn(reqwest::get(heartbeat_url));
-                    }
-
-                    debug!(account.id, last_battle_time = ?account.last_battle_time, "crawling account…");
                     let tanks = crawl_account(&api, &account).await?;
                     Ok((account, account_info, tanks))
                 })
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
-            .inspect_ok(|(account, _account_info, tanks)| trace!(account.id, n_tanks = tanks.len(), "crawled account"))
+            .inspect_ok(|(account, _account_info, tanks)| {
+                trace!(account.id, n_tanks = tanks.len(), "crawled account")
+            })
             // Make the database updates concurrent.
             .try_for_each_concurrent(
                 Some(buffering.n_updated_accounts),
-                |(account, new_info, tanks)| update_account(self.mongodb.clone(), account, new_info, tanks, self.metrics.clone()),
+                |(account, new_info, tanks)| {
+                    update_account(
+                        self.mongodb.clone(),
+                        account,
+                        new_info,
+                        tanks,
+                        self.metrics.clone(),
+                    )
+                },
             )
             .await
             .context("crawler stream has failed")
@@ -149,16 +158,32 @@ async fn crawl_batch(
     batch: Vec<database::Account>,
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
+    heartbeat_url: Option<String>,
 ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
     let new_infos = api.get_account_info(&account_ids).await?;
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
 
-    debug!(matched_len = matched.len(), "batch crawled");
-    metrics.lock().await.add_batch(batch_len, matched.len());
-
+    on_batch_crawled(batch_len, matched.len(), metrics, &api.request_counter, heartbeat_url).await;
     Ok(stream::iter(matched.into_iter()).map(Ok))
+}
+
+async fn on_batch_crawled(
+    batch_len: usize,
+    matched_len: usize,
+    metrics: Arc<Mutex<CrawlerMetrics>>,
+    request_counter: &AtomicU32,
+    heartbeat_url: Option<String>,
+) {
+    debug!(matched_len, "batch crawled");
+
+    let mut metrics = metrics.lock().await;
+    metrics.add_batch(batch_len, matched_len);
+    let is_metrics_logged = metrics.check(request_counter);
+    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
+        tokio::spawn(reqwest::get(heartbeat_url));
+    }
 }
 
 /// Match the batch's accounts to the account infos fetched from the API.
@@ -188,12 +213,13 @@ fn match_account_infos(
 /// # Returns
 ///
 /// The tanks statistics as returned by the API.
-#[instrument(skip_all, fields(account_id = account_id, since = ?since))]
+#[instrument(skip_all, fields(account_id = account_id))]
 async fn get_updated_tanks_statistics(
     api: &WargamingApi,
     account_id: wargaming::AccountId,
     since: Option<DateTime>,
 ) -> Result<Vec<wargaming::TankStatistics>> {
+    debug!(?since);
     let statistics = api.get_tanks_stats(account_id).await?;
     let statistics = match since {
         Some(since) => statistics
@@ -213,12 +239,13 @@ async fn get_updated_tanks_statistics(
 #[instrument(
     skip_all,
     level = "debug",
-    fields(account_id = account.id),
+    fields(account.id = account.id),
 )]
 async fn crawl_account(
     api: &WargamingApi,
     account: &database::Account,
 ) -> Result<Vec<wargaming::Tank>> {
+    debug!(last_battle_time = ?account.last_battle_time, "crawling account…");
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {
