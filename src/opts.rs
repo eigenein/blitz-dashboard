@@ -190,15 +190,6 @@ pub struct SharedCrawlerOpts {
         env = "BLITZ_DASHBOARD_CRAWLER_LAG_WINDOW_SIZE",
     )]
     pub lag_window_size: usize,
-
-    /// Wargaming.net API timeout.
-    #[structopt(
-        long,
-        default_value = "10sec",
-        parse(try_from_str = humantime::parse_duration),
-        env = "BLITZ_DASHBOARD_CRAWLER_API_TIMEOUT",
-    )]
-    pub api_timeout: StdDuration,
 }
 
 #[derive(Parser)]
@@ -209,6 +200,24 @@ pub struct ConnectionOpts {
     /// Wargaming.net API application ID.
     #[clap(short, long, env = "BLITZ_DASHBOARD_APPLICATION_ID")]
     pub application_id: String,
+
+    /// Wargaming.net API timeout.
+    #[structopt(
+        long,
+        default_value = "10sec",
+        parse(try_from_str = humantime::parse_duration),
+        env = "BLITZ_DASHBOARD_API_TIMEOUT",
+    )]
+    pub api_timeout: StdDuration,
+
+    /// Maximum number of simultaneous API requests.
+    #[clap(
+        short,
+        long,
+        env = "BLITZ_DASHBOARD_MAX_API_PERMITS",
+        default_value = "20"
+    )]
+    pub max_api_permits: usize,
 }
 
 #[derive(Parser)]

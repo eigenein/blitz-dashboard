@@ -24,7 +24,11 @@ pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
-    let api = WargamingApi::new(&opts.connections.application_id, StdDuration::from_secs(3))?;
+    let api = WargamingApi::new(
+        &opts.connections.application_id,
+        opts.connections.api_timeout,
+        opts.connections.max_api_permits,
+    )?;
     let mongodb = crate::database::mongodb::open(&opts.connections.internal.mongodb_uri).await?;
     let redis = redis::connect(
         &opts.connections.internal.redis_uri,

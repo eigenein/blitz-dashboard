@@ -62,7 +62,11 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
 
 impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
-        let api = WargamingApi::new(&opts.connections.application_id, opts.api_timeout)?;
+        let api = WargamingApi::new(
+            &opts.connections.application_id,
+            opts.connections.api_timeout,
+            opts.connections.max_api_permits,
+        )?;
         let internal = &opts.connections.internal;
         let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
 
