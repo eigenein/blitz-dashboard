@@ -2253,8 +2253,8 @@
       "7172": {
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "is_default": true,
@@ -2856,8 +2856,8 @@
         "name": "Wright Continental R-975C4",
         "next_modules": null,
         "next_tanks": [
-          9761,
-          16673
+          16673,
+          9761
         ],
         "is_default": false,
         "price_xp": 2800,
@@ -40681,6 +40681,167 @@
     ],
     "name": "Type 64"
   },
+  "26145": {
+    "suspensions": [
+      264994
+    ],
+    "description": "В силуэте этого стильного красавца опытный боец легко узнает исследуемого «американца» M4 Sherman. Но пусть это не вводит тебя в заблуждение: играется High Score совершенно по-другому. Он не такой скорострельный, зато его разовому урону позавидовали бы даже некоторые тяжи! То, что нужно для эффективной огневой поддержки союзников.",
+    "engines": [
+      28197
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "264994": {
+        "name": "High Score",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 264994,
+        "type": "vehicleChassis"
+      },
+      "264739": {
+        "name": "High Score",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 264739,
+        "type": "vehicleTurret"
+      },
+      "267044": {
+        "name": "105 mm M4",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 267044,
+        "type": "vehicleGun"
+      },
+      "28197": {
+        "name": "Wright Continental R-975C4",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 28197,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "usa",
+    "is_premium": true,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/A05_M4_105BD.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/A05_M4_105BD.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 31350,
+      "profile_id": "28197-264739-264994-267044",
+      "firepower": 30,
+      "shot_efficiency": 30,
+      "gun_id": 267044,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "HOLLOW_CHARGE",
+          "penetration": 100,
+          "damage": 280
+        },
+        {
+          "type": "HOLLOW_CHARGE",
+          "penetration": 120,
+          "damage": 250
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 50,
+          "damage": 400
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 80,
+          "sides": 60,
+          "rear": 55
+        },
+        "hull": {
+          "front": 64,
+          "sides": 38,
+          "rear": 38
+        }
+      },
+      "speed_forward": 48,
+      "battle_level_range_min": 5,
+      "speed_backward": 18,
+      "engine": {
+        "tier": 5,
+        "fire_chance": 0.2,
+        "power": 450,
+        "name": "Wright Continental R-975C4",
+        "weight": 550
+      },
+      "max_ammo": 36,
+      "battle_level_range_max": 6,
+      "engine_id": 28197,
+      "hp": 680,
+      "is_default": true,
+      "protection": 21,
+      "suspension": {
+        "tier": 5,
+        "load_limit": 32300,
+        "traverse_speed": 37,
+        "name": "High Score",
+        "weight": 8300
+      },
+      "suspension_id": 264994,
+      "max_weight": 32300,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 105,
+        "name": "105 mm M4",
+        "weight": 2600,
+        "move_up_arc": 20,
+        "fire_rate": 4.62,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.48,
+        "clip_capacity": 1,
+        "traverse_speed": 35.0,
+        "reload_time": 13.0,
+        "tier": 5,
+        "aim_time": 4.06
+      },
+      "turret_id": 264739,
+      "turret": {
+        "name": "High Score",
+        "weight": 5000,
+        "view_range": 240,
+        "traverse_left_arc": 180,
+        "hp": 130,
+        "traverse_speed": 37,
+        "tier": 5,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 45,
+      "hull_weight": 14600,
+      "hull_hp": 550
+    },
+    "tier": 5,
+    "tank_id": 26145,
+    "type": "mediumTank",
+    "guns": [
+      267044
+    ],
+    "turrets": [
+      264739
+    ],
+    "name": "High Score"
+  },
   "2625": {
     "suspensions": [
       4674,
@@ -41361,8 +41522,8 @@
       "11777": 30000
     },
     "next_tanks": {
-      "513": 58390,
-      "5889": 54420
+      "5889": 54420,
+      "513": 58390
     },
     "modules_tree": {
       "5634": {
@@ -41448,8 +41609,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "is_default": false,
         "price_xp": 5310,
@@ -54970,8 +55131,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          5409,
-          10273
+          10273,
+          5409
         ],
         "is_default": false,
         "price_xp": 1250,
@@ -62453,6 +62614,223 @@
     ],
     "name": "Comet"
   },
+  "5473": {
+    "suspensions": [
+      10338,
+      10082
+    ],
+    "description": "Воплощение концепции тяжёлого танка прорыва, популярной в середине 20-х годов. Машина оснащалась несколькими башнями и несла лёгкую противоснарядную броню. К началу 1940-х годов танк Mitsu 108 оказался слишком тяжёлым для армии и технически устарел, в результате чего так и не был запущен в серийное производство. ",
+    "engines": [
+      6757,
+      7013
+    ],
+    "prices_xp": null,
+    "next_tanks": {
+      "5729": 25000
+    },
+    "modules_tree": {
+      "10338": {
+        "name": "Mitsu 105 plan 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 5000,
+        "price_credit": 0,
+        "module_id": 10338,
+        "type": "vehicleChassis"
+      },
+      "8803": {
+        "name": "Mitsu 105 plan 1",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 8803,
+        "type": "vehicleTurret"
+      },
+      "8804": {
+        "name": "75 mm Gun Type 88",
+        "next_modules": [
+          9059
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 8804,
+        "type": "vehicleGun"
+      },
+      "7013": {
+        "name": "Kawasaki Ha9 IIC",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 2500,
+        "price_credit": 0,
+        "module_id": 7013,
+        "type": "vehicleEngine"
+      },
+      "10082": {
+        "name": "Mitsu 105 plan 1",
+        "next_modules": [
+          10338
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10082,
+        "type": "vehicleChassis"
+      },
+      "9059": {
+        "name": "Mitsu 105 plan 2",
+        "next_modules": [
+          9060
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 6500,
+        "price_credit": 0,
+        "module_id": 9059,
+        "type": "vehicleTurret"
+      },
+      "9060": {
+        "name": "105 mm Gun Type 14 L/34",
+        "next_modules": null,
+        "next_tanks": [
+          5729
+        ],
+        "is_default": false,
+        "price_xp": 5000,
+        "price_credit": 0,
+        "module_id": 9060,
+        "type": "vehicleGun"
+      },
+      "6757": {
+        "name": "Kawasaki Ha8",
+        "next_modules": [
+          7013
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 6757,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J30_Mitsu_108.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J30_Mitsu_108.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 44399,
+      "profile_id": "6757-8803-8804-10082",
+      "firepower": 27,
+      "shot_efficiency": 37,
+      "gun_id": 8804,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 105,
+          "damage": 160
+        },
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 155,
+          "damage": 135
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 20,
+          "damage": 200
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 80,
+          "sides": 50,
+          "rear": 40
+        },
+        "hull": {
+          "front": 90,
+          "sides": 55,
+          "rear": 40
+        }
+      },
+      "speed_forward": 30,
+      "battle_level_range_min": 5,
+      "speed_backward": 10,
+      "engine": {
+        "tier": 5,
+        "fire_chance": 0.2,
+        "power": 500,
+        "name": "Kawasaki Ha8",
+        "weight": 580
+      },
+      "max_ammo": 80,
+      "battle_level_range_max": 6,
+      "engine_id": 6757,
+      "hp": 680,
+      "is_default": true,
+      "protection": 28,
+      "suspension": {
+        "tier": 4,
+        "load_limit": 55800,
+        "traverse_speed": 18,
+        "name": "Mitsu 105 plan 1",
+        "weight": 10600
+      },
+      "suspension_id": 10082,
+      "max_weight": 55800,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 75,
+        "name": "75 mm Gun Type 88",
+        "weight": 1489,
+        "move_up_arc": 14,
+        "fire_rate": 7.5,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.44,
+        "clip_capacity": 1,
+        "traverse_speed": 35.0,
+        "reload_time": 8.0,
+        "tier": 5,
+        "aim_time": 5.76
+      },
+      "turret_id": 8803,
+      "turret": {
+        "name": "Mitsu 105 plan 1",
+        "weight": 3000,
+        "view_range": 220,
+        "traverse_left_arc": 180,
+        "hp": 136,
+        "traverse_speed": 20,
+        "tier": 5,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 19,
+      "hull_weight": 28480,
+      "hull_hp": 544
+    },
+    "tier": 5,
+    "tank_id": 5473,
+    "type": "heavyTank",
+    "guns": [
+      9060,
+      8804
+    ],
+    "turrets": [
+      8803,
+      9059
+    ],
+    "name": "Mitsu 108"
+  },
   "54785": {
     "suspensions": [
       30210
@@ -65240,6 +65618,223 @@
       12371
     ],
     "name": "Centurion Mk. 7/1"
+  },
+  "5729": {
+    "suspensions": [
+      10594,
+      10850
+    ],
+    "description": "Один из результатов сотрудничества японских конструкторов с немецкими инженерами. Оснащался литой башней и более лёгкой, чем у «Тигров», подвеской. В металле не изготавливался. ",
+    "engines": [
+      7269,
+      7013
+    ],
+    "prices_xp": null,
+    "next_tanks": {
+      "5985": 45000
+    },
+    "modules_tree": {
+      "10594": {
+        "name": "Ju-Nu plan 1",
+        "next_modules": [
+          10850
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10594,
+        "type": "vehicleChassis"
+      },
+      "9571": {
+        "name": "Ju-Nu plan 2",
+        "next_modules": [
+          9316
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 6400,
+        "price_credit": 0,
+        "module_id": 9571,
+        "type": "vehicleTurret"
+      },
+      "4452": {
+        "name": "7.5 cm Tank Gun Type 5 Model I",
+        "next_modules": [
+          9571
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 4452,
+        "type": "vehicleGun"
+      },
+      "7013": {
+        "name": "Kawasaki Ha9 IIC",
+        "next_modules": [
+          7269
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 7013,
+        "type": "vehicleEngine"
+      },
+      "10850": {
+        "name": "Ju-Nu plan 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 6000,
+        "price_credit": 0,
+        "module_id": 10850,
+        "type": "vehicleChassis"
+      },
+      "9315": {
+        "name": "Ju-Nu plan 1",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 9315,
+        "type": "vehicleTurret"
+      },
+      "9316": {
+        "name": "88 mm Gun Type 3",
+        "next_modules": null,
+        "next_tanks": [
+          5985
+        ],
+        "is_default": false,
+        "price_xp": 11500,
+        "price_credit": 0,
+        "module_id": 9316,
+        "type": "vehicleGun"
+      },
+      "7269": {
+        "name": "Kawasaki Ha9 IID",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 6200,
+        "price_credit": 0,
+        "module_id": 7269,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J29_Ju_Nu.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J29_Ju_Nu.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 54094,
+      "profile_id": "4452-7013-9315-10594",
+      "firepower": 37,
+      "shot_efficiency": 61,
+      "gun_id": 4452,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 155,
+          "damage": 160
+        },
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 186,
+          "damage": 135
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 38,
+          "damage": 200
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 110,
+          "sides": 80,
+          "rear": 60
+        },
+        "hull": {
+          "front": 135,
+          "sides": 80,
+          "rear": 55
+        }
+      },
+      "speed_forward": 40,
+      "battle_level_range_min": 6,
+      "speed_backward": 12,
+      "engine": {
+        "tier": 6,
+        "fire_chance": 0.2,
+        "power": 550,
+        "name": "Kawasaki Ha9 IIC",
+        "weight": 850
+      },
+      "max_ammo": 90,
+      "battle_level_range_max": 7,
+      "engine_id": 7013,
+      "hp": 1070,
+      "is_default": true,
+      "protection": 42,
+      "suspension": {
+        "tier": 5,
+        "load_limit": 65000,
+        "traverse_speed": 22,
+        "name": "Ju-Nu plan 1",
+        "weight": 15000
+      },
+      "suspension_id": 10594,
+      "max_weight": 65000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 75,
+        "name": "7.5 cm Tank Gun Type 5 Model I",
+        "weight": 1764,
+        "move_up_arc": 14,
+        "fire_rate": 9.52,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "clip_capacity": 1,
+        "traverse_speed": 35.0,
+        "reload_time": 6.3,
+        "tier": 6,
+        "aim_time": 5.13
+      },
+      "turret_id": 9315,
+      "turret": {
+        "name": "Ju-Nu plan 1",
+        "weight": 10680,
+        "view_range": 240,
+        "traverse_left_arc": 180,
+        "hp": 214,
+        "traverse_speed": 24,
+        "tier": 5,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 23,
+      "hull_weight": 25550,
+      "hull_hp": 856
+    },
+    "tier": 6,
+    "tank_id": 5729,
+    "type": "heavyTank",
+    "guns": [
+      9316,
+      4452
+    ],
+    "turrets": [
+      9571,
+      9315
+    ],
+    "name": "Ju-Nu"
   },
   "57361": {
     "suspensions": [
@@ -68046,6 +68641,223 @@
     ],
     "name": "Centurion Mk. I"
   },
+  "5985": {
+    "suspensions": [
+      11362,
+      11106
+    ],
+    "description": "Результат работы японских конструкторов с немецкой технической документацией и проектирования по её мотивам. Оснащался сварной башней и верхней лобовой деталью с рациональными углами наклона, отсылающими к конструкции «Пантер». В металле не изготавливался.",
+    "engines": [
+      7269,
+      7525
+    ],
+    "prices_xp": null,
+    "next_tanks": {
+      "6241": 80000
+    },
+    "modules_tree": {
+      "11362": {
+        "name": "Ju-To plan 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 9500,
+        "price_credit": 0,
+        "module_id": 11362,
+        "type": "vehicleChassis"
+      },
+      "10083": {
+        "name": "Ju-To plan 2",
+        "next_modules": [
+          9572
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 11500,
+        "price_credit": 0,
+        "module_id": 10083,
+        "type": "vehicleTurret"
+      },
+      "9316": {
+        "name": "88 mm Gun Type 3",
+        "next_modules": [
+          10083
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 9316,
+        "type": "vehicleGun"
+      },
+      "7525": {
+        "name": "Kawasaki Ha60 IB",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 18500,
+        "price_credit": 0,
+        "module_id": 7525,
+        "type": "vehicleEngine"
+      },
+      "11106": {
+        "name": "Ju-To plan 1",
+        "next_modules": [
+          11362
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 11106,
+        "type": "vehicleChassis"
+      },
+      "9827": {
+        "name": "Ju-To plan 1",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 9827,
+        "type": "vehicleTurret"
+      },
+      "9572": {
+        "name": "105 mm Gun Type 92 L/45",
+        "next_modules": null,
+        "next_tanks": [
+          6241
+        ],
+        "is_default": false,
+        "price_xp": 22000,
+        "price_credit": 0,
+        "module_id": 9572,
+        "type": "vehicleGun"
+      },
+      "7269": {
+        "name": "Kawasaki Ha9 IID",
+        "next_modules": [
+          7525
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 7269,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J28_Ju_To.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J28_Ju_To.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 51295,
+      "profile_id": "7269-9316-9827-11106",
+      "firepower": 46,
+      "shot_efficiency": 55,
+      "gun_id": 9316,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 145,
+          "damage": 220
+        },
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 195,
+          "damage": 190
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 44,
+          "damage": 270
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 152,
+          "sides": 80,
+          "rear": 80
+        },
+        "hull": {
+          "front": 90,
+          "sides": 80,
+          "rear": 60
+        }
+      },
+      "speed_forward": 40,
+      "battle_level_range_min": 7,
+      "speed_backward": 14,
+      "engine": {
+        "tier": 7,
+        "fire_chance": 0.2,
+        "power": 650,
+        "name": "Kawasaki Ha9 IID",
+        "weight": 900
+      },
+      "max_ammo": 72,
+      "battle_level_range_max": 8,
+      "engine_id": 7269,
+      "hp": 1300,
+      "is_default": true,
+      "protection": 51,
+      "suspension": {
+        "tier": 6,
+        "load_limit": 61000,
+        "traverse_speed": 22,
+        "name": "Ju-To plan 1",
+        "weight": 15000
+      },
+      "suspension_id": 11106,
+      "max_weight": 61000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 88,
+        "name": "88 mm Gun Type 3",
+        "weight": 2065,
+        "move_up_arc": 14,
+        "fire_rate": 8.22,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "clip_capacity": 1,
+        "traverse_speed": 35.0,
+        "reload_time": 7.3,
+        "tier": 7,
+        "aim_time": 5.42
+      },
+      "turret_id": 9827,
+      "turret": {
+        "name": "Ju-To plan 1",
+        "weight": 7680,
+        "view_range": 240,
+        "traverse_left_arc": 180,
+        "hp": 260,
+        "traverse_speed": 24,
+        "tier": 6,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 27,
+      "hull_weight": 25350,
+      "hull_hp": 1040
+    },
+    "tier": 7,
+    "tank_id": 5985,
+    "type": "heavyTank",
+    "guns": [
+      9572,
+      9316
+    ],
+    "turrets": [
+      10083,
+      9827
+    ],
+    "name": "Ju-To"
+  },
   "59905": {
     "suspensions": [
       45314
@@ -70226,6 +71038,223 @@
       13395
     ],
     "name": "FV215b"
+  },
+  "6241": {
+    "suspensions": [
+      11874,
+      11618
+    ],
+    "description": "Японский тяжёлый танк с максимальным использованием технологических наработок немецкого происхождения. В ходе разработки его основной задачей стала оборона Японских островов. Обладал рациональными углами наклона брони и боевой массой в пределах массы «Тигра». В металле не изготавливался, оставшись на уровне эскиза. ",
+    "engines": [
+      7781,
+      7525
+    ],
+    "prices_xp": null,
+    "next_tanks": {
+      "6497": 154000
+    },
+    "modules_tree": {
+      "11874": {
+        "name": "Chi-Se plan 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 16940,
+        "price_credit": 0,
+        "module_id": 11874,
+        "type": "vehicleChassis"
+      },
+      "10595": {
+        "name": "Chi-Se plan 2",
+        "next_modules": [
+          9828
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 22260,
+        "price_credit": 0,
+        "module_id": 10595,
+        "type": "vehicleTurret"
+      },
+      "9572": {
+        "name": "105 mm Gun Type 92 L/45",
+        "next_modules": [
+          10595
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 9572,
+        "type": "vehicleGun"
+      },
+      "7525": {
+        "name": "Kawasaki Ha60 IB",
+        "next_modules": [
+          7781
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 7525,
+        "type": "vehicleEngine"
+      },
+      "11618": {
+        "name": "Chi-Se plan 1",
+        "next_modules": [
+          11874
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 11618,
+        "type": "vehicleChassis"
+      },
+      "10339": {
+        "name": "Chi-Se plan 1",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10339,
+        "type": "vehicleTurret"
+      },
+      "9828": {
+        "name": "105 mm Gun Type 5",
+        "next_modules": null,
+        "next_tanks": [
+          6497
+        ],
+        "is_default": false,
+        "price_xp": 21000,
+        "price_credit": 0,
+        "module_id": 9828,
+        "type": "vehicleGun"
+      },
+      "7781": {
+        "name": "Kawasaki Ha60 Ic",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 18800,
+        "price_credit": 0,
+        "module_id": 7781,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J27_Chi_Se.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J27_Chi_Se.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 67182,
+      "profile_id": "7525-9572-10339-11618",
+      "firepower": 50,
+      "shot_efficiency": 62,
+      "gun_id": 9572,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 180,
+          "damage": 310
+        },
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 255,
+          "damage": 280
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 60,
+          "damage": 400
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 120,
+          "sides": 90,
+          "rear": 80
+        },
+        "hull": {
+          "front": 203,
+          "sides": 100,
+          "rear": 90
+        }
+      },
+      "speed_forward": 35,
+      "battle_level_range_min": 8,
+      "speed_backward": 12,
+      "engine": {
+        "tier": 8,
+        "fire_chance": 0.2,
+        "power": 700,
+        "name": "Kawasaki Ha60 IB",
+        "weight": 950
+      },
+      "max_ammo": 65,
+      "battle_level_range_max": 9,
+      "engine_id": 7525,
+      "hp": 1710,
+      "is_default": true,
+      "protection": 65,
+      "suspension": {
+        "tier": 7,
+        "load_limit": 74000,
+        "traverse_speed": 21,
+        "name": "Chi-Se plan 1",
+        "weight": 22350
+      },
+      "suspension_id": 11618,
+      "max_weight": 74000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 105,
+        "name": "105 mm Gun Type 92 L/45",
+        "weight": 3032,
+        "move_up_arc": 14,
+        "fire_rate": 6.32,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.39,
+        "clip_capacity": 1,
+        "traverse_speed": 35.0,
+        "reload_time": 9.5,
+        "tier": 7,
+        "aim_time": 6.28
+      },
+      "turret_id": 10339,
+      "turret": {
+        "name": "Chi-Se plan 1",
+        "weight": 8250,
+        "view_range": 240,
+        "traverse_left_arc": 180,
+        "hp": 342,
+        "traverse_speed": 25,
+        "tier": 8,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 21,
+      "hull_weight": 32300,
+      "hull_hp": 1368
+    },
+    "tier": 8,
+    "tank_id": 6241,
+    "type": "heavyTank",
+    "guns": [
+      9828,
+      9572
+    ],
+    "turrets": [
+      10595,
+      10339
+    ],
+    "name": "Chi-Se"
   },
   "625": {
     "suspensions": [
@@ -75085,6 +76114,223 @@
     ],
     "name": "AC 1 Sentinel"
   },
+  "6497": {
+    "suspensions": [
+      12130,
+      12386
+    ],
+    "description": "Воплощение концепции основного боевого танка, набравшей популярность в середине 1960-х годов. Потенциально обладал хорошим бронированием и подвижностью, но из-за чрезмерно большой массы и высокой стоимости проект так и не был запущен в производство, оставшись на уровне эскизов. ",
+    "engines": [
+      8037,
+      8293
+    ],
+    "prices_xp": null,
+    "next_tanks": {
+      "6753": 240000
+    },
+    "modules_tree": {
+      "12130": {
+        "name": "Type 68 plan 1",
+        "next_modules": [
+          12386
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 12130,
+        "type": "vehicleChassis"
+      },
+      "10851": {
+        "name": "Type 68 plan 1",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10851,
+        "type": "vehicleTurret"
+      },
+      "10084": {
+        "name": "120 mm Gun Type 58",
+        "next_modules": [
+          11107
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10084,
+        "type": "vehicleGun"
+      },
+      "8293": {
+        "name": "Mitsubishi 12ZT",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 26500,
+        "price_credit": 0,
+        "module_id": 8293,
+        "type": "vehicleEngine"
+      },
+      "12386": {
+        "name": "Type 68 plan 2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 31500,
+        "price_credit": 0,
+        "module_id": 12386,
+        "type": "vehicleChassis"
+      },
+      "11107": {
+        "name": "Type 68 plan 2",
+        "next_modules": [
+          10340
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 30500,
+        "price_credit": 0,
+        "module_id": 11107,
+        "type": "vehicleTurret"
+      },
+      "10340": {
+        "name": "120 mm Gun Type 60",
+        "next_modules": null,
+        "next_tanks": [
+          6753
+        ],
+        "is_default": false,
+        "price_xp": 60000,
+        "price_credit": 0,
+        "module_id": 10340,
+        "type": "vehicleGun"
+      },
+      "8037": {
+        "name": "Mitsubishi 12ZM",
+        "next_modules": [
+          8293
+        ],
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 8037,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J26_Type_68.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J26_Type_68.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 66990,
+      "profile_id": "8037-10084-10851-12130",
+      "firepower": 48,
+      "shot_efficiency": 77,
+      "gun_id": 10084,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 245,
+          "damage": 400
+        },
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 320,
+          "damage": 340
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 60,
+          "damage": 515
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 127,
+          "sides": 90,
+          "rear": 90
+        },
+        "hull": {
+          "front": 127,
+          "sides": 120,
+          "rear": 100
+        }
+      },
+      "speed_forward": 40,
+      "battle_level_range_min": 9,
+      "speed_backward": 15,
+      "engine": {
+        "tier": 9,
+        "fire_chance": 0.12,
+        "power": 800,
+        "name": "Mitsubishi 12ZM",
+        "weight": 2400
+      },
+      "max_ammo": 48,
+      "battle_level_range_max": 10,
+      "engine_id": 8037,
+      "hp": 1900,
+      "is_default": true,
+      "protection": 75,
+      "suspension": {
+        "tier": 8,
+        "load_limit": 96000,
+        "traverse_speed": 21,
+        "name": "Type 68 plan 1",
+        "weight": 11500
+      },
+      "suspension_id": 12130,
+      "max_weight": 96000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 120,
+        "name": "120 mm Gun Type 58",
+        "weight": 2790,
+        "move_up_arc": 14,
+        "fire_rate": 4.69,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.39,
+        "clip_capacity": 1,
+        "traverse_speed": 26.25,
+        "reload_time": 12.8,
+        "tier": 9,
+        "aim_time": 6.05
+      },
+      "turret_id": 10851,
+      "turret": {
+        "name": "Type 68 plan 1",
+        "weight": 13500,
+        "view_range": 250,
+        "traverse_left_arc": 180,
+        "hp": 380,
+        "traverse_speed": 20,
+        "tier": 8,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 25,
+      "hull_weight": 36500,
+      "hull_hp": 1520
+    },
+    "tier": 9,
+    "tank_id": 6497,
+    "type": "heavyTank",
+    "guns": [
+      10340,
+      10084
+    ],
+    "turrets": [
+      10851,
+      11107
+    ],
+    "name": "Type 68"
+  },
   "6529": {
     "suspensions": [
       10114,
@@ -76583,6 +77829,167 @@
       10051
     ],
     "name": "BDR G1 B"
+  },
+  "6753": {
+    "suspensions": [
+      12642
+    ],
+    "description": "Воплощение концепции основного боевого танка, созданное под влияние американских и собственных (японских) разработок середины 1960-х годов. Оснащался гидропневматической подвеской, позволявшей менять клиренс и дополнительно увеличивать углы вертикальной наводки орудия. В металле не изготавливался, оставшись на уровне эскизного проекта. ",
+    "engines": [
+      8549
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "12642": {
+        "name": "Type 71",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 12642,
+        "type": "vehicleChassis"
+      },
+      "11363": {
+        "name": "Type 71",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 11363,
+        "type": "vehicleTurret"
+      },
+      "10596": {
+        "name": "120 mm Gun Type 71",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 10596,
+        "type": "vehicleGun"
+      },
+      "8549": {
+        "name": "Mitsubishi MT11",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 8549,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "japan",
+    "is_premium": false,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J25_Type71.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J25_Type71.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 67680,
+      "profile_id": "8549-10596-11363-12642",
+      "firepower": 57,
+      "shot_efficiency": 81,
+      "gun_id": 10596,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 255,
+          "damage": 400
+        },
+        {
+          "type": "HOLLOW_CHARGE",
+          "penetration": 330,
+          "damage": 340
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 60,
+          "damage": 515
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 203,
+          "sides": 127,
+          "rear": 105
+        },
+        "hull": {
+          "front": 178,
+          "sides": 105,
+          "rear": 100
+        }
+      },
+      "speed_forward": 40,
+      "battle_level_range_min": 10,
+      "speed_backward": 15,
+      "engine": {
+        "tier": 10,
+        "fire_chance": 0.12,
+        "power": 1000,
+        "name": "Mitsubishi MT11",
+        "weight": 2500
+      },
+      "max_ammo": 48,
+      "battle_level_range_max": 11,
+      "engine_id": 8549,
+      "hp": 2450,
+      "is_default": true,
+      "protection": 98,
+      "suspension": {
+        "tier": 10,
+        "load_limit": 80000,
+        "traverse_speed": 24,
+        "name": "Type 71",
+        "weight": 11500
+      },
+      "suspension_id": 12642,
+      "max_weight": 80000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 120,
+        "name": "120 mm Gun Type 71",
+        "weight": 3100,
+        "move_up_arc": 14,
+        "fire_rate": 5.45,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "clip_capacity": 1,
+        "traverse_speed": 26.25,
+        "reload_time": 11.0,
+        "tier": 10,
+        "aim_time": 4.89
+      },
+      "turret_id": 11363,
+      "turret": {
+        "name": "Type 71",
+        "weight": 13800,
+        "view_range": 250,
+        "traverse_left_arc": 180,
+        "hp": 490,
+        "traverse_speed": 15,
+        "tier": 10,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 33,
+      "hull_weight": 36480,
+      "hull_hp": 1960
+    },
+    "tier": 10,
+    "tank_id": 6753,
+    "type": "heavyTank",
+    "guns": [
+      10596
+    ],
+    "turrets": [
+      11363
+    ],
+    "name": "Type 71"
   },
   "6785": {
     "suspensions": [
@@ -85724,8 +87131,8 @@
       "16403": {
         "name": "Panther II Schmalturm",
         "next_modules": [
-          2068,
-          2324
+          2324,
+          2068
         ],
         "next_tanks": [
           10257
@@ -88766,8 +90173,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          7972,
-          10276
+          10276,
+          7972
         ],
         "next_tanks": null,
         "is_default": true,

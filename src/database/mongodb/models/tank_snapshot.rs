@@ -121,10 +121,13 @@ impl TankSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
-        Self::collection(to)
+        let result = Self::collection(to)
             .update_one(query, update, options)
             .await
             .context("failed to upsert the tank snapshot")?;
+        if result.matched_count != 0 {
+            warn!(result.matched_count);
+        }
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())

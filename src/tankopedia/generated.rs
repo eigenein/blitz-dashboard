@@ -1797,6 +1797,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::China,
         type_: TankType::Light,
     },
+    26145_u32 => Vehicle {
+        tank_id: 26145,
+        name: Cow::Borrowed("High Score"),
+        tier: 5,
+        is_premium: true,
+        nation: Nation::Usa,
+        type_: TankType::Medium,
+    },
     2625_u32 => Vehicle {
         tank_id: 2625,
         name: Cow::Borrowed("ARL 44"),
@@ -2757,6 +2765,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::Uk,
         type_: TankType::Medium,
     },
+    5473_u32 => Vehicle {
+        tank_id: 5473,
+        name: Cow::Borrowed("Mitsu 108"),
+        tier: 5,
+        is_premium: false,
+        nation: Nation::Japan,
+        type_: TankType::Heavy,
+    },
     54785_u32 => Vehicle {
         tank_id: 54785,
         name: Cow::Borrowed("СУ-100Y"),
@@ -2893,6 +2909,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::Uk,
         type_: TankType::Medium,
     },
+    5729_u32 => Vehicle {
+        tank_id: 5729,
+        name: Cow::Borrowed("Ju-Nu"),
+        tier: 6,
+        is_premium: false,
+        nation: Nation::Japan,
+        type_: TankType::Heavy,
+    },
     57361_u32 => Vehicle {
         tank_id: 57361,
         name: Cow::Borrowed("Pz.Kpfw. IV Schmalturm"),
@@ -3021,6 +3045,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::Uk,
         type_: TankType::Medium,
     },
+    5985_u32 => Vehicle {
+        tank_id: 5985,
+        name: Cow::Borrowed("Ju-To"),
+        tier: 7,
+        is_premium: false,
+        nation: Nation::Japan,
+        type_: TankType::Heavy,
+    },
     59905_u32 => Vehicle {
         tank_id: 59905,
         name: Cow::Borrowed("Т-54 первый образец"),
@@ -3131,6 +3163,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         tier: 10,
         is_premium: false,
         nation: Nation::Uk,
+        type_: TankType::Heavy,
+    },
+    6241_u32 => Vehicle {
+        tank_id: 6241,
+        name: Cow::Borrowed("Chi-Se"),
+        tier: 8,
+        is_premium: false,
+        nation: Nation::Japan,
         type_: TankType::Heavy,
     },
     625_u32 => Vehicle {
@@ -3373,6 +3413,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::Uk,
         type_: TankType::Medium,
     },
+    6497_u32 => Vehicle {
+        tank_id: 6497,
+        name: Cow::Borrowed("Type 68"),
+        tier: 9,
+        is_premium: false,
+        nation: Nation::Japan,
+        type_: TankType::Heavy,
+    },
     6529_u32 => Vehicle {
         tank_id: 6529,
         name: Cow::Borrowed("Škoda T 25"),
@@ -3435,6 +3483,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         tier: 5,
         is_premium: false,
         nation: Nation::France,
+        type_: TankType::Heavy,
+    },
+    6753_u32 => Vehicle {
+        tank_id: 6753,
+        name: Cow::Borrowed("Type 71"),
+        tier: 10,
+        is_premium: false,
+        nation: Nation::Japan,
         type_: TankType::Heavy,
     },
     6785_u32 => Vehicle {
