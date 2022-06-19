@@ -250,7 +250,7 @@ async fn crawl_account(
     api: &WargamingApi,
     account: &database::Account,
 ) -> Result<Vec<wargaming::Tank>> {
-    debug!(last_battle_time = ?account.last_battle_time, "crawling account…");
+    debug!(?account.last_battle_time);
     let statistics =
         get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
     if !statistics.is_empty() {

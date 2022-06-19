@@ -43,6 +43,7 @@ impl WargamingApi {
         concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
     pub fn new(application_id: &str, timeout: StdDuration, max_rps: u64) -> Result<WargamingApi> {
+        info!(max_rps);
         let mut headers = header::HeaderMap::new();
         headers.insert(header::USER_AGENT, HeaderValue::from_static(Self::USER_AGENT));
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
@@ -147,6 +148,7 @@ impl WargamingApi {
         url: &str,
         account_id: AccountId,
     ) -> Result<Option<T>> {
+        trace!("entered");
         let account_id = account_id.to_string();
         let mut map: HashMap<String, Option<T>> = self
             .call(Url::parse_with_params(
@@ -162,6 +164,7 @@ impl WargamingApi {
 
     #[instrument(skip_all, level = "debug", fields(path = url.path()))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
+        trace!("entered");
         let mut backoff = Backoff::new(100, 25600);
         loop {
             match self.call_once(url.clone()).await {
@@ -216,8 +219,9 @@ impl WargamingApi {
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
-        if let Some(delay) = self.semaphore.lock().await.calc_delay() {
-            trace!(?delay);
+        let delay = self.semaphore.lock().await.calc_delay();
+        trace!(?delay, "entered");
+        if let Some(delay) = delay {
             sleep(delay).await;
         }
 
