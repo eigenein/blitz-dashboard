@@ -15,6 +15,7 @@ pub use models::*;
 use reqwest::header::HeaderValue;
 use reqwest::{header, Url};
 use serde::de::DeserializeOwned;
+use tokio::time::sleep;
 use tracing::{debug, instrument, warn};
 
 use crate::helpers::tracing::format_elapsed;
@@ -180,13 +181,15 @@ impl WargamingApi {
                     Response::Error { error } => {
                         let message = error.message.as_str();
                         match message {
-                            "REQUEST_LIMIT_EXCEEDED" | "SOURCE_NOT_AVAILABLE" => {
-                                // ♻️ Retrying for these particular errors.
-                                warn!(error.code, nr_attempt, message);
+                            "REQUEST_LIMIT_EXCEEDED" => {
+                                warn!(error.code, nr_attempt, "request limit exceeded");
+                            }
+                            "SOURCE_NOT_AVAILABLE" => {
+                                warn!(error.code, nr_attempt, "source not available");
+                                sleep(StdDuration::from_secs(1)).await;
                             }
                             _ => {
-                                // 🥅 This is an unexpected API error.
-                                bail!("{}/{}", error.code, error.message);
+                                bail!("{}/{}", error.code, message);
                             }
                         }
                     }
