@@ -5,6 +5,7 @@ use mongodb::bson::doc;
 use mongodb::options::{FindOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::time::timeout;
 
 use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
@@ -67,8 +68,10 @@ impl Account {
         info!(sample_size, %min_offset, %max_offset);
         try_unfold((1, database), move |(sample_number, database)| async move {
             debug!(sample_number, "retrieving a sample…");
-            let sample =
-                Account::retrieve_sample(&database, sample_size, min_offset, max_offset).await?;
+            let future = Account::retrieve_sample(&database, sample_size, min_offset, max_offset);
+            let sample = timeout(StdDuration::from_secs(60), future) // FIXME.
+                .await
+                .with_context(|| format!("timed out to retrieve sample #{}", sample_number))??;
             debug!(sample_number, "retrieved");
             Ok::<_, Error>(Some((iter(sample.into_iter().map(Ok)), (sample_number + 1, database))))
         })

@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
-use anyhow::{Context, Error};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use tokio::sync::Mutex;
+use tokio::time::timeout;
 
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::helpers::tracing::format_elapsed;
@@ -95,60 +95,60 @@ impl Crawler {
             n_buffered_accounts = buffering.n_buffered_accounts,
             n_updated_accounts = buffering.n_updated_accounts,
         );
+        const TIMEOUT: StdDuration = StdDuration::from_secs(60); // FIXME.
         accounts
-            .inspect_ok(|account| trace!(account.id, "sampled account (crawler)"))
+            .inspect_ok(|account| trace!(account.id, "sampled account"))
             // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
-            .map_err(Error::from)
             .enumerate()
-            .inspect(|(batch_number, batch)| {
-                trace!(batch_number, is_ok = batch.is_ok(), "sampled batch")
-            })
             // For each batch request basic account information.
             // We need the accounts' last battle timestamps.
             .map(|(batch_number, batch)| {
-                Ok(crawl_batch(
-                    self.api.clone(),
-                    batch?,
-                    batch_number,
-                    self.metrics.clone(),
-                    heartbeat_url.clone(),
-                ))
+                let batch = batch?;
+                trace!(batch_number, n_accounts = batch.len(), "scheduling the crawler");
+                let api = self.api.clone();
+                let metrics = self.metrics.clone();
+                let heartbeat_url = heartbeat_url.clone();
+
+                Ok(async move {
+                    timeout(TIMEOUT, crawl_batch(api, batch, batch_number, metrics, heartbeat_url))
+                        .await
+                        .with_context(|| format!("timed out to crawl batch #{}", batch_number))?
+                })
             })
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
             // Flatten the stream of batches into the stream of non-crawled accounts.
             .try_flatten()
-            .inspect_ok(|(account, _account_info)| {
-                trace!(account.id, "account is about to get crawled")
-            })
             // Crawl the accounts.
             .map(|item| {
                 let (account, account_info) = item?;
+                trace!(account.id, "scheduling the crawler");
                 let api = self.api.clone();
 
                 Ok(async move {
-                    let tanks = crawl_account(&api, &account).await?;
+                    let tanks = timeout(TIMEOUT, crawl_account(&api, &account))
+                        .await?
+                        .with_context(|| format!("timed out to crawl account #{}", account.id))?;
                     Ok((account, account_info, tanks))
                 })
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
-            .inspect_ok(|(account, _account_info, tanks)| {
-                trace!(account.id, n_tanks = tanks.len(), "crawled account")
-            })
             // Make the database updates concurrent.
             .try_for_each_concurrent(
                 Some(buffering.n_updated_accounts),
                 |(account, new_info, tanks)| {
-                    update_account(
-                        self.mongodb.clone(),
-                        account,
-                        new_info,
-                        tanks,
-                        self.metrics.clone(),
-                    )
+                    trace!(account.id, n_tanks = tanks.len(), "scheduling the update");
+                    let mongodb = self.mongodb.clone();
+                    let metrics = self.metrics.clone();
+
+                    async move {
+                        timeout(TIMEOUT, update_account(mongodb, new_info, tanks, metrics))
+                            .await
+                            .with_context(|| format!("timed out to update #{}", account.id))?
+                    }
                 },
             )
             .await
@@ -265,10 +265,9 @@ async fn crawl_account(
     }
 }
 
-#[instrument(skip_all, fields(account_id = account.id))]
+#[instrument(skip_all, fields(account_id = new_info.id))]
 async fn update_account(
     connection: impl Borrow<mongodb::Database>,
-    account: database::Account,
     new_info: wargaming::AccountInfo,
     tanks: Vec<wargaming::Tank>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
@@ -285,6 +284,7 @@ async fn update_account(
     }
     debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
 
+    let account_id = new_info.id;
     let last_battle_time = new_info.last_battle_time;
     database::Account::from(new_info)
         .upsert(connection, database::Account::OPERATION_SET)
@@ -292,7 +292,7 @@ async fn update_account(
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
     let mut metrics = metrics.lock().await;
-    metrics.add_account(account.id);
+    metrics.add_account(account_id);
     metrics.add_lag_from(last_battle_time);
     drop(metrics);
 
