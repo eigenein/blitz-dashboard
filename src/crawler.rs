@@ -60,6 +60,8 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     crawler.run(accounts, &opts.shared.buffering, None).await
 }
 
+const TIMEOUT: StdDuration = StdDuration::from_secs(60); // FIXME.
+
 impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
         let api = WargamingApi::new(
@@ -95,7 +97,6 @@ impl Crawler {
             n_buffered_accounts = buffering.n_buffered_accounts,
             n_updated_accounts = buffering.n_updated_accounts,
         );
-        const TIMEOUT: StdDuration = StdDuration::from_secs(60); // FIXME.
         accounts
             .inspect_ok(|account| trace!(account.id, "sampled account"))
             // Chunk in batches of 100 accounts – the maximum for the account information API.
@@ -143,12 +144,7 @@ impl Crawler {
                     trace!(account.id, n_tanks = tanks.len(), "scheduling the update");
                     let mongodb = self.mongodb.clone();
                     let metrics = self.metrics.clone();
-
-                    async move {
-                        timeout(TIMEOUT, update_account(mongodb, new_info, tanks, metrics))
-                            .await
-                            .with_context(|| format!("timed out to update #{}", account.id))?
-                    }
+                    update_account(mongodb, new_info, tanks, metrics)
                 },
             )
             .await
@@ -278,20 +274,25 @@ async fn update_account(
     let start_instant = Instant::now();
 
     for tank in tanks.into_iter() {
-        database::TankSnapshot::from(tank)
-            .upsert(connection)
-            .await?;
+        timeout(TIMEOUT, database::TankSnapshot::from(tank).upsert(connection))
+            .await
+            .context("timed out to upsert the tank snapshot")??;
     }
     debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
 
     let account_id = new_info.id;
     let last_battle_time = new_info.last_battle_time;
-    database::Account::from(new_info)
-        .upsert(connection, database::Account::OPERATION_SET)
-        .await?;
+    timeout(
+        TIMEOUT,
+        database::Account::from(new_info).upsert(connection, database::Account::OPERATION_SET),
+    )
+    .await
+    .context("timed out to upsert the account")??;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
-    let mut metrics = metrics.lock().await;
+    let mut metrics = timeout(TIMEOUT, metrics.lock())
+        .await
+        .context("timed out to lock the metrics")?;
     metrics.add_account(account_id);
     metrics.add_lag_from(last_battle_time);
     drop(metrics);
