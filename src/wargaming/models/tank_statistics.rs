@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
@@ -31,19 +30,6 @@ pub struct TankAchievements {
     pub tank_id: TankId,
     pub achievements: HashMap<String, i32>,
     pub max_series: HashMap<String, i32>,
-}
-
-impl Sub for TankStatistics {
-    type Output = TankStatistics;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self::Output {
-            tank_id: self.tank_id,
-            last_battle_time: self.last_battle_time,
-            battle_life_time: self.battle_life_time - rhs.battle_life_time,
-            all: self.all - rhs.all,
-        }
-    }
 }
 
 #[cfg(test)]

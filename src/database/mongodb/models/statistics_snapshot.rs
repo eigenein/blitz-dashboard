@@ -1,9 +1,13 @@
+use std::iter::Sum;
+
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::prelude::*;
 use crate::wargaming;
 
+/// This is a part of the other models, there's no dedicated collection
+/// for statistics snapshots.
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct StatisticsSnapshot {
@@ -42,6 +46,24 @@ pub struct StatisticsSnapshot {
     pub xp: i32,
 }
 
+impl Default for StatisticsSnapshot {
+    fn default() -> Self {
+        Self {
+            battle_life_time: Duration::seconds(0),
+            n_battles: 0,
+            n_wins: 0,
+            n_survived_battles: 0,
+            n_win_and_survived: 0,
+            damage_dealt: 0,
+            damage_received: 0,
+            n_shots: 0,
+            n_hits: 0,
+            n_frags: 0,
+            xp: 0,
+        }
+    }
+}
+
 impl From<wargaming::TankStatistics> for StatisticsSnapshot {
     fn from(statistics: wargaming::TankStatistics) -> Self {
         Self {
@@ -57,6 +79,25 @@ impl From<wargaming::TankStatistics> for StatisticsSnapshot {
             n_frags: statistics.all.frags,
             xp: statistics.all.xp,
         }
+    }
+}
+
+impl Sum for StatisticsSnapshot {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = Self::default();
+        for component in iter {
+            sum.n_battles += component.n_battles;
+            sum.n_wins += component.n_wins;
+            sum.n_hits += component.n_hits;
+            sum.n_shots += component.n_shots;
+            sum.n_survived_battles += component.n_survived_battles;
+            sum.n_frags += component.n_frags;
+            sum.xp += component.xp;
+            sum.damage_received += component.damage_received;
+            sum.damage_dealt += component.damage_dealt;
+            sum.n_win_and_survived += component.n_win_and_survived;
+        }
+        sum
     }
 }
 
@@ -98,5 +139,23 @@ impl StatisticsSnapshot {
     #[inline]
     pub fn damage_per_minute(&self) -> f64 {
         self.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn damage_per_battle(&self) -> f64 {
+        self.damage_dealt as f64 / self.n_battles as f64
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn survival_rate(&self) -> f64 {
+        self.n_survived_battles as f64 / self.n_battles as f64
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn hit_rate(&self) -> f64 {
+        self.n_hits as f64 / self.n_shots as f64
     }
 }

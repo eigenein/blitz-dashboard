@@ -13,13 +13,14 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rocket::http::Status;
 use rocket::{uri, State};
 
+use crate::database::StatisticsSnapshot;
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::wargaming::models::{subtract_tanks, BasicStatistics, Tank, TankType};
+use crate::wargaming::models::{subtract_tanks, Tank, TankType};
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -74,10 +75,7 @@ pub async fn get(
         .await?;
 
     let tanks_delta = subtract_tanks(tanks, tank_snapshots);
-    let stats_delta: BasicStatistics = tanks_delta
-        .iter()
-        .map(|snapshot| BasicStatistics::from(&snapshot.statistics))
-        .sum();
+    let stats_delta: StatisticsSnapshot = tanks_delta.iter().map(|tank| tank.statistics).sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|snapshot| snapshot.statistics.battle_life_time.num_seconds())
@@ -305,7 +303,7 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        @if stats_delta.battles != 0 {
+                        @if stats_delta.n_battles != 0 {
                             div.columns.is-multiline {
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
@@ -317,19 +315,19 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (stats_delta.battles) }
+                                                        p.title { (stats_delta.n_battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Победы" }
-                                                        p.title { (stats_delta.wins) }
+                                                        p.title { (stats_delta.n_wins) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Выжил" }
-                                                        p.title { (stats_delta.survived_battles) }
+                                                        p.title { (stats_delta.n_survived_battles) }
                                                     }
                                                 }
                                             }
@@ -371,7 +369,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (stats_delta.frags) }
+                                                        p.title { (stats_delta.n_frags) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -383,7 +381,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(stats_delta.frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.n_frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -436,7 +434,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(stats_delta.wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.n_wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -467,7 +465,7 @@ pub async fn get(
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::wilson_score_interval(
-                                                                stats_delta.battles, stats_delta.survived_battles, ConfidenceLevel::default());
+                                                                stats_delta.n_battles, stats_delta.n_survived_battles, ConfidenceLevel::default());
                                                             (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }
@@ -478,7 +476,7 @@ pub async fn get(
                                     }
                                 }
 
-                                @if stats_delta.shots != 0 {
+                                @if stats_delta.n_shots != 0 {
                                     div.column."is-4-tablet"."is-2-desktop" {
                                         div.card {
                                             header.card-header {
