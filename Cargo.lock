@@ -232,6 +232,7 @@ dependencies = [
  "chrono-humanize",
  "circular-queue",
  "clap",
+ "either",
  "fastrand",
  "fred",
  "futures 0.3.21",

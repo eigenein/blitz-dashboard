@@ -13,14 +13,13 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rocket::http::Status;
 use rocket::{uri, State};
 
-use crate::database::StatisticsSnapshot;
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::wargaming::models::{subtract_tanks, Tank, TankType};
+use crate::wargaming::models::subtract_tanks;
 use crate::web::partials::*;
 use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
@@ -56,26 +55,17 @@ pub async fn get(
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&current_info.nickname);
+    database::Account::fake(account_id)
+        .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
+        .await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
     let tanks = tanks
         .into_iter()
         .filter(|tank| tank.statistics.last_battle_time >= before)
         .collect_vec();
-    let tank_snapshots = {
-        let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();
-        database::TankSnapshot::retrieve_latest_tank_snapshots(
-            mongodb, account_id, before, &tank_ids,
-        )
-        .await?
-    };
-
-    database::Account::fake(account_id)
-        .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
-        .await?;
-
-    let tanks_delta = subtract_tanks(tanks, tank_snapshots);
-    let stats_delta: StatisticsSnapshot = tanks_delta.iter().map(|tank| tank.statistics).sum();
+    let (stats_delta, tanks_delta) =
+        retrieve_deltas_slowly(mongodb, account_id, tanks, before).await?;
     let battle_life_time: i64 = tanks_delta
         .iter()
         .map(|snapshot| snapshot.statistics.battle_life_time.num_seconds())
@@ -550,11 +540,11 @@ fn render_tank_tr(
 
             td.has-text-centered {
                 @match vehicle.type_ {
-                    TankType::Light => "ЛТ",
-                    TankType::Medium => "СТ",
-                    TankType::Heavy => "ТТ",
-                    TankType::AT => "ПТ",
-                    TankType::Unknown => "",
+                    wargaming::TankType::Light => "ЛТ",
+                    wargaming::TankType::Medium => "СТ",
+                    wargaming::TankType::Heavy => "ТТ",
+                    wargaming::TankType::AT => "ПТ",
+                    wargaming::TankType::Unknown => "",
                 }
             }
 
@@ -661,4 +651,22 @@ fn render_tank_tr(
         }
     };
     Ok(markup)
+}
+
+async fn retrieve_deltas_slowly(
+    mongodb: &mongodb::Database,
+    account_id: wargaming::AccountId,
+    tanks: Vec<wargaming::Tank>,
+    before: DateTime,
+) -> Result<(database::StatisticsSnapshot, Vec<database::TankSnapshot>)> {
+    let tank_snapshots = {
+        let tank_ids = tanks.iter().map(wargaming::Tank::tank_id).collect_vec();
+        database::TankSnapshot::retrieve_latest_tank_snapshots(
+            mongodb, account_id, before, &tank_ids,
+        )
+        .await?
+    };
+    let tanks_delta = subtract_tanks(tanks, tank_snapshots);
+    let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();
+    Ok((stats_delta, tanks_delta))
 }

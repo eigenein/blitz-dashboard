@@ -46,10 +46,14 @@ pub struct AccountInfoStatistics {
 }
 
 impl AccountInfoStatistics {
+    #[inline]
+    #[must_use]
     pub fn n_battles(&self) -> i32 {
         self.all.battles + self.rating.basic.battles
     }
 
+    #[inline]
+    #[must_use]
     pub fn n_wins(&self) -> i32 {
         self.all.wins + self.rating.basic.wins
     }
