@@ -20,8 +20,8 @@ pub struct BasicStatistics {
     pub xp: i32,
 }
 
-impl From<&database::TankSnapshot> for BasicStatistics {
-    fn from(snapshot: &database::TankSnapshot) -> Self {
+impl From<&database::StatisticsSnapshot> for BasicStatistics {
+    fn from(snapshot: &database::StatisticsSnapshot) -> Self {
         Self {
             battles: snapshot.n_battles,
             wins: snapshot.n_wins,

@@ -7,8 +7,8 @@ use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::database::root::Root;
+use crate::database::statistics_snapshot::StatisticsSnapshot;
 use crate::helpers::tracing::format_elapsed;
-use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -25,39 +25,8 @@ pub struct TankSnapshot {
     #[serde(rename = "tid")]
     pub tank_id: u32,
 
-    #[serde(rename = "life")]
-    #[serde_as(as = "serde_with::DurationSeconds<i64>")]
-    pub battle_life_time: Duration,
-
-    #[serde(rename = "nb")]
-    pub n_battles: i32,
-
-    #[serde(rename = "nw")]
-    pub n_wins: i32,
-
-    #[serde(rename = "nsb")]
-    pub n_survived_battles: i32,
-
-    #[serde(rename = "nws")]
-    pub n_win_and_survived: i32,
-
-    #[serde(rename = "dmgd")]
-    pub damage_dealt: i32,
-
-    #[serde(rename = "dmgr")]
-    pub damage_received: i32,
-
-    #[serde(rename = "shts")]
-    pub n_shots: i32,
-
-    #[serde(rename = "hits")]
-    pub n_hits: i32,
-
-    #[serde(rename = "frgs")]
-    pub n_frags: i32,
-
-    #[serde(rename = "xp")]
-    pub xp: i32,
+    #[serde(flatten)]
+    pub statistics: StatisticsSnapshot,
 }
 
 impl From<wargaming::Tank> for TankSnapshot {
@@ -66,17 +35,7 @@ impl From<wargaming::Tank> for TankSnapshot {
             last_battle_time: tank.statistics.basic.last_battle_time,
             account_id: tank.account_id,
             tank_id: tank.statistics.basic.tank_id as u32,
-            battle_life_time: tank.statistics.battle_life_time,
-            n_battles: tank.statistics.all.battles,
-            n_wins: tank.statistics.all.wins,
-            n_survived_battles: tank.statistics.all.survived_battles,
-            n_win_and_survived: tank.statistics.all.win_and_survived,
-            damage_dealt: tank.statistics.all.damage_dealt,
-            damage_received: tank.statistics.all.damage_received,
-            n_shots: tank.statistics.all.shots,
-            n_hits: tank.statistics.all.hits,
-            n_frags: tank.statistics.all.frags,
-            xp: tank.statistics.all.xp,
+            statistics: tank.statistics.into(),
         }
     }
 }
@@ -176,44 +135,5 @@ impl TankSnapshot {
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(stream)
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn current_win_rate(&self) -> f64 {
-        self.n_wins as f64 / self.n_battles as f64
-    }
-
-    #[inline]
-    pub fn true_win_rate(&self) -> ConfidenceInterval {
-        ConfidenceInterval::wilson_score_interval(
-            self.n_battles,
-            self.n_wins,
-            ConfidenceLevel::default(),
-        )
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn frags_per_battle(&self) -> f64 {
-        self.n_frags as f64 / self.n_battles as f64
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn wins_per_hour(&self) -> f64 {
-        self.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn battles_per_hour(&self) -> f64 {
-        self.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn damage_per_minute(&self) -> f64 {
-        self.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
     }
 }

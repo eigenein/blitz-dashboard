@@ -74,10 +74,13 @@ pub async fn get(
         .await?;
 
     let tanks_delta = subtract_tanks(tanks, tank_snapshots);
-    let stats_delta: BasicStatistics = tanks_delta.iter().map(BasicStatistics::from).sum();
+    let stats_delta: BasicStatistics = tanks_delta
+        .iter()
+        .map(|snapshot| BasicStatistics::from(&snapshot.statistics))
+        .sum();
     let battle_life_time: i64 = tanks_delta
         .iter()
-        .map(|snapshot| snapshot.battle_life_time.num_seconds())
+        .map(|snapshot| snapshot.statistics.battle_life_time.num_seconds())
         .sum();
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
@@ -541,7 +544,7 @@ fn render_tank_tr(
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.true_win_rate();
+        @let true_win_rate = snapshot.statistics.true_win_rate();
         @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -557,22 +560,22 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(snapshot.battle_life_time.num_seconds()) {
-                (format_duration(snapshot.battle_life_time.to_std()?))
+            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(snapshot.statistics.battle_life_time.num_seconds()) {
+                (format_duration(snapshot.statistics.battle_life_time.to_std()?))
             }
 
-            td.has-text-right data-sort="battles" data-value=(snapshot.n_battles) {
-                (snapshot.n_battles)
+            td.has-text-right data-sort="battles" data-value=(snapshot.statistics.n_battles) {
+                (snapshot.statistics.n_battles)
             }
 
-            td data-sort="wins" data-value=(snapshot.n_wins) {
+            td data-sort="wins" data-value=(snapshot.statistics.n_wins) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
-                    span { (snapshot.n_wins) }
+                    span { (snapshot.statistics.n_wins) }
                 }
             }
 
-            @let win_rate = snapshot.current_win_rate();
+            @let win_rate = snapshot.statistics.current_win_rate();
             td.has-text-right data-sort="win-rate" data-value=(win_rate) {
                 strong { (render_percentage(win_rate)) }
             }
@@ -592,7 +595,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let frags_per_battle = snapshot.frags_per_battle();
+            @let frags_per_battle = snapshot.statistics.frags_per_battle();
             td data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
@@ -600,7 +603,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let wins_per_hour = snapshot.wins_per_hour();
+            @let wins_per_hour = snapshot.statistics.wins_per_hour();
             td data-sort="wins-per-hour" data-value=(wins_per_hour) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
@@ -608,7 +611,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let expected_wins_per_hour = true_win_rate * snapshot.battles_per_hour();
+            @let expected_wins_per_hour = true_win_rate * snapshot.statistics.battles_per_hour();
             td.is-white-space-nowrap
                 data-sort="expected-wins-per-hour"
                 data-value=(expected_wins_per_hour.mean)
@@ -632,25 +635,25 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right data-sort="damage-dealt" data-value=(snapshot.damage_dealt) {
-                (snapshot.damage_dealt)
+            td.has-text-right data-sort="damage-dealt" data-value=(snapshot.statistics.damage_dealt) {
+                (snapshot.statistics.damage_dealt)
             }
 
-            @let damage_per_minute = snapshot.damage_per_minute();
+            @let damage_per_minute = snapshot.statistics.damage_per_minute();
             td.has-text-right data-sort="damage-per-minute" data-value=(damage_per_minute) {
                 (format!("{:.0}", damage_per_minute))
             }
 
-            @let damage_per_battle = snapshot.damage_dealt as f64 / snapshot.n_battles as f64;
+            @let damage_per_battle = snapshot.statistics.damage_dealt as f64 / snapshot.statistics.n_battles as f64;
             td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }
 
-            td.has-text-right data-sort="survived-battles" data-value=(snapshot.n_survived_battles) {
-                (snapshot.n_survived_battles)
+            td.has-text-right data-sort="survived-battles" data-value=(snapshot.statistics.n_survived_battles) {
+                (snapshot.statistics.n_survived_battles)
             }
 
-            @let survival_rate = snapshot.n_survived_battles as f64 / snapshot.n_battles as f64;
+            @let survival_rate = snapshot.statistics.n_survived_battles as f64 / snapshot.statistics.n_battles as f64;
             td data-sort="survival-rate" data-value=(survival_rate) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-heart.has-text-danger {} }
