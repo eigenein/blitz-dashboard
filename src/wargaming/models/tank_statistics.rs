@@ -46,18 +46,6 @@ impl Sub for TankStatistics {
     }
 }
 
-impl Sub for TankAchievements {
-    type Output = TankAchievements;
-
-    fn sub(self, _rhs: Self) -> Self::Output {
-        Self::Output {
-            tank_id: self.tank_id,
-            achievements: Default::default(), // TODO
-            max_series: Default::default(),   // TODO
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
