@@ -112,11 +112,15 @@ impl Account {
                 { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
             ],
         };
+        let options = FindOptions::builder()
+            .sort(doc! { "random": 1 })
+            .limit(sample_size as i64)
+            .build();
 
         let start_instant = Instant::now();
         debug!(sample_size, "retrieving a sample…");
         let accounts: Vec<Account> = Self::collection(from)
-            .find(filter, FindOptions::builder().limit(sample_size as i64).build())
+            .find(filter, options)
             .await
             .context("failed to query a sample of accounts")?
             .try_collect()
