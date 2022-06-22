@@ -7,20 +7,14 @@ use crate::helpers::serde::{deserialize_duration_seconds, serialize_duration_sec
 use crate::prelude::*;
 use crate::wargaming::models::{BasicStatistics, TankId};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
-pub struct BasicTankStatistics {
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
+pub struct TankStatistics {
     pub tank_id: TankId,
 
     /// The moment in time when the related state is actual.
     /// Every new timestamp produces a new tank snapshot in the database.
     #[serde(with = "chrono::serde::ts_seconds")]
     pub last_battle_time: DateTime,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
-pub struct TankStatistics {
-    #[serde(flatten)]
-    pub basic: BasicTankStatistics,
 
     #[serde(
         serialize_with = "serialize_duration_seconds",
@@ -44,7 +38,8 @@ impl Sub for TankStatistics {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
-            basic: self.basic,
+            tank_id: self.tank_id,
+            last_battle_time: self.last_battle_time,
             battle_life_time: self.battle_life_time - rhs.battle_life_time,
             all: self.all - rhs.all,
         }

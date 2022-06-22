@@ -225,7 +225,7 @@ async fn get_updated_tanks_statistics(
     let statistics = match since {
         Some(since) => statistics
             .into_iter()
-            .filter(|tank| tank.basic.last_battle_time > since)
+            .filter(|tank| tank.last_battle_time > since)
             .collect(),
         None => statistics,
     };

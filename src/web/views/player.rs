@@ -59,7 +59,7 @@ pub async fn get(
     let before = Utc::now() - Duration::from_std(period)?;
     let tanks = tanks
         .into_iter()
-        .filter(|tank| tank.statistics.basic.last_battle_time >= before)
+        .filter(|tank| tank.statistics.last_battle_time >= before)
         .collect_vec();
     let tank_snapshots = {
         let tank_ids = tanks.iter().map(Tank::tank_id).collect_vec();

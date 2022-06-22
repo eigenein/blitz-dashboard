@@ -32,9 +32,9 @@ pub struct TankSnapshot {
 impl From<wargaming::Tank> for TankSnapshot {
     fn from(tank: wargaming::Tank) -> Self {
         Self {
-            last_battle_time: tank.statistics.basic.last_battle_time,
+            last_battle_time: tank.statistics.last_battle_time,
             account_id: tank.account_id,
-            tank_id: tank.statistics.basic.tank_id as u32,
+            tank_id: tank.statistics.tank_id as u32,
             statistics: tank.statistics.into(),
         }
     }

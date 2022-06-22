@@ -16,7 +16,7 @@ pub struct Tank {
 impl Tank {
     #[must_use]
     pub fn tank_id(&self) -> TankId {
-        self.statistics.basic.tank_id
+        self.statistics.tank_id
     }
 }
 
@@ -25,12 +25,12 @@ pub fn subtract_tanks(
     mut right: HashMap<TankId, database::TankSnapshot>,
 ) -> Vec<database::TankSnapshot> {
     left.into_iter()
-        .filter_map(|left_tank| match right.remove(&left_tank.statistics.basic.tank_id) {
+        .filter_map(|left_tank| match right.remove(&left_tank.statistics.tank_id) {
             Some(right_tank)
                 if left_tank.statistics.all.battles > right_tank.statistics.n_battles =>
             {
                 Some(database::TankSnapshot {
-                    last_battle_time: left_tank.statistics.basic.last_battle_time,
+                    last_battle_time: left_tank.statistics.last_battle_time,
                     account_id: right_tank.account_id,
                     tank_id: right_tank.tank_id,
                     statistics: database::StatisticsSnapshot {
