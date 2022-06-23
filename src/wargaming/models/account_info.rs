@@ -39,7 +39,7 @@ impl AccountInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 pub struct AccountInfoStatistics {
     pub all: BasicStatistics,
     pub rating: RatingStatistics,

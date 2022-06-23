@@ -23,7 +23,11 @@ pub struct TankSnapshot {
     pub account_id: wargaming::AccountId,
 
     #[serde(rename = "tid")]
-    pub tank_id: u32,
+    pub tank_id: wargaming::TankId,
+
+    #[serde(rename = "life")]
+    #[serde_as(as = "serde_with::DurationSeconds<i64>")]
+    pub battle_life_time: Duration,
 
     #[serde(flatten)]
     pub statistics: StatisticsSnapshot,
@@ -35,16 +39,13 @@ impl From<wargaming::Tank> for TankSnapshot {
             last_battle_time: tank.statistics.last_battle_time,
             account_id: tank.account_id,
             tank_id: tank.statistics.tank_id as u32,
-            statistics: tank.statistics.into(),
+            battle_life_time: tank.statistics.battle_life_time,
+            statistics: tank.statistics.all.into(),
         }
     }
 }
 
 impl TankSnapshot {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("tank_snapshots")
-    }
-
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [
@@ -135,5 +136,31 @@ impl TankSnapshot {
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(stream)
+    }
+}
+
+impl TankSnapshot {
+    #[must_use]
+    #[inline]
+    pub fn wins_per_hour(&self) -> f64 {
+        self.statistics.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn battles_per_hour(&self) -> f64 {
+        self.statistics.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn damage_per_minute(&self) -> f64 {
+        self.statistics.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
+    }
+}
+
+impl TankSnapshot {
+    fn collection(in_: &Database) -> Collection<Self> {
+        in_.collection("tank_snapshots")
     }
 }

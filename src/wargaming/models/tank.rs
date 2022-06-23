@@ -33,9 +33,9 @@ pub fn subtract_tanks(
                     last_battle_time: left_tank.statistics.last_battle_time,
                     account_id: right_tank.account_id,
                     tank_id: right_tank.tank_id,
+                    battle_life_time: left_tank.statistics.battle_life_time
+                        - right_tank.battle_life_time,
                     statistics: database::StatisticsSnapshot {
-                        battle_life_time: left_tank.statistics.battle_life_time
-                            - right_tank.statistics.battle_life_time,
                         n_battles: left_tank.statistics.all.battles
                             - right_tank.statistics.n_battles,
                         n_wins: left_tank.statistics.all.wins - right_tank.statistics.n_wins,

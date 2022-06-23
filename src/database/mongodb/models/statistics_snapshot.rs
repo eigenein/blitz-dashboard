@@ -3,18 +3,13 @@ use std::iter::Sum;
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::prelude::*;
-use crate::wargaming;
+use crate::wargaming::BasicStatistics;
 
 /// This is a part of the other models, there's no dedicated collection
 /// for statistics snapshots.
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, Default)]
 pub struct StatisticsSnapshot {
-    #[serde(rename = "life")]
-    #[serde_as(as = "serde_with::DurationSeconds<i64>")]
-    pub battle_life_time: Duration,
-
     #[serde(rename = "nb")]
     pub n_battles: i32,
 
@@ -46,38 +41,19 @@ pub struct StatisticsSnapshot {
     pub xp: i32,
 }
 
-impl Default for StatisticsSnapshot {
-    fn default() -> Self {
+impl From<BasicStatistics> for StatisticsSnapshot {
+    fn from(statistics: BasicStatistics) -> Self {
         Self {
-            battle_life_time: Duration::seconds(0),
-            n_battles: 0,
-            n_wins: 0,
-            n_survived_battles: 0,
-            n_win_and_survived: 0,
-            damage_dealt: 0,
-            damage_received: 0,
-            n_shots: 0,
-            n_hits: 0,
-            n_frags: 0,
-            xp: 0,
-        }
-    }
-}
-
-impl From<wargaming::TankStatistics> for StatisticsSnapshot {
-    fn from(statistics: wargaming::TankStatistics) -> Self {
-        Self {
-            battle_life_time: statistics.battle_life_time,
-            n_battles: statistics.all.battles,
-            n_wins: statistics.all.wins,
-            n_survived_battles: statistics.all.survived_battles,
-            n_win_and_survived: statistics.all.win_and_survived,
-            damage_dealt: statistics.all.damage_dealt,
-            damage_received: statistics.all.damage_received,
-            n_shots: statistics.all.shots,
-            n_hits: statistics.all.hits,
-            n_frags: statistics.all.frags,
-            xp: statistics.all.xp,
+            n_battles: statistics.battles,
+            n_wins: statistics.wins,
+            n_survived_battles: statistics.survived_battles,
+            n_win_and_survived: statistics.win_and_survived,
+            damage_dealt: statistics.damage_dealt,
+            damage_received: statistics.damage_received,
+            n_shots: statistics.shots,
+            n_hits: statistics.hits,
+            n_frags: statistics.frags,
+            xp: statistics.xp,
         }
     }
 }
@@ -121,24 +97,6 @@ impl StatisticsSnapshot {
     #[inline]
     pub fn frags_per_battle(&self) -> f64 {
         self.n_frags as f64 / self.n_battles as f64
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn wins_per_hour(&self) -> f64 {
-        self.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn battles_per_hour(&self) -> f64 {
-        self.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn damage_per_minute(&self) -> f64 {
-        self.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
     }
 
     #[must_use]

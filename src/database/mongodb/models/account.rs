@@ -21,21 +21,12 @@ pub struct Account {
     pub last_battle_time: Option<DateTime>,
 }
 
-impl From<wargaming::AccountInfo> for Account {
-    fn from(account_info: wargaming::AccountInfo) -> Self {
-        Self {
-            id: account_info.id,
-            last_battle_time: Some(account_info.last_battle_time),
-        }
-    }
-}
-
 impl Account {
-    pub const OPERATION_SET: &'static str = "$set";
-    pub const OPERATION_SET_ON_INSERT: &'static str = "$setOnInsert";
-
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("accounts")
+    pub fn new(id: wargaming::AccountId, last_battle_time: DateTime) -> Self {
+        Self {
+            id,
+            last_battle_time: Some(last_battle_time),
+        }
     }
 
     pub fn fake(account_id: wargaming::AccountId) -> Self {
@@ -44,6 +35,11 @@ impl Account {
             last_battle_time: None,
         }
     }
+}
+
+impl Account {
+    pub const OPERATION_SET: &'static str = "$set";
+    pub const OPERATION_SET_ON_INSERT: &'static str = "$setOnInsert";
 
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
@@ -132,5 +128,11 @@ impl Account {
             "done",
         );
         Ok(accounts)
+    }
+}
+
+impl Account {
+    fn collection(in_: &Database) -> Collection<Self> {
+        in_.collection("accounts")
     }
 }

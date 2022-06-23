@@ -68,7 +68,7 @@ pub async fn get(
         retrieve_deltas_slowly(mongodb, account_id, tanks, before).await?;
     let battle_life_time: i64 = tanks_delta
         .iter()
-        .map(|snapshot| snapshot.statistics.battle_life_time.num_seconds())
+        .map(|snapshot| snapshot.battle_life_time.num_seconds())
         .sum();
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
@@ -548,8 +548,8 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(snapshot.statistics.battle_life_time.num_seconds()) {
-                (format_duration(snapshot.statistics.battle_life_time.to_std()?))
+            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(snapshot.battle_life_time.num_seconds()) {
+                (format_duration(snapshot.battle_life_time.to_std()?))
             }
 
             td.has-text-right data-sort="battles" data-value=(snapshot.statistics.n_battles) {
@@ -591,7 +591,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let wins_per_hour = snapshot.statistics.wins_per_hour();
+            @let wins_per_hour = snapshot.wins_per_hour();
             td data-sort="wins-per-hour" data-value=(wins_per_hour) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
@@ -599,7 +599,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let expected_wins_per_hour = true_win_rate * snapshot.statistics.battles_per_hour();
+            @let expected_wins_per_hour = true_win_rate * snapshot.battles_per_hour();
             td.is-white-space-nowrap
                 data-sort="expected-wins-per-hour"
                 data-value=(expected_wins_per_hour.mean)
@@ -627,7 +627,7 @@ fn render_tank_tr(
                 (snapshot.statistics.damage_dealt)
             }
 
-            @let damage_per_minute = snapshot.statistics.damage_per_minute();
+            @let damage_per_minute = snapshot.damage_per_minute();
             td.has-text-right data-sort="damage-per-minute" data-value=(damage_per_minute) {
                 (format!("{:.0}", damage_per_minute))
             }

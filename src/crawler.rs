@@ -4,6 +4,8 @@ use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
 use futures::{stream, Stream, StreamExt, TryStreamExt};
+use itertools::Itertools;
+use mongodb::bson;
 use tokio::sync::Mutex;
 use tokio::time::timeout;
 
@@ -129,10 +131,9 @@ impl Crawler {
                 let api = self.api.clone();
 
                 Ok(async move {
-                    let tanks = timeout(TIMEOUT, crawl_account(&api, &account))
+                    timeout(TIMEOUT, crawl_account(&api, &account, &account_info))
                         .await?
-                        .with_context(|| format!("timed out to crawl account #{}", account.id))?;
-                    Ok((account, account_info, tanks))
+                        .with_context(|| format!("timed out to crawl account #{}", account.id))
                 })
             })
             // Buffer the accounts.
@@ -140,11 +141,15 @@ impl Crawler {
             // Make the database updates concurrent.
             .try_for_each_concurrent(
                 Some(buffering.n_updated_accounts),
-                |(account, new_info, tanks)| {
-                    trace!(account.id, n_tanks = tanks.len(), "scheduling the update");
+                |(account_snapshot, tank_snapshots)| {
+                    trace!(
+                        account_snapshot.account_id,
+                        n_tanks = tank_snapshots.len(),
+                        "scheduling the update"
+                    );
                     let mongodb = self.mongodb.clone();
                     let metrics = self.metrics.clone();
-                    update_account(mongodb, new_info, tanks, metrics)
+                    update_account(mongodb, account_snapshot, tank_snapshots, metrics)
                 },
             )
             .await
@@ -208,30 +213,6 @@ fn match_account_infos(
         .collect()
 }
 
-/// Gets account tanks which have their last battle time updated since the specified timestamp.
-///
-/// # Returns
-///
-/// The tanks statistics as returned by the API.
-#[instrument(skip_all, fields(account_id = account_id))]
-async fn get_updated_tanks_statistics(
-    api: &WargamingApi,
-    account_id: wargaming::AccountId,
-    since: Option<DateTime>,
-) -> Result<Vec<wargaming::TankStatistics>> {
-    debug!(?since);
-    let statistics = api.get_tanks_stats(account_id).await?;
-    debug!(statistics.len = statistics.len());
-    let statistics = match since {
-        Some(since) => statistics
-            .into_iter()
-            .filter(|tank| tank.last_battle_time > since)
-            .collect(),
-        None => statistics,
-    };
-    Ok(statistics)
-}
-
 /// Crawls account from Wargaming.net API, including the tank statistics and achievements.
 ///
 /// # Returns
@@ -245,56 +226,77 @@ async fn get_updated_tanks_statistics(
 async fn crawl_account(
     api: &WargamingApi,
     account: &database::Account,
-) -> Result<Vec<wargaming::Tank>> {
+    account_info: &wargaming::AccountInfo,
+) -> Result<(database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?account.last_battle_time);
-    let statistics =
-        get_updated_tanks_statistics(api, account.id, account.last_battle_time).await?;
-    if !statistics.is_empty() {
-        debug!(n_updated_tanks = statistics.len());
+
+    let statistics = api.get_tanks_stats(account.id).await?;
+    let tank_last_battle_times = statistics
+        .iter()
+        .map(|item| (item.tank_id, bson::DateTime::from(item.last_battle_time)))
+        .collect_vec();
+
+    let updated_statistics = match account.last_battle_time {
+        Some(since) => statistics
+            .into_iter()
+            .filter(|tank| tank.last_battle_time > since)
+            .collect(),
+        None => statistics,
+    };
+    let tank_snapshots = if !updated_statistics.is_empty() {
+        debug!(n_updated_tanks = updated_statistics.len());
         let achievements = api.get_tanks_achievements(account.id).await?;
-        let tanks = wargaming::merge_tanks(account.id, statistics, achievements);
+        let tanks = wargaming::merge_tanks(account.id, updated_statistics, achievements);
         debug!(n_tanks = tanks.len(), "crawled");
-        Ok(tanks)
+        tanks
+            .into_iter()
+            .map(database::TankSnapshot::from)
+            .collect()
     } else {
         trace!("no updated tanks");
-        Ok(Vec::new())
-    }
+        Vec::new()
+    };
+
+    let account_snapshot = database::AccountSnapshot::new(account_info, tank_last_battle_times);
+
+    Ok((account_snapshot, tank_snapshots))
 }
 
-#[instrument(skip_all, fields(account_id = new_info.id))]
+#[instrument(skip_all, fields(account_id = account_snapshot.account_id))]
 async fn update_account(
     connection: impl Borrow<mongodb::Database>,
-    new_info: wargaming::AccountInfo,
-    tanks: Vec<wargaming::Tank>,
+    account_snapshot: database::AccountSnapshot,
+    tank_snapshots: Vec<database::TankSnapshot>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 ) -> Result {
     let connection = connection.borrow();
 
-    debug!(n_tanks = tanks.len(), "updating account…");
+    debug!(n_tanks = tank_snapshots.len(), "updating account…");
     let start_instant = Instant::now();
 
-    for tank in tanks.into_iter() {
-        timeout(TIMEOUT, database::TankSnapshot::from(tank).upsert(connection))
+    for tank_snapshot in tank_snapshots.into_iter() {
+        timeout(TIMEOUT, tank_snapshot.upsert(connection))
             .await
             .context("timed out to upsert the tank snapshot")??;
     }
     debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted to MongoDB");
 
-    let account_id = new_info.id;
-    let last_battle_time = new_info.last_battle_time;
-    timeout(
-        TIMEOUT,
-        database::Account::from(new_info).upsert(connection, database::Account::OPERATION_SET),
-    )
-    .await
-    .context("timed out to upsert the account")??;
+    timeout(TIMEOUT, account_snapshot.upsert(connection))
+        .await
+        .context("timed out to upsert the account snapshot")??;
+
+    let account =
+        database::Account::new(account_snapshot.account_id, account_snapshot.last_battle_time);
+    timeout(TIMEOUT, account.upsert(connection, database::Account::OPERATION_SET))
+        .await
+        .context("timed out to upsert the account")??;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted to MongoDB");
 
     let mut metrics = timeout(TIMEOUT, metrics.lock())
         .await
         .context("timed out to lock the metrics")?;
-    metrics.add_account(account_id);
-    metrics.add_lag_from(last_battle_time);
+    metrics.add_account(account_snapshot.account_id);
+    metrics.add_lag_from(account_snapshot.last_battle_time);
     drop(metrics);
 
     debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
