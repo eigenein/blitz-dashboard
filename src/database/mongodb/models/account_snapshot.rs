@@ -48,7 +48,7 @@ impl AccountSnapshot {
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [IndexModel::builder()
             .keys(doc! { "aid": 1, "lbts": -1 })
-            .options(IndexOptions::builder().build())
+            .options(IndexOptions::builder().unique(true).build())
             .build()];
         Self::collection(on)
             .create_indexes(indexes, None)
