@@ -6,6 +6,7 @@ use std::time::Instant;
 
 use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
+use either::Either;
 use futures::future::try_join;
 use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
@@ -653,18 +654,40 @@ fn render_tank_tr(
     Ok(markup)
 }
 
+#[instrument(skip_all, level = "debug", fields(account_id = account_id))]
+async fn retrieve_deltas_quickly(
+    from: &mongodb::Database,
+    account_id: wargaming::AccountId,
+    tanks: Vec<wargaming::Tank>,
+    before: DateTime,
+) -> Result<Either<(database::StatisticsSnapshot, Vec<database::TankSnapshot>), Vec<wargaming::Tank>>>
+{
+    match database::AccountSnapshot::retrieve_latest(from, account_id, before).await? {
+        Some(account_snapshot) => {
+            let tank_snapshots = database::TankSnapshot::retrieve_many(
+                from,
+                &account_snapshot.tank_last_battle_times,
+            )
+            .await?;
+            let stats_delta = todo!();
+            let tanks_delta = subtract_tanks(tanks, tank_snapshots);
+            Ok(Either::Left((stats_delta, tanks_delta)))
+        }
+        None => Ok(Either::Right(tanks)),
+    }
+}
+
+#[instrument(skip_all, level = "debug", fields(account_id = account_id))]
 async fn retrieve_deltas_slowly(
-    mongodb: &mongodb::Database,
+    from: &mongodb::Database,
     account_id: wargaming::AccountId,
     tanks: Vec<wargaming::Tank>,
     before: DateTime,
 ) -> Result<(database::StatisticsSnapshot, Vec<database::TankSnapshot>)> {
     let tank_snapshots = {
         let tank_ids = tanks.iter().map(wargaming::Tank::tank_id).collect_vec();
-        database::TankSnapshot::retrieve_latest_tank_snapshots(
-            mongodb, account_id, before, &tank_ids,
-        )
-        .await?
+        database::TankSnapshot::retrieve_latest_tank_snapshots(from, account_id, before, &tank_ids)
+            .await?
     };
     let tanks_delta = subtract_tanks(tanks, tank_snapshots);
     let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();

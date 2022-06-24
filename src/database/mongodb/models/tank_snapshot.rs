@@ -137,6 +137,14 @@ impl TankSnapshot {
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
         Ok(stream)
     }
+
+    #[instrument(level = "debug", skip_all)]
+    pub async fn retrieve_many(
+        from: &Database,
+        tank_last_battle_times: &[(wargaming::TankId, bson::DateTime)],
+    ) -> Result<HashMap<wargaming::TankId, Self>> {
+        todo!()
+    }
 }
 
 impl TankSnapshot {
