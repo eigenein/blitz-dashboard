@@ -1,5 +1,6 @@
+use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
+use mongodb::options::{FindOptions, IndexOptions, UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
@@ -76,6 +77,24 @@ impl AccountSnapshot {
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
+    }
+
+    #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
+    pub async fn retrieve_latest(
+        from: &Database,
+        account_id: wargaming::AccountId,
+        before: DateTime,
+    ) -> Result<Option<Self>> {
+        let filter = doc! { "aid": account_id, "lbts": { "$lte": before } };
+        let options = FindOptions::builder()
+            .sort(doc! { "lbts": -1 })
+            .limit(1)
+            .build();
+        Ok(Self::collection(from)
+            .find(filter, options)
+            .await?
+            .try_next()
+            .await?)
     }
 }
 
