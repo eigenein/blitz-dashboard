@@ -90,11 +90,15 @@ impl AccountSnapshot {
             .sort(doc! { "lbts": -1 })
             .limit(1)
             .build();
-        Ok(Self::collection(from)
+        let this = Self::collection(from)
             .find(filter, options)
             .await?
             .try_next()
-            .await?)
+            .await?;
+        if let Some(this) = &this {
+            debug!(?this.last_battle_time, "found");
+        }
+        Ok(this)
     }
 }
 

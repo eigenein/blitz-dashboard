@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
+use itertools::Itertools;
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
@@ -141,9 +142,29 @@ impl TankSnapshot {
     #[instrument(level = "debug", skip_all)]
     pub async fn retrieve_many(
         from: &Database,
+        account_id: wargaming::AccountId,
         tank_last_battle_times: &[(wargaming::TankId, bson::DateTime)],
     ) -> Result<HashMap<wargaming::TankId, Self>> {
-        todo!()
+        let start_instant = Instant::now();
+        let or_clauses = tank_last_battle_times
+            .iter()
+            .map(|(tank_id, last_battle_time)| doc! { "tid": tank_id, "lbts": last_battle_time })
+            .collect_vec();
+        let snapshots: HashMap<wargaming::TankId, Self> = Self::collection(from)
+            .find(doc! { "aid": account_id, "$or": or_clauses }, None)
+            .await?
+            .map(|snapshot| -> Result<(wargaming::TankId, Self)> {
+                let snapshot = snapshot?;
+                Ok((snapshot.tank_id, snapshot))
+            })
+            .try_collect()
+            .await?;
+        debug!(
+            elapsed_secs = start_instant.elapsed().as_secs_f32(),
+            n_snapshots = snapshots.len(),
+            "done"
+        );
+        Ok(snapshots)
     }
 }
 

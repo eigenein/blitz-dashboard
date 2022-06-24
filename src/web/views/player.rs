@@ -61,10 +61,6 @@ pub async fn get(
         .await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
-    let tanks = tanks
-        .into_iter()
-        .filter(|tank| tank.statistics.last_battle_time >= before)
-        .collect_vec();
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
@@ -675,8 +671,10 @@ async fn retrieve_deltas_quickly(
 {
     match database::AccountSnapshot::retrieve_latest(from, account_id, before).await? {
         Some(account_snapshot) => {
+            // TODO: only select tanks which `lbts >= account_snapshot.lbts`.
             let tank_snapshots = database::TankSnapshot::retrieve_many(
                 from,
+                account_id,
                 &account_snapshot.tank_last_battle_times,
             )
             .await?;
@@ -695,6 +693,11 @@ async fn retrieve_deltas_slowly(
     tanks: Vec<wargaming::Tank>,
     before: DateTime,
 ) -> Result<(database::StatisticsSnapshot, Vec<database::TankSnapshot>)> {
+    debug!("taking the slow path");
+    let tanks = tanks
+        .into_iter()
+        .filter(|tank| tank.statistics.last_battle_time >= before)
+        .collect_vec();
     let tank_snapshots = {
         let tank_ids = tanks.iter().map(wargaming::Tank::tank_id).collect_vec();
         database::TankSnapshot::retrieve_latest_tank_snapshots(from, account_id, before, &tank_ids)
