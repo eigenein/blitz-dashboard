@@ -65,17 +65,27 @@ pub async fn get(
         .into_iter()
         .filter(|tank| tank.statistics.last_battle_time >= before)
         .collect_vec();
-    let (stats_delta, tanks_delta) =
-        retrieve_deltas_slowly(mongodb, account_id, tanks, before).await?;
-    let battle_life_time: i64 = tanks_delta
-        .iter()
-        .map(|snapshot| snapshot.battle_life_time.num_seconds())
-        .sum();
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         current_info.statistics.n_battles(),
         current_info.statistics.n_wins(),
         ConfidenceLevel::default(),
     );
+    let (stats_delta, tanks_delta) = match retrieve_deltas_quickly(
+        mongodb,
+        account_id,
+        current_info.statistics.all,
+        tanks,
+        before,
+    )
+    .await?
+    {
+        Either::Left(result) => result,
+        Either::Right(tanks) => retrieve_deltas_slowly(mongodb, account_id, tanks, before).await?,
+    };
+    let battle_life_time: i64 = tanks_delta
+        .iter()
+        .map(|snapshot| snapshot.battle_life_time.num_seconds())
+        .sum();
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
@@ -658,6 +668,7 @@ fn render_tank_tr(
 async fn retrieve_deltas_quickly(
     from: &mongodb::Database,
     account_id: wargaming::AccountId,
+    account_statistics: wargaming::BasicStatistics,
     tanks: Vec<wargaming::Tank>,
     before: DateTime,
 ) -> Result<Either<(database::StatisticsSnapshot, Vec<database::TankSnapshot>), Vec<wargaming::Tank>>>
@@ -669,7 +680,7 @@ async fn retrieve_deltas_quickly(
                 &account_snapshot.tank_last_battle_times,
             )
             .await?;
-            let stats_delta = todo!();
+            let stats_delta = account_statistics - account_snapshot.statistics;
             let tanks_delta = subtract_tanks(tanks, tank_snapshots);
             Ok(Either::Left((stats_delta, tanks_delta)))
         }

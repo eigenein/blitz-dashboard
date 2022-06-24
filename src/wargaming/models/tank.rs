@@ -1,9 +1,10 @@
 use std::collections::HashMap;
+use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
 use crate::database;
-use crate::wargaming::{AccountId, TankAchievements, TankId, TankStatistics};
+use crate::wargaming::{AccountId, BasicStatistics, TankAchievements, TankId, TankStatistics};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -35,24 +36,7 @@ pub fn subtract_tanks(
                     tank_id: right_tank.tank_id,
                     battle_life_time: left_tank.statistics.battle_life_time
                         - right_tank.battle_life_time,
-                    statistics: database::StatisticsSnapshot {
-                        // TODO: extract.
-                        n_battles: left_tank.statistics.all.battles
-                            - right_tank.statistics.n_battles,
-                        n_wins: left_tank.statistics.all.wins - right_tank.statistics.n_wins,
-                        n_survived_battles: left_tank.statistics.all.survived_battles
-                            - right_tank.statistics.n_survived_battles,
-                        n_win_and_survived: left_tank.statistics.all.win_and_survived
-                            - right_tank.statistics.n_win_and_survived,
-                        damage_dealt: left_tank.statistics.all.damage_dealt
-                            - right_tank.statistics.damage_dealt,
-                        damage_received: left_tank.statistics.all.damage_received
-                            - right_tank.statistics.damage_received,
-                        n_shots: left_tank.statistics.all.shots - right_tank.statistics.n_shots,
-                        n_hits: left_tank.statistics.all.hits - right_tank.statistics.n_hits,
-                        n_frags: left_tank.statistics.all.frags - right_tank.statistics.n_frags,
-                        xp: left_tank.statistics.all.xp - right_tank.statistics.xp,
-                    },
+                    statistics: left_tank.statistics.all - right_tank.statistics,
                 })
             }
             None if left_tank.statistics.all.battles != 0 => {
@@ -61,4 +45,23 @@ pub fn subtract_tanks(
             _ => None,
         })
         .collect()
+}
+
+impl Sub<database::StatisticsSnapshot> for BasicStatistics {
+    type Output = database::StatisticsSnapshot;
+
+    fn sub(self, rhs: database::StatisticsSnapshot) -> Self::Output {
+        Self::Output {
+            n_battles: self.battles - rhs.n_battles,
+            n_wins: self.wins - rhs.n_wins,
+            n_survived_battles: self.survived_battles - rhs.n_survived_battles,
+            n_win_and_survived: self.win_and_survived - rhs.n_win_and_survived,
+            damage_dealt: self.damage_dealt - rhs.damage_dealt,
+            damage_received: self.damage_received - rhs.damage_received,
+            n_shots: self.shots - rhs.n_shots,
+            n_hits: self.hits - rhs.n_hits,
+            n_frags: self.frags - rhs.n_frags,
+            xp: self.xp - rhs.xp,
+        }
+    }
 }
