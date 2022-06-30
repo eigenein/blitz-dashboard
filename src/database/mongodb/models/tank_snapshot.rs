@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use futures::{StreamExt, TryStreamExt};
+use futures::TryStreamExt;
 use itertools::Itertools;
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
@@ -101,9 +99,9 @@ impl TankSnapshot {
         account_id: wargaming::AccountId,
         before: DateTime,
         tank_ids: &[wargaming::TankId],
-    ) -> Result<HashMap<wargaming::TankId, Self>> {
+    ) -> Result<Vec<Self>> {
         if tank_ids.is_empty() {
-            return Ok(HashMap::new());
+            return Ok(Vec::new());
         }
 
         let pipeline = [
@@ -130,9 +128,9 @@ impl TankSnapshot {
             .try_filter_map(|document| async move {
                 trace!(?document);
                 let document = from_document::<Root<Self>>(document)?;
-                Ok(Some((document.root.tank_id, document.root)))
+                Ok(Some(document.root))
             })
-            .try_collect::<HashMap<wargaming::TankId, Self>>()
+            .try_collect::<Vec<Self>>()
             .await?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "done");
@@ -143,20 +141,20 @@ impl TankSnapshot {
     pub async fn retrieve_many(
         from: &Database,
         account_id: wargaming::AccountId,
-        tank_last_battle_times: &[(wargaming::TankId, bson::DateTime)],
-    ) -> Result<HashMap<wargaming::TankId, Self>> {
+        tank_last_battle_times: impl IntoIterator<Item = &(wargaming::TankId, bson::DateTime)>,
+    ) -> Result<Vec<Self>> {
         let start_instant = Instant::now();
         let or_clauses = tank_last_battle_times
-            .iter()
+            .into_iter()
             .map(|(tank_id, last_battle_time)| doc! { "tid": tank_id, "lbts": last_battle_time })
             .collect_vec();
-        let snapshots: HashMap<wargaming::TankId, Self> = Self::collection(from)
+        debug!(n_or_clauses = or_clauses.len());
+        if or_clauses.is_empty() {
+            return Ok(Vec::new());
+        }
+        let snapshots: Vec<Self> = Self::collection(from)
             .find(doc! { "aid": account_id, "$or": or_clauses }, None)
             .await?
-            .map(|snapshot| -> Result<(wargaming::TankId, Self)> {
-                let snapshot = snapshot?;
-                Ok((snapshot.tank_id, snapshot))
-            })
             .try_collect()
             .await?;
         debug!(

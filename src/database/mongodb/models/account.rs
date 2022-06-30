@@ -11,7 +11,7 @@ use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
 
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Account {
     #[serde(rename = "_id")]
     pub id: wargaming::AccountId,

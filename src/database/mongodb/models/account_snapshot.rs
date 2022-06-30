@@ -79,7 +79,7 @@ impl AccountSnapshot {
         Ok(())
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
+    #[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
     pub async fn retrieve_latest(
         from: &Database,
         account_id: wargaming::AccountId,

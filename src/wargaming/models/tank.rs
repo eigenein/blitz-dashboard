@@ -1,10 +1,9 @@
-use std::collections::HashMap;
 use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::database;
 use crate::wargaming::{AccountId, BasicStatistics, TankAchievements, TankId, TankStatistics};
+use crate::{database, AHashMap};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -22,29 +21,26 @@ impl Tank {
 }
 
 pub fn subtract_tanks(
-    left: Vec<Tank>,
-    mut right: HashMap<TankId, database::TankSnapshot>,
+    mut actual_tanks: AHashMap<TankId, Tank>,
+    snapshots: Vec<database::TankSnapshot>,
 ) -> Vec<database::TankSnapshot> {
-    left.into_iter()
-        .filter_map(|left_tank| match right.remove(&left_tank.statistics.tank_id) {
-            Some(right_tank)
-                if left_tank.statistics.all.battles > right_tank.statistics.n_battles =>
-            {
-                Some(database::TankSnapshot {
-                    last_battle_time: left_tank.statistics.last_battle_time,
-                    account_id: right_tank.account_id,
-                    tank_id: right_tank.tank_id,
-                    battle_life_time: left_tank.statistics.battle_life_time
-                        - right_tank.battle_life_time,
-                    statistics: left_tank.statistics.all - right_tank.statistics,
+    let mut subtracted: Vec<database::TankSnapshot> = snapshots
+        .into_iter()
+        .filter_map(|snapshot| {
+            actual_tanks
+                .remove(&snapshot.tank_id)
+                .map(|actual_tank| database::TankSnapshot {
+                    last_battle_time: actual_tank.statistics.last_battle_time,
+                    account_id: snapshot.account_id,
+                    tank_id: snapshot.tank_id,
+                    battle_life_time: actual_tank.statistics.battle_life_time
+                        - snapshot.battle_life_time,
+                    statistics: actual_tank.statistics.all - snapshot.statistics,
                 })
-            }
-            None if left_tank.statistics.all.battles != 0 => {
-                Some(database::TankSnapshot::from(left_tank))
-            }
-            _ => None,
         })
-        .collect()
+        .collect();
+    subtracted.extend(actual_tanks.into_values().map(database::TankSnapshot::from));
+    subtracted
 }
 
 impl Sub<database::StatisticsSnapshot> for BasicStatistics {

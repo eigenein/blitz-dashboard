@@ -7,7 +7,7 @@ use tracing::{debug, instrument};
 use crate::helpers::compression::{compress, decompress};
 use crate::prelude::*;
 use crate::wargaming::models::{merge_tanks, Tank};
-use crate::wargaming::{AccountId, WargamingApi};
+use crate::wargaming::{AccountId, TankId, WargamingApi};
 
 #[derive(Clone)]
 pub struct AccountTanksCache {
@@ -23,7 +23,7 @@ impl AccountTanksCache {
     }
 
     #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get(&self, account_id: AccountId) -> Result<Vec<Tank>> {
+    pub async fn get(&self, account_id: AccountId) -> Result<AHashMap<TankId, Tank>> {
         let cache_key = Self::cache_key(account_id);
 
         if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
@@ -47,6 +47,6 @@ impl AccountTanksCache {
 
     #[inline]
     fn cache_key(account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:2:a:t:ru:{}", account_id))
+        RedisKey::from(format!("cache:3:a:t:ru:{}", account_id))
     }
 }

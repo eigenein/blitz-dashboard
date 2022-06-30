@@ -2,6 +2,7 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
+use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use chrono::{Duration, Utc};
@@ -11,6 +12,7 @@ use futures::future::try_join;
 use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
+use mongodb::bson;
 use rocket::http::Status;
 use rocket::{uri, State};
 
@@ -49,28 +51,28 @@ pub async fn get(
         None => from_days(1),
     };
 
-    let (current_info, tanks) =
+    let (actual_info, actual_tanks) =
         try_join(info_cache.get(account_id), tanks_cache.get(account_id)).await?;
-    let current_info = match current_info {
+    let actual_info = match actual_info {
         Some(info) => info,
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
-    set_user(&current_info.nickname);
+    set_user(&actual_info.nickname);
     database::Account::fake(account_id)
         .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
-        current_info.statistics.n_battles(),
-        current_info.statistics.n_wins(),
+        actual_info.statistics.n_battles(),
+        actual_info.statistics.n_wins(),
         ConfidenceLevel::default(),
     );
     let (stats_delta, tanks_delta) = match retrieve_deltas_quickly(
         mongodb,
         account_id,
-        current_info.statistics.all,
-        tanks,
+        actual_info.statistics.all,
+        actual_tanks,
         before,
     )
     .await?
@@ -90,29 +92,29 @@ pub async fn get(
                     (home_button())
 
                     div.navbar-item title="Последний бой" {
-                        time.(if current_info.has_recently_played() { "has-text-success-dark" } else if !current_info.is_active() { "has-text-danger-dark" } else { "" })
-                            datetime=(current_info.last_battle_time.to_rfc3339())
-                            title=(current_info.last_battle_time) {
-                                (datetime(current_info.last_battle_time, Tense::Past))
+                        time.(if actual_info.has_recently_played() { "has-text-success-dark" } else if !actual_info.is_active() { "has-text-danger-dark" } else { "" })
+                            datetime=(actual_info.last_battle_time.to_rfc3339())
+                            title=(actual_info.last_battle_time) {
+                                (datetime(actual_info.last_battle_time, Tense::Past))
                             }
                     }
 
                     div.navbar-item title="Боев" {
                         span.icon-text {
                             span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                            span { (current_info.statistics.n_battles()) }
+                            span { (actual_info.statistics.n_battles()) }
                         }
                     }
 
                     div.navbar-item title="Возраст аккаунта" {
                         span.icon-text {
-                            @if current_info.is_account_birthday() {
+                            @if actual_info.is_account_birthday() {
                                 span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
                             } @else {
                                 span.icon { i.far.fa-calendar-alt {} }
                             }
-                            span title=(current_info.created_at) {
-                                (datetime(current_info.created_at, Tense::Present))
+                            span title=(actual_info.created_at) {
+                                (datetime(actual_info.created_at, Tense::Present))
                             }
                         }
                     }
@@ -120,7 +122,7 @@ pub async fn get(
                 div.navbar-menu.is-active {
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
-                            (account_search("", &current_info.nickname, false, current_info.is_prerelease_account()))
+                            (account_search("", &actual_info.nickname, false, actual_info.is_prerelease_account()))
                         }
                     }
                 }
@@ -289,7 +291,7 @@ pub async fn get(
 
                 (headers())
                 link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
-                title { (current_info.nickname) " – Я – статист в World of Tanks Blitz!" }
+                title { (actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
             }
             body {
                 (tracking_code.0)
@@ -497,7 +499,7 @@ pub async fn get(
                             article.message.is-warning {
                                 div.message-body {
                                     p { "Пользователь не играл в случайных боях за этот период времени." }
-                                    p { "Последний бой закончился " strong { (datetime(current_info.last_battle_time, Tense::Present)) } " назад." }
+                                    p { "Последний бой закончился " strong { (datetime(actual_info.last_battle_time, Tense::Present)) } " назад." }
                                 }
                             }
                         }
@@ -660,29 +662,46 @@ fn render_tank_tr(
     Ok(markup)
 }
 
-#[instrument(skip_all, level = "debug", fields(account_id = account_id))]
+#[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
 async fn retrieve_deltas_quickly(
     from: &mongodb::Database,
     account_id: wargaming::AccountId,
     account_statistics: wargaming::BasicStatistics,
-    tanks: Vec<wargaming::Tank>,
+    mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
-) -> Result<Either<(database::StatisticsSnapshot, Vec<database::TankSnapshot>), Vec<wargaming::Tank>>>
-{
+) -> Result<
+    Either<
+        (database::StatisticsSnapshot, Vec<database::TankSnapshot>),
+        AHashMap<wargaming::TankId, wargaming::Tank>,
+    >,
+> {
     match database::AccountSnapshot::retrieve_latest(from, account_id, before).await? {
         Some(account_snapshot) => {
-            // TODO: only select tanks which `lbts >= account_snapshot.lbts`.
-            let tank_snapshots = database::TankSnapshot::retrieve_many(
-                from,
-                account_id,
-                &account_snapshot.tank_last_battle_times,
-            )
-            .await?;
+            let tank_last_battle_times = account_snapshot.tank_last_battle_times.iter().filter(
+                |(tank_id, last_battle_time)| {
+                    let tank_entry = actual_tanks.entry(*tank_id);
+                    match tank_entry {
+                        Entry::Occupied(entry) => {
+                            let keep =
+                                bson::DateTime::from(entry.get().statistics.last_battle_time)
+                                    > *last_battle_time;
+                            if !keep {
+                                entry.remove();
+                            }
+                            keep
+                        }
+                        Entry::Vacant(_) => false,
+                    }
+                },
+            );
+            let snapshots =
+                database::TankSnapshot::retrieve_many(from, account_id, tank_last_battle_times)
+                    .await?;
             let stats_delta = account_statistics - account_snapshot.statistics;
-            let tanks_delta = subtract_tanks(tanks, tank_snapshots);
+            let tanks_delta = subtract_tanks(actual_tanks, snapshots);
             Ok(Either::Left((stats_delta, tanks_delta)))
         }
-        None => Ok(Either::Right(tanks)),
+        None => Ok(Either::Right(actual_tanks)),
     }
 }
 
@@ -690,20 +709,23 @@ async fn retrieve_deltas_quickly(
 async fn retrieve_deltas_slowly(
     from: &mongodb::Database,
     account_id: wargaming::AccountId,
-    tanks: Vec<wargaming::Tank>,
+    actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
 ) -> Result<(database::StatisticsSnapshot, Vec<database::TankSnapshot>)> {
     debug!("taking the slow path");
-    let tanks = tanks
+    let actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank> = actual_tanks
         .into_iter()
-        .filter(|tank| tank.statistics.last_battle_time >= before)
-        .collect_vec();
-    let tank_snapshots = {
-        let tank_ids = tanks.iter().map(wargaming::Tank::tank_id).collect_vec();
+        .filter(|(_, tank)| tank.statistics.last_battle_time >= before)
+        .collect();
+    let snapshots = {
+        let tank_ids = actual_tanks
+            .values()
+            .map(wargaming::Tank::tank_id)
+            .collect_vec();
         database::TankSnapshot::retrieve_latest_tank_snapshots(from, account_id, before, &tank_ids)
             .await?
     };
-    let tanks_delta = subtract_tanks(tanks, tank_snapshots);
+    let tanks_delta = subtract_tanks(actual_tanks, snapshots);
     let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();
     Ok((stats_delta, tanks_delta))
 }
