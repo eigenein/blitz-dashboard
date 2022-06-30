@@ -129,6 +129,8 @@ impl Account {
         );
         Ok(accounts)
     }
+
+    // TODO: retrieve one random account and implement «I'm feeling lucky».
 }
 
 impl Account {
