@@ -90,6 +90,7 @@ impl AccountSnapshot {
             .sort(doc! { "lbts": -1 })
             .limit(1)
             .build();
+        let start_instant = Instant::now();
         let this = Self::collection(from)
             .find(filter, options)
             .await?
@@ -98,6 +99,7 @@ impl AccountSnapshot {
         if let Some(this) = &this {
             debug!(?this.last_battle_time, "found");
         }
+        debug!(elapsed_secs = start_instant.elapsed().as_secs_f32());
         Ok(this)
     }
 }
