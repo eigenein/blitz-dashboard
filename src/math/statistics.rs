@@ -97,7 +97,7 @@ impl PartialOrd for ConfidenceInterval {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub enum ConfidenceLevel {
     Z80,
     Z85,
@@ -106,17 +106,14 @@ pub enum ConfidenceLevel {
     Z89,
     Z90,
     Z95,
+
+    #[default]
     Z96,
+
     Z97,
     Z98,
     Z99,
     Z99_99,
-}
-
-impl Default for ConfidenceLevel {
-    fn default() -> Self {
-        Self::Z96
-    }
 }
 
 impl ConfidenceLevel {
