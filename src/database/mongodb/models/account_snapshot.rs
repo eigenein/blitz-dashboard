@@ -23,7 +23,7 @@ pub struct AccountSnapshot {
     pub statistics: StatisticsSnapshot,
 
     #[serde(rename = "mm")]
-    pub mm_rating: Option<f64>,
+    pub mm_rating: f64,
 
     #[serde(rename = "t")]
     pub tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
