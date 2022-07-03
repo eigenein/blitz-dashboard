@@ -44,7 +44,12 @@ pub fn subtract_tanks(
             })
         })
         .collect();
-    subtracted.extend(actual_tanks.into_values().map(database::TankSnapshot::from));
+    subtracted.extend(
+        actual_tanks
+            .into_values()
+            .filter(|tank| tank.statistics.all.n_battles != 0)
+            .map(database::TankSnapshot::from),
+    );
     subtracted
 }
 
