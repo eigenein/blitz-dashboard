@@ -64,8 +64,8 @@ pub async fn get(
 
     let before = Utc::now() - Duration::from_std(period)?;
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
-        actual_info.statistics.all.battles,
-        actual_info.statistics.all.wins,
+        actual_info.statistics.all.n_battles,
+        actual_info.statistics.all.n_wins,
         ConfidenceLevel::default(),
     );
     let (stats_delta, tanks_delta) = match retrieve_deltas_quickly(

@@ -44,8 +44,8 @@ pub struct StatisticsSnapshot {
 impl From<BasicStatistics> for StatisticsSnapshot {
     fn from(statistics: BasicStatistics) -> Self {
         Self {
-            n_battles: statistics.battles,
-            n_wins: statistics.wins,
+            n_battles: statistics.n_battles,
+            n_wins: statistics.n_wins,
             n_survived_battles: statistics.survived_battles,
             n_win_and_survived: statistics.win_and_survived,
             damage_dealt: statistics.damage_dealt,

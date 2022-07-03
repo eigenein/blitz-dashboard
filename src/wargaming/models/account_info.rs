@@ -49,7 +49,7 @@ impl AccountInfoStatistics {
     #[inline]
     #[must_use]
     pub const fn n_total_battles(&self) -> i32 {
-        self.all.battles + self.rating.basic.battles
+        self.all.n_battles + self.rating.basic.n_battles
     }
 }
 

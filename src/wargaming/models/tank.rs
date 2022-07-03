@@ -32,7 +32,7 @@ pub fn subtract_tanks(
                 .map(|actual_tank| (snapshot, actual_tank))
         })
         .filter_map(|(snapshot, actual_tank)| {
-            (actual_tank.statistics.all.battles != snapshot.statistics.n_battles).then(|| {
+            (actual_tank.statistics.all.n_battles != snapshot.statistics.n_battles).then(|| {
                 database::TankSnapshot {
                     last_battle_time: actual_tank.statistics.last_battle_time,
                     account_id: snapshot.account_id,
@@ -53,8 +53,8 @@ impl Sub<database::StatisticsSnapshot> for BasicStatistics {
 
     fn sub(self, rhs: database::StatisticsSnapshot) -> Self::Output {
         Self::Output {
-            n_battles: self.battles - rhs.n_battles,
-            n_wins: self.wins - rhs.n_wins,
+            n_battles: self.n_battles - rhs.n_battles,
+            n_wins: self.n_wins - rhs.n_wins,
             n_survived_battles: self.survived_battles - rhs.n_survived_battles,
             n_win_and_survived: self.win_and_survived - rhs.n_win_and_survived,
             damage_dealt: self.damage_dealt - rhs.damage_dealt,

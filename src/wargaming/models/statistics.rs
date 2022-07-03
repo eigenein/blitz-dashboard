@@ -5,8 +5,12 @@ use crate::database;
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct BasicStatistics {
-    pub battles: i32,
-    pub wins: i32,
+    #[serde(rename = "battles")]
+    pub n_battles: i32,
+
+    #[serde(rename = "wins")]
+    pub n_wins: i32,
+
     pub survived_battles: i32,
     pub win_and_survived: i32,
     pub damage_dealt: i32,
@@ -20,8 +24,8 @@ pub struct BasicStatistics {
 impl From<&database::StatisticsSnapshot> for BasicStatistics {
     fn from(snapshot: &database::StatisticsSnapshot) -> Self {
         Self {
-            battles: snapshot.n_battles,
-            wins: snapshot.n_wins,
+            n_battles: snapshot.n_battles,
+            n_wins: snapshot.n_wins,
             survived_battles: snapshot.n_survived_battles,
             win_and_survived: snapshot.n_win_and_survived,
             damage_dealt: snapshot.damage_dealt,
