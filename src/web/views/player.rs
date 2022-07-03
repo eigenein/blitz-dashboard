@@ -192,7 +192,7 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Процент побед, скорректированный на число боев, CI 97%" { "Процент побед (интервал)" } }
+                        span { abbr title="Процент побед, скорректированный на число боев, CI 98%" { "Процент побед (интервал)" } }
                     }
                 }
             }
@@ -216,7 +216,7 @@ pub async fn get(
             th {
                 a data-sort="expected-wins-per-hour" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед в час, скорректированное на число проведенных боев, CI 97%" { "Победы в час (интервал)" } }
+                        span { abbr title="Число побед в час, скорректированное на число проведенных боев, CI 98%" { "Победы в час (интервал)" } }
                     }
                 }
             }
@@ -224,7 +224,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 97%" { "Ожидаемое золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 98%" { "Ожидаемое золото" } }
                     }
                 }
             }

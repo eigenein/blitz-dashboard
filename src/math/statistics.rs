@@ -107,11 +107,11 @@ pub enum ConfidenceLevel {
     Z90,
     Z95,
     Z96,
-
-    #[default]
     Z97,
 
+    #[default]
     Z98,
+
     Z99,
     Z99_99,
 }
