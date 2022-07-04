@@ -13,9 +13,6 @@ use crate::{format_elapsed, wargaming};
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Account {
-    #[serde(default, rename(serialize = "_id"))]
-    pub _deprecated_id: wargaming::AccountId,
-
     /// Wargaming.net account ID.
     #[serde(rename(serialize = "aid", deserialize = "_id"))]
     pub id: wargaming::AccountId,
@@ -35,7 +32,6 @@ impl Account {
     pub fn new(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
         Self {
             id: account_id,
-            _deprecated_id: account_id,
             realm,
             last_battle_time: None,
             random: fastrand::f64(),
