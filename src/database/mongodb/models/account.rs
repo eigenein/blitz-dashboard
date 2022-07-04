@@ -16,6 +16,7 @@ pub struct Account {
     #[serde(default, rename(serialize = "_id"))]
     pub _deprecated_id: wargaming::AccountId,
 
+    /// Wargaming.net account ID.
     #[serde(rename(serialize = "aid", deserialize = "_id"))]
     pub id: wargaming::AccountId,
 
@@ -25,28 +26,19 @@ pub struct Account {
     #[serde(rename = "lbts")]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
+
+    /// Used to select random accounts from the database.
+    pub random: f64,
 }
 
 impl Account {
-    pub fn new(
-        id: wargaming::AccountId,
-        realm: wargaming::Realm,
-        last_battle_time: DateTime,
-    ) -> Self {
-        Self {
-            id,
-            realm,
-            _deprecated_id: id,
-            last_battle_time: Some(last_battle_time),
-        }
-    }
-
-    pub fn fake(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
+    pub fn new(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
         Self {
             id: account_id,
             _deprecated_id: account_id,
             realm,
             last_battle_time: None,
+            random: fastrand::f64(),
         }
     }
 }
@@ -96,7 +88,7 @@ impl Account {
                 "aid": self.id,
                 "lbts": self.last_battle_time,
                 "rlm": bson::to_bson(&self.realm)?,
-                "random": fastrand::f64(),
+                "random": self.random,
             },
         };
         let options = UpdateOptions::builder().upsert(true).build();

@@ -56,7 +56,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let accounts = stream::iter(opts.start_id..opts.end_id)
-        .map(|account_id| database::Account::fake(account_id, Default::default()))
+        .map(|account_id| database::Account::new(account_id, Default::default()))
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
     crawler.run(accounts, &opts.shared.buffering, None).await
@@ -131,9 +131,10 @@ impl Crawler {
                 let api = self.api.clone();
 
                 Ok(async move {
-                    timeout(TIMEOUT, crawl_account(&api, &account, &account_info))
+                    let account_id = account.id;
+                    timeout(TIMEOUT, crawl_account(&api, account, &account_info))
                         .await?
-                        .with_context(|| format!("timed out to crawl account #{}", account.id))
+                        .with_context(|| format!("timed out to crawl account #{}", account_id))
                 })
             })
             // Buffer the accounts.
@@ -225,7 +226,7 @@ fn match_account_infos(
 )]
 async fn crawl_account(
     api: &WargamingApi,
-    account: &database::Account,
+    mut account: database::Account,
     account_info: &wargaming::AccountInfo,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?account.last_battle_time);
@@ -257,12 +258,8 @@ async fn crawl_account(
         Vec::new()
     };
 
+    account.last_battle_time = Some(account_info.last_battle_time);
     let account_snapshot = database::AccountSnapshot::new(account_info, tank_last_battle_times);
-    let account = database::Account::new(
-        account_snapshot.account_id,
-        Default::default(),
-        account_snapshot.last_battle_time,
-    );
 
     Ok((account, account_snapshot, tank_snapshots))
 }
