@@ -16,22 +16,31 @@ pub struct Account {
     #[serde(rename = "_id")]
     pub id: wargaming::AccountId,
 
+    #[serde(default, rename = "rlm")]
+    pub realm: wargaming::Realm,
+
     #[serde(rename = "lbts")]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
 }
 
 impl Account {
-    pub fn new(id: wargaming::AccountId, last_battle_time: DateTime) -> Self {
+    pub fn new(
+        id: wargaming::AccountId,
+        realm: wargaming::Realm,
+        last_battle_time: DateTime,
+    ) -> Self {
         Self {
             id,
+            realm,
             last_battle_time: Some(last_battle_time),
         }
     }
 
-    pub fn fake(account_id: wargaming::AccountId) -> Self {
+    pub fn fake(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
         Self {
             id: account_id,
+            realm,
             last_battle_time: None,
         }
     }
@@ -77,8 +86,13 @@ impl Account {
     #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
     pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
         let query = doc! { "_id": self.id };
-        let update =
-            doc! { operation: { "lbts": self.last_battle_time, "random": fastrand::f64() } };
+        let update = doc! {
+            operation: {
+                "lbts": self.last_battle_time,
+                "rlm": bson::to_bson(&self.realm)?,
+                "random": fastrand::f64(),
+            },
+        };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");

@@ -56,7 +56,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let accounts = stream::iter(opts.start_id..opts.end_id)
-        .map(database::Account::fake)
+        .map(|account_id| database::Account::fake(account_id, Default::default()))
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
     crawler.run(accounts, &opts.shared.buffering, None).await
@@ -258,8 +258,11 @@ async fn crawl_account(
     };
 
     let account_snapshot = database::AccountSnapshot::new(account_info, tank_last_battle_times);
-    let account =
-        database::Account::new(account_snapshot.account_id, account_snapshot.last_battle_time);
+    let account = database::Account::new(
+        account_snapshot.account_id,
+        Default::default(),
+        account_snapshot.last_battle_time,
+    );
 
     Ok((account, account_snapshot, tank_snapshots))
 }

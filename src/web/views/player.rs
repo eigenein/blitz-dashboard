@@ -58,7 +58,7 @@ pub async fn get(
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&actual_info.nickname);
-    database::Account::fake(account_id)
+    database::Account::fake(account_id, Default::default())
         .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
