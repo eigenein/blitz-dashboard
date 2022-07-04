@@ -40,7 +40,7 @@ pub struct AccountSnapshot {
 
 impl AccountSnapshot {
     pub fn new(
-        account_info: &wargaming::AccountInfo,
+        account_info: wargaming::AccountInfo,
         tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
     ) -> Self {
         Self {

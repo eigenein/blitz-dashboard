@@ -132,7 +132,7 @@ impl Crawler {
 
                 Ok(async move {
                     let account_id = account.id;
-                    timeout(TIMEOUT, crawl_account(&api, account, &account_info))
+                    timeout(TIMEOUT, crawl_account(&api, account, account_info))
                         .await?
                         .with_context(|| format!("timed out to crawl account #{}", account_id))
                 })
@@ -227,7 +227,7 @@ fn match_account_infos(
 async fn crawl_account(
     api: &WargamingApi,
     mut account: database::Account,
-    account_info: &wargaming::AccountInfo,
+    account_info: wargaming::AccountInfo,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?account.last_battle_time);
 
