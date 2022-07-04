@@ -12,6 +12,9 @@ use crate::wargaming;
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AccountSnapshot {
+    #[serde(rename = "rlm")]
+    pub realm: wargaming::Realm,
+
     #[serde(rename = "lbts")]
     #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
@@ -41,6 +44,7 @@ impl AccountSnapshot {
         tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
     ) -> Self {
         Self {
+            realm: Default::default(),
             last_battle_time: account_info.last_battle_time,
             account_id: account_info.id,
             statistics: account_info.statistics.all.into(),

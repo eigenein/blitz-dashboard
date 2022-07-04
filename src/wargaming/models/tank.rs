@@ -34,6 +34,7 @@ pub fn subtract_tanks(
         .filter_map(|(snapshot, actual_tank)| {
             (actual_tank.statistics.all.n_battles != snapshot.statistics.n_battles).then(|| {
                 database::TankSnapshot {
+                    realm: snapshot.realm,
                     last_battle_time: actual_tank.statistics.last_battle_time,
                     account_id: snapshot.account_id,
                     tank_id: snapshot.tank_id,

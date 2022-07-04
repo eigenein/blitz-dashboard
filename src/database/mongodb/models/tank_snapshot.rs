@@ -14,6 +14,9 @@ use crate::wargaming;
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct TankSnapshot {
+    #[serde(rename = "rlm")]
+    pub realm: wargaming::Realm,
+
     #[serde(rename = "lbts")]
     #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
@@ -35,6 +38,7 @@ pub struct TankSnapshot {
 impl From<wargaming::Tank> for TankSnapshot {
     fn from(tank: wargaming::Tank) -> Self {
         Self {
+            realm: Default::default(),
             last_battle_time: tank.statistics.last_battle_time,
             account_id: tank.account_id,
             tank_id: tank.statistics.tank_id as u32,
