@@ -13,7 +13,10 @@ use crate::{format_elapsed, wargaming};
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Account {
-    #[serde(rename = "_id")]
+    #[serde(default, rename(serialize = "_id"))]
+    pub _deprecated_id: wargaming::AccountId,
+
+    #[serde(rename(serialize = "aid", deserialize = "_id"))]
     pub id: wargaming::AccountId,
 
     #[serde(default, rename = "rlm")]
@@ -33,6 +36,7 @@ impl Account {
         Self {
             id,
             realm,
+            _deprecated_id: id,
             last_battle_time: Some(last_battle_time),
         }
     }
@@ -40,6 +44,7 @@ impl Account {
     pub fn fake(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
         Self {
             id: account_id,
+            _deprecated_id: account_id,
             realm,
             last_battle_time: None,
         }
@@ -88,6 +93,7 @@ impl Account {
         let query = doc! { "_id": self.id };
         let update = doc! {
             operation: {
+                "aid": self.id,
                 "lbts": self.last_battle_time,
                 "rlm": bson::to_bson(&self.realm)?,
                 "random": fastrand::f64(),

@@ -1,6 +1,6 @@
 use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::{FindOptions, IndexOptions, UpdateModifications, UpdateOptions};
+use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
@@ -73,7 +73,7 @@ impl AccountSnapshot {
     )]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "aid": self.account_id, "lbts": self.last_battle_time };
-        let update = UpdateModifications::Document(doc! { "$setOnInsert": bson::to_bson(self)? });
+        let update = doc! { "$setOnInsert": bson::to_bson(self)? };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
