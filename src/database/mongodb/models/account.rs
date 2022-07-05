@@ -2,7 +2,7 @@ use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::options::{FindOptions, UpdateOptions};
+use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::time::timeout;
@@ -14,7 +14,7 @@ use crate::{format_elapsed, wargaming};
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Account {
     /// Wargaming.net account ID.
-    #[serde(rename(serialize = "aid", deserialize = "_id"))]
+    #[serde(rename = "aid")]
     pub id: wargaming::AccountId,
 
     #[serde(default, rename = "rlm")]
@@ -46,8 +46,16 @@ impl Account {
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [
-            IndexModel::builder().keys(doc! { "lbts": -1 }).build(),
-            IndexModel::builder().keys(doc! { "random": 1 }).build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "aid": 1 })
+                .options(IndexOptions::builder().unique(true).build())
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "lbts": -1 })
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "random": 1 })
+                .build(),
         ];
         Self::collection(on)
             .create_indexes(indexes, None)
@@ -59,6 +67,7 @@ impl Account {
     #[instrument(skip_all, level = "debug")]
     pub fn get_sampled_stream(
         database: Database,
+        realm: wargaming::Realm,
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
@@ -66,7 +75,8 @@ impl Account {
         info!(sample_size, %min_offset, %max_offset);
         try_unfold((1, database), move |(sample_number, database)| async move {
             debug!(sample_number, "retrieving a sample…");
-            let future = Account::retrieve_sample(&database, sample_size, min_offset, max_offset);
+            let future =
+                Account::retrieve_sample(&database, realm, sample_size, min_offset, max_offset);
             let sample = timeout(StdDuration::from_secs(60), future) // FIXME.
                 .await
                 .with_context(|| format!("timed out to retrieve sample #{}", sample_number))??;
@@ -78,15 +88,8 @@ impl Account {
 
     #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
     pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
-        let query = doc! { "_id": self.id };
-        let update = doc! {
-            operation: {
-                "aid": self.id,
-                "lbts": self.last_battle_time,
-                "rlm": bson::to_bson(&self.realm)?,
-                "random": self.random,
-            },
-        };
+        let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
+        let update = doc! { operation: bson::to_bson(&self)? };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
@@ -103,12 +106,14 @@ impl Account {
     #[instrument(skip_all, level = "debug")]
     pub async fn retrieve_sample(
         from: &Database,
+        realm: wargaming::Realm,
         sample_size: u32,
         min_offset: Duration,
         max_offset: Duration,
     ) -> Result<Vec<Account>> {
         let now = Utc::now();
         let filter = doc! {
+            "rlm": realm.to_str(),
             "random": { "$gt": fastrand::f64() },
             "$or": [
                 { "lbts": null },

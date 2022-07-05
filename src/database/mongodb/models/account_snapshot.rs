@@ -60,7 +60,7 @@ impl AccountSnapshot {
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [IndexModel::builder()
-            .keys(doc! { "aid": 1, "lbts": -1 })
+            .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
             .options(IndexOptions::builder().unique(true).build())
             .build()];
         Self::collection(on)
@@ -76,7 +76,7 @@ impl AccountSnapshot {
         fields(account_id = self.account_id),
     )]
     pub async fn upsert(&self, to: &Database) -> Result {
-        let query = doc! { "aid": self.account_id, "lbts": self.last_battle_time };
+        let query = doc! { "rlm": self.realm.to_str(), "aid": self.account_id, "lbts": self.last_battle_time };
         let update = doc! { "$setOnInsert": bson::to_bson(self)? };
         let options = UpdateOptions::builder().upsert(true).build();
 
@@ -94,10 +94,11 @@ impl AccountSnapshot {
     #[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
     pub async fn retrieve_latest(
         from: &Database,
+        realm: wargaming::Realm,
         account_id: wargaming::AccountId,
         before: DateTime,
     ) -> Result<Option<Self>> {
-        let filter = doc! { "aid": account_id, "lbts": { "$lte": before } };
+        let filter = doc! { "rlm": realm.to_str(), "aid": account_id, "lbts": { "$lte": before } };
         let options = FindOptions::builder()
             .sort(doc! { "lbts": -1 })
             .limit(1)

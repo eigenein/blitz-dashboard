@@ -1,7 +1,7 @@
 use futures::TryStreamExt;
 use itertools::Itertools;
 use mongodb::bson::{doc, from_document};
-use mongodb::options::{IndexOptions, UpdateModifications, UpdateOptions};
+use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
@@ -53,11 +53,11 @@ impl TankSnapshot {
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [
             IndexModel::builder()
-                .keys(doc! { "aid": 1, "tid": 1, "lbts": -1 })
+                .keys(doc! { "rlm": 1, "aid": 1, "tid": 1, "lbts": -1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
             IndexModel::builder()
-                .keys(doc! { "aid": 1, "lbts": -1 })
+                .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
                 .options(IndexOptions::builder().build())
                 .build(),
         ];
@@ -75,11 +75,12 @@ impl TankSnapshot {
     )]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! {
+            "rlm": self.realm.to_str(),
             "aid": self.account_id,
             "tid": self.tank_id,
             "lbts": self.last_battle_time,
         };
-        let update = UpdateModifications::Document(doc! { "$setOnInsert": bson::to_bson(self)? });
+        let update = doc! { "$setOnInsert": bson::to_bson(self)? };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
@@ -100,6 +101,7 @@ impl TankSnapshot {
     )]
     pub async fn retrieve_latest_tank_snapshots(
         from: &Database,
+        realm: wargaming::Realm,
         account_id: wargaming::AccountId,
         before: DateTime,
         tank_ids: &[wargaming::TankId],
@@ -111,6 +113,7 @@ impl TankSnapshot {
         let pipeline = [
             doc! {
                 "$match": {
+                    "rlm": realm.to_str(),
                     "aid": account_id,
                     "tid": {"$in": tank_ids},
                     "lbts": {"$lt": before},
@@ -144,6 +147,7 @@ impl TankSnapshot {
     #[instrument(level = "debug", skip_all)]
     pub async fn retrieve_many(
         from: &Database,
+        realm: wargaming::Realm,
         account_id: wargaming::AccountId,
         tank_last_battle_times: impl IntoIterator<Item = &(wargaming::TankId, bson::DateTime)>,
     ) -> Result<Vec<Self>> {
@@ -157,7 +161,7 @@ impl TankSnapshot {
             return Ok(Vec::new());
         }
         let snapshots: Vec<Self> = Self::collection(from)
-            .find(doc! { "aid": account_id, "$or": or_clauses }, None)
+            .find(doc! { "rlm": realm.to_str(), "aid": account_id, "$or": or_clauses }, None)
             .await?
             .try_collect()
             .await?;

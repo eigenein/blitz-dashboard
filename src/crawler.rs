@@ -37,6 +37,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     info!("running…");
     let accounts = database::Account::get_sampled_stream(
         crawler.mongodb.clone(),
+        Default::default(),
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,
         Duration::from_std(opts.max_offset)?,

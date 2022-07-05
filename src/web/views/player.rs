@@ -675,7 +675,9 @@ async fn retrieve_deltas_quickly(
         AHashMap<wargaming::TankId, wargaming::Tank>,
     >,
 > {
-    match database::AccountSnapshot::retrieve_latest(from, account_id, before).await? {
+    match database::AccountSnapshot::retrieve_latest(from, Default::default(), account_id, before)
+        .await?
+    {
         Some(account_snapshot) => {
             let tank_last_battle_times = account_snapshot.tank_last_battle_times.iter().filter(
                 |(tank_id, last_battle_time)| {
@@ -694,9 +696,13 @@ async fn retrieve_deltas_quickly(
                     }
                 },
             );
-            let snapshots =
-                database::TankSnapshot::retrieve_many(from, account_id, tank_last_battle_times)
-                    .await?;
+            let snapshots = database::TankSnapshot::retrieve_many(
+                from,
+                Default::default(),
+                account_id,
+                tank_last_battle_times,
+            )
+            .await?;
             let stats_delta = account_statistics - account_snapshot.statistics;
             let tanks_delta = subtract_tanks(actual_tanks, snapshots);
             Ok(Either::Left((stats_delta, tanks_delta)))
@@ -722,8 +728,14 @@ async fn retrieve_deltas_slowly(
             .values()
             .map(wargaming::Tank::tank_id)
             .collect_vec();
-        database::TankSnapshot::retrieve_latest_tank_snapshots(from, account_id, before, &tank_ids)
-            .await?
+        database::TankSnapshot::retrieve_latest_tank_snapshots(
+            from,
+            Default::default(),
+            account_id,
+            before,
+            &tank_ids,
+        )
+        .await?
     };
     let tanks_delta = subtract_tanks(actual_tanks, snapshots);
     let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();
