@@ -126,7 +126,7 @@ pub async fn get(
                 div.navbar-menu.is-active {
                     div.navbar-end {
                         form.navbar-item action="/search" method="GET" {
-                            (account_search("", &actual_info.nickname, false, actual_info.is_prerelease_account()))
+                            (account_search("", realm, &actual_info.nickname, false, actual_info.is_prerelease_account()))
                         }
                     }
                 }

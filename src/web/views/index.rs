@@ -3,6 +3,7 @@ use rocket::State;
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
+use crate::wargaming;
 use crate::web::partials::{account_search, headers};
 use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;
@@ -46,7 +47,7 @@ pub async fn get(
                                                 a.button.is-rounded.is-small href="/ru/2992069" { "Tortik" }
                                             }
                                         }
-                                        (account_search("is-medium", "", true, false))
+                                        (account_search("is-medium", wargaming::Realm::Russia, "", true, false))
                                     }
                                 }
                             }

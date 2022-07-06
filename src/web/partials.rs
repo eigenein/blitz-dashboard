@@ -10,6 +10,7 @@ use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 #[must_use]
 pub fn account_search(
     class: &str,
+    realm: Realm,
     value: &str,
     has_autofocus: bool,
     has_user_secret: bool,
@@ -19,8 +20,8 @@ pub fn account_search(
             div.control {
                 span.select.is-rounded.(class) {
                     select name="realm" {
-                        option title="Россия" value=(Realm::Russia.to_str()) { "🇷🇺" }
-                        option title="Европа" value=(Realm::Europe.to_str()) { "🇪🇺" }
+                        option title="Россия" value=(Realm::Russia.to_str()) selected[realm == Realm::Russia] { "🇷🇺" }
+                        option title="Европа" value=(Realm::Europe.to_str()) selected[realm == Realm::Europe] { "🇪🇺" }
                     }
                 }
             }

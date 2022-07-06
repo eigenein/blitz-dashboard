@@ -84,7 +84,7 @@ pub async fn get(
                     div.navbar-menu {
                         div.navbar-end {
                             form.navbar-item action="/search" method="GET" {
-                                (account_search("", &query, false, false))
+                                (account_search("", realm, &query, false, false))
                             }
                         }
                     }
