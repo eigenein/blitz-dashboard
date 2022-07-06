@@ -3,7 +3,7 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 
 use crate::wargaming::{AccountId, BasicStatistics, TankAchievements, TankId, TankStatistics};
-use crate::{database, AHashMap};
+use crate::{database, wargaming, AHashMap};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -21,6 +21,7 @@ impl Tank {
 }
 
 pub fn subtract_tanks(
+    realm: wargaming::Realm,
     mut actual_tanks: AHashMap<TankId, Tank>,
     snapshots: Vec<database::TankSnapshot>,
 ) -> Vec<database::TankSnapshot> {
@@ -34,7 +35,7 @@ pub fn subtract_tanks(
         .filter_map(|(snapshot, actual_tank)| {
             (actual_tank.statistics.all.n_battles != snapshot.statistics.n_battles).then(|| {
                 database::TankSnapshot {
-                    realm: snapshot.realm,
+                    realm,
                     last_battle_time: actual_tank.statistics.last_battle_time,
                     account_id: snapshot.account_id,
                     tank_id: snapshot.tank_id,
@@ -49,7 +50,7 @@ pub fn subtract_tanks(
         actual_tanks
             .into_values()
             .filter(|tank| tank.statistics.all.n_battles != 0)
-            .map(database::TankSnapshot::from),
+            .map(|tank| database::TankSnapshot::from_tank(realm, tank)),
     );
     subtracted
 }

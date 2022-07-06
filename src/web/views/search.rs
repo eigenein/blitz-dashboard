@@ -22,9 +22,10 @@ pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
 #[instrument(skip_all, level = "info", fields(query = ?query))]
-#[rocket::get("/search?<query>")]
+#[rocket::get("/search?<query>&<realm>")]
 pub async fn get(
     query: String,
+    realm: wargaming::Realm,
     tracking_code: &State<TrackingCode>,
     api: &State<WargamingApi>,
     account_info_cache: &State<AccountInfoCache>,
@@ -36,21 +37,22 @@ pub async fn get(
     }
 
     let account_ids: Vec<wargaming::AccountId> = api
-        .search_accounts(&query)
+        .search_accounts(realm, &query)
         .await?
         .iter()
         .map(|account| account.id)
         .collect();
     let mut accounts: Vec<AccountInfo> = api
-        .get_account_info(&account_ids)
+        .get_account_info(realm, &account_ids)
         .await?
         .into_iter()
         .filter_map(|(_, info)| info)
         .collect();
     if accounts.len() == 1 {
         let account_info = accounts.first().unwrap();
-        account_info_cache.put(account_info).await?;
+        account_info_cache.put(realm, account_info).await?;
         return Ok(CustomResponse::Redirect(Redirect::temporary(uri!(get_player(
+            realm = realm,
             account_id = account_info.id,
             period = _,
         )))));
@@ -60,7 +62,7 @@ pub async fn get(
         .position(|account| account.nickname == query)
         .map(|index| accounts.remove(index));
     if let Some(exact_match) = &exact_match {
-        account_info_cache.put(exact_match).await?;
+        account_info_cache.put(realm, exact_match).await?;
     }
     accounts.sort_unstable_by(|left, right| right.last_battle_time.cmp(&left.last_battle_time));
 
@@ -107,11 +109,11 @@ pub async fn get(
                             }
                             @if let Some(exact_match) = exact_match {
                                 h1.title.block."is-4" { "Точное совпадение" }
-                                (account_card(&exact_match))
+                                (account_card(realm, &exact_match))
                                 h1.title.block."is-4" { "Другие результаты" }
                             }
                             @for account in &accounts {
-                                (account_card(account))
+                                (account_card(realm, account))
                             }
                         }
                     }
@@ -125,11 +127,11 @@ pub async fn get(
     Ok(CustomResponse::Html(markup.into()))
 }
 
-fn account_card(account_info: &AccountInfo) -> Markup {
+fn account_card(realm: wargaming::Realm, account_info: &AccountInfo) -> Markup {
     html! {
         div.box {
             p.title."is-5" {
-                a href=(uri!(get_player(account_id = account_info.id, period = _))) { (account_info.nickname) }
+                a href=(uri!(get_player(realm = realm, account_id = account_info.id, period = _))) { (account_info.nickname) }
             }
             p.subtitle."is-6" {
                 span.icon-text.has-text-grey {

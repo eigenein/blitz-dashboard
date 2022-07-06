@@ -15,6 +15,7 @@ use crate::wargaming::WargamingApi;
 mod error;
 mod fairings;
 mod partials;
+mod realm;
 mod response;
 mod result;
 mod views;

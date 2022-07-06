@@ -73,10 +73,16 @@ impl WargamingApi {
     }
 
     /// See: <https://developers.wargaming.net/reference/all/wotb/account/list/>.
-    #[instrument(skip_all, fields(query = query))]
-    pub async fn search_accounts(&self, query: &str) -> Result<Vec<FoundAccount>> {
+    #[instrument(skip_all, fields(realm = ?realm, query = query))]
+    pub async fn search_accounts(&self, realm: Realm, query: &str) -> Result<Vec<FoundAccount>> {
+        let url = match realm {
+            Realm::Asia => "https://api.wotblitz.asia/wotb/account/list/",
+            Realm::Europe => "https://api.wotblitz.eu/wotb/account/list/",
+            Realm::Russia => "https://api.wotblitz.ru/wotb/account/list/",
+            Realm::NorthAmerica => "https://api.wotblitz.com/wotb/account/list/",
+        };
         self.call(Url::parse_with_params(
-            "https://api.wotblitz.ru/wotb/account/list/",
+            url,
             &[
                 ("application_id", self.application_id.as_str()),
                 ("limit", "20"),
@@ -88,9 +94,10 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
-    #[instrument(skip_all, level = "debug", fields(n_accounts = account_ids.len()))]
+    #[instrument(skip_all, level = "debug", fields(realm = ?realm, n_accounts = account_ids.len()))]
     pub async fn get_account_info(
         &self,
+        realm: Realm,
         account_ids: &[AccountId],
     ) -> Result<HashMap<String, Option<AccountInfo>>> {
         trace!("entered");
@@ -98,8 +105,14 @@ impl WargamingApi {
             return Ok(HashMap::new());
         }
         let account_id = account_ids.iter().map(ToString::to_string).join(",");
+        let url = match realm {
+            Realm::Asia => "https://api.wotblitz.asia/wotb/account/info/",
+            Realm::Europe => "https://api.wotblitz.eu/wotb/account/info/",
+            Realm::Russia => "https://api.wotblitz.ru/wotb/account/info/",
+            Realm::NorthAmerica => "https://api.wotblitz.com/wotb/account/info/",
+        };
         self.call(Url::parse_with_params(
-            "https://api.wotblitz.ru/wotb/account/info/",
+            url,
             &[
                 ("application_id", self.application_id.as_str()),
                 ("account_id", account_id.as_str()),
@@ -111,11 +124,21 @@ impl WargamingApi {
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
-    #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
-    pub async fn get_tanks_stats(&self, account_id: AccountId) -> Result<Vec<TankStatistics>> {
+    #[instrument(skip_all, level = "debug", fields(realm = ?realm, account_id = account_id))]
+    pub async fn get_tanks_stats(
+        &self,
+        realm: Realm,
+        account_id: AccountId,
+    ) -> Result<Vec<TankStatistics>> {
         trace!("entered");
+        let url = match realm {
+            Realm::Asia => "https://api.wotblitz.asia/wotb/tanks/stats/",
+            Realm::Europe => "https://api.wotblitz.eu/wotb/tanks/stats/",
+            Realm::Russia => "https://api.wotblitz.ru/wotb/tanks/stats/",
+            Realm::NorthAmerica => "https://api.wotblitz.com/wotb/tanks/stats/",
+        };
         Ok(self
-            .call_by_account("https://api.wotblitz.ru/wotb/tanks/stats/", account_id)
+            .call_by_account(url, account_id)
             .await
             .with_context(|| format!("failed to get tanks stats for #{}", account_id))?
             .unwrap_or_default())
@@ -125,11 +148,18 @@ impl WargamingApi {
     #[instrument(skip_all, fields(account_id = account_id))]
     pub async fn get_tanks_achievements(
         &self,
+        realm: Realm,
         account_id: AccountId,
     ) -> Result<Vec<TankAchievements>> {
         trace!("entered");
+        let url = match realm {
+            Realm::Asia => "https://api.wotblitz.asia/wotb/tanks/achievements/",
+            Realm::Europe => "https://api.wotblitz.eu/wotb/tanks/achievements/",
+            Realm::Russia => "https://api.wotblitz.ru/wotb/tanks/achievements/",
+            Realm::NorthAmerica => "https://api.wotblitz.com/wotb/tanks/achievements/",
+        };
         Ok(self
-            .call_by_account("https://api.wotblitz.ru/wotb/tanks/achievements/", account_id)
+            .call_by_account(url, account_id)
             .await
             .with_context(|| format!("failed to get tanks achievements for #{}", account_id))?
             .unwrap_or_default())

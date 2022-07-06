@@ -21,6 +21,7 @@ mod metrics;
 #[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
+    realm: wargaming::Realm,
     mongodb: mongodb::Database,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 }
@@ -37,7 +38,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     info!("running…");
     let accounts = database::Account::get_sampled_stream(
         crawler.mongodb.clone(),
-        Default::default(),
+        opts.shared.realm,
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,
         Duration::from_std(opts.max_offset)?,
@@ -57,7 +58,7 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawl-accounts"));
 
     let accounts = stream::iter(opts.start_id..opts.end_id)
-        .map(|account_id| database::Account::new(account_id, Default::default()))
+        .map(|account_id| database::Account::new(opts.shared.realm, account_id))
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
     crawler.run(accounts, &opts.shared.buffering, None).await
@@ -76,6 +77,7 @@ impl Crawler {
         let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
+            realm: opts.realm,
             metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
                 &api.request_counter,
                 opts.lag_percentile,
@@ -115,9 +117,12 @@ impl Crawler {
                 let heartbeat_url = heartbeat_url.clone();
 
                 Ok(async move {
-                    timeout(TIMEOUT, crawl_batch(api, batch, batch_number, metrics, heartbeat_url))
-                        .await
-                        .with_context(|| format!("timed out to crawl batch #{}", batch_number))?
+                    timeout(
+                        TIMEOUT,
+                        crawl_batch(api, self.realm, batch, batch_number, metrics, heartbeat_url),
+                    )
+                    .await
+                    .with_context(|| format!("timed out to crawl batch #{}", batch_number))?
                 })
             })
             // Here we have the stream of batches of accounts that need to be crawled.
@@ -133,7 +138,7 @@ impl Crawler {
 
                 Ok(async move {
                     let account_id = account.id;
-                    timeout(TIMEOUT, crawl_account(&api, account, account_info))
+                    timeout(TIMEOUT, crawl_account(&api, self.realm, account, account_info))
                         .await?
                         .with_context(|| format!("timed out to crawl account #{}", account_id))
                 })
@@ -162,13 +167,14 @@ impl Crawler {
 #[instrument(skip_all, level = "debug", fields(batch_number = _batch_number))]
 async fn crawl_batch(
     api: WargamingApi,
+    realm: wargaming::Realm,
     batch: Vec<database::Account>,
     _batch_number: usize,
     metrics: Arc<Mutex<CrawlerMetrics>>,
     heartbeat_url: Option<String>,
 ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
-    let new_infos = api.get_account_info(&account_ids).await?;
+    let new_infos = api.get_account_info(realm, &account_ids).await?;
     let batch_len = batch.len();
     let matched = match_account_infos(batch, new_infos);
 
@@ -227,12 +233,13 @@ fn match_account_infos(
 )]
 async fn crawl_account(
     api: &WargamingApi,
+    realm: wargaming::Realm,
     mut account: database::Account,
     account_info: wargaming::AccountInfo,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?account.last_battle_time);
 
-    let statistics = api.get_tanks_stats(account.id).await?;
+    let statistics = api.get_tanks_stats(realm, account.id).await?;
     let tank_last_battle_times = statistics
         .iter()
         .map(|item| (item.tank_id, bson::DateTime::from(item.last_battle_time)))
@@ -247,12 +254,12 @@ async fn crawl_account(
     };
     let tank_snapshots = if !updated_statistics.is_empty() {
         debug!(n_updated_tanks = updated_statistics.len());
-        let achievements = api.get_tanks_achievements(account.id).await?;
+        let achievements = api.get_tanks_achievements(realm, account.id).await?;
         let tanks = wargaming::merge_tanks(account.id, updated_statistics, achievements);
         debug!(n_tanks = tanks.len(), "crawled");
         tanks
             .into_values()
-            .map(database::TankSnapshot::from)
+            .map(|tank| database::TankSnapshot::from_tank(realm, tank))
             .collect()
     } else {
         trace!("no updated tanks");
@@ -260,7 +267,8 @@ async fn crawl_account(
     };
 
     account.last_battle_time = Some(account_info.last_battle_time);
-    let account_snapshot = database::AccountSnapshot::new(account_info, tank_last_battle_times);
+    let account_snapshot =
+        database::AccountSnapshot::new(realm, account_info, tank_last_battle_times);
 
     Ok((account, account_snapshot, tank_snapshots))
 }

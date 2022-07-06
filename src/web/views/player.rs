@@ -33,8 +33,9 @@ pub mod partials;
 
 #[allow(clippy::too_many_arguments)]
 #[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?period))]
-#[rocket::get("/ru/<account_id>?<period>")]
+#[rocket::get("/<realm>/<account_id>?<period>")]
 pub async fn get(
+    realm: wargaming::Realm,
     account_id: wargaming::AccountId,
     period: Option<String>,
     mongodb: &State<mongodb::Database>,
@@ -52,13 +53,13 @@ pub async fn get(
     };
 
     let (actual_info, actual_tanks) =
-        try_join(info_cache.get(account_id), tanks_cache.get(account_id)).await?;
+        try_join(info_cache.get(realm, account_id), tanks_cache.get(realm, account_id)).await?;
     let actual_info = match actual_info {
         Some(info) => info,
         None => return Ok(CustomResponse::Status(Status::NotFound)),
     };
     set_user(&actual_info.nickname);
-    database::Account::new(account_id, Default::default())
+    database::Account::new(realm, account_id)
         .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
@@ -70,6 +71,7 @@ pub async fn get(
     );
     let (stats_delta, tanks_delta) = match retrieve_deltas_quickly(
         mongodb,
+        realm,
         account_id,
         actual_info.statistics.all,
         actual_tanks,
@@ -78,7 +80,9 @@ pub async fn get(
     .await?
     {
         Either::Left(result) => result,
-        Either::Right(tanks) => retrieve_deltas_slowly(mongodb, account_id, tanks, before).await?,
+        Either::Right(tanks) => {
+            retrieve_deltas_slowly(mongodb, realm, account_id, tanks, before).await?
+        }
     };
     let battle_life_time: i64 = tanks_delta
         .iter()
@@ -290,7 +294,7 @@ pub async fn get(
                 }
 
                 (headers())
-                link rel="canonical" href=(uri!(get(account_id = account_id, period = _)));
+                link rel="canonical" href=(uri!(get(realm = realm, account_id = account_id, period = _)));
                 title { (actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
             }
             body {
@@ -665,6 +669,7 @@ fn render_tank_tr(
 #[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
 async fn retrieve_deltas_quickly(
     from: &mongodb::Database,
+    realm: wargaming::Realm,
     account_id: wargaming::AccountId,
     account_statistics: wargaming::BasicStatistics,
     mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
@@ -675,9 +680,7 @@ async fn retrieve_deltas_quickly(
         AHashMap<wargaming::TankId, wargaming::Tank>,
     >,
 > {
-    match database::AccountSnapshot::retrieve_latest(from, Default::default(), account_id, before)
-        .await?
-    {
+    match database::AccountSnapshot::retrieve_latest(from, realm, account_id, before).await? {
         Some(account_snapshot) => {
             let tank_last_battle_times = account_snapshot.tank_last_battle_times.iter().filter(
                 |(tank_id, last_battle_time)| {
@@ -698,13 +701,13 @@ async fn retrieve_deltas_quickly(
             );
             let snapshots = database::TankSnapshot::retrieve_many(
                 from,
-                Default::default(),
+                realm,
                 account_id,
                 tank_last_battle_times,
             )
             .await?;
             let stats_delta = account_statistics - account_snapshot.statistics;
-            let tanks_delta = subtract_tanks(actual_tanks, snapshots);
+            let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
             Ok(Either::Left((stats_delta, tanks_delta)))
         }
         None => Ok(Either::Right(actual_tanks)),
@@ -714,6 +717,7 @@ async fn retrieve_deltas_quickly(
 #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
 async fn retrieve_deltas_slowly(
     from: &mongodb::Database,
+    realm: wargaming::Realm,
     account_id: wargaming::AccountId,
     actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
@@ -729,15 +733,11 @@ async fn retrieve_deltas_slowly(
             .map(wargaming::Tank::tank_id)
             .collect_vec();
         database::TankSnapshot::retrieve_latest_tank_snapshots(
-            from,
-            Default::default(),
-            account_id,
-            before,
-            &tank_ids,
+            from, realm, account_id, before, &tank_ids,
         )
         .await?
     };
-    let tanks_delta = subtract_tanks(actual_tanks, snapshots);
+    let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
     let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();
     Ok((stats_delta, tanks_delta))
 }

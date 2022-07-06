@@ -5,7 +5,7 @@ use tracing::{debug, instrument};
 
 use crate::prelude::*;
 use crate::wargaming::models::AccountInfo;
-use crate::wargaming::{AccountId, WargamingApi};
+use crate::wargaming::{AccountId, Realm, WargamingApi};
 
 pub struct AccountInfoCache {
     api: WargamingApi,
@@ -19,11 +19,11 @@ impl AccountInfoCache {
         Self { api, redis }
     }
 
-    #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get(&self, account_id: AccountId) -> Result<Option<AccountInfo>> {
+    #[instrument(skip_all, fields(realm = ?realm, account_id = account_id))]
+    pub async fn get(&self, realm: Realm, account_id: AccountId) -> Result<Option<AccountInfo>> {
         if let Some(blob) = self
             .redis
-            .get::<Option<Vec<u8>>, _>(Self::cache_key(account_id))
+            .get::<Option<Vec<u8>>, _>(Self::cache_key(realm, account_id))
             .await?
         {
             debug!(account_id = account_id, "cache hit");
@@ -32,28 +32,34 @@ impl AccountInfoCache {
 
         let account_info = self
             .api
-            .get_account_info(&[account_id])
+            .get_account_info(realm, &[account_id])
             .await?
             .remove(&account_id.to_string())
             .flatten();
         if let Some(account_info) = &account_info {
-            self.put(account_info).await?;
+            self.put(realm, account_info).await?;
         }
         Ok(account_info)
     }
 
-    #[instrument(skip_all, fields(account_id = account_info.id))]
-    pub async fn put(&self, account_info: &AccountInfo) -> Result {
+    #[instrument(skip_all, fields(realm = ?realm, account_id = account_info.id))]
+    pub async fn put(&self, realm: Realm, account_info: &AccountInfo) -> Result {
         let blob = rmp_serde::to_vec(&account_info)?;
         debug!(account_id = account_info.id, n_bytes = blob.len(), "set cache");
         self.redis
-            .set(Self::cache_key(account_info.id), blob.as_slice(), Self::EXPIRE, None, false)
+            .set(
+                Self::cache_key(realm, account_info.id),
+                blob.as_slice(),
+                Self::EXPIRE,
+                None,
+                false,
+            )
             .await?;
         Ok(())
     }
 
     #[inline]
-    fn cache_key(account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:1:a:i:ru:{}", account_id))
+    fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
+        RedisKey::from(format!("cache:1:a:i:{}:{}", realm.to_str(), account_id))
     }
 }

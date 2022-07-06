@@ -4,8 +4,7 @@ use maud::{html, Markup};
 use phf::phf_set;
 
 use crate::wargaming::models::tank_id::to_client_id;
-use crate::wargaming::models::{Nation, TankType, Vehicle};
-use crate::wargaming::TankId;
+use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
 use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 #[must_use]
@@ -19,8 +18,9 @@ pub fn account_search(
         div.field.has-addons {
             div.control {
                 span.select.is-rounded.(class) {
-                    select {
-                        option title="Россия" { "🇷🇺" }
+                    select name="realm" {
+                        option title="Россия" value=(Realm::Russia.to_str()) { "🇷🇺" }
+                        option title="Европа" value=(Realm::Europe.to_str()) { "🇪🇺" }
                     }
                 }
             }

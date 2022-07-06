@@ -169,9 +169,9 @@ pub struct SharedCrawlerOpts {
     /// Specifies which realm should be crawled.
     #[clap(
         long,
-        default_value = "ru",
         ignore_case = true,
         value_parser = EnumValueParser::<wargaming::Realm>::new(),
+        env = "BLITZ_DASHBOARD_CRAWLER_REALM",
     )]
     pub realm: wargaming::Realm,
 

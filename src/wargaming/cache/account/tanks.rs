@@ -7,7 +7,7 @@ use tracing::{debug, instrument};
 use crate::helpers::compression::{compress, decompress};
 use crate::prelude::*;
 use crate::wargaming::models::{merge_tanks, Tank};
-use crate::wargaming::{AccountId, TankId, WargamingApi};
+use crate::wargaming::{AccountId, Realm, TankId, WargamingApi};
 
 #[derive(Clone)]
 pub struct AccountTanksCache {
@@ -22,9 +22,9 @@ impl AccountTanksCache {
         Self { api, redis }
     }
 
-    #[instrument(skip_all, fields(account_id = account_id))]
-    pub async fn get(&self, account_id: AccountId) -> Result<AHashMap<TankId, Tank>> {
-        let cache_key = Self::cache_key(account_id);
+    #[instrument(skip_all, fields(realm = ?realm, account_id = account_id))]
+    pub async fn get(&self, realm: Realm, account_id: AccountId) -> Result<AHashMap<TankId, Tank>> {
+        let cache_key = Self::cache_key(realm, account_id);
 
         if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
             debug!(account_id, "cache hit");
@@ -32,8 +32,8 @@ impl AccountTanksCache {
         }
 
         let (statistics, achievements) = {
-            let get_statistics = self.api.get_tanks_stats(account_id);
-            let get_achievements = self.api.get_tanks_achievements(account_id);
+            let get_statistics = self.api.get_tanks_stats(realm, account_id);
+            let get_achievements = self.api.get_tanks_achievements(realm, account_id);
             try_join(get_statistics, get_achievements).await?
         };
         let tanks = merge_tanks(account_id, statistics, achievements);
@@ -46,7 +46,7 @@ impl AccountTanksCache {
     }
 
     #[inline]
-    fn cache_key(account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:3:a:t:ru:{}", account_id))
+    fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
+        RedisKey::from(format!("cache:3:a:t:{}:{}", realm.to_str(), account_id))
     }
 }

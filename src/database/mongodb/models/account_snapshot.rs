@@ -40,11 +40,12 @@ pub struct AccountSnapshot {
 
 impl AccountSnapshot {
     pub fn new(
+        realm: wargaming::Realm,
         account_info: wargaming::AccountInfo,
         tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
     ) -> Self {
         Self {
-            realm: Default::default(),
+            realm,
             last_battle_time: account_info.last_battle_time,
             account_id: account_info.id,
             statistics: account_info.statistics.all.into(),

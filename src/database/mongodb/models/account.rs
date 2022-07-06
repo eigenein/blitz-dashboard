@@ -17,7 +17,7 @@ pub struct Account {
     #[serde(rename = "aid")]
     pub id: wargaming::AccountId,
 
-    #[serde(default, rename = "rlm")]
+    #[serde(rename = "rlm")]
     pub realm: wargaming::Realm,
 
     #[serde(rename = "lbts")]
@@ -29,7 +29,7 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn new(account_id: wargaming::AccountId, realm: wargaming::Realm) -> Self {
+    pub fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
         Self {
             id: account_id,
             realm,
