@@ -265,8 +265,8 @@
       "19475": {
         "name": "VK 28.01 Ausf. B",
         "next_modules": [
-          1300,
-          5908
+          5908,
+          1300
         ],
         "next_tanks": null,
         "is_default": false,
@@ -2253,8 +2253,8 @@
       "7172": {
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "is_default": true,
@@ -2856,8 +2856,8 @@
         "name": "Wright Continental R-975C4",
         "next_modules": null,
         "next_tanks": [
-          16673,
-          9761
+          9761,
+          16673
         ],
         "is_default": false,
         "price_xp": 2800,
@@ -39689,6 +39689,167 @@
     ],
     "name": "Barkhan"
   },
+  "25377": {
+    "suspensions": [
+      264226
+    ],
+    "description": "Проект американского танка на базе серийного М48 с использованием наработок по Т54, разрабатываемый в середине 1950-х годов. Было построено несколько башен, но в 1957 году из-за постоянных изменений требований и затягивания работ проект был отменён, а в начале 1958 года башни были списаны.",
+    "engines": [
+      27429
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "264226": {
+        "name": "T54",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 264226,
+        "type": "vehicleChassis"
+      },
+      "263971": {
+        "name": "T169",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 263971,
+        "type": "vehicleTurret"
+      },
+      "266276": {
+        "name": "120 mm Gun T179 in Mount 169",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 266276,
+        "type": "vehicleGun"
+      },
+      "27429": {
+        "name": "Continental AV-1790-5B",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 27429,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "usa",
+    "is_premium": true,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/A132_T77.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/A132_T77.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 59275,
+      "profile_id": "27429-263971-264226-266276",
+      "firepower": 49,
+      "shot_efficiency": 73,
+      "gun_id": 266276,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 221,
+          "damage": 380
+        },
+        {
+          "type": "HOLLOW_CHARGE",
+          "penetration": 249,
+          "damage": 320
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 50,
+          "damage": 440
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 160,
+          "sides": 160,
+          "rear": 160
+        },
+        "hull": {
+          "front": 140,
+          "sides": 80,
+          "rear": 60
+        }
+      },
+      "speed_forward": 35,
+      "battle_level_range_min": 8,
+      "speed_backward": 18,
+      "engine": {
+        "tier": 8,
+        "fire_chance": 0.2,
+        "power": 860,
+        "name": "Continental AV-1790-5B",
+        "weight": 1000
+      },
+      "max_ammo": 50,
+      "battle_level_range_max": 9,
+      "engine_id": 27429,
+      "hp": 1750,
+      "is_default": true,
+      "protection": 56,
+      "suspension": {
+        "tier": 8,
+        "load_limit": 62000,
+        "traverse_speed": 26,
+        "name": "T54",
+        "weight": 10000
+      },
+      "suspension_id": 264226,
+      "max_weight": 62000,
+      "gun": {
+        "move_down_arc": 10,
+        "caliber": 120,
+        "name": "120 mm Gun T179 in Mount 169",
+        "weight": 4000,
+        "move_up_arc": 12,
+        "fire_rate": 5.0,
+        "clip_reload_time": 2.5,
+        "dispersion": 0.38,
+        "clip_capacity": 2,
+        "traverse_speed": 26.25,
+        "reload_time": 21.5,
+        "tier": 8,
+        "aim_time": 5.28
+      },
+      "turret_id": 263971,
+      "turret": {
+        "name": "T169",
+        "weight": 14000,
+        "view_range": 240,
+        "traverse_left_arc": 180,
+        "hp": 380,
+        "traverse_speed": 30,
+        "tier": 8,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 33,
+      "hull_weight": 30000,
+      "hull_hp": 1370
+    },
+    "tier": 8,
+    "tank_id": 25377,
+    "type": "heavyTank",
+    "guns": [
+      266276
+    ],
+    "turrets": [
+      263971
+    ],
+    "name": "T77"
+  },
   "2561": {
     "suspensions": [
       5378,
@@ -40297,6 +40458,167 @@
       4371
     ],
     "name": "VK 30.01 (H)"
+  },
+  "25889": {
+    "suspensions": [
+      264738
+    ],
+    "description": "Когда-то это был проворный лёгкий танк с солидным разовым уроном и комфортными углами наводки — идеальный разведчик в любом бою. Но для путешествий по непроходимой чаще он был недостаточно экипирован. Пришлось кое-что доработать: поставить кондиционер, привлекатель жуков и отпугиватель змей... Теперь машина полностью готова к диким условиям!",
+    "engines": [
+      27941
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "264738": {
+        "name": "Рейнджер",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 264738,
+        "type": "vehicleChassis"
+      },
+      "264483": {
+        "name": "Рейнджер",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 264483,
+        "type": "vehicleTurret"
+      },
+      "266788": {
+        "name": "76 mm Gun M1A2B2",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 266788,
+        "type": "vehicleGun"
+      },
+      "27941": {
+        "name": "Ford GAN",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 27941,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "usa",
+    "is_premium": true,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/T21_BP.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/T21_BP.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 23106,
+      "profile_id": "27941-264483-264738-266788",
+      "firepower": 40,
+      "shot_efficiency": 54,
+      "gun_id": 266788,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 128,
+          "damage": 160
+        },
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 177,
+          "damage": 135
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 20,
+          "damage": 200
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 30,
+          "sides": 25,
+          "rear": 25
+        },
+        "hull": {
+          "front": 30,
+          "sides": 25,
+          "rear": 23
+        }
+      },
+      "speed_forward": 60,
+      "battle_level_range_min": 6,
+      "speed_backward": 21,
+      "engine": {
+        "tier": 7,
+        "fire_chance": 0.2,
+        "power": 610,
+        "name": "Ford GAN",
+        "weight": 569
+      },
+      "max_ammo": 70,
+      "battle_level_range_max": 7,
+      "engine_id": 27941,
+      "hp": 900,
+      "is_default": true,
+      "protection": 22,
+      "suspension": {
+        "tier": 6,
+        "load_limit": 26000,
+        "traverse_speed": 48,
+        "name": "Рейнджер",
+        "weight": 5300
+      },
+      "suspension_id": 264738,
+      "max_weight": 26000,
+      "gun": {
+        "move_down_arc": 10,
+        "caliber": 76,
+        "name": "76 mm Gun M1A2B2",
+        "weight": 1590,
+        "move_up_arc": 25,
+        "fire_rate": 10.17,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.36,
+        "clip_capacity": 1,
+        "traverse_speed": 40.25,
+        "reload_time": 5.9,
+        "tier": 6,
+        "aim_time": 3.86
+      },
+      "turret_id": 264483,
+      "turret": {
+        "name": "Рейнджер",
+        "weight": 4500,
+        "view_range": 250,
+        "traverse_left_arc": 180,
+        "hp": 180,
+        "traverse_speed": 42,
+        "tier": 6,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 79,
+      "hull_weight": 10847,
+      "hull_hp": 720
+    },
+    "tier": 6,
+    "tank_id": 25889,
+    "type": "lightTank",
+    "guns": [
+      266788
+    ],
+    "turrets": [
+      264483
+    ],
+    "name": "Рейнджер"
   },
   "2593": {
     "suspensions": [
@@ -41522,8 +41844,8 @@
       "11777": 30000
     },
     "next_tanks": {
-      "5889": 54420,
-      "513": 58390
+      "513": 58390,
+      "5889": 54420
     },
     "modules_tree": {
       "5634": {
@@ -41609,8 +41931,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "is_default": false,
         "price_xp": 5310,
@@ -55131,8 +55453,8 @@
         "name": "T16",
         "next_modules": null,
         "next_tanks": [
-          10273,
-          5409
+          5409,
+          10273
         ],
         "is_default": false,
         "price_xp": 1250,
@@ -62624,7 +62946,9 @@
       6757,
       7013
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "1633": 7000
+    },
     "next_tanks": {
       "5729": 25000
     },
@@ -62726,7 +63050,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J30_Mitsu_108.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J30_Mitsu_108.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 400000,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 44399,
       "profile_id": "6757-8803-8804-10082",
@@ -65629,7 +65956,9 @@
       7269,
       7013
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "5473": 25000
+    },
     "next_tanks": {
       "5985": 45000
     },
@@ -65731,7 +66060,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J29_Ju_Nu.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J29_Ju_Nu.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 885000,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 54094,
       "profile_id": "4452-7013-9315-10594",
@@ -68651,7 +68983,9 @@
       7269,
       7525
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "5729": 45000
+    },
     "next_tanks": {
       "6241": 80000
     },
@@ -68753,7 +69087,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J28_Ju_To.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J28_Ju_To.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 1450300,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 51295,
       "profile_id": "7269-9316-9827-11106",
@@ -71049,7 +71386,9 @@
       7781,
       7525
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "5985": 80000
+    },
     "next_tanks": {
       "6497": 154000
     },
@@ -71151,7 +71490,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J27_Chi_Se.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J27_Chi_Se.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 2610000,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 67182,
       "profile_id": "7525-9572-10339-11618",
@@ -76124,7 +76466,9 @@
       8037,
       8293
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "6241": 154000
+    },
     "next_tanks": {
       "6753": 240000
     },
@@ -76226,7 +76570,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J26_Type_68.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J26_Type_68.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 3640000,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 66990,
       "profile_id": "8037-10084-10851-12130",
@@ -77834,11 +78181,13 @@
     "suspensions": [
       12642
     ],
-    "description": "Воплощение концепции основного боевого танка, созданное под влияние американских и собственных (японских) разработок середины 1960-х годов. Оснащался гидропневматической подвеской, позволявшей менять клиренс и дополнительно увеличивать углы вертикальной наводки орудия. В металле не изготавливался, оставшись на уровне эскизного проекта. ",
+    "description": "Воплощение концепции основного боевого танка, созданное под влиянием американских и собственных (японских) разработок середины 1960-х годов. Оснащался гидропневматической подвеской, позволявшей менять клиренс и дополнительно увеличивать углы вертикальной наводки орудия. В металле не изготавливался, оставшись на уровне эскизного проекта. ",
     "engines": [
       8549
     ],
-    "prices_xp": null,
+    "prices_xp": {
+      "6497": 240000
+    },
     "next_tanks": null,
     "modules_tree": {
       "12642": {
@@ -77888,7 +78237,10 @@
       "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/J25_Type71.png",
       "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/J25_Type71.png"
     },
-    "cost": null,
+    "cost": {
+      "price_credit": 6100000,
+      "price_gold": 0
+    },
     "default_profile": {
       "weight": 67680,
       "profile_id": "8549-10596-11363-12642",
@@ -82243,8 +82595,8 @@
       "1025": 700
     },
     "next_tanks": {
-      "6913": 2500,
-      "2049": 2500
+      "2049": 2500,
+      "6913": 2500
     },
     "modules_tree": {
       "1794": {
@@ -82307,8 +82659,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          2049,
-          6913
+          6913,
+          2049
         ],
         "is_default": false,
         "price_xp": 1250,
@@ -90173,8 +90525,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          10276,
-          7972
+          7972,
+          10276
         ],
         "next_tanks": null,
         "is_default": true,
@@ -92502,6 +92854,167 @@
     ],
     "turrets": [],
     "name": "AT 8"
+  },
+  "9601": {
+    "suspensions": [
+      14466
+    ],
+    "description": "Проект среднего танка с газотурбинным двигателем, который прорабатывался в начале 1950-х годов. Работы прекращены на стадии эскизного проектирования.",
+    "engines": [
+      14469
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "14466": {
+        "name": "CS-52",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 14466,
+        "type": "vehicleChassis"
+      },
+      "14211": {
+        "name": "CS-52",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 14211,
+        "type": "vehicleTurret"
+      },
+      "13700": {
+        "name": "105 mm armata wz. 52",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 13700,
+        "type": "vehicleGun"
+      },
+      "14469": {
+        "name": "GTD",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 14469,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "european",
+    "is_premium": true,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/Pl119_CS_52_LIS.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/Pl119_CS_52_LIS.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 36475,
+      "profile_id": "13700-14211-14466-14469",
+      "firepower": 44,
+      "shot_efficiency": 54,
+      "gun_id": 13700,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 158,
+          "damage": 290
+        },
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 197,
+          "damage": 250
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 53,
+          "damage": 380
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 165,
+          "sides": 80,
+          "rear": 60
+        },
+        "hull": {
+          "front": 80,
+          "sides": 70,
+          "rear": 45
+        }
+      },
+      "speed_forward": 47,
+      "battle_level_range_min": 7,
+      "speed_backward": 19,
+      "engine": {
+        "tier": 8,
+        "fire_chance": 0.2,
+        "power": 565,
+        "name": "GTD",
+        "weight": 1450
+      },
+      "max_ammo": 90,
+      "battle_level_range_max": 8,
+      "engine_id": 14469,
+      "hp": 1250,
+      "is_default": true,
+      "protection": 42,
+      "suspension": {
+        "tier": 8,
+        "load_limit": 38000,
+        "traverse_speed": 45,
+        "name": "CS-52",
+        "weight": 7700
+      },
+      "suspension_id": 14466,
+      "max_weight": 38000,
+      "gun": {
+        "move_down_arc": 6,
+        "caliber": 105,
+        "name": "105 mm armata wz. 52",
+        "weight": 2250,
+        "move_up_arc": 20,
+        "fire_rate": 6.0,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.41,
+        "clip_capacity": 1,
+        "traverse_speed": 33.0,
+        "reload_time": 10.0,
+        "tier": 8,
+        "aim_time": 3.77
+      },
+      "turret_id": 14211,
+      "turret": {
+        "name": "CS-52",
+        "weight": 7800,
+        "view_range": 250,
+        "traverse_left_arc": 180,
+        "hp": 250,
+        "traverse_speed": 42,
+        "tier": 8,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 54,
+      "hull_weight": 17000,
+      "hull_hp": 1000
+    },
+    "tier": 7,
+    "tank_id": 9601,
+    "type": "mediumTank",
+    "guns": [
+      13700
+    ],
+    "turrets": [
+      14211
+    ],
+    "name": "CS-52 LIS"
   },
   "9745": {
     "suspensions": [

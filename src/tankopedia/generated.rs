@@ -1757,6 +1757,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         nation: Nation::Germany,
         type_: TankType::Heavy,
     },
+    25377_u32 => Vehicle {
+        tank_id: 25377,
+        name: Cow::Borrowed("T77"),
+        tier: 8,
+        is_premium: true,
+        nation: Nation::Usa,
+        type_: TankType::Heavy,
+    },
     2561_u32 => Vehicle {
         tank_id: 2561,
         name: Cow::Borrowed("Т-34-85"),
@@ -1780,6 +1788,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         is_premium: true,
         nation: Nation::Germany,
         type_: TankType::Heavy,
+    },
+    25889_u32 => Vehicle {
+        tank_id: 25889,
+        name: Cow::Borrowed("Рейнджер"),
+        tier: 6,
+        is_premium: true,
+        nation: Nation::Usa,
+        type_: TankType::Light,
     },
     2593_u32 => Vehicle {
         tank_id: 2593,
@@ -4116,6 +4132,14 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
         is_premium: false,
         nation: Nation::Uk,
         type_: TankType::AT,
+    },
+    9601_u32 => Vehicle {
+        tank_id: 9601,
+        name: Cow::Borrowed("CS-52 LIS"),
+        tier: 7,
+        is_premium: true,
+        nation: Nation::Europe,
+        type_: TankType::Medium,
     },
     9745_u32 => Vehicle {
         tank_id: 9745,
