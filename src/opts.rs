@@ -2,6 +2,7 @@
 
 use std::num::NonZeroU32;
 
+use clap::builder::EnumValueParser;
 use clap::Parser;
 
 use crate::prelude::*;
@@ -164,6 +165,15 @@ pub struct BufferingOpts {
 pub struct SharedCrawlerOpts {
     #[clap(flatten)]
     pub connections: ConnectionOpts,
+
+    /// Specifies which realm should be crawled.
+    #[clap(
+        long,
+        default_value = "ru",
+        ignore_case = true,
+        value_parser = EnumValueParser::<wargaming::Realm>::new(),
+    )]
+    pub realm: wargaming::Realm,
 
     #[clap(flatten)]
     pub buffering: BufferingOpts,

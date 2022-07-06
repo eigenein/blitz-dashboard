@@ -25,3 +25,18 @@ pub fn non_zero_u32(value: &str) -> Result<u32> {
         _ => Err(anyhow!("expected a positive number")),
     }
 }
+
+impl clap::ValueEnum for wargaming::Realm {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Russia, Self::Europe, Self::NorthAmerica, Self::Asia]
+    }
+
+    fn to_possible_value<'a>(&self) -> Option<clap::PossibleValue<'a>> {
+        match self {
+            Self::Russia => Some(clap::PossibleValue::new(Self::Russia.to_str())),
+            Self::Europe => Some(clap::PossibleValue::new(Self::Europe.to_str())),
+            Self::Asia => Some(clap::PossibleValue::new(Self::Asia.to_str())),
+            Self::NorthAmerica => Some(clap::PossibleValue::new(Self::NorthAmerica.to_str())),
+        }
+    }
+}
