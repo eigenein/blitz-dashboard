@@ -48,8 +48,8 @@ pub struct RatingStatistics {
 }
 
 impl RatingStatistics {
-    #[allow(dead_code)]
-    pub fn client_rating(&self) -> f64 {
+    #[must_use]
+    pub fn rating(&self) -> f64 {
         self.mm_rating * 10.0 + 3000.0
     }
 }

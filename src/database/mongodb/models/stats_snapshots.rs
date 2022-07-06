@@ -1,9 +1,10 @@
 use std::iter::Sum;
+use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::wargaming::{BasicStatistics, RatingStatistics};
+use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
 /// for statistics snapshots.
@@ -41,8 +42,8 @@ pub struct RandomStatsSnapshot {
     pub xp: i32,
 }
 
-impl From<BasicStatistics> for RandomStatsSnapshot {
-    fn from(statistics: BasicStatistics) -> Self {
+impl From<wargaming::BasicStatistics> for RandomStatsSnapshot {
+    fn from(statistics: wargaming::BasicStatistics) -> Self {
         Self {
             n_battles: statistics.n_battles,
             n_wins: statistics.n_wins,
@@ -124,18 +125,52 @@ pub struct RatingStatsSnapshot {
     pub mm_rating: f64,
 
     #[serde(default, rename = "nrb")]
-    pub n_rating_battles: i32,
+    pub n_battles: i32,
 
     #[serde(default, rename = "nrw")]
-    pub n_rating_wins: i32,
+    pub n_wins: i32,
 }
 
-impl From<RatingStatistics> for RatingStatsSnapshot {
-    fn from(stats: RatingStatistics) -> Self {
+impl From<wargaming::RatingStatistics> for RatingStatsSnapshot {
+    fn from(stats: wargaming::RatingStatistics) -> Self {
         Self {
             mm_rating: stats.mm_rating,
-            n_rating_battles: stats.basic.n_battles,
-            n_rating_wins: stats.basic.n_wins,
+            n_battles: stats.basic.n_battles,
+            n_wins: stats.basic.n_wins,
         }
+    }
+}
+
+impl Sub<RatingStatsSnapshot> for wargaming::RatingStatistics {
+    type Output = RatingStatsSnapshot;
+
+    fn sub(self, rhs: RatingStatsSnapshot) -> Self::Output {
+        Self::Output {
+            mm_rating: self.mm_rating - rhs.mm_rating,
+            n_battles: self.basic.n_battles - rhs.n_battles,
+            n_wins: self.basic.n_wins - rhs.n_wins,
+        }
+    }
+}
+
+impl RatingStatsSnapshot {
+    #[inline]
+    pub fn true_win_rate(&self) -> ConfidenceInterval {
+        ConfidenceInterval::wilson_score_interval(
+            self.n_battles,
+            self.n_wins,
+            ConfidenceLevel::default(),
+        )
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn current_win_rate(&self) -> f64 {
+        self.n_wins as f64 / self.n_battles as f64
+    }
+
+    #[must_use]
+    pub fn delta(&self) -> f64 {
+        self.mm_rating * 10.0
     }
 }

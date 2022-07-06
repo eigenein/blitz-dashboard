@@ -69,22 +69,32 @@ pub async fn get(
         actual_info.statistics.all.n_wins,
         ConfidenceLevel::default(),
     );
-    let (stats_delta, tanks_delta) = match retrieve_deltas_quickly(
+    let stats_delta = match retrieve_deltas_quickly(
         mongodb,
         realm,
         account_id,
         actual_info.statistics.all,
+        actual_info.statistics.rating,
         actual_tanks,
         before,
     )
     .await?
     {
-        Either::Left(result) => result,
+        Either::Left(delta) => delta,
         Either::Right(tanks) => {
-            retrieve_deltas_slowly(mongodb, realm, account_id, tanks, before).await?
+            retrieve_deltas_slowly(
+                mongodb,
+                realm,
+                account_id,
+                tanks,
+                before,
+                actual_info.statistics.rating,
+            )
+            .await?
         }
     };
-    let battle_life_time: i64 = tanks_delta
+    let battle_life_time: i64 = stats_delta
+        .tanks
         .iter()
         .map(|snapshot| snapshot.battle_life_time.num_seconds())
         .sum();
@@ -306,31 +316,136 @@ pub async fn get(
                     (tabs)
 
                     div.container {
-                        @if stats_delta.n_battles != 0 {
+                        @if stats_delta.rating.n_battles != 0 {
                             div.columns.is-multiline {
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Бои")) }
+                                            p.card-header-title {
+                                                span.icon-text {
+                                                    span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                    span { "Рейтинговые бои" }
+                                                }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (stats_delta.n_battles) }
+                                                        p.title { (stats_delta.rating.n_battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Победы" }
-                                                        p.title { (stats_delta.n_wins) }
+                                                        p.title { (stats_delta.rating.n_wins) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div.column."is-6-tablet"."is-4-desktop" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title {
+                                                span.icon-text {
+                                                    span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                    span { "Рейтинг" }
+                                                }
+                                            }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Сейчас" }
+                                                        p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Изменение" }
+                                                        p.title { (format!("{:+.0}", stats_delta.rating.delta())) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div.column."is-8-tablet"."is-4-desktop" {
+                                    div.card {
+                                        header.card-header {
+                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
+                                                ul {
+                                                    li.is-active {
+                                                        a {
+                                                            span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                                            span { "Процент побед" }
+                                                        }
+                                                    }
+                                                    li.is-active {
+                                                        a {
+                                                            span.icon.has-text-warning-dark { i.fa-solid.fa-trophy {} }
+                                                            span.has-text-grey-light { "Рейтинговые бои" }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Средний" }
+                                                        p.title { (render_percentage(stats_delta.rating.current_win_rate())) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Истинный" }
+                                                        p.title.is-white-space-nowrap {
+                                                            @let true_win_rate = stats_delta.rating.true_win_rate();
+                                                            (render_percentage(true_win_rate.mean))
+                                                            span.has-text-grey-light { " ±" (render_float(100.0 * true_win_rate.margin, 1)) }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        @if stats_delta.random.n_battles != 0 {
+                            div.columns.is-multiline {
+                                div.column."is-6-tablet"."is-4-desktop" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Случайные бои")) }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Всего" }
+                                                        p.title { (stats_delta.random.n_battles) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Победы" }
+                                                        p.title { (stats_delta.random.n_wins) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Выжил" }
-                                                        p.title { (stats_delta.n_survived_battles) }
+                                                        p.title { (stats_delta.random.n_survived_battles) }
                                                     }
                                                 }
                                             }
@@ -348,13 +463,13 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (stats_delta.damage_dealt) }
+                                                        p.title { (stats_delta.random.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_float(stats_delta.damage_per_battle(), 0)) }
+                                                        p.title { (render_float(stats_delta.random.damage_per_battle(), 0)) }
                                                     }
                                                 }
                                             }
@@ -372,19 +487,19 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Всего" }
-                                                        p.title { (stats_delta.n_frags) }
+                                                        p.title { (stats_delta.random.n_frags) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_float(stats_delta.frags_per_battle(), 1)) }
+                                                        p.title { (render_float(stats_delta.random.frags_per_battle(), 1)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(stats_delta.n_frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.random.n_frags as f64 / battle_life_time as f64 * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -395,17 +510,32 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-4-desktop" {
-                                    @let period_win_rate = stats_delta.true_win_rate();
+                                    @let period_win_rate = stats_delta.random.true_win_rate();
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-percentage", "Процент побед")) }
+                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
+                                                ul {
+                                                    li.is-active {
+                                                        a {
+                                                            span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                                            span { "Процент побед" }
+                                                        }
+                                                    }
+                                                    li.is-active {
+                                                        a.has-text-grey-light {
+                                                            span.icon { i.fa-solid.fa-dice {} }
+                                                            span { "Случайные бои" }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средний" }
-                                                        p.title { (render_percentage(stats_delta.current_win_rate())) }
+                                                        p.title { (render_percentage(stats_delta.random.current_win_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -437,7 +567,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(stats_delta.n_wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(stats_delta.random.n_wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -448,10 +578,20 @@ pub async fn get(
                                 div.column."is-8-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title {
-                                                span.icon-text {
-                                                    span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                    span { "Выживаемость" }
+                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
+                                                ul {
+                                                    li.is-active {
+                                                        a {
+                                                            span.icon { i.fas.fa-heart.has-text-danger {} }
+                                                            span { "Выживаемость" }
+                                                        }
+                                                    }
+                                                    li.is-active {
+                                                        a.has-text-grey-light {
+                                                            span.icon { i.fa-solid.fa-dice {} }
+                                                            span { "Случайные бои" }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -460,7 +600,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Средняя" }
-                                                        p.title { (render_percentage(stats_delta.survival_rate())) }
+                                                        p.title { (render_percentage(stats_delta.random.survival_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -468,7 +608,7 @@ pub async fn get(
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = ConfidenceInterval::wilson_score_interval(
-                                                                stats_delta.n_battles, stats_delta.n_survived_battles, ConfidenceLevel::default());
+                                                                stats_delta.random.n_battles, stats_delta.random.n_survived_battles, ConfidenceLevel::default());
                                                             (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }
@@ -479,7 +619,7 @@ pub async fn get(
                                     }
                                 }
 
-                                @if stats_delta.n_shots != 0 {
+                                @if stats_delta.random.n_shots != 0 {
                                     div.column."is-4-tablet"."is-2-desktop" {
                                         div.card {
                                             header.card-header {
@@ -490,7 +630,7 @@ pub async fn get(
                                                     div.level-item.has-text-centered {
                                                         div {
                                                             p.heading { "В среднем" }
-                                                            p.title { (render_percentage(stats_delta.hit_rate())) }
+                                                            p.title { (render_percentage(stats_delta.random.hit_rate())) }
                                                         }
                                                     }
                                                 }
@@ -508,17 +648,17 @@ pub async fn get(
                             }
                         }
 
-                        @if !tanks_delta.is_empty() {
+                        @if !stats_delta.tanks.is_empty() {
                             div.box {
                                 div.table-container {
                                     table.table.is-hoverable.is-striped.is-fullwidth id="vehicles" {
                                         thead { (vehicles_thead) }
                                         tbody {
-                                            @for tank in &tanks_delta {
+                                            @for tank in &stats_delta.tanks {
                                                 (render_tank_tr(tank, &current_win_rate)?)
                                             }
                                         }
-                                        @if tanks_delta.len() >= 25 {
+                                        @if stats_delta.tanks.len() >= 25 {
                                             tfoot { (vehicles_thead) }
                                         }
                                     }
@@ -666,20 +806,22 @@ fn render_tank_tr(
     Ok(markup)
 }
 
+struct StatsDelta {
+    random: database::RandomStatsSnapshot,
+    rating: database::RatingStatsSnapshot,
+    tanks: Vec<database::TankSnapshot>,
+}
+
 #[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
 async fn retrieve_deltas_quickly(
     from: &mongodb::Database,
     realm: wargaming::Realm,
     account_id: wargaming::AccountId,
-    account_statistics: wargaming::BasicStatistics,
+    random_stats: wargaming::BasicStatistics,
+    rating_stats: wargaming::RatingStatistics,
     mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
-) -> Result<
-    Either<
-        (database::RandomStatsSnapshot, Vec<database::TankSnapshot>),
-        AHashMap<wargaming::TankId, wargaming::Tank>,
-    >,
-> {
+) -> Result<Either<StatsDelta, AHashMap<wargaming::TankId, wargaming::Tank>>> {
     match database::AccountSnapshot::retrieve_latest(from, realm, account_id, before).await? {
         Some(account_snapshot) => {
             let tank_last_battle_times = account_snapshot.tank_last_battle_times.iter().filter(
@@ -706,9 +848,11 @@ async fn retrieve_deltas_quickly(
                 tank_last_battle_times,
             )
             .await?;
-            let stats_delta = account_statistics - account_snapshot.random_stats;
-            let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
-            Ok(Either::Left((stats_delta, tanks_delta)))
+            Ok(Either::Left(StatsDelta {
+                random: random_stats - account_snapshot.random_stats,
+                rating: rating_stats - account_snapshot.rating_stats,
+                tanks: subtract_tanks(realm, actual_tanks, snapshots),
+            }))
         }
         None => Ok(Either::Right(actual_tanks)),
     }
@@ -721,7 +865,8 @@ async fn retrieve_deltas_slowly(
     account_id: wargaming::AccountId,
     actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
-) -> Result<(database::RandomStatsSnapshot, Vec<database::TankSnapshot>)> {
+    rating_stats: wargaming::RatingStatistics,
+) -> Result<StatsDelta> {
     debug!("taking the slow path");
     let actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank> = actual_tanks
         .into_iter()
@@ -738,6 +883,9 @@ async fn retrieve_deltas_slowly(
         .await?
     };
     let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
-    let stats_delta = tanks_delta.iter().map(|tank| tank.stats).sum();
-    Ok((stats_delta, tanks_delta))
+    Ok(StatsDelta {
+        random: tanks_delta.iter().map(|tank| tank.stats).sum(),
+        rating: rating_stats.into(),
+        tanks: tanks_delta,
+    })
 }
