@@ -34,8 +34,6 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
 
     let crawler = Crawler::new(&opts.shared).await?;
-
-    info!("running…");
     let accounts = database::Account::get_sampled_stream(
         crawler.mongodb.clone(),
         opts.shared.realm,
@@ -98,9 +96,11 @@ impl Crawler {
         heartbeat_url: Option<String>,
     ) -> Result {
         info!(
+            realm = ?self.realm,
             n_buffered_batches = buffering.n_batches,
             n_buffered_accounts = buffering.n_buffered_accounts,
             n_updated_accounts = buffering.n_updated_accounts,
+            "running…",
         );
         accounts
             .inspect_ok(|account| trace!(account.id, "sampled account"))
