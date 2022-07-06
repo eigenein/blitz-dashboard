@@ -3,13 +3,13 @@ use std::iter::Sum;
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::wargaming::BasicStatistics;
+use crate::wargaming::{BasicStatistics, RatingStatistics};
 
 /// This is a part of the other models, there's no dedicated collection
 /// for statistics snapshots.
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone, Default)]
-pub struct StatisticsSnapshot {
+pub struct RandomStatsSnapshot {
     #[serde(rename = "nb")]
     pub n_battles: i32,
 
@@ -41,7 +41,7 @@ pub struct StatisticsSnapshot {
     pub xp: i32,
 }
 
-impl From<BasicStatistics> for StatisticsSnapshot {
+impl From<BasicStatistics> for RandomStatsSnapshot {
     fn from(statistics: BasicStatistics) -> Self {
         Self {
             n_battles: statistics.n_battles,
@@ -58,7 +58,7 @@ impl From<BasicStatistics> for StatisticsSnapshot {
     }
 }
 
-impl Sum for StatisticsSnapshot {
+impl Sum for RandomStatsSnapshot {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let mut sum = Self::default();
         for component in iter {
@@ -77,7 +77,7 @@ impl Sum for StatisticsSnapshot {
     }
 }
 
-impl StatisticsSnapshot {
+impl RandomStatsSnapshot {
     #[must_use]
     #[inline]
     pub fn current_win_rate(&self) -> f64 {
@@ -115,5 +115,27 @@ impl StatisticsSnapshot {
     #[inline]
     pub fn hit_rate(&self) -> f64 {
         self.n_hits as f64 / self.n_shots as f64
+    }
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone)]
+pub struct RatingStatsSnapshot {
+    #[serde(rename = "mm")]
+    pub mm_rating: f64,
+
+    #[serde(default, rename = "nrb")]
+    pub n_rating_battles: i32,
+
+    #[serde(default, rename = "nrw")]
+    pub n_rating_wins: i32,
+}
+
+impl From<RatingStatistics> for RatingStatsSnapshot {
+    fn from(stats: RatingStatistics) -> Self {
+        Self {
+            mm_rating: stats.mm_rating,
+            n_rating_battles: stats.basic.n_battles,
+            n_rating_wins: stats.basic.n_wins,
+        }
     }
 }

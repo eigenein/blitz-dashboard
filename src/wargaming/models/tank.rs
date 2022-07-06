@@ -33,7 +33,7 @@ pub fn subtract_tanks(
                 .map(|actual_tank| (snapshot, actual_tank))
         })
         .filter_map(|(snapshot, actual_tank)| {
-            (actual_tank.statistics.all.n_battles != snapshot.statistics.n_battles).then(|| {
+            (actual_tank.statistics.all.n_battles != snapshot.stats.n_battles).then(|| {
                 database::TankSnapshot {
                     realm,
                     last_battle_time: actual_tank.statistics.last_battle_time,
@@ -41,7 +41,7 @@ pub fn subtract_tanks(
                     tank_id: snapshot.tank_id,
                     battle_life_time: actual_tank.statistics.battle_life_time
                         - snapshot.battle_life_time,
-                    statistics: actual_tank.statistics.all - snapshot.statistics,
+                    stats: actual_tank.statistics.all - snapshot.stats,
                 }
             })
         })
@@ -55,10 +55,10 @@ pub fn subtract_tanks(
     subtracted
 }
 
-impl Sub<database::StatisticsSnapshot> for BasicStatistics {
-    type Output = database::StatisticsSnapshot;
+impl Sub<database::RandomStatsSnapshot> for BasicStatistics {
+    type Output = database::RandomStatsSnapshot;
 
-    fn sub(self, rhs: database::StatisticsSnapshot) -> Self::Output {
+    fn sub(self, rhs: database::RandomStatsSnapshot) -> Self::Output {
         Self::Output {
             n_battles: self.n_battles - rhs.n_battles,
             n_wins: self.n_wins - rhs.n_wins,

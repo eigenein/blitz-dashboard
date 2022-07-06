@@ -545,7 +545,7 @@ fn render_tank_tr(
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.statistics.true_win_rate();
+        @let true_win_rate = snapshot.stats.true_win_rate();
         @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -565,18 +565,18 @@ fn render_tank_tr(
                 (format_duration(snapshot.battle_life_time.to_std()?))
             }
 
-            td.has-text-right data-sort="battles" data-value=(snapshot.statistics.n_battles) {
-                (snapshot.statistics.n_battles)
+            td.has-text-right data-sort="battles" data-value=(snapshot.stats.n_battles) {
+                (snapshot.stats.n_battles)
             }
 
-            td data-sort="wins" data-value=(snapshot.statistics.n_wins) {
+            td data-sort="wins" data-value=(snapshot.stats.n_wins) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-success { i.fas.fa-check {} }
-                    span { (snapshot.statistics.n_wins) }
+                    span { (snapshot.stats.n_wins) }
                 }
             }
 
-            @let win_rate = snapshot.statistics.current_win_rate();
+            @let win_rate = snapshot.stats.current_win_rate();
             td.has-text-right data-sort="win-rate" data-value=(win_rate) {
                 strong { (render_percentage(win_rate)) }
             }
@@ -596,7 +596,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let frags_per_battle = snapshot.statistics.frags_per_battle();
+            @let frags_per_battle = snapshot.stats.frags_per_battle();
             td data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
@@ -636,8 +636,8 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right data-sort="damage-dealt" data-value=(snapshot.statistics.damage_dealt) {
-                (snapshot.statistics.damage_dealt)
+            td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
+                (snapshot.stats.damage_dealt)
             }
 
             @let damage_per_minute = snapshot.damage_per_minute();
@@ -645,16 +645,16 @@ fn render_tank_tr(
                 (format!("{:.0}", damage_per_minute))
             }
 
-            @let damage_per_battle = snapshot.statistics.damage_dealt as f64 / snapshot.statistics.n_battles as f64;
+            @let damage_per_battle = snapshot.stats.damage_dealt as f64 / snapshot.stats.n_battles as f64;
             td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }
 
-            td.has-text-right data-sort="survived-battles" data-value=(snapshot.statistics.n_survived_battles) {
-                (snapshot.statistics.n_survived_battles)
+            td.has-text-right data-sort="survived-battles" data-value=(snapshot.stats.n_survived_battles) {
+                (snapshot.stats.n_survived_battles)
             }
 
-            @let survival_rate = snapshot.statistics.n_survived_battles as f64 / snapshot.statistics.n_battles as f64;
+            @let survival_rate = snapshot.stats.n_survived_battles as f64 / snapshot.stats.n_battles as f64;
             td data-sort="survival-rate" data-value=(survival_rate) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-heart.has-text-danger {} }
@@ -676,7 +676,7 @@ async fn retrieve_deltas_quickly(
     before: DateTime,
 ) -> Result<
     Either<
-        (database::StatisticsSnapshot, Vec<database::TankSnapshot>),
+        (database::RandomStatsSnapshot, Vec<database::TankSnapshot>),
         AHashMap<wargaming::TankId, wargaming::Tank>,
     >,
 > {
@@ -706,7 +706,7 @@ async fn retrieve_deltas_quickly(
                 tank_last_battle_times,
             )
             .await?;
-            let stats_delta = account_statistics - account_snapshot.statistics;
+            let stats_delta = account_statistics - account_snapshot.random_stats;
             let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
             Ok(Either::Left((stats_delta, tanks_delta)))
         }
@@ -721,7 +721,7 @@ async fn retrieve_deltas_slowly(
     account_id: wargaming::AccountId,
     actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
-) -> Result<(database::StatisticsSnapshot, Vec<database::TankSnapshot>)> {
+) -> Result<(database::RandomStatsSnapshot, Vec<database::TankSnapshot>)> {
     debug!("taking the slow path");
     let actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank> = actual_tanks
         .into_iter()
@@ -738,6 +738,6 @@ async fn retrieve_deltas_slowly(
         .await?
     };
     let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
-    let stats_delta = tanks_delta.iter().map(|tank| tank.statistics).sum();
+    let stats_delta = tanks_delta.iter().map(|tank| tank.stats).sum();
     Ok((stats_delta, tanks_delta))
 }

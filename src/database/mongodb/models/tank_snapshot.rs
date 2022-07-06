@@ -6,7 +6,7 @@ use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::database::root::Root;
-use crate::database::statistics_snapshot::StatisticsSnapshot;
+use crate::database::stats_snapshots::RandomStatsSnapshot;
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
@@ -32,7 +32,7 @@ pub struct TankSnapshot {
     pub battle_life_time: Duration,
 
     #[serde(flatten)]
-    pub statistics: StatisticsSnapshot,
+    pub stats: RandomStatsSnapshot,
 }
 
 impl TankSnapshot {
@@ -43,7 +43,7 @@ impl TankSnapshot {
             account_id: tank.account_id,
             tank_id: tank.statistics.tank_id as u32,
             battle_life_time: tank.statistics.battle_life_time,
-            statistics: tank.statistics.all.into(),
+            stats: tank.statistics.all.into(),
         }
     }
 }
@@ -178,19 +178,19 @@ impl TankSnapshot {
     #[must_use]
     #[inline]
     pub fn wins_per_hour(&self) -> f64 {
-        self.statistics.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+        self.stats.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
     }
 
     #[must_use]
     #[inline]
     pub fn battles_per_hour(&self) -> f64 {
-        self.statistics.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
+        self.stats.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
     }
 
     #[must_use]
     #[inline]
     pub fn damage_per_minute(&self) -> f64 {
-        self.statistics.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
+        self.stats.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
     }
 }
 

@@ -4,7 +4,7 @@ use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-use crate::database::StatisticsSnapshot;
+use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
@@ -23,16 +23,10 @@ pub struct AccountSnapshot {
     pub account_id: wargaming::AccountId,
 
     #[serde(flatten)]
-    pub statistics: StatisticsSnapshot,
+    pub random_stats: RandomStatsSnapshot,
 
-    #[serde(rename = "mm")]
-    pub mm_rating: f64,
-
-    #[serde(default, rename = "nrb")]
-    pub n_rating_battles: i32,
-
-    #[serde(default, rename = "nrw")]
-    pub n_rating_wins: i32,
+    #[serde(flatten)]
+    pub rating_stats: RatingStatsSnapshot,
 
     #[serde(rename = "t")]
     pub tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
@@ -48,10 +42,8 @@ impl AccountSnapshot {
             realm,
             last_battle_time: account_info.last_battle_time,
             account_id: account_info.id,
-            statistics: account_info.statistics.all.into(),
-            mm_rating: account_info.statistics.rating.mm_rating,
-            n_rating_battles: account_info.statistics.rating.basic.n_battles,
-            n_rating_wins: account_info.statistics.rating.basic.n_wins,
+            random_stats: account_info.statistics.all.into(),
+            rating_stats: account_info.statistics.rating.into(),
             tank_last_battle_times,
         }
     }
