@@ -95,7 +95,12 @@ jobs:
         run: |
           ssh yastatist "sudo systemctl restart web; systemctl status --lines=0 web"
 
-      - name: Restart crawler
+      - name: Restart crawler (RU)
         if: ${{ true }}
         run: |
-          ssh yastatist "sudo systemctl restart crawler; systemctl status --lines=0 crawler"
+          ssh yastatist "sudo systemctl restart crawler-ru; systemctl status --lines=0 crawler-ru"
+
+      - name: Restart crawler (EU)
+        if: ${{ true }}
+        run: |
+          ssh yastatist "sudo systemctl restart crawler-eu; systemctl status --lines=0 crawler-eu"
