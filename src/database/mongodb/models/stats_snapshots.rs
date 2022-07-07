@@ -175,11 +175,6 @@ impl RatingStatsSnapshot {
     }
 
     #[must_use]
-    pub const fn n_losses(&self) -> i32 {
-        self.n_battles - self.n_wins
-    }
-
-    #[must_use]
     pub fn delta_per_battle(&self) -> f64 {
         self.delta() / self.n_battles as f64
     }
