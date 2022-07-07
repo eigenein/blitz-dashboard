@@ -318,14 +318,73 @@ pub async fn get(
                     div.container {
                         @if stats_delta.rating.n_battles != 0 {
                             div.columns.is-multiline {
-                                div.column."is-6-tablet"."is-4-desktop" {
+                                div.column."is-12-tablet"."is-12-desktop"."is-5-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
-                                                span.icon-text {
-                                                    span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-warning { i.fa-solid.fa-star-half-stroke {} }
+                                                    span { "Рейтинг" }
+                                                }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                            }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Сейчас" }
+                                                        p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "Изменение" }
+                                                        @let delta = stats_delta.rating.delta();
+                                                        p.title.(sign_class(delta)) { (format!("{:+.0}", delta)) }
+                                                    }
+                                                }
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "За бой" }
+                                                        @let delta_per_battle = stats_delta.rating.delta_per_battle();
+                                                        p.title.(sign_class(delta_per_battle)) { (format!("{:+.0}", delta_per_battle)) }
+                                                    }
+                                                }
+                                                @if let Some(delta_per_win) = stats_delta.rating.delta_per_win() {
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "Победа" }
+                                                            p.title.(sign_class(delta_per_win)) { (format!("{:+.0}", delta_per_win)) }
+                                                        }
+                                                    }
+                                                }
+                                                @if let Some(delta_per_loss) = stats_delta.rating.delta_per_loss() {
+                                                    div.level-item.has-text-centered {
+                                                        div {
+                                                            p.heading { "Поражение" }
+                                                            p.title.(sign_class(delta_per_loss)) { (format!("{:+.0}", delta_per_loss)) }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-link { i.fa-solid.fa-sort-numeric-up-alt {} }
                                                     span { "Рейтинговые бои" }
                                                 }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -347,53 +406,17 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-6-tablet"."is-4-desktop" {
+                                div.column."is-8-tablet"."is-8-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
-                                                span.icon-text {
-                                                    span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
-                                                    span { "Рейтинг" }
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                                    span { "Процент побед" }
                                                 }
                                             }
-                                        }
-                                        div.card-content {
-                                            div.level.is-mobile {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "Сейчас" }
-                                                        p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
-                                                    }
-                                                }
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "Изменение" }
-                                                        p.title { (format!("{:+.0}", stats_delta.rating.delta())) }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    div.card {
-                                        header.card-header {
-                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
-                                                ul {
-                                                    li.is-active {
-                                                        a {
-                                                            span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                            span { "Процент побед" }
-                                                        }
-                                                    }
-                                                    li.is-active {
-                                                        a {
-                                                            span.icon.has-text-warning-dark { i.fa-solid.fa-trophy {} }
-                                                            span.is-hidden-widescreen-only.has-text-grey-light { "Рейтинговые бои" }
-                                                        }
-                                                    }
-                                                }
+                                            p.card-header-icon {
+                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -426,7 +449,15 @@ pub async fn get(
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-sort-numeric-up-alt", "Случайные бои")) }
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-link { i.fa-solid.fa-sort-numeric-up-alt {} }
+                                                    span { "Случайные бои" }
+                                                }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
@@ -456,7 +487,15 @@ pub async fn get(
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-house-damage", "Нанесенный урон")) }
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon { i.fa-solid.fa-house-damage {} }
+                                                    span { "Нанесенный урон" }
+                                                }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
@@ -480,7 +519,15 @@ pub async fn get(
                                 div.column."is-12-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
-                                            p.card-header-title { (icon_text("fas fa-skull-crossbones", "Уничтоженная техника")) }
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon { i.fa-solid.fa-skull-crossbones {} }
+                                                    span { "Уничтоженная техника" }
+                                                }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                            }
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
@@ -513,21 +560,14 @@ pub async fn get(
                                     @let period_win_rate = stats_delta.random.true_win_rate();
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
                                         header.card-header {
-                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
-                                                ul {
-                                                    li.is-active {
-                                                        a {
-                                                            span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                            span { "Процент побед" }
-                                                        }
-                                                    }
-                                                    li.is-active {
-                                                        a.has-text-grey-light {
-                                                            span.icon { i.fa-solid.fa-dice {} }
-                                                            span.is-hidden-widescreen-only { "Случайные бои" }
-                                                        }
-                                                    }
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                                    span { "Процент побед" }
                                                 }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -555,21 +595,14 @@ pub async fn get(
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
-                                            div.card-header-title.breadcrumb aria-label="breadcrumbs" {
-                                                ul {
-                                                    li.is-active {
-                                                        a {
-                                                            span.icon { i.fas.fa-heart.has-text-danger {} }
-                                                            span { "Выживаемость" }
-                                                        }
-                                                    }
-                                                    li.is-active {
-                                                        a.has-text-grey-light {
-                                                            span.icon { i.fa-solid.fa-dice {} }
-                                                            span.is-hidden-widescreen-only { "Случайные бои" }
-                                                        }
-                                                    }
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-danger { i.fa-solid.fa-heart {} }
+                                                    span { "Выживаемость" }
                                                 }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -600,10 +633,13 @@ pub async fn get(
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
-                                                span.icon-text {
-                                                    span.icon.has-text-success { i.fas.fa-check {} }
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-success { i.fa-solid.fa-check {} }
                                                     span { "Победы" }
                                                 }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -623,7 +659,15 @@ pub async fn get(
                                     div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
                                         div.card {
                                             header.card-header {
-                                                p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
+                                                p.card-header-title {
+                                                    span.icon-text.is-flex-wrap-nowrap {
+                                                        span.icon.has-text-danger { i.fa-solid.fa-bullseye {} }
+                                                        span { "Попадания" }
+                                                    }
+                                                }
+                                                p.card-header-icon {
+                                                    span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                }
                                             }
                                             div.card-content {
                                                 div.level.is-mobile {

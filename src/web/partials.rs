@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup};
+use maud::{html, Markup, PreEscaped};
 use phf::phf_set;
 
 use crate::wargaming::models::tank_id::to_client_id;
@@ -55,16 +55,6 @@ pub fn account_search(
                     span.is-hidden-touch { "Поиск" }
                 };
             }
-        }
-    }
-}
-
-#[must_use]
-pub fn icon_text(class: &str, text: &str) -> Markup {
-    html! {
-        span.icon-text.is-flex-wrap-nowrap {
-            span.icon { i class=(class) {} }
-            span { (text) }
         }
     }
 }
@@ -254,6 +244,17 @@ pub fn render_float(value: f64, precision: usize) -> Markup {
         span title=(value) {
             (format!("{:.1$}", value, precision))
         }
+    }
+}
+
+#[must_use]
+pub fn sign_class(value: f64) -> PreEscaped<&'static str> {
+    if value > 0.0 {
+        PreEscaped("has-text-success")
+    } else if value < 0.0 {
+        PreEscaped("has-text-danger")
+    } else {
+        PreEscaped("")
     }
 }
 
