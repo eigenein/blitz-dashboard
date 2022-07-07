@@ -643,7 +643,6 @@ pub async fn get(
                             article.message.is-warning {
                                 div.message-body {
                                     p { "Пользователь не играл в случайных боях за этот период времени." }
-                                    p { "Последний бой закончился " strong { (datetime(actual_info.last_battle_time, Tense::Present)) } " назад." }
                                 }
                             }
                         }
