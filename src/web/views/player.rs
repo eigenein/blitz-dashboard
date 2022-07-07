@@ -357,26 +357,6 @@ pub async fn get(
                                                         }
                                                     }
                                                 }
-                                                @if let Some(delta_per_win) = stats_delta.rating.delta_per_win() {
-                                                    div.level-item.has-text-centered {
-                                                        div {
-                                                            p.heading { "Победа" }
-                                                            p.title.(sign_class(delta_per_win)) title=(delta_per_win) {
-                                                                (format!("{:+.0}", delta_per_win))
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                @if let Some(delta_per_loss) = stats_delta.rating.delta_per_loss() {
-                                                    div.level-item.has-text-centered {
-                                                        div {
-                                                            p.heading { "Поражение" }
-                                                            p.title.(sign_class(delta_per_loss)) title=(delta_per_loss) {
-                                                                (format!("{:+.0}", delta_per_loss))
-                                                            }
-                                                        }
-                                                    }
-                                                }
                                             }
                                         }
                                     }

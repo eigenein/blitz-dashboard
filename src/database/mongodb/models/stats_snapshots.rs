@@ -183,14 +183,4 @@ impl RatingStatsSnapshot {
     pub fn delta_per_battle(&self) -> f64 {
         self.delta() / self.n_battles as f64
     }
-
-    #[must_use]
-    pub fn delta_per_win(&self) -> Option<f64> {
-        (self.n_wins != 0).then(|| self.delta() / self.n_wins as f64)
-    }
-
-    #[must_use]
-    pub fn delta_per_loss(&self) -> Option<f64> {
-        (self.n_losses() != 0).then(|| self.delta() / self.n_losses() as f64)
-    }
 }
