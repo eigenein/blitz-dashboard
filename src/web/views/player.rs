@@ -343,21 +343,27 @@ pub async fn get(
                                                     div {
                                                         p.heading { "Изменение" }
                                                         @let delta = stats_delta.rating.delta();
-                                                        p.title.(sign_class(delta)) { (format!("{:+.0}", delta)) }
+                                                        p.title.(sign_class(delta)) title=(delta) {
+                                                            (format!("{:+.0}", delta))
+                                                        }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
                                                         @let delta_per_battle = stats_delta.rating.delta_per_battle();
-                                                        p.title.(sign_class(delta_per_battle)) { (format!("{:+.0}", delta_per_battle)) }
+                                                        p.title.(sign_class(delta_per_battle)) title=(delta_per_battle) {
+                                                            (format!("{:+.0}", delta_per_battle))
+                                                        }
                                                     }
                                                 }
                                                 @if let Some(delta_per_win) = stats_delta.rating.delta_per_win() {
                                                     div.level-item.has-text-centered {
                                                         div {
                                                             p.heading { "Победа" }
-                                                            p.title.(sign_class(delta_per_win)) { (format!("{:+.0}", delta_per_win)) }
+                                                            p.title.(sign_class(delta_per_win)) title=(delta_per_win) {
+                                                                (format!("{:+.0}", delta_per_win))
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -365,7 +371,9 @@ pub async fn get(
                                                     div.level-item.has-text-centered {
                                                         div {
                                                             p.heading { "Поражение" }
-                                                            p.title.(sign_class(delta_per_loss)) { (format!("{:+.0}", delta_per_loss)) }
+                                                            p.title.(sign_class(delta_per_loss)) title=(delta_per_loss) {
+                                                                (format!("{:+.0}", delta_per_loss))
+                                                            }
                                                         }
                                                     }
                                                 }
