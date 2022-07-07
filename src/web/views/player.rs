@@ -376,7 +376,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-8-tablet"."is-4-desktop" {
+                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
                                             div.card-header-title.breadcrumb aria-label="breadcrumbs" {
@@ -390,7 +390,7 @@ pub async fn get(
                                                     li.is-active {
                                                         a {
                                                             span.icon.has-text-warning-dark { i.fa-solid.fa-trophy {} }
-                                                            span.has-text-grey-light { "Рейтинговые бои" }
+                                                            span.is-hidden-widescreen-only.has-text-grey-light { "Рейтинговые бои" }
                                                         }
                                                     }
                                                 }
@@ -509,7 +509,7 @@ pub async fn get(
                             }
 
                             div.columns.is-multiline {
-                                div.column."is-8-tablet"."is-4-desktop" {
+                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     @let period_win_rate = stats_delta.random.true_win_rate();
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&current_win_rate))) {
                                         header.card-header {
@@ -524,7 +524,7 @@ pub async fn get(
                                                     li.is-active {
                                                         a.has-text-grey-light {
                                                             span.icon { i.fa-solid.fa-dice {} }
-                                                            span { "Случайные бои" }
+                                                            span.is-hidden-widescreen-only { "Случайные бои" }
                                                         }
                                                     }
                                                 }
@@ -552,30 +552,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-4-tablet"."is-2-desktop" {
-                                    div.card {
-                                        header.card-header {
-                                            p.card-header-title {
-                                                span.icon-text {
-                                                    span.icon.has-text-success { i.fas.fa-check {} }
-                                                    span { "Победы" }
-                                                }
-                                            }
-                                        }
-                                        div.card-content {
-                                            div.level.is-mobile {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "В час" }
-                                                        p.title { (render_float(stats_delta.random.n_wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                div.column."is-8-tablet"."is-4-desktop" {
+                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
                                             div.card-header-title.breadcrumb aria-label="breadcrumbs" {
@@ -589,7 +566,7 @@ pub async fn get(
                                                     li.is-active {
                                                         a.has-text-grey-light {
                                                             span.icon { i.fa-solid.fa-dice {} }
-                                                            span { "Случайные бои" }
+                                                            span.is-hidden-widescreen-only { "Случайные бои" }
                                                         }
                                                     }
                                                 }
@@ -619,8 +596,31 @@ pub async fn get(
                                     }
                                 }
 
+                                div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title {
+                                                span.icon-text {
+                                                    span.icon.has-text-success { i.fas.fa-check {} }
+                                                    span { "Победы" }
+                                                }
+                                            }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "В час" }
+                                                        p.title { (render_float(stats_delta.random.n_wins as f64 / battle_life_time as f64 * 3600.0, 1)) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 @if stats_delta.random.n_shots != 0 {
-                                    div.column."is-4-tablet"."is-2-desktop" {
+                                    div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
                                         div.card {
                                             header.card-header {
                                                 p.card-header-title { (icon_text("fas fa-bullseye", "Попадания")) }
