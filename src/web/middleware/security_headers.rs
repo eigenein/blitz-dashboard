@@ -1,22 +1,22 @@
 use poem::http::HeaderValue;
 use poem::{Endpoint, IntoResponse, Middleware, Request, Response, Result};
 
-pub struct SecurityHeaders;
+pub struct SecurityHeadersMiddleware;
 
-impl<E: Endpoint> Middleware<E> for SecurityHeaders {
-    type Output = SecurityHeadersImpl<E>;
+impl<E: Endpoint> Middleware<E> for SecurityHeadersMiddleware {
+    type Output = SecurityHeadersMiddlewareImpl<E>;
 
     fn transform(&self, ep: E) -> Self::Output {
-        SecurityHeadersImpl { ep }
+        SecurityHeadersMiddlewareImpl { ep }
     }
 }
 
-pub struct SecurityHeadersImpl<E> {
+pub struct SecurityHeadersMiddlewareImpl<E> {
     ep: E,
 }
 
 #[poem::async_trait]
-impl<E: Endpoint> Endpoint for SecurityHeadersImpl<E> {
+impl<E: Endpoint> Endpoint for SecurityHeadersMiddlewareImpl<E> {
     type Output = Response;
 
     async fn call(&self, request: Request) -> Result<Self::Output> {

@@ -11,7 +11,7 @@ use crate::opts::WebOpts;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
-use crate::web::middleware::{ErrorMiddleware, SecurityHeaders};
+use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 use crate::web::tracking_code::TrackingCode;
 
 mod middleware;
@@ -68,7 +68,8 @@ pub async fn run(opts: WebOpts) -> Result {
         .with(AddData::new(api))
         .with(CatchPanic::new())
         .with(ErrorMiddleware)
-        .with(SecurityHeaders);
+        .with(SecurityHeadersMiddleware)
+        .with(SentryMiddleware);
     Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
         .run(app)
         .await
