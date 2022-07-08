@@ -432,6 +432,12 @@ pub async fn get(
                                     }
                                 }
                             }
+                        } @else {
+                            article.message.is-warning {
+                                div.message-body {
+                                    p { "Пользователь не играл в " strong { "рейтинговых" } " боях за этот период времени." }
+                                }
+                            }
                         }
 
                         @if stats_delta.random.n_battles != 0 {
@@ -676,7 +682,7 @@ pub async fn get(
                         } @else {
                             article.message.is-warning {
                                 div.message-body {
-                                    p { "Пользователь не играл в случайных боях за этот период времени." }
+                                    p { "Пользователь не играл в " strong { "случайных" } " боях за этот период времени." }
                                 }
                             }
                         }
