@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
 use poem::http::StatusCode;
@@ -7,6 +5,7 @@ use poem::web::{Data, Html, Query, Redirect};
 use poem::{handler, IntoResponse, Response};
 use serde::Deserialize;
 use tracing::instrument;
+use validator::Validate;
 
 use crate::helpers::sentry::clear_user;
 use crate::prelude::*;
@@ -17,13 +16,14 @@ use crate::wargaming::WargamingApi;
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::TrackingCode;
 
-const SEARCH_QUERY_LENGTH: Range<usize> = MIN_QUERY_LENGTH..(MAX_QUERY_LENGTH + 1);
 pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct Params {
+    #[validate(length(min = "MIN_QUERY_LENGTH", max = "MAX_QUERY_LENGTH"))]
     query: String,
+
     realm: wargaming::Realm,
 }
 
@@ -37,7 +37,7 @@ pub async fn get(
 ) -> Result<Response> {
     clear_user();
 
-    if !SEARCH_QUERY_LENGTH.contains(&params.query.len()) {
+    if params.validate().is_err() {
         return Ok(StatusCode::BAD_REQUEST.into_response());
     }
 
