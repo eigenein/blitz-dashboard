@@ -13,8 +13,10 @@ use humantime::{format_duration, parse_duration};
 use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use mongodb::bson;
-use rocket::http::Status;
-use rocket::{uri, State};
+use poem::http::StatusCode;
+use poem::web::{Data, Html, Path, Query};
+use poem::{handler, IntoResponse, Response};
+use serde::Deserialize;
 
 use crate::database::{CurrentWinRate, TrueWinRate};
 use crate::helpers::sentry::set_user;
@@ -25,30 +27,40 @@ use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::models::subtract_tanks;
 use crate::web::partials::*;
-use crate::web::response::CustomResponse;
 use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 use crate::{database, format_elapsed, wargaming};
 
 pub mod partials;
 
-#[allow(clippy::too_many_arguments)]
-#[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?period))]
-#[rocket::get("/<realm>/<account_id>?<period>")]
-pub async fn get(
+#[derive(Deserialize)]
+pub struct Segments {
     realm: wargaming::Realm,
     account_id: wargaming::AccountId,
+}
+
+#[derive(Deserialize)]
+pub struct Params {
+    #[serde(default)]
     period: Option<String>,
-    mongodb: &State<mongodb::Database>,
-    info_cache: &State<AccountInfoCache>,
-    tracking_code: &State<TrackingCode>,
-    tanks_cache: &State<AccountTanksCache>,
-) -> crate::web::result::Result<CustomResponse> {
+}
+
+#[allow(clippy::too_many_arguments)]
+#[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?params.period))]
+#[handler]
+pub async fn get(
+    Path(Segments { realm, account_id }): Path<Segments>,
+    params: Query<Params>,
+    mongodb: Data<&mongodb::Database>,
+    info_cache: Data<&AccountInfoCache>,
+    tracking_code: Data<&TrackingCode>,
+    tanks_cache: Data<&AccountTanksCache>,
+) -> Result<Response> {
     let start_instant = Instant::now();
-    let period = match period {
-        Some(period) => match parse_duration(&period) {
+    let period = match &params.period {
+        Some(period) => match parse_duration(period) {
             Ok(period) => period,
-            Err(_) => return Ok(CustomResponse::Status(Status::BadRequest)),
+            Err(_) => return Ok(StatusCode::BAD_REQUEST.into_response()),
         },
         None => from_days(1),
     };
@@ -57,11 +69,11 @@ pub async fn get(
         try_join(info_cache.get(realm, account_id), tanks_cache.get(realm, account_id)).await?;
     let actual_info = match actual_info {
         Some(info) => info,
-        None => return Ok(CustomResponse::Status(Status::NotFound)),
+        None => return Ok(StatusCode::NOT_FOUND.into_response()),
     };
     set_user(&actual_info.nickname);
     database::Account::new(realm, account_id)
-        .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
+        .upsert(&mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
     let before = Utc::now() - Duration::from_std(period)?;
@@ -71,7 +83,7 @@ pub async fn get(
         ConfidenceLevel::default(),
     );
     let stats_delta = match retrieve_deltas_quickly(
-        mongodb,
+        &mongodb,
         realm,
         account_id,
         actual_info.statistics.all,
@@ -84,7 +96,7 @@ pub async fn get(
         Either::Left(delta) => delta,
         Either::Right(tanks) => {
             retrieve_deltas_slowly(
-                mongodb,
+                &mongodb,
                 realm,
                 account_id,
                 tanks,
@@ -305,7 +317,7 @@ pub async fn get(
                 }
 
                 (headers())
-                link rel="canonical" href=(uri!(get(realm = realm, account_id = account_id, period = _)));
+                link rel="canonical" href=(format!("/{}/{}", realm, account_id));
                 title { (actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
             }
             body {
@@ -705,10 +717,11 @@ pub async fn get(
         }
     };
 
-    let result =
-        Ok(CustomResponse::CachedMarkup("max-age=60, stale-while-revalidate=3600", markup));
+    let response = Html(markup.into_string())
+        .with_header("Cache-Control", "max-age=60, stale-while-revalidate=3600")
+        .into_response();
     info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
-    result
+    Ok(response)
 }
 
 fn render_tank_tr(

@@ -51,10 +51,6 @@ pub struct WebOpts {
     #[structopt(long, default_value = "8081", env = "BLITZ_DASHBOARD_WEB_BIND_PORT")]
     pub port: u16,
 
-    /// Yandex.Metrika counter number (deprecated).
-    #[structopt(long)]
-    pub yandex_metrika: Option<String>,
-
     /// Google Analytics measurement ID.
     #[structopt(long, env = "BLITZ_DASHBOARD_WEB_GTAG")]
     pub gtag: Option<String>,

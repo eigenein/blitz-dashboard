@@ -7,6 +7,7 @@ use crate::prelude::*;
 use crate::wargaming::models::AccountInfo;
 use crate::wargaming::{AccountId, Realm, WargamingApi};
 
+#[derive(Clone)]
 pub struct AccountInfoCache {
     api: WargamingApi,
     redis: RedisPool,

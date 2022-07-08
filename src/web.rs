@@ -1,9 +1,9 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use maud::PreEscaped;
-use rocket::http::{Status, StatusClass};
-use rocket::{routes, Request};
+use poem::listener::TcpListener;
+use poem::middleware::{AddData, CatchPanic, Tracing};
+use poem::{get, EndpointExt, Route, Server};
 use views::r#static;
 
 use crate::helpers::redis;
@@ -11,13 +11,12 @@ use crate::opts::WebOpts;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
+use crate::web::middleware::{ErrorMiddleware, SecurityHeaders};
+use crate::web::tracking_code::TrackingCode;
 
-mod error;
-mod fairings;
+mod middleware;
 mod partials;
-mod realm;
-mod response;
-mod result;
+mod tracking_code;
 mod views;
 
 /// Run the web app.
@@ -36,96 +35,42 @@ pub async fn run(opts: WebOpts) -> Result {
         opts.connections.internal.redis_pool_size,
     )
     .await?;
-    let _ = rocket::custom(to_config(&opts)?)
-        .manage(AccountInfoCache::new(api.clone(), redis.clone()))
-        .manage(AccountTanksCache::new(api.clone(), redis.clone()))
-        .manage(api)
-        .manage(mongodb)
-        .manage(TrackingCode::new(&opts))
-        .manage(redis)
-        .mount("/", routes![r#static::get_site_manifest])
-        .mount("/", routes![r#static::get_favicon])
-        .mount("/", routes![r#static::get_favicon_16x16])
-        .mount("/", routes![r#static::get_favicon_32x32])
-        .mount("/", routes![r#static::get_android_chrome_192x192])
-        .mount("/", routes![r#static::get_android_chrome_512x512])
-        .mount("/", routes![r#static::get_apple_touch_icon])
-        .mount("/", routes![r#static::get_table_js])
-        .mount("/", routes![r#static::get_robots_txt])
-        .mount("/", routes![r#static::get_theme_css])
-        .mount("/", routes![r#static::get_cn_svg])
-        .mount("/", routes![r#static::get_de_svg])
-        .mount("/", routes![r#static::get_eu_svg])
-        .mount("/", routes![r#static::get_fr_svg])
-        .mount("/", routes![r#static::get_gb_svg])
-        .mount("/", routes![r#static::get_jp_svg])
-        .mount("/", routes![r#static::get_su_svg])
-        .mount("/", routes![r#static::get_us_svg])
-        .mount("/", routes![r#static::get_xx_svg])
-        .mount("/", routes![views::index::get])
-        .mount("/", routes![views::search::get])
-        .mount("/", routes![views::player::get])
-        .mount("/", routes![views::error::get_error])
-        .register("/", rocket::catchers![default_catcher])
-        .attach(fairings::SecurityHeaders)
-        .launch()
-        .await?;
-    Ok(())
-}
-
-#[rocket::catch(default)]
-fn default_catcher(status: Status, request: &Request<'_>) -> rocket::response::status::Custom<()> {
-    match status.class() {
-        StatusClass::ClientError => {
-            warn!(
-                method = %request.method(),
-                uri = %request.uri(),
-                status = status.code,
-                "client error {}",
-                status.code,
-            );
-        }
-        StatusClass::ServerError => {
-            error!(
-                method = %request.method(),
-                uri = %request.uri(),
-                status = status.code,
-                "server error {}",
-                status.code,
-            );
-        }
-        _ => {}
-    }
-    rocket::response::status::Custom(status, ())
-}
-
-fn to_config(opts: &WebOpts) -> Result<rocket::Config> {
-    Ok(rocket::Config {
-        address: IpAddr::from_str(&opts.host)?,
-        port: opts.port,
-        log_level: rocket::log::LogLevel::Off,
-        ..Default::default()
-    })
-}
-
-#[must_use]
-pub struct TrackingCode(PreEscaped<String>);
-
-impl TrackingCode {
-    fn new(opts: &WebOpts) -> Self {
-        let mut extra_html_headers = Vec::new();
-        if let Some(counter) = &opts.yandex_metrika {
-            extra_html_headers.push(format!(
-                r#"<!-- Yandex.Metrika counter --> <script async type="text/javascript"> (function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym({}, "init", {{ clickmap:true, trackLinks:true, accurateTrackBounce:true, trackHash:true }}); </script> <noscript><div><img src="https://mc.yandex.ru/watch/{}" style="position:absolute; left:-9999px;" alt=""/></div></noscript> <!-- /Yandex.Metrika counter -->"#,
-                counter, counter,
-            ));
-        };
-        if let Some(measurement_id) = &opts.gtag {
-            extra_html_headers.push(format!(
-                r#"<!-- Global site tag (gtag.js) - Google Analytics --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-S1HXCH4JPZ"></script> <script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{}'); </script>"#,
-                measurement_id,
-            ));
-        };
-        Self(PreEscaped(extra_html_headers.join("")))
-    }
+    let app = Route::new()
+        .at("/site.webmanifest", get(r#static::get_site_manifest))
+        .at("/favicon.ico", get(r#static::get_favicon))
+        .at("/favicon-16x16.png", get(r#static::get_favicon_16x16))
+        .at("/favicon-32x32.png", get(r#static::get_favicon_32x32))
+        .at("/android-chrome-192x192.png", get(r#static::get_android_chrome_192x192))
+        .at("/android-chrome-512x512.png", get(r#static::get_android_chrome_512x512))
+        .at("/apple-touch-icon.png", get(r#static::get_apple_touch_icon))
+        .at("/static/table.js", get(r#static::get_table_js))
+        .at("/static/theme.css", get(r#static::get_theme_css))
+        .at("/robots.txt", get(r#static::get_robots_txt))
+        .at("/static/flags/cn.svg", get(r#static::get_cn_svg))
+        .at("/static/flags/de.svg", get(r#static::get_de_svg))
+        .at("/static/flags/eu.svg", get(r#static::get_eu_svg))
+        .at("/static/flags/fr.svg", get(r#static::get_fr_svg))
+        .at("/static/flags/gb.svg", get(r#static::get_gb_svg))
+        .at("/static/flags/jp.svg", get(r#static::get_jp_svg))
+        .at("/static/flags/su.svg", get(r#static::get_su_svg))
+        .at("/static/flags/us.svg", get(r#static::get_us_svg))
+        .at("/static/flags/xx.svg", get(r#static::get_xx_svg))
+        .at("/", get(views::index::get))
+        .at("/search", get(views::search::get))
+        .at("/:realm/:account_id", get(views::player::get))
+        .at("/error", get(views::error::get_error))
+        .with(Tracing)
+        .with(AddData::new(mongodb))
+        .with(AddData::new(TrackingCode::new(&opts)?))
+        .with(AddData::new(AccountInfoCache::new(api.clone(), redis.clone())))
+        .with(AddData::new(AccountTanksCache::new(api.clone(), redis.clone())))
+        .with(AddData::new(redis))
+        .with(AddData::new(api))
+        .with(CatchPanic::new())
+        .with(ErrorMiddleware)
+        .with(SecurityHeaders);
+    Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
+        .run(app)
+        .await
+        .map_err(Error::from)
 }

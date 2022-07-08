@@ -1,102 +1,136 @@
-use rocket::get;
-use rocket::http::ContentType;
+use poem::{handler, IntoResponse};
 
-use crate::web::response::CustomResponse;
+const CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 
-#[get("/site.webmanifest")]
-pub async fn get_site_manifest() -> CustomResponse {
-    CustomResponse::Static(ContentType::JSON, include_bytes!("static/site.webmanifest"))
+#[handler]
+pub async fn get_site_manifest() -> impl IntoResponse {
+    include_bytes!("static/site.webmanifest")
+        .with_content_type("application/json")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/favicon.ico")]
-pub async fn get_favicon() -> CustomResponse {
-    CustomResponse::Static(
-        ContentType::new("image", "vnd.microsoft.icon"),
-        include_bytes!("static/favicon.ico"),
-    )
+#[handler]
+pub async fn get_favicon() -> impl IntoResponse {
+    include_bytes!("static/favicon.ico")
+        .with_content_type("image/vnd.microsoft.icon")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/favicon-16x16.png")]
-pub async fn get_favicon_16x16() -> CustomResponse {
-    CustomResponse::Static(ContentType::PNG, include_bytes!("static/favicon-16x16.png"))
+#[handler]
+pub async fn get_favicon_16x16() -> impl IntoResponse {
+    include_bytes!("static/favicon-16x16.png")
+        .with_content_type("image/png")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/favicon-32x32.png")]
-pub async fn get_favicon_32x32() -> CustomResponse {
-    CustomResponse::Static(ContentType::PNG, include_bytes!("static/favicon-32x32.png"))
+#[handler]
+pub async fn get_favicon_32x32() -> impl IntoResponse {
+    include_bytes!("static/favicon-32x32.png")
+        .with_content_type("image/png")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/android-chrome-192x192.png")]
-pub async fn get_android_chrome_192x192() -> CustomResponse {
-    CustomResponse::Static(ContentType::PNG, include_bytes!("static/android-chrome-192x192.png"))
+#[handler]
+pub async fn get_android_chrome_192x192() -> impl IntoResponse {
+    include_bytes!("static/android-chrome-192x192.png")
+        .with_content_type("image/png")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/android-chrome-512x512.png")]
-pub async fn get_android_chrome_512x512() -> CustomResponse {
-    CustomResponse::Static(ContentType::PNG, include_bytes!("static/android-chrome-512x512.png"))
+#[handler]
+pub async fn get_android_chrome_512x512() -> impl IntoResponse {
+    include_bytes!("static/android-chrome-512x512.png")
+        .with_content_type("image/png")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/apple-touch-icon.png")]
-pub async fn get_apple_touch_icon() -> CustomResponse {
-    CustomResponse::Static(ContentType::PNG, include_bytes!("static/apple-touch-icon.png"))
+#[handler]
+pub async fn get_apple_touch_icon() -> impl IntoResponse {
+    include_bytes!("static/apple-touch-icon.png")
+        .with_content_type("image/png")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/table.js")]
-pub async fn get_table_js() -> CustomResponse {
-    CustomResponse::Static(ContentType::JavaScript, include_bytes!("static/table.js"))
+#[handler]
+pub async fn get_table_js() -> impl IntoResponse {
+    include_bytes!("static/table.js")
+        .with_content_type("application/javascript")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/theme.css")]
-pub async fn get_theme_css() -> CustomResponse {
-    CustomResponse::Static(ContentType::CSS, include_bytes!("static/theme.css"))
+#[handler]
+pub async fn get_theme_css() -> impl IntoResponse {
+    include_bytes!("static/theme.css")
+        .with_content_type("text/css")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/robots.txt")]
-pub async fn get_robots_txt() -> CustomResponse {
-    CustomResponse::Static(ContentType::Text, include_bytes!("static/robots.txt"))
+#[handler]
+pub async fn get_robots_txt() -> impl IntoResponse {
+    include_bytes!("static/robots.txt")
+        .with_content_type("text/plain")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/cn.svg")]
-pub async fn get_cn_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/cn.svg"))
+#[handler]
+pub async fn get_cn_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/cn.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/de.svg")]
-pub async fn get_de_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/de.svg"))
+#[handler]
+pub async fn get_de_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/de.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/eu.svg")]
-pub async fn get_eu_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/eu.svg"))
+#[handler]
+pub async fn get_eu_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/eu.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/fr.svg")]
-pub async fn get_fr_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/fr.svg"))
+#[handler]
+pub async fn get_fr_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/fr.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/gb.svg")]
-pub async fn get_gb_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/gb.svg"))
+#[handler]
+pub async fn get_gb_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/gb.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/jp.svg")]
-pub async fn get_jp_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/jp.svg"))
+#[handler]
+pub async fn get_jp_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/jp.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/su.svg")]
-pub async fn get_su_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/su.svg"))
+#[handler]
+pub async fn get_su_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/su.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/us.svg")]
-pub async fn get_us_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/us.svg"))
+#[handler]
+pub async fn get_us_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/us.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }
 
-#[get("/static/flags/xx.svg")]
-pub async fn get_xx_svg() -> CustomResponse {
-    CustomResponse::Static(ContentType::SVG, include_bytes!("static/flags/xx.svg"))
+#[handler]
+pub async fn get_xx_svg() -> impl IntoResponse {
+    include_bytes!("static/flags/xx.svg")
+        .with_content_type("image/svg+xml")
+        .with_header("Cache-Control", CACHE_CONTROL)
 }

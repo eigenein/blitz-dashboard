@@ -1,18 +1,17 @@
 use maud::{html, DOCTYPE};
-use rocket::State;
+use poem::web::{Data, Html};
+use poem::{handler, IntoResponse, Response};
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
+use crate::prelude::*;
 use crate::wargaming;
 use crate::web::partials::{account_search, headers};
-use crate::web::response::CustomResponse;
 use crate::web::TrackingCode;
 
 #[instrument(skip_all)]
-#[rocket::get("/")]
-pub async fn get(
-    tracking_code: &State<TrackingCode>,
-) -> crate::web::result::Result<CustomResponse> {
+#[handler]
+pub async fn get(tracking_code: Data<&TrackingCode>) -> Result<Response> {
     clear_user();
 
     let markup = html! {
@@ -23,7 +22,7 @@ pub async fn get(
                 title { "Я – статист в World of Tanks Blitz!" }
             }
             body {
-                (tracking_code.0)
+                (*tracking_code)
                 section.hero.is-fullheight {
                     div.hero-body {
                         div.container {
@@ -58,8 +57,7 @@ pub async fn get(
         }
     };
 
-    Ok(CustomResponse::CachedMarkup(
-        "max-age=604800, stale-while-revalidate=86400",
-        markup,
-    ))
+    Ok(Html(markup.into_string())
+        .with_header("Cache-Control", "max-age=604800, stale-while-revalidate=86400")
+        .into_response())
 }

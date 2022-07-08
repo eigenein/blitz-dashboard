@@ -1,24 +1,26 @@
-use anyhow::bail;
-use rocket::FromFormField;
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, FromFormField)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub enum Realm {
-    #[field(value = "ru")]
     #[serde(rename = "ru")]
     Russia,
 
-    #[field(value = "eu")]
     #[serde(rename = "eu")]
     Europe,
 
-    #[field(value = "na")]
     #[serde(rename = "na")]
     NorthAmerica,
 
-    #[field(value = "asia")]
     #[serde(rename = "asia")]
     Asia,
+}
+
+impl fmt::Display for Realm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
 }
 
 impl Realm {
@@ -31,20 +33,6 @@ impl Realm {
             Self::Europe => "eu",
             Self::NorthAmerica => "na",
             Self::Russia => "ru",
-        }
-    }
-}
-
-impl TryFrom<&str> for Realm {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "asia" => Ok(Self::Asia),
-            "na" => Ok(Self::NorthAmerica),
-            "eu" => Ok(Self::Europe),
-            "ru" => Ok(Self::Russia),
-            _ => bail!("`{}` is not a valid realm", value),
         }
     }
 }
