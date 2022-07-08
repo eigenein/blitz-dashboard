@@ -16,6 +16,7 @@ use mongodb::bson;
 use rocket::http::Status;
 use rocket::{uri, State};
 
+use crate::database::{CurrentWinRate, TrueWinRate};
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};

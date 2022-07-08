@@ -2,7 +2,7 @@ use std::iter::Sum;
 
 use serde::{Deserialize, Serialize};
 
-use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
+use crate::database::{NBattles, NWins};
 use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
@@ -39,6 +39,18 @@ pub struct RandomStatsSnapshot {
 
     #[serde(rename = "xp")]
     pub xp: i32,
+}
+
+impl NBattles for RandomStatsSnapshot {
+    fn n_battles(&self) -> i32 {
+        self.n_battles
+    }
+}
+
+impl NWins for RandomStatsSnapshot {
+    fn n_wins(&self) -> i32 {
+        self.n_wins
+    }
 }
 
 impl From<wargaming::BasicStatistics> for RandomStatsSnapshot {
@@ -78,21 +90,6 @@ impl Sum for RandomStatsSnapshot {
 }
 
 impl RandomStatsSnapshot {
-    #[must_use]
-    #[inline]
-    pub fn current_win_rate(&self) -> f64 {
-        self.n_wins as f64 / self.n_battles as f64
-    }
-
-    #[inline]
-    pub fn true_win_rate(&self) -> ConfidenceInterval {
-        ConfidenceInterval::wilson_score_interval(
-            self.n_battles,
-            self.n_wins,
-            ConfidenceLevel::default(),
-        )
-    }
-
     #[must_use]
     #[inline]
     pub fn frags_per_battle(&self) -> f64 {

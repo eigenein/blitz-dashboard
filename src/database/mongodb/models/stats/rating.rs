@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
+use crate::database::{NBattles, NWins};
 use crate::wargaming;
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
@@ -15,6 +15,18 @@ pub struct RatingStatsSnapshot {
 
     #[serde(default, rename = "nrw")]
     pub n_wins: i32,
+}
+
+impl NBattles for RatingStatsSnapshot {
+    fn n_battles(&self) -> i32 {
+        self.n_battles
+    }
+}
+
+impl NWins for RatingStatsSnapshot {
+    fn n_wins(&self) -> i32 {
+        self.n_wins
+    }
 }
 
 impl From<wargaming::RatingStatistics> for RatingStatsSnapshot {
@@ -40,21 +52,6 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStatistics {
 }
 
 impl RatingStatsSnapshot {
-    #[inline]
-    pub fn true_win_rate(&self) -> ConfidenceInterval {
-        ConfidenceInterval::wilson_score_interval(
-            self.n_battles,
-            self.n_wins,
-            ConfidenceLevel::default(),
-        )
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn current_win_rate(&self) -> f64 {
-        self.n_wins as f64 / self.n_battles as f64
-    }
-
     #[must_use]
     pub fn delta(&self) -> f64 {
         self.mm_rating * 10.0
