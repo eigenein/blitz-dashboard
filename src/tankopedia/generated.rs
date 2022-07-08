@@ -3407,7 +3407,7 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
     },
     64801_u32 => Vehicle {
         tank_id: 64801,
-        name: Cow::Borrowed("T34 Independence"),
+        name: Cow::Borrowed("T34 (1776)"),
         tier: 8,
         is_premium: true,
         nation: Nation::Usa,

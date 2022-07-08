@@ -21891,8 +21891,8 @@
       "32035": {
         "name": "XM551 test bed",
         "next_modules": [
-          26660,
-          26148
+          26148,
+          26660
         ],
         "next_tanks": null,
         "is_default": false,
@@ -25557,9 +25557,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          8065,
           1409,
-          3713
+          3713,
+          8065
         ],
         "is_default": false,
         "price_xp": 5000,
@@ -76126,7 +76126,7 @@
     "turrets": [
       256035
     ],
-    "name": "T34 Independence"
+    "name": "T34 (1776)"
   },
   "6481": {
     "suspensions": [
@@ -82595,8 +82595,8 @@
       "1025": 700
     },
     "next_tanks": {
-      "2049": 2500,
-      "6913": 2500
+      "6913": 2500,
+      "2049": 2500
     },
     "modules_tree": {
       "1794": {
@@ -82659,8 +82659,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          6913,
-          2049
+          2049,
+          6913
         ],
         "is_default": false,
         "price_xp": 1250,
@@ -85108,8 +85108,8 @@
           1827
         ],
         "next_tanks": [
-          23585,
-          3873
+          3873,
+          23585
         ],
         "is_default": false,
         "price_xp": 6840,
@@ -90525,8 +90525,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          7972,
-          10276
+          10276,
+          7972
         ],
         "next_tanks": null,
         "is_default": true,
