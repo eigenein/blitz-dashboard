@@ -1,3 +1,4 @@
+use poem::error::{MethodNotAllowedError, NotFoundError};
 use poem::http::StatusCode;
 use poem::{Endpoint, IntoResponse, Middleware, Request, Response, Result};
 
@@ -36,8 +37,13 @@ impl<E: Endpoint> Endpoint for ErrorMiddlewareImpl<E> {
                 Ok(response)
             }
             Err(error) => {
-                error!(?method, ?uri, "{}", error);
-                Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response())
+                if error.is::<NotFoundError>() || error.is::<MethodNotAllowedError>() {
+                    info!(?method, ?uri, "{}", error);
+                    Ok(StatusCode::BAD_REQUEST.into_response())
+                } else {
+                    error!(?method, ?uri, "{}", error);
+                    Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response())
+                }
             }
         }
     }
