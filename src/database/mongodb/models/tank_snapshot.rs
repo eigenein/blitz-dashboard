@@ -5,8 +5,7 @@ use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-use crate::database::root::Root;
-use crate::database::stats_snapshots::RandomStatsSnapshot;
+use crate::database::{RandomStatsSnapshot, Root};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
