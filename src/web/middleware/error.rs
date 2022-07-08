@@ -30,7 +30,7 @@ impl<E: Endpoint> Endpoint for ErrorMiddlewareImpl<E> {
                 if response.status().is_client_error() {
                     info!(?method, ?uri, status = ?response.status(), "client error");
                 }
-                if response.status().is_client_error() {
+                if response.status().is_server_error() {
                     error!(?method, ?uri, status = ?response.status(), "internal server error");
                 }
                 Ok(response)
