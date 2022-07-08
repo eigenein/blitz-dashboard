@@ -1,31 +1,21 @@
+pub mod models;
+
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
 use poem::http::StatusCode;
 use poem::web::{Data, Html, Query, Redirect};
 use poem::{handler, IntoResponse, Response};
-use serde::Deserialize;
 use tracing::instrument;
 use validator::Validate;
 
+use self::models::*;
 use crate::helpers::sentry::clear_user;
 use crate::prelude::*;
 use crate::wargaming;
 use crate::wargaming::cache::account::info::AccountInfoCache;
-use crate::wargaming::models::AccountInfo;
-use crate::wargaming::WargamingApi;
+use crate::wargaming::{AccountInfo, Realm, WargamingApi};
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::TrackingCode;
-
-pub const MIN_QUERY_LENGTH: usize = 3;
-pub const MAX_QUERY_LENGTH: usize = 24;
-
-#[derive(Deserialize, Validate)]
-pub struct Params {
-    #[validate(length(min = "MIN_QUERY_LENGTH", max = "MAX_QUERY_LENGTH"))]
-    query: String,
-
-    realm: wargaming::Realm,
-}
 
 #[instrument(skip_all, level = "info", fields(query = ?params.query))]
 #[handler]
@@ -130,7 +120,7 @@ pub async fn get(
     Ok(Html(markup.into_string()).into_response())
 }
 
-fn account_card(realm: wargaming::Realm, account_info: &AccountInfo) -> Markup {
+fn account_card(realm: Realm, account_info: &AccountInfo) -> Markup {
     html! {
         div.box {
             p.title."is-5" {

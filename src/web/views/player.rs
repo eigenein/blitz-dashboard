@@ -16,8 +16,8 @@ use mongodb::bson;
 use poem::http::StatusCode;
 use poem::web::{Data, Html, Path, Query};
 use poem::{handler, IntoResponse, Response};
-use serde::Deserialize;
 
+use self::models::*;
 use crate::database::{CurrentWinRate, TrueWinRate};
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
@@ -31,19 +31,8 @@ use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 use crate::{database, format_elapsed, wargaming};
 
-pub mod partials;
-
-#[derive(Deserialize)]
-pub struct Segments {
-    realm: wargaming::Realm,
-    account_id: wargaming::AccountId,
-}
-
-#[derive(Deserialize)]
-pub struct Params {
-    #[serde(default)]
-    period: Option<String>,
-}
+mod models;
+mod partials;
 
 #[allow(clippy::too_many_arguments)]
 #[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?params.period))]

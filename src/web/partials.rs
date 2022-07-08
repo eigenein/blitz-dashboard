@@ -5,7 +5,7 @@ use phf::phf_set;
 
 use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
-use crate::web::views::search::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
+use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
 #[must_use]
 pub fn account_search(
