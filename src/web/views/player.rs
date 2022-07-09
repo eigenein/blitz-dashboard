@@ -146,7 +146,7 @@ pub async fn get(
         }
     };
     let tabs = html! {
-        nav.tabs.is-boxed {
+        nav.tabs.is-boxed.has-text-weight-medium {
             div.container {
                 ul {
                     (render_period_li(period, from_days(1), "24 часа"))
@@ -314,7 +314,9 @@ pub async fn get(
 
                 (navbar)
 
-                section.section {
+                section.section.has-background-info-light."pt-5" {
+                    p.subtitle.has-text-weight-medium { "За все время" }
+
                     div.container {
                         div.columns.is-multiline {
                             div.column."is-3-tablet"."is-3-desktop"."is-2-widescreen" {
@@ -332,7 +334,8 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Сейчас" }
-                                                    p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
+                                                    @let rating = actual_info.statistics.rating.rating();
+                                                    p.title title=(rating) { (format!("{:.0}", rating)) }
                                                 }
                                             }
                                         }
@@ -355,8 +358,9 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Случайные бои" }
-                                                    p.title {
-                                                        (format!("{:.2}", 100.0 * actual_info.statistics.all.current_win_rate()))
+                                                    @let win_rate = 100.0 * actual_info.statistics.all.current_win_rate();
+                                                    p.title title=(win_rate) {
+                                                        (format!("{:.2}", win_rate))
                                                         span.has-text-grey-light { "%" }
                                                     }
                                                 }
@@ -364,8 +368,9 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Рейтинговые бои" }
-                                                    p.title {
-                                                        (format!("{:.2}", 100.0 * actual_info.statistics.rating.basic.current_win_rate()))
+                                                    @let win_rate = 100.0 * actual_info.statistics.rating.basic.current_win_rate();
+                                                    p.title title=(win_rate) {
+                                                        (format!("{:.2}", win_rate))
                                                         span.has-text-grey-light { "%" }
                                                     }
                                                 }
@@ -378,12 +383,12 @@ pub async fn get(
                     }
                 }
 
-                section.section."pt-0" {
+                section.section."pt-5" {
                     (tabs)
 
                     div.container {
                         @if stats_delta.rating.n_battles != 0 {
-                            div.columns.is-multiline {
+                            div.columns.is-multiline.has-background-warning-light {
                                 div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
@@ -715,7 +720,7 @@ pub async fn get(
                                             header.card-header {
                                                 p.card-header-title {
                                                     span.icon-text.is-flex-wrap-nowrap {
-                                                        span.icon.has-text-danger { i.fa-solid.fa-bullseye {} }
+                                                        span.icon.has-text-warning-dark { i.fa-solid.fa-bullseye {} }
                                                         span { "Попадания" }
                                                     }
                                                 }
@@ -738,7 +743,7 @@ pub async fn get(
                                 }
                             }
                         } @else {
-                            article.message.is-warning {
+                            article.message {
                                 div.message-body {
                                     p { "Пользователь не играл в " strong { "случайных" } " боях за этот период времени." }
                                 }
