@@ -75,6 +75,10 @@
         background-color: hsl(348, 86%, 14%) !important;
     }
 
+    .has-background-warning-light {
+        background-color: hsl(48, 100%, 14%) !important;
+    }
+
     .has-background-info-light {
         background-color: hsl(204, 71%, 14%) !important;
     }
