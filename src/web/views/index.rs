@@ -46,7 +46,7 @@ pub async fn get(tracking_code: Data<&TrackingCode>) -> Result<Response> {
                                                 a.button.is-rounded.is-small href="/ru/2992069" { "Tortik" }
                                             }
                                         }
-                                        (account_search("is-medium", wargaming::Realm::Russia, "", true, false))
+                                        (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false))
                                     }
                                 }
                             }

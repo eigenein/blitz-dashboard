@@ -18,7 +18,7 @@ pub fn account_search(
     html! {
         div.field.has-addons {
             div.control {
-                span.select.is-rounded.(class) {
+                span.select.(class) {
                     select name="realm" {
                         option title="Россия" value=(Realm::Russia.to_str()) selected[realm == Realm::Russia] { "🇷🇺" }
                         option title="Европа" value=(Realm::Europe.to_str()) selected[realm == Realm::Europe] { "🇪🇺" }
@@ -26,7 +26,7 @@ pub fn account_search(
                 }
             }
             div.control.has-icons-left.is-expanded.(conditional_class(has_user_secret, "has-icons-right")) {
-                input.input.is-rounded.(class)
+                input.input.(class)
                     type="search"
                     name="query"
                     value=(value)
@@ -50,7 +50,7 @@ pub fn account_search(
                 }
             }
             div.control {
-                button.button.is-rounded.is-link.(class) type="submit" {
+                button.button.is-link.(class) type="submit" {
                     span.icon.is-hidden-desktop { i.fas.fa-search {} }
                     span.is-hidden-touch { "Поиск" }
                 };
