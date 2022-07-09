@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::database;
+use crate::database::{NBattles, NWins};
 
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
@@ -35,6 +36,18 @@ impl From<&database::RandomStatsSnapshot> for BasicStatistics {
             frags: snapshot.n_frags,
             xp: snapshot.xp,
         }
+    }
+}
+
+impl NBattles for BasicStatistics {
+    fn n_battles(&self) -> i32 {
+        self.n_battles
+    }
+}
+
+impl NWins for BasicStatistics {
+    fn n_wins(&self) -> i32 {
+        self.n_wins
     }
 }
 

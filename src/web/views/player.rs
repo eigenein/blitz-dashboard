@@ -315,12 +315,76 @@ pub async fn get(
                 (navbar)
 
                 section.section {
+                    div.container {
+                        div.columns.is-multiline {
+                            div.column."is-3-tablet"."is-3-desktop"."is-2-widescreen" {
+                                div.card {
+                                    header.card-header {
+                                        p.card-header-title {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span.icon.has-text-warning { i.fa-solid.fa-star-half-stroke {} }
+                                                span { "Рейтинг" }
+                                            }
+                                        }
+                                    }
+                                    div.card-content {
+                                        div.level.is-mobile {
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { "Сейчас" }
+                                                    p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div.column."is-6-tablet"."is-5-desktop"."is-4-widescreen" {
+                                div.card {
+                                    header.card-header {
+                                        p.card-header-title {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                                span { "Процент побед" }
+                                            }
+                                        }
+                                    }
+                                    div.card-content {
+                                        div.level.is-mobile {
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { "Случайные бои" }
+                                                    p.title {
+                                                        (format!("{:.2}", 100.0 * actual_info.statistics.all.current_win_rate()))
+                                                        span.has-text-grey-light { "%" }
+                                                    }
+                                                }
+                                            }
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { "Рейтинговые бои" }
+                                                    p.title {
+                                                        (format!("{:.2}", 100.0 * actual_info.statistics.rating.basic.current_win_rate()))
+                                                        span.has-text-grey-light { "%" }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                section.section."pt-0" {
                     (tabs)
 
                     div.container {
                         @if stats_delta.rating.n_battles != 0 {
                             div.columns.is-multiline {
-                                div.column."is-12-tablet"."is-12-desktop"."is-5-widescreen" {
+                                div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -335,12 +399,6 @@ pub async fn get(
                                         }
                                         div.card-content {
                                             div.level.is-mobile {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "Сейчас" }
-                                                        p.title { (format!("{:.0}", actual_info.statistics.rating.rating())) }
-                                                    }
-                                                }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "Изменение" }
@@ -364,7 +422,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
+                                div.column."is-5-tablet"."is-4-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -396,7 +454,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-8-tablet"."is-8-desktop"."is-4-widescreen" {
+                                div.column."is-7-tablet"."is-6-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
