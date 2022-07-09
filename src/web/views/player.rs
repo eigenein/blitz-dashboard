@@ -18,10 +18,10 @@ use poem::web::{Data, Html, Path, Query};
 use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
-use crate::database::{CurrentWinRate, TrueWinRate};
 use crate::helpers::sentry::set_user;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
+use crate::math::traits::{AverageDamageDealt, CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -372,6 +372,41 @@ pub async fn get(
                                                     p.title title=(win_rate) {
                                                         (format!("{:.2}", win_rate))
                                                         span.has-text-grey-light { "%" }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div.column."is-6-tablet"."is-5-desktop"."is-4-widescreen" {
+                                div.card {
+                                    header.card-header {
+                                        p.card-header-title {
+                                            span.icon-text.is-flex-wrap-nowrap {
+                                                span.icon { i.fa-solid.fa-solid.fa-house-damage {} }
+                                                span { "Средний урон" }
+                                            }
+                                        }
+                                    }
+                                    div.card-content {
+                                        div.level.is-mobile {
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { "Случайные бои" }
+                                                    @let damage_dealt = actual_info.statistics.all.average_damage_dealt();
+                                                    p.title title=(damage_dealt) {
+                                                        (format!("{:.0}", damage_dealt))
+                                                    }
+                                                }
+                                            }
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { "Рейтинговые бои" }
+                                                    @let damage_dealt = actual_info.statistics.rating.basic.average_damage_dealt();
+                                                    p.title title=(damage_dealt) {
+                                                        (format!("{:.0}", damage_dealt))
                                                     }
                                                 }
                                             }

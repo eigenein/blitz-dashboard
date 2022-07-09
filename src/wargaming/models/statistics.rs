@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::database;
-use crate::database::{NBattles, NWins};
+use crate::math::traits::{DamageDealt, NBattles, NWins};
 
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
@@ -48,6 +48,12 @@ impl NBattles for BasicStatistics {
 impl NWins for BasicStatistics {
     fn n_wins(&self) -> i32 {
         self.n_wins
+    }
+}
+
+impl DamageDealt for BasicStatistics {
+    fn damage_dealt(&self) -> i32 {
+        self.damage_dealt
     }
 }
 

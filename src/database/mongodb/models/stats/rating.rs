@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::database::{NBattles, NWins};
+use crate::math::traits::{NBattles, NWins};
 use crate::wargaming;
 
 #[derive(Serialize, Deserialize, Copy, Clone)]

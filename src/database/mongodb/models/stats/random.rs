@@ -2,7 +2,7 @@ use std::iter::Sum;
 
 use serde::{Deserialize, Serialize};
 
-use crate::database::{NBattles, NWins};
+use crate::math::traits::{NBattles, NWins};
 use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
