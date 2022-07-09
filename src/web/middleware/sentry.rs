@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
-use poem::{Endpoint, Middleware, Request, Result};
+use poem::web::RealIp;
+use poem::{Endpoint, FromRequest, Middleware, Request, Result};
 
 pub struct SentryMiddleware;
 
@@ -21,15 +22,20 @@ impl<E: Endpoint> Endpoint for SentryMiddlewareImpl<E> {
     type Output = E::Output;
 
     async fn call(&self, request: Request) -> Result<Self::Output> {
+        let real_ip = RealIp::from_request(&request, &mut Default::default())
+            .await?
+            .0;
+        let request_context = BTreeMap::from([("query".to_string(), request.uri().query().into())]);
+
         sentry::configure_scope(|scope| {
             scope.set_tag("request.method", request.method().as_str());
             scope.set_tag("request.path", request.uri().path());
-            scope.set_tag("request.remote_addr", request.remote_addr());
-
-            let mut context = BTreeMap::new();
-            context.insert("query".to_string(), request.uri().query().into());
-            scope.set_context("request", sentry::protocol::Context::Other(context));
+            if let Some(real_ip) = real_ip {
+                scope.set_tag("request.real_ip", real_ip);
+            }
+            scope.set_context("request", sentry::protocol::Context::Other(request_context));
         });
+
         self.ep.call(request).await
     }
 }
