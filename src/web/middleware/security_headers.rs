@@ -1,9 +1,9 @@
 use poem::http::HeaderValue;
-use poem::{Endpoint, IntoResponse, Middleware, Request, Response, Result};
+use poem::{Endpoint, Middleware, Request, Response, Result};
 
 pub struct SecurityHeadersMiddleware;
 
-impl<E: Endpoint> Middleware<E> for SecurityHeadersMiddleware {
+impl<E: Endpoint<Output = Response>> Middleware<E> for SecurityHeadersMiddleware {
     type Output = SecurityHeadersMiddlewareImpl<E>;
 
     fn transform(&self, ep: E) -> Self::Output {
@@ -16,11 +16,11 @@ pub struct SecurityHeadersMiddlewareImpl<E> {
 }
 
 #[poem::async_trait]
-impl<E: Endpoint> Endpoint for SecurityHeadersMiddlewareImpl<E> {
+impl<E: Endpoint<Output = Response>> Endpoint for SecurityHeadersMiddlewareImpl<E> {
     type Output = Response;
 
     async fn call(&self, request: Request) -> Result<Self::Output> {
-        let mut response = self.ep.call(request).await?.into_response();
+        let mut response = self.ep.call(request).await?;
         let headers = response.headers_mut();
         headers.remove("Server");
         headers.append("X-DNS-Prefetch-Control", HeaderValue::from_static("on"));

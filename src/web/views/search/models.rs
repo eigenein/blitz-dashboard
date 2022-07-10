@@ -1,16 +1,31 @@
 use serde::Deserialize;
-use validator::Validate;
 
+use crate::prelude::*;
 use crate::wargaming;
 
 pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize)]
 pub struct Params {
-    #[serde(default)]
-    #[validate(length(min = "MIN_QUERY_LENGTH", max = "MAX_QUERY_LENGTH"))]
-    pub query: String,
-
+    pub query: Query,
     pub realm: wargaming::Realm,
+}
+
+#[derive(Deserialize)]
+#[serde(try_from = "String")]
+pub struct Query(pub String);
+
+impl TryFrom<String> for Query {
+    type Error = Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value.len() < MIN_QUERY_LENGTH {
+            bail!("query is too short")
+        }
+        if value.len() > MAX_QUERY_LENGTH {
+            bail!("query is tool long")
+        }
+        Ok(Self(value))
+    }
 }

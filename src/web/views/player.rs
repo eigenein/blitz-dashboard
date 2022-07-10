@@ -9,11 +9,11 @@ use chrono::{Duration, Utc};
 use chrono_humanize::Tense;
 use either::Either;
 use futures::future::try_join;
-use humantime::{format_duration, parse_duration};
+use humantime::format_duration;
 use itertools::Itertools;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use mongodb::bson;
-use poem::http::StatusCode;
+use poem::error::{InternalServerError, NotFoundError};
 use poem::web::{Data, Html, Path, Query};
 use poem::{handler, IntoResponse, Response};
 
@@ -35,7 +35,7 @@ mod models;
 mod partials;
 
 #[allow(clippy::too_many_arguments)]
-#[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?params.period))]
+#[instrument(skip_all, level = "info", fields(account_id = account_id, period = ?params.period.0))]
 #[handler]
 pub async fn get(
     Path(Segments { realm, account_id }): Path<Segments>,
@@ -44,28 +44,17 @@ pub async fn get(
     info_cache: Data<&AccountInfoCache>,
     tracking_code: Data<&TrackingCode>,
     tanks_cache: Data<&AccountTanksCache>,
-) -> Result<Response> {
+) -> poem::Result<Response> {
     let start_instant = Instant::now();
-    let period = match &params.period {
-        Some(period) => match parse_duration(period) {
-            Ok(period) => period,
-            Err(_) => return Ok(StatusCode::BAD_REQUEST.into_response()),
-        },
-        None => from_days(1),
-    };
-
     let (actual_info, actual_tanks) =
         try_join(info_cache.get(realm, account_id), tanks_cache.get(realm, account_id)).await?;
-    let actual_info = match actual_info {
-        Some(info) => info,
-        None => return Ok(StatusCode::NOT_FOUND.into_response()),
-    };
+    let actual_info = actual_info.ok_or(NotFoundError)?;
     set_user(&actual_info.nickname);
     database::Account::new(realm, account_id)
         .upsert(&mongodb, database::Account::OPERATION_SET_ON_INSERT)
         .await?;
 
-    let before = Utc::now() - Duration::from_std(period)?;
+    let before = Utc::now() - Duration::from_std(params.period.0).map_err(InternalServerError)?;
     let current_win_rate = ConfidenceInterval::wilson_score_interval(
         actual_info.statistics.all.n_battles,
         actual_info.statistics.all.n_wins,
@@ -149,15 +138,15 @@ pub async fn get(
         nav.tabs.is-boxed.has-text-weight-medium {
             div.container {
                 ul {
-                    (render_period_li(period, from_days(1), "24 часа"))
-                    (render_period_li(period, from_days(2), "2 дня"))
-                    (render_period_li(period, from_days(3), "3 дня"))
-                    (render_period_li(period, from_days(7), "Неделя"))
-                    (render_period_li(period, from_days(14), "2 недели"))
-                    (render_period_li(period, from_days(21), "3 недели"))
-                    (render_period_li(period, from_months(1), "Месяц"))
-                    (render_period_li(period, from_months(2), "2 месяца"))
-                    (render_period_li(period, from_months(3), "3 месяца"))
+                    (render_period_li(params.period.0, from_days(1), "24 часа"))
+                    (render_period_li(params.period.0, from_days(2), "2 дня"))
+                    (render_period_li(params.period.0, from_days(3), "3 дня"))
+                    (render_period_li(params.period.0, from_days(7), "Неделя"))
+                    (render_period_li(params.period.0, from_days(14), "2 недели"))
+                    (render_period_li(params.period.0, from_days(21), "3 недели"))
+                    (render_period_li(params.period.0, from_months(1), "Месяц"))
+                    (render_period_li(params.period.0, from_months(2), "2 месяца"))
+                    (render_period_li(params.period.0, from_months(3), "3 месяца"))
                 }
             }
         }

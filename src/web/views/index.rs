@@ -4,14 +4,13 @@ use poem::{handler, IntoResponse, Response};
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
-use crate::prelude::*;
 use crate::wargaming;
 use crate::web::partials::{account_search, headers};
 use crate::web::TrackingCode;
 
 #[instrument(skip_all)]
 #[handler]
-pub async fn get(tracking_code: Data<&TrackingCode>) -> Result<Response> {
+pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<Response> {
     clear_user();
 
     let markup = html! {

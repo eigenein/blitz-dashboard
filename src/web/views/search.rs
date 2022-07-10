@@ -2,37 +2,30 @@ pub mod models;
 
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
-use poem::http::StatusCode;
 use poem::web::{Data, Html, Query, Redirect};
 use poem::{handler, IntoResponse, Response};
 use tracing::instrument;
-use validator::Validate;
 
 use self::models::*;
 use crate::helpers::sentry::clear_user;
-use crate::prelude::*;
 use crate::wargaming;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::{AccountInfo, Realm, WargamingApi};
 use crate::web::partials::{account_search, datetime, footer, headers, home_button};
 use crate::web::TrackingCode;
 
-#[instrument(skip_all, level = "info", fields(query = ?params.query))]
+#[instrument(skip_all, level = "info", fields(query = ?params.query.0))]
 #[handler]
 pub async fn get(
     params: Query<Params>,
     tracking_code: Data<&TrackingCode>,
     api: Data<&WargamingApi>,
     account_info_cache: Data<&AccountInfoCache>,
-) -> Result<Response> {
+) -> poem::Result<Response> {
     clear_user();
 
-    if params.validate().is_err() {
-        return Ok(StatusCode::BAD_REQUEST.into_response());
-    }
-
     let account_ids: Vec<wargaming::AccountId> = api
-        .search_accounts(params.realm, &params.query)
+        .search_accounts(params.realm, &params.query.0)
         .await?
         .iter()
         .map(|account| account.id)
@@ -52,7 +45,7 @@ pub async fn get(
     }
     let exact_match = accounts
         .iter()
-        .position(|account| account.nickname == params.query)
+        .position(|account| account.nickname == params.query.0)
         .map(|index| accounts.remove(index));
     if let Some(exact_match) = &exact_match {
         account_info_cache.put(params.realm, exact_match).await?;
@@ -64,7 +57,7 @@ pub async fn get(
         html.has-navbar-fixed-top lang="en" {
             head {
                 (headers())
-                title { (params.query) " – Поиск статистов" }
+                title { (params.query.0) " – Поиск статистов" }
             }
         }
         body {
@@ -77,7 +70,7 @@ pub async fn get(
                     div.navbar-menu {
                         div.navbar-end {
                             form.navbar-item action="/search" method="GET" {
-                                (account_search("", params.realm, &params.query, false, false))
+                                (account_search("", params.realm, &params.query.0, false, false))
                             }
                         }
                     }

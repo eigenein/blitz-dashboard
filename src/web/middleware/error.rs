@@ -1,4 +1,4 @@
-use poem::error::{MethodNotAllowedError, NotFoundError};
+use poem::error::{MethodNotAllowedError, NotFoundError, ParsePathError, ParseQueryError};
 use poem::http::StatusCode;
 use poem::{Endpoint, IntoResponse, Middleware, Request, Response, Result};
 
@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 pub struct ErrorMiddleware;
 
-impl<E: Endpoint> Middleware<E> for ErrorMiddleware {
+impl<E: Endpoint<Output = Response>> Middleware<E> for ErrorMiddleware {
     type Output = ErrorMiddlewareImpl<E>;
 
     fn transform(&self, ep: E) -> Self::Output {
@@ -19,32 +19,31 @@ pub struct ErrorMiddlewareImpl<E> {
 }
 
 #[poem::async_trait]
-impl<E: Endpoint> Endpoint for ErrorMiddlewareImpl<E> {
+impl<E: Endpoint<Output = Response>> Endpoint for ErrorMiddlewareImpl<E> {
     type Output = Response;
 
     async fn call(&self, request: Request) -> Result<Self::Output> {
         let method = request.method().clone();
         let uri = request.uri().clone();
         match self.ep.call(request).await {
-            Ok(response) => {
-                let response = response.into_response();
-                if response.status().is_client_error() {
-                    info!(?method, ?uri, status = ?response.status(), "client error");
-                }
-                if response.status().is_server_error() {
-                    error!(?method, ?uri, status = ?response.status(), "internal server error");
-                }
-                Ok(response)
+            Err(error) if error.is::<NotFoundError>() => {
+                info!(?method, ?uri, "{:#}", error);
+                Ok(StatusCode::NOT_FOUND.into_response())
+            }
+            Err(error) if error.is::<MethodNotAllowedError>() => {
+                info!(?method, ?uri, "{:#}", error);
+                Ok(StatusCode::METHOD_NOT_ALLOWED.into_response())
             }
             Err(error) => {
-                if error.is::<NotFoundError>() || error.is::<MethodNotAllowedError>() {
-                    info!(?method, ?uri, "{}", error);
+                if error.is::<ParseQueryError>() || error.is::<ParsePathError>() {
+                    info!(?method, ?uri, "{:#}", error);
                     Ok(StatusCode::BAD_REQUEST.into_response())
                 } else {
-                    error!(?method, ?uri, "{}", error);
+                    error!(?method, ?uri, "{:#}", error);
                     Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response())
                 }
             }
+            result => result,
         }
     }
 }
