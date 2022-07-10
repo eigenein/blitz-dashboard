@@ -17,7 +17,7 @@ pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
     pub current_win_rate: ConfidenceInterval,
-    pub battle_life_time: i64,
+    pub battle_life_time_secs: f64,
     pub stats_delta: StatsDelta,
 }
 
@@ -61,17 +61,17 @@ impl ViewModel {
             before,
         )
         .await?;
-        let battle_life_time: i64 = stats_delta
+        let battle_life_time_secs = stats_delta
             .tanks
             .iter()
             .map(|snapshot| snapshot.battle_life_time.num_seconds())
-            .sum();
+            .sum::<i64>() as f64;
 
         Ok(Self {
             realm,
             actual_info,
             current_win_rate,
-            battle_life_time,
+            battle_life_time_secs,
             stats_delta,
         })
     }

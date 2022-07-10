@@ -582,7 +582,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(view_model.stats_delta.random.n_frags as f64 / view_model.battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(view_model.stats_delta.random.n_frags as f64 / view_model.battle_life_time_secs * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -683,7 +683,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "В час" }
-                                                        p.title { (render_float(view_model.stats_delta.random.n_wins as f64 / view_model.battle_life_time as f64 * 3600.0, 1)) }
+                                                        p.title { (render_float(view_model.stats_delta.random.n_wins as f64 / view_model.battle_life_time_secs * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
