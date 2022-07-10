@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::database;
-use crate::math::traits::{DamageDealt, NBattles, NWins};
+use crate::math::traits::{DamageDealt, MMRating, NBattles, NWins};
 
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
@@ -66,9 +66,8 @@ pub struct RatingStats {
     pub mm_rating: f64,
 }
 
-impl RatingStats {
-    #[must_use]
-    pub fn rating(&self) -> f64 {
-        self.mm_rating * 10.0 + 3000.0
+impl MMRating for RatingStats {
+    fn mm_rating(&self) -> f64 {
+        self.mm_rating
     }
 }

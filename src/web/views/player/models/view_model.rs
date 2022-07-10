@@ -8,6 +8,7 @@ use poem::Result;
 use sentry::protocol::IpAddress;
 
 use crate::math::statistics::ConfidenceInterval;
+use crate::math::traits::{MMRating, TrueWinRate};
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::models::{Params, Segments, StatsDelta};
@@ -19,6 +20,7 @@ pub struct ViewModel {
     pub current_win_rate: ConfidenceInterval,
     pub battle_life_time_secs: f64,
     pub stats_delta: StatsDelta,
+    pub rating_snapshots_data: Vec<(i64, i32)>,
 }
 
 impl ViewModel {
@@ -44,13 +46,8 @@ impl ViewModel {
             .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
             .await?;
 
-        let before =
-            Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
-        let current_win_rate = ConfidenceInterval::wilson_score_interval(
-            actual_info.stats.random.n_battles,
-            actual_info.stats.random.n_wins,
-            Default::default(),
-        );
+        let current_win_rate = actual_info.stats.random.true_win_rate();
+
         let stats_delta = StatsDelta::retrieve(
             mongodb,
             realm,
@@ -58,14 +55,25 @@ impl ViewModel {
             actual_info.stats.random,
             actual_info.stats.rating,
             actual_tanks,
-            before,
+            Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?,
         )
         .await?;
+
         let battle_life_time_secs = stats_delta
             .tanks
             .iter()
             .map(|snapshot| snapshot.battle_life_time.num_seconds())
             .sum::<i64>() as f64;
+
+        let rating_snapshots_data =
+            database::RatingSnapshot::retrieve_latest(mongodb, realm, account_id, 10)
+                .await
+                .map_err(poem::Error::from)?
+                .into_iter()
+                .map(|snapshot| {
+                    (snapshot.last_battle_time.timestamp_millis(), snapshot.display_rating())
+                })
+                .collect();
 
         Ok(Self {
             realm,
@@ -73,11 +81,12 @@ impl ViewModel {
             current_win_rate,
             battle_life_time_secs,
             stats_delta,
+            rating_snapshots_data,
         })
     }
 }
 
-fn get_sentry_user(
+pub fn get_sentry_user(
     realm: wargaming::Realm,
     account_id: wargaming::AccountId,
     ip_addr: Option<IpAddr>,

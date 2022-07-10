@@ -16,6 +16,15 @@ pub trait TrueWinRate {
     fn true_win_rate(&self) -> ConfidenceInterval;
 }
 
+pub trait MMRating {
+    fn mm_rating(&self) -> f64;
+
+    #[must_use]
+    fn display_rating(&self) -> i32 {
+        (self.mm_rating() * 10.0 + 3000.0).round() as i32
+    }
+}
+
 impl<T: NBattles + NWins> TrueWinRate for T {
     fn true_win_rate(&self) -> ConfidenceInterval {
         ConfidenceInterval::wilson_score_interval(

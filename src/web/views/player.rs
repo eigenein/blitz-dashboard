@@ -6,14 +6,15 @@ use std::time::Instant;
 
 use chrono_humanize::Tense;
 use humantime::format_duration;
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
+use poem::error::InternalServerError;
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::math::traits::{AverageDamageDealt, CurrentWinRate, TrueWinRate};
+use crate::math::traits::{AverageDamageDealt, CurrentWinRate, MMRating, TrueWinRate};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -174,20 +175,18 @@ pub async fn get(
         (DOCTYPE)
         html lang="en" {
             head {
-                script type="module" defer {
-                    (PreEscaped(r#"""
-                        "use strict";
-                        
-                        import { initSortableTable } from "/static/table.js?v5";
-                        
-                        (function () {
-                            const vehicles = document.getElementById("vehicles");
-                            if (vehicles != null) {
-                                initSortableTable(vehicles, "battles");
-                            }
-                        })();
-                    """#))
-                }
+                script type="module" defer { (r##"
+                    'use strict';
+                    
+                    import { initSortableTable } from '/static/table.js?v5';
+                    
+                    (function () {
+                        const vehicles = document.getElementById('vehicles');
+                        if (vehicles != null) {
+                            initSortableTable(vehicles, 'battles');
+                        }
+                    })();
+                "##) }
 
                 (headers())
                 link rel="canonical" href=(format!("/{}/{}", view_model.realm, view_model.actual_info.id));
@@ -240,11 +239,11 @@ pub async fn get(
                 }
 
                 section.section.has-background-info-light."pt-5" {
-                    p.subtitle.has-text-weight-medium { "За все время" }
+                    p.subtitle.has-text-weight-medium { "Сводка" }
 
                     div.container {
                         div.columns.is-multiline {
-                            div.column."is-3-tablet"."is-3-desktop"."is-2-widescreen" {
+                            div class=(view_model.rating_snapshots_data.is_empty().then_some("column is-3-tablet is-3-desktop is-2-widescreen").unwrap_or("column is-5-tablet is-4-desktop is-3-widescreen")) {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -259,8 +258,13 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Сейчас" }
-                                                    @let rating = view_model.actual_info.stats.rating.rating();
-                                                    p.title title=(rating) { (format!("{:.0}", rating)) }
+                                                    @let rating = view_model.actual_info.stats.rating.display_rating();
+                                                    p.title title=(rating) { (rating) }
+                                                }
+                                            }
+                                            @if !view_model.rating_snapshots_data.is_empty() {
+                                                div.level-item.has-text-centered {
+                                                    div id="rating-chart" {}
                                                 }
                                             }
                                         }
@@ -745,6 +749,33 @@ pub async fn get(
                 }
 
                 (footer())
+
+                @if !view_model.rating_snapshots_data.is_empty() {
+                    script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
+                    script { (format!(r##"
+                        'use strict';
+                        new ApexCharts(document.getElementById('rating-chart'), {{
+                            chart: {{
+                                type: 'line',
+                                width: 100,
+                                height: 57,
+                                sparkline: {{enabled: true}},
+                                animations: {{enabled: false}},
+                                background: 'transparent',
+                            }},
+                            colors: ['hsl(204, 71%, 39%)'],
+                            series: [{{name: '', data: {}}}],
+                            xaxis: {{type: 'datetime'}},
+                            tooltip: {{fixed: {{enabled: false}}, marker: {{show: false}}, x: {{format: 'MMM d, H:mm'}}}},
+                            stroke: {{width: 3, curve: 'straight'}},
+                            annotations: {{yaxis: [
+                                {{y: 5000, borderColor: 'hsl(217, 71%, 53%)'}},
+                                {{y: 4000, borderColor: 'hsl(141, 71%, 48%)'}},
+                                {{y: 3000, borderColor: 'hsl(48, 100%, 67%)'}},
+                            ]}},
+                        }}).render();
+                    "##, serde_json::to_string(&view_model.rating_snapshots_data).map_err(InternalServerError)?)) }
+                }
             }
         }
     };
