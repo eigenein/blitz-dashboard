@@ -103,40 +103,37 @@ async fn retrieve_deltas_quickly(
     mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
 ) -> Result<Either<StatsDelta, AHashMap<wargaming::TankId, wargaming::Tank>>> {
-    match database::AccountSnapshot::retrieve_latest(from, realm, account_id, before).await? {
-        Some(account_snapshot) => {
-            let tank_last_battle_times = account_snapshot.tank_last_battle_times.iter().filter(
-                |(tank_id, last_battle_time)| {
-                    let tank_entry = actual_tanks.entry(*tank_id);
-                    match tank_entry {
-                        Entry::Occupied(entry) => {
-                            let keep =
-                                bson::DateTime::from(entry.get().statistics.last_battle_time)
-                                    > *last_battle_time;
-                            if !keep {
-                                entry.remove();
-                            }
-                            keep
+    let account_snapshot =
+        match database::AccountSnapshot::retrieve_latest(from, realm, account_id, before).await? {
+            Some(account_snapshot) => account_snapshot,
+            None => return Ok(Either::Right(actual_tanks)),
+        };
+    let tank_last_battle_times =
+        account_snapshot
+            .tank_last_battle_times
+            .iter()
+            .filter(|(tank_id, last_battle_time)| {
+                let tank_entry = actual_tanks.entry(*tank_id);
+                match tank_entry {
+                    Entry::Occupied(entry) => {
+                        let keep = bson::DateTime::from(entry.get().statistics.last_battle_time)
+                            > *last_battle_time;
+                        if !keep {
+                            entry.remove();
                         }
-                        Entry::Vacant(_) => false,
+                        keep
                     }
-                },
-            );
-            let snapshots = database::TankSnapshot::retrieve_many(
-                from,
-                realm,
-                account_id,
-                tank_last_battle_times,
-            )
+                    Entry::Vacant(_) => false,
+                }
+            });
+    let snapshots =
+        database::TankSnapshot::retrieve_many(from, realm, account_id, tank_last_battle_times)
             .await?;
-            Ok(Either::Left(StatsDelta {
-                random: random_stats - account_snapshot.random_stats,
-                rating: rating_stats - account_snapshot.rating_stats,
-                tanks: subtract_tanks(realm, actual_tanks, snapshots),
-            }))
-        }
-        None => Ok(Either::Right(actual_tanks)),
-    }
+    Ok(Either::Left(StatsDelta {
+        random: random_stats - account_snapshot.random_stats,
+        rating: rating_stats - account_snapshot.rating_stats,
+        tanks: subtract_tanks(realm, actual_tanks, snapshots),
+    }))
 }
 
 #[instrument(skip_all, level = "debug", fields(account_id = account_id))]
