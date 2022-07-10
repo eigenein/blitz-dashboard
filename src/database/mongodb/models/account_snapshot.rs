@@ -42,8 +42,8 @@ impl AccountSnapshot {
             realm,
             last_battle_time: account_info.last_battle_time,
             account_id: account_info.id,
-            random_stats: account_info.statistics.all.into(),
-            rating_stats: account_info.statistics.rating.into(),
+            random_stats: account_info.stats.random.into(),
+            rating_stats: account_info.stats.rating.into(),
             tank_last_battle_times,
         }
     }

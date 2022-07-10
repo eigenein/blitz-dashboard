@@ -29,8 +29,8 @@ impl NWins for RatingStatsSnapshot {
     }
 }
 
-impl From<wargaming::RatingStatistics> for RatingStatsSnapshot {
-    fn from(stats: wargaming::RatingStatistics) -> Self {
+impl From<wargaming::RatingStats> for RatingStatsSnapshot {
+    fn from(stats: wargaming::RatingStats) -> Self {
         Self {
             mm_rating: stats.mm_rating,
             n_battles: stats.basic.n_battles,
@@ -39,7 +39,7 @@ impl From<wargaming::RatingStatistics> for RatingStatsSnapshot {
     }
 }
 
-impl Sub<RatingStatsSnapshot> for wargaming::RatingStatistics {
+impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
     type Output = RatingStatsSnapshot;
 
     fn sub(self, rhs: RatingStatsSnapshot) -> Self::Output {

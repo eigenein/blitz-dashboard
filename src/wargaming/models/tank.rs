@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::wargaming::{AccountId, BasicStatistics, TankAchievements, TankId, TankStatistics};
+use crate::wargaming::{AccountId, BasicStats, TankAchievements, TankId, TankStatistics};
 use crate::{database, wargaming, AHashMap};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
@@ -55,7 +55,7 @@ pub fn subtract_tanks(
     subtracted
 }
 
-impl Sub<database::RandomStatsSnapshot> for BasicStatistics {
+impl Sub<database::RandomStatsSnapshot> for BasicStats {
     type Output = database::RandomStatsSnapshot;
 
     fn sub(self, rhs: database::RandomStatsSnapshot) -> Self::Output {

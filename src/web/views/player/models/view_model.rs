@@ -43,16 +43,16 @@ impl ViewModel {
         let before =
             Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
         let current_win_rate = ConfidenceInterval::wilson_score_interval(
-            actual_info.statistics.all.n_battles,
-            actual_info.statistics.all.n_wins,
+            actual_info.stats.random.n_battles,
+            actual_info.stats.random.n_wins,
             Default::default(),
         );
         let stats_delta = match retrieve_deltas_quickly(
             mongodb,
             realm,
             account_id,
-            actual_info.statistics.all,
-            actual_info.statistics.rating,
+            actual_info.stats.random,
+            actual_info.stats.rating,
             actual_tanks,
             before,
         )
@@ -66,7 +66,7 @@ impl ViewModel {
                     account_id,
                     tanks,
                     before,
-                    actual_info.statistics.rating,
+                    actual_info.stats.rating,
                 )
                 .await?
             }
@@ -98,8 +98,8 @@ async fn retrieve_deltas_quickly(
     from: &mongodb::Database,
     realm: wargaming::Realm,
     account_id: wargaming::AccountId,
-    random_stats: wargaming::BasicStatistics,
-    rating_stats: wargaming::RatingStatistics,
+    random_stats: wargaming::BasicStats,
+    rating_stats: wargaming::RatingStats,
     mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
 ) -> Result<Either<StatsDelta, AHashMap<wargaming::TankId, wargaming::Tank>>> {
@@ -143,7 +143,7 @@ async fn retrieve_deltas_slowly(
     account_id: wargaming::AccountId,
     actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
     before: DateTime,
-    rating_stats: wargaming::RatingStatistics,
+    rating_stats: wargaming::RatingStats,
 ) -> Result<StatsDelta> {
     debug!("taking the slow path");
     let actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank> = actual_tanks

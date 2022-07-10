@@ -5,7 +5,7 @@ use crate::math::traits::{DamageDealt, NBattles, NWins};
 
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
-pub struct BasicStatistics {
+pub struct BasicStats {
     #[serde(rename = "battles")]
     pub n_battles: i32,
 
@@ -22,7 +22,7 @@ pub struct BasicStatistics {
     pub xp: i32,
 }
 
-impl From<&database::RandomStatsSnapshot> for BasicStatistics {
+impl From<&database::RandomStatsSnapshot> for BasicStats {
     fn from(snapshot: &database::RandomStatsSnapshot) -> Self {
         Self {
             n_battles: snapshot.n_battles,
@@ -39,34 +39,34 @@ impl From<&database::RandomStatsSnapshot> for BasicStatistics {
     }
 }
 
-impl NBattles for BasicStatistics {
+impl NBattles for BasicStats {
     fn n_battles(&self) -> i32 {
         self.n_battles
     }
 }
 
-impl NWins for BasicStatistics {
+impl NWins for BasicStats {
     fn n_wins(&self) -> i32 {
         self.n_wins
     }
 }
 
-impl DamageDealt for BasicStatistics {
+impl DamageDealt for BasicStats {
     fn damage_dealt(&self) -> i32 {
         self.damage_dealt
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
-pub struct RatingStatistics {
+pub struct RatingStats {
     #[serde(flatten)]
-    pub basic: BasicStatistics,
+    pub basic: BasicStats,
 
     #[serde(default)]
     pub mm_rating: f64,
 }
 
-impl RatingStatistics {
+impl RatingStats {
     #[must_use]
     pub fn rating(&self) -> f64 {
         self.mm_rating * 10.0 + 3000.0

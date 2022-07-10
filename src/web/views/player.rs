@@ -61,7 +61,7 @@ pub async fn get(
                     div.navbar-item title="Боев" {
                         span.icon-text {
                             span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                            span { (view_model.actual_info.statistics.n_total_battles()) }
+                            span { (view_model.actual_info.stats.n_total_battles()) }
                         }
                     }
 
@@ -260,7 +260,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Сейчас" }
-                                                    @let rating = view_model.actual_info.statistics.rating.rating();
+                                                    @let rating = view_model.actual_info.stats.rating.rating();
                                                     p.title title=(rating) { (format!("{:.0}", rating)) }
                                                 }
                                             }
@@ -284,7 +284,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Случайные бои" }
-                                                    @let win_rate = 100.0 * view_model.actual_info.statistics.all.current_win_rate();
+                                                    @let win_rate = 100.0 * view_model.actual_info.stats.random.current_win_rate();
                                                     p.title title=(win_rate) {
                                                         (format!("{:.2}", win_rate))
                                                         span.has-text-grey-light { "%" }
@@ -294,7 +294,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Рейтинговые бои" }
-                                                    @let win_rate = 100.0 * view_model.actual_info.statistics.rating.basic.current_win_rate();
+                                                    @let win_rate = 100.0 * view_model.actual_info.stats.rating.basic.current_win_rate();
                                                     p.title title=(win_rate) {
                                                         (format!("{:.2}", win_rate))
                                                         span.has-text-grey-light { "%" }
@@ -321,7 +321,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Случайные бои" }
-                                                    @let damage_dealt = view_model.actual_info.statistics.all.average_damage_dealt();
+                                                    @let damage_dealt = view_model.actual_info.stats.random.average_damage_dealt();
                                                     p.title title=(damage_dealt) {
                                                         (format!("{:.0}", damage_dealt))
                                                     }
@@ -330,7 +330,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Рейтинговые бои" }
-                                                    @let damage_dealt = view_model.actual_info.statistics.rating.basic.average_damage_dealt();
+                                                    @let damage_dealt = view_model.actual_info.stats.rating.basic.average_damage_dealt();
                                                     p.title title=(damage_dealt) {
                                                         (format!("{:.0}", damage_dealt))
                                                     }

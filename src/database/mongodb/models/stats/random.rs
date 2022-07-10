@@ -53,8 +53,8 @@ impl NWins for RandomStatsSnapshot {
     }
 }
 
-impl From<wargaming::BasicStatistics> for RandomStatsSnapshot {
-    fn from(statistics: wargaming::BasicStatistics) -> Self {
+impl From<wargaming::BasicStats> for RandomStatsSnapshot {
+    fn from(statistics: wargaming::BasicStats) -> Self {
         Self {
             n_battles: statistics.n_battles,
             n_wins: statistics.n_wins,
