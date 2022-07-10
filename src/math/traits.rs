@@ -21,7 +21,7 @@ pub trait MMRating {
 
     #[must_use]
     fn display_rating(&self) -> i32 {
-        (self.mm_rating() * 10.0 + 3000.0).round() as i32
+        (self.mm_rating() * 10.0 + 3000.0) as i32
     }
 }
 
