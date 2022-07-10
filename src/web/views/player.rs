@@ -46,50 +46,6 @@ pub async fn get(
     let view_model =
         ViewModel::new(real_ip.0, path, query, *mongodb, *info_cache, *tanks_cache).await?;
 
-    let navbar = html! {
-        nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-            div.container {
-                div.navbar-brand {
-                    (home_button())
-
-                    div.navbar-item title="Последний бой" {
-                        time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
-                            datetime=(view_model.actual_info.last_battle_time.to_rfc3339())
-                            title=(view_model.actual_info.last_battle_time) {
-                                (datetime(view_model.actual_info.last_battle_time, Tense::Past))
-                            }
-                    }
-
-                    div.navbar-item title="Боев" {
-                        span.icon-text {
-                            span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                            span { (view_model.actual_info.stats.n_total_battles()) }
-                        }
-                    }
-
-                    div.navbar-item title="Возраст аккаунта" {
-                        span.icon-text {
-                            @if view_model.actual_info.is_account_birthday() {
-                                span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
-                            } @else {
-                                span.icon { i.far.fa-calendar-alt {} }
-                            }
-                            span title=(view_model.actual_info.created_at) {
-                                (datetime(view_model.actual_info.created_at, Tense::Present))
-                            }
-                        }
-                    }
-                }
-                div.navbar-menu.is-active {
-                    div.navbar-end {
-                        form.navbar-item action="/search" method="GET" {
-                            (account_search("", view_model.realm, &view_model.actual_info.nickname, false, view_model.actual_info.is_prerelease_account()))
-                        }
-                    }
-                }
-            }
-        }
-    };
     let vehicles_thead = html! {
         tr {
             th {
@@ -240,7 +196,48 @@ pub async fn get(
             body {
                 (tracking_code.0)
 
-                (navbar)
+                nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
+                    div.container {
+                        div.navbar-brand {
+                            (home_button())
+
+                            div.navbar-item title="Последний бой" {
+                                time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
+                                    datetime=(view_model.actual_info.last_battle_time.to_rfc3339())
+                                    title=(view_model.actual_info.last_battle_time) {
+                                        (datetime(view_model.actual_info.last_battle_time, Tense::Past))
+                                    }
+                            }
+
+                            div.navbar-item title="Боев" {
+                                span.icon-text {
+                                    span.icon { i.fas.fa-sort-numeric-up-alt {} }
+                                    span { (view_model.actual_info.stats.n_total_battles()) }
+                                }
+                            }
+
+                            div.navbar-item title="Возраст аккаунта" {
+                                span.icon-text {
+                                    @if view_model.actual_info.is_account_birthday() {
+                                        span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
+                                    } @else {
+                                        span.icon { i.far.fa-calendar-alt {} }
+                                    }
+                                    span title=(view_model.actual_info.created_at) {
+                                        (datetime(view_model.actual_info.created_at, Tense::Present))
+                                    }
+                                }
+                            }
+                        }
+                        div.navbar-menu.is-active {
+                            div.navbar-end {
+                                form.navbar-item action="/search" method="GET" {
+                                    (account_search("", view_model.realm, &view_model.actual_info.nickname, false, view_model.actual_info.is_prerelease_account()))
+                                }
+                            }
+                        }
+                    }
+                }
 
                 section.section.has-background-info-light."pt-5" {
                     p.subtitle.has-text-weight-medium { "За все время" }
