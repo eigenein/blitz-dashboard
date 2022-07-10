@@ -1,4 +1,6 @@
 use std::collections::hash_map::Entry;
+use std::collections::BTreeMap;
+use std::net::IpAddr;
 
 use either::Either;
 use futures::future::try_join;
@@ -7,8 +9,8 @@ use mongodb::bson;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::{Path, Query};
 use poem::Result;
+use sentry::protocol::IpAddress;
 
-use crate::helpers::sentry::set_user;
 use crate::math::statistics::ConfidenceInterval;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -26,16 +28,23 @@ pub struct ViewModel {
 
 impl ViewModel {
     pub async fn new(
+        ip_addr: Option<IpAddr>,
         Path(Segments { realm, account_id }): Path<Segments>,
         query: Query<Params>,
         mongodb: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
     ) -> Result<Self> {
+        let mut user = get_sentry_user(realm, account_id, ip_addr)?;
+        sentry::configure_scope(|scope| scope.set_user(Some(user.clone())));
+
         let (actual_info, actual_tanks) =
             try_join(info_cache.get(realm, account_id), tanks_cache.get(realm, account_id)).await?;
         let actual_info = actual_info.ok_or(NotFoundError)?;
-        set_user(&actual_info.nickname);
+
+        user.username = Some(actual_info.nickname.clone());
+        sentry::configure_scope(|scope| scope.set_user(Some(user)));
+
         database::Account::new(realm, account_id)
             .upsert(mongodb, database::Account::OPERATION_SET_ON_INSERT)
             .await?;
@@ -85,6 +94,22 @@ impl ViewModel {
             stats_delta,
         })
     }
+}
+
+fn get_sentry_user(
+    realm: wargaming::Realm,
+    account_id: wargaming::AccountId,
+    ip_addr: Option<IpAddr>,
+) -> Result<sentry::User> {
+    Ok(sentry::User {
+        id: Some(account_id.to_string()),
+        ip_address: ip_addr.map(IpAddress::Exact),
+        other: BTreeMap::from([(
+            "realm".to_string(),
+            serde_json::to_value(realm).map_err(InternalServerError)?,
+        )]),
+        ..Default::default()
+    })
 }
 
 pub struct StatsDelta {

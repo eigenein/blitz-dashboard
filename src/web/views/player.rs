@@ -7,7 +7,7 @@ use std::time::Instant;
 use chrono_humanize::Tense;
 use humantime::format_duration;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
-use poem::web::{Data, Html, Path, Query};
+use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
@@ -39,10 +39,12 @@ pub async fn get(
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
+    real_ip: RealIp,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
     let period = query.period.0;
-    let view_model = ViewModel::new(path, query, *mongodb, *info_cache, *tanks_cache).await?;
+    let view_model =
+        ViewModel::new(real_ip.0, path, query, *mongodb, *info_cache, *tanks_cache).await?;
 
     let navbar = html! {
         nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
