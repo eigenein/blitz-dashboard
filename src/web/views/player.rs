@@ -88,23 +88,6 @@ pub async fn get(
             }
         }
     };
-    let tabs = html! {
-        nav.tabs.is-boxed.has-text-weight-medium {
-            div.container {
-                ul {
-                    (render_period_li(period, from_days(1), "24 часа"))
-                    (render_period_li(period, from_days(2), "2 дня"))
-                    (render_period_li(period, from_days(3), "3 дня"))
-                    (render_period_li(period, from_days(7), "Неделя"))
-                    (render_period_li(period, from_days(14), "2 недели"))
-                    (render_period_li(period, from_days(21), "3 недели"))
-                    (render_period_li(period, from_months(1), "Месяц"))
-                    (render_period_li(period, from_months(2), "2 месяца"))
-                    (render_period_li(period, from_months(3), "3 месяца"))
-                }
-            }
-        }
-    };
     let vehicles_thead = html! {
         tr {
             th {
@@ -362,7 +345,21 @@ pub async fn get(
                 }
 
                 section.section."pt-5" {
-                    (tabs)
+                    nav.tabs.is-boxed.has-text-weight-medium {
+                        div.container {
+                            ul {
+                                (render_period_li(period, from_days(1), "24 часа"))
+                                (render_period_li(period, from_days(2), "2 дня"))
+                                (render_period_li(period, from_days(3), "3 дня"))
+                                (render_period_li(period, from_days(7), "Неделя"))
+                                (render_period_li(period, from_days(14), "2 недели"))
+                                (render_period_li(period, from_days(21), "3 недели"))
+                                (render_period_li(period, from_months(1), "Месяц"))
+                                (render_period_li(period, from_months(2), "2 месяца"))
+                                (render_period_li(period, from_months(3), "3 месяца"))
+                            }
+                        }
+                    }
 
                     div.container {
                         @if view_model.stats_delta.rating.n_battles != 0 {
