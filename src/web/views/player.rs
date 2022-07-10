@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use chrono_humanize::Tense;
 use humantime::format_duration;
-use maud::{html, Markup, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::error::InternalServerError;
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
@@ -752,8 +752,9 @@ pub async fn get(
 
                 @if !view_model.rating_snapshots_data.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
-                    script { (format!(r##"
+                    script { (PreEscaped(format!(r##"
                         'use strict';
+                        const mode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
                         new ApexCharts(document.getElementById('rating-chart'), {{
                             chart: {{
                                 type: 'line',
@@ -773,8 +774,9 @@ pub async fn get(
                                 {{y: 4000, borderColor: 'hsl(141, 71%, 48%)'}},
                                 {{y: 3000, borderColor: 'hsl(48, 100%, 67%)'}},
                             ]}},
+                            theme: {{mode: mode}},
                         }}).render();
-                    "##, serde_json::to_string(&view_model.rating_snapshots_data).map_err(InternalServerError)?)) }
+                    "##, serde_json::to_string(&view_model.rating_snapshots_data).map_err(InternalServerError)?))) }
                 }
             }
         }
