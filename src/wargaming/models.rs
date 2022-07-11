@@ -42,7 +42,7 @@ pub struct FoundAccount {
 /// Merges tank statistics and tank achievements into a single tank structure.
 pub fn merge_tanks(
     account_id: AccountId,
-    mut statistics: Vec<TankStatistics>,
+    mut statistics: Vec<TankStats>,
     mut achievements: Vec<TankAchievements>,
 ) -> AHashMap<TankId, Tank> {
     statistics.sort_unstable_by_key(|snapshot| snapshot.tank_id);

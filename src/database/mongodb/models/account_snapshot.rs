@@ -4,7 +4,7 @@ use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot};
+use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
@@ -29,14 +29,14 @@ pub struct AccountSnapshot {
     pub rating_stats: RatingStatsSnapshot,
 
     #[serde(rename = "t")]
-    pub tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
+    pub tank_last_battle_times: Vec<TankLastBattleTime>,
 }
 
 impl AccountSnapshot {
     pub fn new(
         realm: wargaming::Realm,
         account_info: wargaming::AccountInfo,
-        tank_last_battle_times: Vec<(wargaming::TankId, bson::DateTime)>,
+        tank_last_battle_times: Vec<TankLastBattleTime>,
     ) -> Self {
         Self {
             realm,

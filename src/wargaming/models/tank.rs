@@ -2,14 +2,14 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::wargaming::{AccountId, BasicStats, TankAchievements, TankId, TankStatistics};
+use crate::wargaming::{AccountId, BasicStats, TankAchievements, TankId, TankStats};
 use crate::{database, wargaming, AHashMap};
 
 /// Represents a state of a specific player's tank at a specific moment in time.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Tank {
     pub account_id: AccountId,
-    pub statistics: TankStatistics,
+    pub statistics: TankStats,
     pub achievements: TankAchievements,
 }
 

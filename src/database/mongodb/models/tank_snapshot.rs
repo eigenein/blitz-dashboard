@@ -5,7 +5,7 @@ use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-use crate::database::{RandomStatsSnapshot, Root};
+use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
@@ -148,12 +148,12 @@ impl TankSnapshot {
         from: &Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        tank_last_battle_times: impl IntoIterator<Item = &(wargaming::TankId, bson::DateTime)>,
+        tank_last_battle_times: impl IntoIterator<Item = &TankLastBattleTime>,
     ) -> Result<Vec<Self>> {
         let start_instant = Instant::now();
         let or_clauses = tank_last_battle_times
             .into_iter()
-            .map(|(tank_id, last_battle_time)| doc! { "tid": tank_id, "lbts": last_battle_time })
+            .map(|item| doc! { "tid": item.tank_id, "lbts": item.last_battle_time})
             .collect_vec();
         debug!(n_or_clauses = or_clauses.len());
         if or_clauses.is_empty() {

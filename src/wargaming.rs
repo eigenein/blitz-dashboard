@@ -128,7 +128,7 @@ impl WargamingApi {
         &self,
         realm: Realm,
         account_id: AccountId,
-    ) -> Result<Vec<TankStatistics>> {
+    ) -> Result<Vec<TankStats>> {
         let url = match realm {
             Realm::Asia => "https://api.wotblitz.asia/wotb/tanks/stats/",
             Realm::Europe => "https://api.wotblitz.eu/wotb/tanks/stats/",

@@ -2,7 +2,6 @@ use std::collections::hash_map::Entry;
 
 use either::Either;
 use itertools::Itertools;
-use mongodb::bson;
 
 use crate::prelude::*;
 use crate::wargaming::subtract_tanks;
@@ -73,13 +72,12 @@ impl StatsDelta {
             account_snapshot
                 .tank_last_battle_times
                 .iter()
-                .filter(|(tank_id, last_battle_time)| {
-                    let tank_entry = actual_tanks.entry(*tank_id);
+                .filter(|item| {
+                    let tank_entry = actual_tanks.entry(item.tank_id);
                     match tank_entry {
                         Entry::Occupied(entry) => {
                             let keep =
-                                bson::DateTime::from(entry.get().statistics.last_battle_time)
-                                    > *last_battle_time;
+                                entry.get().statistics.last_battle_time > item.last_battle_time;
                             if !keep {
                                 entry.remove();
                             }

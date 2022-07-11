@@ -5,7 +5,6 @@ use std::sync::Arc;
 
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
-use mongodb::bson;
 use tokio::sync::Mutex;
 use tokio::time::timeout;
 
@@ -242,7 +241,7 @@ async fn crawl_account(
     let statistics = api.get_tanks_stats(realm, account.id).await?;
     let tank_last_battle_times = statistics
         .iter()
-        .map(|item| (item.tank_id, bson::DateTime::from(item.last_battle_time)))
+        .map(database::TankLastBattleTime::from)
         .collect_vec();
 
     let updated_statistics = match account.last_battle_time {
