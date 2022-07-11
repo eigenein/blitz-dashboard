@@ -36,7 +36,6 @@ pub fn account_search(
                     autocapitalize="none"
                     minlength=(MIN_QUERY_LENGTH)
                     maxlength=(MAX_QUERY_LENGTH)
-                    onclick="this.select();"
                     spellcheck="false"
                     autocorrect="off"
                     aria-label="search"

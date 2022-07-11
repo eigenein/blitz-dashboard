@@ -231,7 +231,7 @@ pub async fn get(
                         div.navbar-menu.is-active {
                             div.navbar-end {
                                 form.navbar-item action="/search" method="GET" {
-                                    (account_search("", view_model.realm, &view_model.actual_info.nickname, false, view_model.actual_info.is_prerelease_account()))
+                                    (account_search("", view_model.realm, "", false, view_model.actual_info.is_prerelease_account()))
                                 }
                             }
                         }
@@ -239,7 +239,7 @@ pub async fn get(
                 }
 
                 section.section.has-background-info-light."pt-5" {
-                    p.subtitle.has-text-weight-medium { "Сводка" }
+                    p.subtitle.has-text-weight-medium { (view_model.actual_info.nickname) }
 
                     div.container {
                         div.columns.is-multiline {
