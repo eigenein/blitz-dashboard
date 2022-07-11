@@ -125,7 +125,12 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(self.api.clone(), self.realm, account, account_info))
+                Ok(crawl_account(
+                    self.api.clone(),
+                    self.realm,
+                    account.last_battle_time,
+                    account_info,
+                ))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -205,41 +210,37 @@ fn match_account_infos(
         .collect()
 }
 
-/// Crawls account from Wargaming.net API, including the tank statistics and achievements.
+/// Crawls account's tank statistics and achievements.
 ///
 /// # Returns
 ///
-/// Updated account information and account's tanks.
-#[instrument(
-    skip_all,
-    level = "debug",
-    fields(account.id = account.id),
-)]
+/// Updated account, snapshot of the account and snapshots of its tanks.
+#[instrument(skip_all, level = "debug", fields(account_id = account_info.id))]
 async fn crawl_account(
     api: WargamingApi,
     realm: wargaming::Realm,
-    mut account: database::Account,
+    last_known_battle_time: Option<DateTime>,
     account_info: wargaming::AccountInfo,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
-    debug!(?account.last_battle_time);
+    debug!(?last_known_battle_time);
 
-    let tanks_stats = api.get_tanks_stats(realm, account.id).await?;
+    let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
     let tank_last_battle_times = tanks_stats
         .iter()
-        .map(database::TankLastBattleTime::from)
+        .map_into::<database::TankLastBattleTime>()
         .collect_vec();
 
-    let updated_tanks_stats = match account.last_battle_time {
-        Some(account_last_battle_time) => tanks_stats
+    let updated_tanks_stats = match last_known_battle_time {
+        Some(last_known_battle_time) => tanks_stats
             .into_iter()
-            .filter(|tank| tank.last_battle_time > account_last_battle_time)
+            .filter(|tank| tank.last_battle_time > last_known_battle_time)
             .collect(),
         None => tanks_stats,
     };
     let tank_snapshots = if !updated_tanks_stats.is_empty() {
         debug!(n_updated_tanks = updated_tanks_stats.len());
-        let achievements = api.get_tanks_achievements(realm, account.id).await?;
-        let tanks = wargaming::merge_tanks(account.id, updated_tanks_stats, achievements);
+        let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
+        let tanks = wargaming::merge_tanks(account_info.id, updated_tanks_stats, achievements);
         debug!(n_tanks = tanks.len(), "crawled");
         tanks
             .into_values()
@@ -250,7 +251,12 @@ async fn crawl_account(
         Vec::new()
     };
 
-    account.last_battle_time = Some(account_info.last_battle_time);
+    let account = database::Account {
+        id: account_info.id,
+        realm,
+        last_battle_time: Some(account_info.last_battle_time),
+        random: fastrand::f64(),
+    };
     let account_snapshot =
         database::AccountSnapshot::new(realm, account_info, tank_last_battle_times);
 
