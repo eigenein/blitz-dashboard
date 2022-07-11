@@ -114,15 +114,7 @@ impl Crawler {
                 let api = self.api.clone();
                 let metrics = self.metrics.clone();
                 let heartbeat_url = heartbeat_url.clone();
-
-                Ok(async move {
-                    timeout(
-                        TIMEOUT,
-                        crawl_batch(api, self.realm, batch, batch_number, metrics, heartbeat_url),
-                    )
-                    .await
-                    .with_context(|| format!("timed out to crawl batch #{}", batch_number))?
-                })
+                Ok(crawl_batch(api, self.realm, batch, batch_number, metrics, heartbeat_url))
             })
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
@@ -133,14 +125,7 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                let api = self.api.clone();
-
-                Ok(async move {
-                    let account_id = account.id;
-                    timeout(TIMEOUT, crawl_account(&api, self.realm, account, account_info))
-                        .await?
-                        .with_context(|| format!("timed out to crawl account #{}", account_id))
-                })
+                Ok(crawl_account(self.api.clone(), self.realm, account, account_info))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -231,7 +216,7 @@ fn match_account_infos(
     fields(account.id = account.id),
 )]
 async fn crawl_account(
-    api: &WargamingApi,
+    api: WargamingApi,
     realm: wargaming::Realm,
     mut account: database::Account,
     account_info: wargaming::AccountInfo,
