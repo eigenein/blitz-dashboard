@@ -100,7 +100,6 @@ impl WargamingApi {
         realm: Realm,
         account_ids: &[AccountId],
     ) -> Result<HashMap<String, Option<AccountInfo>>> {
-        trace!("entered");
         if account_ids.is_empty() {
             return Ok(HashMap::new());
         }
@@ -130,7 +129,6 @@ impl WargamingApi {
         realm: Realm,
         account_id: AccountId,
     ) -> Result<Vec<TankStatistics>> {
-        trace!("entered");
         let url = match realm {
             Realm::Asia => "https://api.wotblitz.asia/wotb/tanks/stats/",
             Realm::Europe => "https://api.wotblitz.eu/wotb/tanks/stats/",
@@ -151,7 +149,6 @@ impl WargamingApi {
         realm: Realm,
         account_id: AccountId,
     ) -> Result<Vec<TankAchievements>> {
-        trace!("entered");
         let url = match realm {
             Realm::Asia => "https://api.wotblitz.asia/wotb/tanks/achievements/",
             Realm::Europe => "https://api.wotblitz.eu/wotb/tanks/achievements/",
@@ -184,7 +181,6 @@ impl WargamingApi {
         url: &str,
         account_id: AccountId,
     ) -> Result<Option<T>> {
-        trace!("entered");
         let account_id = account_id.to_string();
         let mut map: HashMap<String, Option<T>> = self
             .call(Url::parse_with_params(
@@ -200,7 +196,6 @@ impl WargamingApi {
 
     #[instrument(skip_all, level = "debug", fields(path = url.path()))]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
-        trace!("entered");
         for nr_attempt in 1..=10 {
             match self.call_once(url.clone()).await {
                 Ok(response) => match response {
@@ -241,7 +236,6 @@ impl WargamingApi {
         &self,
         url: Url,
     ) -> StdResult<Response<T>, reqwest::Error> {
-        trace!("entered");
         self.rate_limiter
             .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
             .await;
