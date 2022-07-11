@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::net::IpAddr;
 
 use futures::future::try_join;
+use mongodb::Database;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::{Path, Query};
 use poem::Result;
@@ -65,15 +66,15 @@ impl ViewModel {
             .map(|snapshot| snapshot.battle_life_time.num_seconds())
             .sum::<i64>() as f64;
 
-        let rating_snapshots_data =
-            database::RatingSnapshot::retrieve_latest(mongodb, realm, account_id, 10)
-                .await
-                .map_err(poem::Error::from)?
-                .into_iter()
-                .map(|snapshot| {
-                    (snapshot.last_battle_time.timestamp_millis(), snapshot.display_rating())
-                })
-                .collect();
+        let rating_snapshots_data = Self::retrieve_rating_snapshots_data(
+            mongodb,
+            realm,
+            account_id,
+            actual_info.last_battle_time,
+            actual_info.stats.rating.mm_rating,
+        )
+        .await
+        .map_err(poem::Error::from)?;
 
         Ok(Self {
             realm,
@@ -83,6 +84,37 @@ impl ViewModel {
             stats_delta,
             rating_snapshots_data,
         })
+    }
+
+    async fn retrieve_rating_snapshots_data(
+        from: &Database,
+        realm: wargaming::Realm,
+        account_id: wargaming::AccountId,
+        last_battle_time: DateTime,
+        actual_mm_rating: f64,
+    ) -> Result<Vec<(i64, i32)>> {
+        let mut rating_snapshots =
+            database::RatingSnapshot::retrieve_latest(from, realm, account_id, 10)
+                .await
+                .map_err(poem::Error::from)?;
+        rating_snapshots.reverse();
+        if rating_snapshots
+            .last()
+            .map(|snapshot| snapshot.last_battle_time < last_battle_time)
+            .unwrap_or_default()
+        {
+            rating_snapshots.push(database::RatingSnapshot {
+                last_battle_time,
+                mm_rating: actual_mm_rating,
+            });
+        }
+        let rating_snapshots_data = rating_snapshots
+            .into_iter()
+            .map(|snapshot| {
+                (snapshot.last_battle_time.timestamp_millis(), snapshot.display_rating())
+            })
+            .collect();
+        Ok(rating_snapshots_data)
     }
 }
 
