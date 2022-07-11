@@ -28,7 +28,7 @@ clap = { version = "3.1.12", features = ["cargo", "derive", "env"] }
 governor = "0.4.2"
 either = "1.6.1"
 fastrand = "1.7.0"
-fred = { version = "5.0.0", default-features = false, features = ["partial-tracing"] }
+fred = { version = "5.1.0", default-features = false, features = ["partial-tracing", "no-client-setname"] }
 futures = { version = "0.3.21", default-features = false }
 humantime = "2.1.0"
 itertools = "0.10.3"
