@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 pub use account_id::*;
 pub use account_info::*;
 pub use nation::*;
@@ -19,10 +17,10 @@ pub mod tank_id;
 pub mod tank_statistics;
 pub mod vehicle;
 
-#[allow(dead_code)]
-pub type ResultMap<T> = HashMap<String, Option<T>>;
+#[cfg(test)]
+pub type ResultMap<T> = std::collections::HashMap<String, Option<T>>;
 
-#[allow(dead_code)]
+#[cfg(test)]
 pub type ResultMapVec<T> = ResultMap<Vec<T>>;
 
 /// Search accounts item.

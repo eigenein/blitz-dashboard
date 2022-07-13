@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::net::IpAddr;
 
 use futures::future::try_join;
-use mongodb::Database;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::{Path, Query};
 use poem::Result;
@@ -87,7 +86,7 @@ impl ViewModel {
     }
 
     async fn retrieve_rating_snapshots_data(
-        from: &Database,
+        from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
         last_battle_time: DateTime,
