@@ -225,6 +225,7 @@ async fn crawl_account(
     debug!(?last_known_battle_time);
 
     let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
+    debug!(n_tanks_stats = tanks_stats.len());
     let tank_last_battle_times = tanks_stats
         .iter()
         .map_into::<database::TankLastBattleTime>()
@@ -269,7 +270,11 @@ async fn update_account(
 ) -> Result {
     let connection = connection.borrow();
 
-    debug!(n_tanks = tank_snapshots.len(), "updating account…");
+    debug!(
+        last_battle_time = ?account.last_battle_time,
+        n_tank_snapshots = tank_snapshots.len(),
+        "updating account…",
+    );
     let start_instant = Instant::now();
 
     for tank_snapshot in tank_snapshots.into_iter() {
