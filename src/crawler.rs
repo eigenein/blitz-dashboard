@@ -125,12 +125,15 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(
+                let future = crawl_account(
                     self.api.clone(),
                     self.realm,
                     account.last_battle_time,
                     account_info,
-                ))
+                    None,
+                    None,
+                );
+                Ok(future)
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -221,10 +224,15 @@ async fn crawl_account(
     realm: wargaming::Realm,
     last_known_battle_time: Option<DateTime>,
     account_info: wargaming::AccountInfo,
+    prefetched_tanks_stats: Option<Vec<wargaming::TankStats>>,
+    prefetched_tanks_achievements: Option<Vec<wargaming::TankAchievements>>,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?last_known_battle_time);
 
-    let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
+    let tanks_stats = match prefetched_tanks_stats {
+        Some(tanks_stats) => tanks_stats,
+        None => api.get_tanks_stats(realm, account_info.id).await?,
+    };
     debug!(n_tanks_stats = tanks_stats.len());
     let tank_last_battle_times = tanks_stats
         .iter()
@@ -240,7 +248,10 @@ async fn crawl_account(
     };
     let tank_snapshots = if !updated_tanks_stats.is_empty() {
         debug!(n_updated_tanks = updated_tanks_stats.len());
-        let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
+        let achievements = match prefetched_tanks_achievements {
+            Some(tanks_achievements) => tanks_achievements,
+            None => api.get_tanks_achievements(realm, account_info.id).await?,
+        };
         database::TankSnapshot::from_vec(realm, account_info.id, updated_tanks_stats, achievements)
     } else {
         trace!("no updated tanks");
