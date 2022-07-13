@@ -1,3 +1,5 @@
+use std::ops::Sub;
+
 use futures::TryStreamExt;
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use mongodb::bson::{doc, from_document};
@@ -71,7 +73,6 @@ impl TankSnapshot {
     }
 
     pub fn subtract_collections(
-        realm: wargaming::Realm,
         mut actual_tanks: AHashMap<wargaming::TankId, Self>,
         snapshots: Vec<Self>,
     ) -> Vec<Self> {
@@ -83,14 +84,8 @@ impl TankSnapshot {
                     .map(|actual_tank| (snapshot, actual_tank))
             })
             .filter_map(|(snapshot, actual_tank)| {
-                (actual_tank.stats.n_battles != snapshot.stats.n_battles).then(|| Self {
-                    realm,
-                    last_battle_time: actual_tank.last_battle_time,
-                    account_id: snapshot.account_id,
-                    tank_id: snapshot.tank_id,
-                    battle_life_time: actual_tank.battle_life_time - snapshot.battle_life_time,
-                    stats: actual_tank.stats - snapshot.stats,
-                })
+                (actual_tank.stats.n_battles != snapshot.stats.n_battles)
+                    .then(|| actual_tank - snapshot)
             })
             .collect();
         subtracted.extend(
@@ -99,6 +94,21 @@ impl TankSnapshot {
                 .filter(|tank| tank.stats.n_battles != 0),
         );
         subtracted
+    }
+}
+
+impl Sub<TankSnapshot> for TankSnapshot {
+    type Output = Self;
+
+    fn sub(self, rhs: TankSnapshot) -> Self::Output {
+        Self {
+            realm: self.realm,
+            last_battle_time: self.last_battle_time,
+            account_id: self.account_id,
+            tank_id: self.tank_id,
+            battle_life_time: self.battle_life_time - rhs.battle_life_time,
+            stats: self.stats - rhs.stats,
+        }
     }
 }
 
