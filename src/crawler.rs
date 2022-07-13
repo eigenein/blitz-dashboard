@@ -291,9 +291,7 @@ async fn update_account(
         .context("timed out to upsert the account")??;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted");
 
-    let mut metrics = timeout(TIMEOUT, metrics.lock())
-        .await
-        .context("timed out to lock the metrics")?;
+    let mut metrics = metrics.lock().await;
     metrics.add_account(account_snapshot.account_id);
     metrics.add_lag_from(account_snapshot.last_battle_time);
     drop(metrics);

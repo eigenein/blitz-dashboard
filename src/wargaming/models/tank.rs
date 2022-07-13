@@ -1,28 +1,11 @@
 use std::ops::Sub;
 
-use serde::{Deserialize, Serialize};
-
-use crate::wargaming::{AccountId, BasicStats, TankAchievements, TankId, TankStats};
+use crate::wargaming::{BasicStats, TankId};
 use crate::{database, wargaming, AHashMap};
-
-/// Represents a state of a specific player's tank at a specific moment in time.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Tank {
-    pub account_id: AccountId,
-    pub statistics: TankStats,
-    pub achievements: TankAchievements,
-}
-
-impl Tank {
-    #[must_use]
-    pub fn tank_id(&self) -> TankId {
-        self.statistics.tank_id
-    }
-}
 
 pub fn subtract_tanks(
     realm: wargaming::Realm,
-    mut actual_tanks: AHashMap<TankId, Tank>,
+    mut actual_tanks: AHashMap<TankId, database::TankSnapshot>,
     snapshots: Vec<database::TankSnapshot>,
 ) -> Vec<database::TankSnapshot> {
     let mut subtracted: Vec<database::TankSnapshot> = snapshots
@@ -33,15 +16,14 @@ pub fn subtract_tanks(
                 .map(|actual_tank| (snapshot, actual_tank))
         })
         .filter_map(|(snapshot, actual_tank)| {
-            (actual_tank.statistics.all.n_battles != snapshot.stats.n_battles).then(|| {
+            (actual_tank.stats.n_battles != snapshot.stats.n_battles).then(|| {
                 database::TankSnapshot {
                     realm,
-                    last_battle_time: actual_tank.statistics.last_battle_time,
+                    last_battle_time: actual_tank.last_battle_time,
                     account_id: snapshot.account_id,
                     tank_id: snapshot.tank_id,
-                    battle_life_time: actual_tank.statistics.battle_life_time
-                        - snapshot.battle_life_time,
-                    stats: actual_tank.statistics.all - snapshot.stats,
+                    battle_life_time: actual_tank.battle_life_time - snapshot.battle_life_time,
+                    stats: actual_tank.stats - snapshot.stats,
                 }
             })
         })
@@ -49,8 +31,7 @@ pub fn subtract_tanks(
     subtracted.extend(
         actual_tanks
             .into_values()
-            .filter(|tank| tank.statistics.all.n_battles != 0)
-            .map(|tank| database::TankSnapshot::from_tank(realm, tank)),
+            .filter(|tank| tank.stats.n_battles != 0),
     );
     subtracted
 }

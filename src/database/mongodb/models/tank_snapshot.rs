@@ -35,17 +35,6 @@ pub struct TankSnapshot {
 }
 
 impl TankSnapshot {
-    pub fn from_tank(realm: wargaming::Realm, tank: wargaming::Tank) -> Self {
-        Self {
-            realm,
-            last_battle_time: tank.statistics.last_battle_time,
-            account_id: tank.account_id,
-            tank_id: tank.statistics.tank_id as u32,
-            battle_life_time: tank.statistics.battle_life_time,
-            stats: tank.statistics.all.into(),
-        }
-    }
-
     pub fn from(
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,

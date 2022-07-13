@@ -1,4 +1,5 @@
 use std::iter::Sum;
+use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
@@ -66,6 +67,25 @@ impl From<wargaming::BasicStats> for RandomStatsSnapshot {
             n_hits: statistics.hits,
             n_frags: statistics.frags,
             xp: statistics.xp,
+        }
+    }
+}
+
+impl Sub<RandomStatsSnapshot> for RandomStatsSnapshot {
+    type Output = Self;
+
+    fn sub(self, rhs: RandomStatsSnapshot) -> Self::Output {
+        Self {
+            n_battles: self.n_battles - rhs.n_battles,
+            n_wins: self.n_wins - rhs.n_wins,
+            n_survived_battles: self.n_survived_battles - rhs.n_survived_battles,
+            n_win_and_survived: self.n_win_and_survived - rhs.n_win_and_survived,
+            damage_dealt: self.damage_dealt - rhs.damage_dealt,
+            damage_received: self.damage_received - rhs.damage_received,
+            n_shots: self.n_shots - rhs.n_shots,
+            n_hits: self.n_hits - rhs.n_hits,
+            n_frags: self.n_frags - rhs.n_frags,
+            xp: self.xp - rhs.xp,
         }
     }
 }

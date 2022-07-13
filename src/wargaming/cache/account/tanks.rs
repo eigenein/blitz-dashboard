@@ -4,9 +4,9 @@ use fred::types::RedisKey;
 use futures::future::try_join;
 use tracing::{debug, instrument};
 
+use crate::database;
 use crate::helpers::compression::{compress, decompress};
 use crate::prelude::*;
-use crate::wargaming::models::{merge_tanks, Tank};
 use crate::wargaming::{AccountId, Realm, TankId, WargamingApi};
 
 #[derive(Clone)]
@@ -23,7 +23,11 @@ impl AccountTanksCache {
     }
 
     #[instrument(skip_all, fields(realm = ?realm, account_id = account_id))]
-    pub async fn get(&self, realm: Realm, account_id: AccountId) -> Result<AHashMap<TankId, Tank>> {
+    pub async fn get(
+        &self,
+        realm: Realm,
+        account_id: AccountId,
+    ) -> Result<AHashMap<TankId, database::TankSnapshot>> {
         let cache_key = Self::cache_key(realm, account_id);
 
         if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
@@ -36,17 +40,18 @@ impl AccountTanksCache {
             let get_achievements = self.api.get_tanks_achievements(realm, account_id);
             try_join(get_statistics, get_achievements).await?
         };
-        let tanks = merge_tanks(account_id, statistics, achievements);
-        let blob = compress(&rmp_serde::to_vec(&tanks)?).await?;
+        let snapshots =
+            database::TankSnapshot::from_vec(realm, account_id, statistics, achievements);
+        let blob = compress(&rmp_serde::to_vec(&snapshots)?).await?;
         debug!(account_id, n_bytes = blob.len(), "set cache");
         self.redis
             .set(&cache_key, blob.as_slice(), Self::EXPIRE, None, false)
             .await?;
-        Ok(tanks)
+        Ok(snapshots)
     }
 
     #[inline]
     fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:3:a:t:{}:{}", realm.to_str(), account_id))
+        RedisKey::from(format!("cache:4:a:t:{}:{}", realm.to_str(), account_id))
     }
 }

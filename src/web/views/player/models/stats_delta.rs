@@ -25,7 +25,7 @@ impl StatsDelta {
         account_id: wargaming::AccountId,
         random_stats: wargaming::BasicStats,
         rating_stats: wargaming::RatingStats,
-        actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
+        actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
     ) -> Result<Self> {
         let this = match Self::retrieve_quickly(
@@ -58,9 +58,9 @@ impl StatsDelta {
         account_id: wargaming::AccountId,
         random_stats: wargaming::BasicStats,
         rating_stats: wargaming::RatingStats,
-        mut actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
+        mut actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
-    ) -> Result<Either<Self, AHashMap<wargaming::TankId, wargaming::Tank>>> {
+    ) -> Result<Either<Self, AHashMap<wargaming::TankId, database::TankSnapshot>>> {
         let account_snapshot =
             match database::AccountSnapshot::retrieve_latest(from, realm, account_id, before)
                 .await?
@@ -76,8 +76,7 @@ impl StatsDelta {
                     let tank_entry = actual_tanks.entry(item.tank_id);
                     match tank_entry {
                         Entry::Occupied(entry) => {
-                            let keep =
-                                entry.get().statistics.last_battle_time > item.last_battle_time;
+                            let keep = entry.get().last_battle_time > item.last_battle_time;
                             if !keep {
                                 entry.remove();
                             }
@@ -101,19 +100,19 @@ impl StatsDelta {
         from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank>,
+        actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
         rating_stats: wargaming::RatingStats,
     ) -> Result<Self> {
         debug!("taking the slow path");
-        let actual_tanks: AHashMap<wargaming::TankId, wargaming::Tank> = actual_tanks
+        let actual_tanks: AHashMap<_, _> = actual_tanks
             .into_iter()
-            .filter(|(_, tank)| tank.statistics.last_battle_time >= before)
+            .filter(|(_, tank)| tank.last_battle_time >= before)
             .collect();
         let snapshots = {
             let tank_ids = actual_tanks
                 .values()
-                .map(wargaming::Tank::tank_id)
+                .map(|snapshot| snapshot.tank_id)
                 .collect_vec();
             database::TankSnapshot::retrieve_latest_tank_snapshots(
                 from, realm, account_id, before, &tank_ids,
