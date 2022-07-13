@@ -17,12 +17,6 @@ pub mod tank_id;
 pub mod tank_statistics;
 pub mod vehicle;
 
-#[cfg(test)]
-pub type ResultMap<T> = std::collections::HashMap<String, Option<T>>;
-
-#[cfg(test)]
-pub type ResultMapVec<T> = ResultMap<Vec<T>>;
-
 /// Search accounts item.
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct FoundAccount {

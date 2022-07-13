@@ -58,12 +58,13 @@ impl AccountInfoStats {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
-    use crate::wargaming::models::ResultMap;
 
     #[test]
     fn account_info_map_ok() -> Result {
-        let mut map = serde_json::from_str::<ResultMap<AccountInfo>>(
+        let mut map: HashMap<String, Option<AccountInfo>> = serde_json::from_str(
             // language=json
             r#"{"5589968":{"statistics":{"clan":{"spotted":0,"max_frags_tank_id":0,"hits":0,"frags":0,"max_xp":0,"max_xp_tank_id":0,"wins":0,"losses":0,"capture_points":0,"battles":0,"damage_dealt":0,"damage_received":0,"max_frags":0,"shots":0,"frags8p":0,"xp":0,"win_and_survived":0,"survived_battles":0,"dropped_capture_points":0},"rating":{"spotted":152,"calibration_battles_left":0,"hits":2070,"frags":226,"recalibration_start_time":1639417161,"mm_rating":54.9,"wins":142,"losses":148,"is_recalibration":false,"capture_points":164,"battles":292,"current_season":32,"damage_dealt":378035,"damage_received":338354,"shots":2600,"frags8p":164,"xp":221273,"win_and_survived":96,"survived_battles":99,"dropped_capture_points":199},"all":{"spotted":9100,"max_frags_tank_id":3697,"hits":72822,"frags":8197,"max_xp":2292,"max_xp_tank_id":22817,"wins":5318,"losses":4327,"capture_points":5447,"battles":9676,"damage_dealt":10427192,"damage_received":8611546,"max_frags":6,"shots":93254,"frags8p":2760,"xp":6743639,"win_and_survived":3772,"survived_battles":3908,"dropped_capture_points":5882},"frags":null},"account_id":5589968,"created_at":1415225091,"updated_at":1635246495,"private":null,"last_battle_time":1635269048,"nickname":"eigenein"}}"#,
         )?;
