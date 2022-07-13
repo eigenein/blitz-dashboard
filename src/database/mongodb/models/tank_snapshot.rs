@@ -19,7 +19,6 @@ pub struct TankSnapshot {
     pub realm: wargaming::Realm,
 
     #[serde(rename = "lbts")]
-    #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
 
     #[serde(rename = "aid")]

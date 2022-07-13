@@ -32,7 +32,9 @@ impl AccountTanksCache {
 
         if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
             debug!(account_id, "cache hit");
-            return Ok(rmp_serde::from_slice(&decompress(&blob).await?)?);
+            let snapshots = rmp_serde::from_slice(&decompress(&blob).await?)
+                .context("failed to deserialize the tanks cache")?;
+            return Ok(snapshots);
         }
 
         let (statistics, achievements) = {
