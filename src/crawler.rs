@@ -241,8 +241,6 @@ async fn crawl_account(
         debug!(n_updated_tanks = updated_tanks_stats.len());
         let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
         database::TankSnapshot::from_vec(realm, account_info.id, updated_tanks_stats, achievements)
-            .into_values()
-            .collect()
     } else {
         trace!("no updated tanks");
         Vec::new()

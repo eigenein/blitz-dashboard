@@ -58,14 +58,14 @@ impl TankSnapshot {
         account_id: wargaming::AccountId,
         mut stats: Vec<wargaming::TankStats>,
         mut achievements: Vec<wargaming::TankAchievements>,
-    ) -> AHashMap<wargaming::TankId, Self> {
+    ) -> Vec<Self> {
         stats.sort_unstable_by_key(|stats| stats.tank_id);
         achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
 
         merge_join_by(stats, achievements, |left, right| left.tank_id.cmp(&right.tank_id))
             .filter_map(|item| match item {
                 EitherOrBoth::Both(stats, achievements) => {
-                    Some((stats.tank_id, Self::from(realm, account_id, stats, achievements)))
+                    Some(Self::from(realm, account_id, stats, achievements))
                 }
                 _ => None,
             })

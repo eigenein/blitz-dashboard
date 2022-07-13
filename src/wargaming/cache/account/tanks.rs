@@ -41,7 +41,10 @@ impl AccountTanksCache {
             try_join(get_statistics, get_achievements).await?
         };
         let snapshots =
-            database::TankSnapshot::from_vec(realm, account_id, statistics, achievements);
+            database::TankSnapshot::from_vec(realm, account_id, statistics, achievements)
+                .into_iter()
+                .map(|snapshot| (snapshot.tank_id, snapshot))
+                .collect();
         let blob = compress(&rmp_serde::to_vec(&snapshots)?).await?;
         debug!(account_id, n_bytes = blob.len(), "set cache");
         self.redis
