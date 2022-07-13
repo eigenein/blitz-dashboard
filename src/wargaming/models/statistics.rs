@@ -1,3 +1,5 @@
+use std::ops::Sub;
+
 use serde::{Deserialize, Serialize};
 
 use crate::database;
@@ -35,6 +37,25 @@ impl From<&database::RandomStatsSnapshot> for BasicStats {
             hits: snapshot.n_hits,
             frags: snapshot.n_frags,
             xp: snapshot.xp,
+        }
+    }
+}
+
+impl Sub<database::RandomStatsSnapshot> for BasicStats {
+    type Output = database::RandomStatsSnapshot;
+
+    fn sub(self, rhs: database::RandomStatsSnapshot) -> Self::Output {
+        Self::Output {
+            n_battles: self.n_battles - rhs.n_battles,
+            n_wins: self.n_wins - rhs.n_wins,
+            n_survived_battles: self.survived_battles - rhs.n_survived_battles,
+            n_win_and_survived: self.win_and_survived - rhs.n_win_and_survived,
+            damage_dealt: self.damage_dealt - rhs.damage_dealt,
+            damage_received: self.damage_received - rhs.damage_received,
+            n_shots: self.shots - rhs.n_shots,
+            n_hits: self.hits - rhs.n_hits,
+            n_frags: self.frags - rhs.n_frags,
+            xp: self.xp - rhs.xp,
         }
     }
 }

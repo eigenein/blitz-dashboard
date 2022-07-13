@@ -4,7 +4,6 @@ use either::Either;
 use itertools::Itertools;
 
 use crate::prelude::*;
-use crate::wargaming::subtract_tanks;
 use crate::{database, wargaming};
 
 pub struct StatsDelta {
@@ -91,7 +90,7 @@ impl StatsDelta {
         Ok(Either::Left(Self {
             random: random_stats - account_snapshot.random_stats,
             rating: rating_stats - account_snapshot.rating_stats,
-            tanks: subtract_tanks(realm, actual_tanks, snapshots),
+            tanks: database::TankSnapshot::subtract_collections(realm, actual_tanks, snapshots),
         }))
     }
 
@@ -119,7 +118,8 @@ impl StatsDelta {
             )
             .await?
         };
-        let tanks_delta = subtract_tanks(realm, actual_tanks, snapshots);
+        let tanks_delta =
+            database::TankSnapshot::subtract_collections(realm, actual_tanks, snapshots);
         Ok(Self {
             random: tanks_delta.iter().map(|tank| tank.stats).sum(),
             rating: rating_stats.into(),

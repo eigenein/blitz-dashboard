@@ -69,6 +69,37 @@ impl TankSnapshot {
             })
             .collect()
     }
+
+    pub fn subtract_collections(
+        realm: wargaming::Realm,
+        mut actual_tanks: AHashMap<wargaming::TankId, Self>,
+        snapshots: Vec<Self>,
+    ) -> Vec<Self> {
+        let mut subtracted: Vec<Self> = snapshots
+            .into_iter()
+            .filter_map(|snapshot| {
+                actual_tanks
+                    .remove(&snapshot.tank_id)
+                    .map(|actual_tank| (snapshot, actual_tank))
+            })
+            .filter_map(|(snapshot, actual_tank)| {
+                (actual_tank.stats.n_battles != snapshot.stats.n_battles).then(|| Self {
+                    realm,
+                    last_battle_time: actual_tank.last_battle_time,
+                    account_id: snapshot.account_id,
+                    tank_id: snapshot.tank_id,
+                    battle_life_time: actual_tank.battle_life_time - snapshot.battle_life_time,
+                    stats: actual_tank.stats - snapshot.stats,
+                })
+            })
+            .collect();
+        subtracted.extend(
+            actual_tanks
+                .into_values()
+                .filter(|tank| tank.stats.n_battles != 0),
+        );
+        subtracted
+    }
 }
 
 impl TankSnapshot {
