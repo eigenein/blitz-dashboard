@@ -1,5 +1,5 @@
 use futures::TryStreamExt;
-use itertools::Itertools;
+use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
@@ -44,6 +44,41 @@ impl TankSnapshot {
             battle_life_time: tank.statistics.battle_life_time,
             stats: tank.statistics.all.into(),
         }
+    }
+
+    pub fn from(
+        realm: wargaming::Realm,
+        account_id: wargaming::AccountId,
+        stats: wargaming::TankStats,
+        _achievements: wargaming::TankAchievements,
+    ) -> Self {
+        Self {
+            realm,
+            last_battle_time: stats.last_battle_time,
+            account_id,
+            tank_id: stats.tank_id,
+            battle_life_time: stats.battle_life_time,
+            stats: stats.all.into(),
+        }
+    }
+
+    pub fn from_vec(
+        realm: wargaming::Realm,
+        account_id: wargaming::AccountId,
+        mut stats: Vec<wargaming::TankStats>,
+        mut achievements: Vec<wargaming::TankAchievements>,
+    ) -> AHashMap<wargaming::TankId, Self> {
+        stats.sort_unstable_by_key(|stats| stats.tank_id);
+        achievements.sort_unstable_by_key(|achievements| achievements.tank_id);
+
+        merge_join_by(stats, achievements, |left, right| left.tank_id.cmp(&right.tank_id))
+            .filter_map(|item| match item {
+                EitherOrBoth::Both(stats, achievements) => {
+                    Some((stats.tank_id, Self::from(realm, account_id, stats, achievements)))
+                }
+                _ => None,
+            })
+            .collect()
     }
 }
 
