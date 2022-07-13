@@ -240,16 +240,14 @@ async fn crawl_account(
     let tank_snapshots = if !updated_tanks_stats.is_empty() {
         debug!(n_updated_tanks = updated_tanks_stats.len());
         let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
-        let tanks = wargaming::merge_tanks(account_info.id, updated_tanks_stats, achievements);
-        debug!(n_tanks = tanks.len(), "crawled");
-        tanks
+        database::TankSnapshot::from_vec(realm, account_info.id, updated_tanks_stats, achievements)
             .into_values()
-            .map(|tank| database::TankSnapshot::from_tank(realm, tank))
             .collect()
     } else {
         trace!("no updated tanks");
         Vec::new()
     };
+    debug!(n_tank_snapshots = tank_snapshots.len(), "crawled");
 
     let account = database::Account {
         id: account_info.id,
