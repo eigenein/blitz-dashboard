@@ -23,13 +23,13 @@ impl<TS: Borrow<wargaming::TankStats>> From<TS> for TankLastBattleTime {
 }
 
 impl Serialize for TankLastBattleTime {
-    fn serialize<S: Serializer>(&self, serializer: S) -> StdResult<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         (self.tank_id, bson::DateTime::from(self.last_battle_time)).serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for TankLastBattleTime {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> StdResult<Self, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let (tank_id, last_battle_time) =
             <(wargaming::TankId, bson::DateTime) as Deserialize>::deserialize(deserializer)?;
         Ok(Self {

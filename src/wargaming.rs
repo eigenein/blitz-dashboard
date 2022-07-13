@@ -235,7 +235,7 @@ impl WargamingApi {
     async fn call_once<T: DeserializeOwned>(
         &self,
         url: Url,
-    ) -> StdResult<Response<T>, reqwest::Error> {
+    ) -> Result<Response<T>, reqwest::Error> {
         self.rate_limiter
             .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
             .await;

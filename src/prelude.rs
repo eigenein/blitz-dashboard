@@ -1,4 +1,3 @@
-pub use std::result::Result as StdResult;
 pub use std::time::{Duration as StdDuration, Instant};
 
 pub use anyhow::{anyhow, bail, Context, Error};
@@ -10,4 +9,4 @@ pub use tracing_futures::Instrument;
 pub type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 pub type DateTime = chrono::DateTime<Utc>;
-pub type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
+pub type Result<T = (), E = Error> = std::result::Result<T, E>;
