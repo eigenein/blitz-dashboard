@@ -218,7 +218,15 @@ fn match_account_infos(
 /// # Returns
 ///
 /// Updated account, snapshot of the account and snapshots of its tanks.
-#[instrument(skip_all, level = "debug", fields(account_id = account_info.id))]
+#[instrument(
+    skip_all,
+    level = "debug",
+    fields(
+        account_id = account_info.id,
+        got_prefetched_tanks_stats = prefetched_tanks_stats.is_some(),
+        got_prefetched_tanks_achievements = prefetched_tanks_achievements.is_some(),
+    ),
+)]
 async fn crawl_account(
     api: WargamingApi,
     realm: wargaming::Realm,
