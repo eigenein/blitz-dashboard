@@ -24,7 +24,7 @@ async-compression = { version = "0.3.14", features = ["zstd"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 chrono-humanize = "0.2.1"
 circular-queue = "0.2.6"
-clap = { version = "3.2.10", features = ["cargo", "derive", "env"] }
+clap = { version = "3.2.11", features = ["cargo", "derive", "env"] }
 governor = "0.4.2"
 either = "1.6.1"
 fastrand = "1.7.0"
