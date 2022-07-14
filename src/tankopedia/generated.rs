@@ -895,7 +895,7 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
     },
     18177_u32 => Vehicle {
         tank_id: 18177,
-        name: Cow::Borrowed("Т-54 облегчённый"),
+        name: Cow::Borrowed("Т-54 обл."),
         tier: 8,
         is_premium: false,
         nation: Nation::Ussr,
@@ -951,7 +951,7 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
     },
     18449_u32 => Vehicle {
         tank_id: 18449,
-        name: Cow::Borrowed("Spähpanzer Ru 251"),
+        name: Cow::Borrowed("Ru 251"),
         tier: 8,
         is_premium: false,
         nation: Nation::Germany,
@@ -1167,7 +1167,7 @@ pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {
     },
     19985_u32 => Vehicle {
         tank_id: 19985,
-        name: Cow::Borrowed("Rheinmetall Skorpion G"),
+        name: Cow::Borrowed("Skorpion G"),
         tier: 8,
         is_premium: true,
         nation: Nation::Germany,

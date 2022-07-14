@@ -2253,8 +2253,8 @@
       "7172": {
         "name": "122 мм У-11",
         "next_modules": [
-          2564,
-          7428
+          7428,
+          2564
         ],
         "next_tanks": null,
         "is_default": true,
@@ -3825,10 +3825,10 @@
       "price_gold": 0
     },
     "default_profile": {
-      "weight": 53600,
+      "weight": 56590,
       "profile_id": "13093-14116-19235-22562",
       "firepower": 57,
-      "shot_efficiency": 86,
+      "shot_efficiency": 89,
       "gun_id": 14116,
       "signal_range": null,
       "shells": [
@@ -3860,7 +3860,7 @@
           "rear": 38
         }
       },
-      "speed_forward": 37,
+      "speed_forward": 42,
       "battle_level_range_min": 10,
       "speed_backward": 12,
       "engine": {
@@ -3893,12 +3893,12 @@
         "move_up_arc": 15,
         "fire_rate": 5.45,
         "clip_reload_time": 0.0,
-        "dispersion": 0.35,
+        "dispersion": 0.33,
         "clip_capacity": 1,
         "traverse_speed": 26.25,
         "reload_time": 11.0,
         "tier": 10,
-        "aim_time": 3.95
+        "aim_time": 3.37
       },
       "turret_id": 19235,
       "turret": {
@@ -3907,12 +3907,12 @@
         "view_range": 250,
         "traverse_left_arc": 180,
         "hp": 460,
-        "traverse_speed": 16,
+        "traverse_speed": 20,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 36,
-      "hull_weight": 30000,
+      "hull_weight": 32990,
       "hull_hp": 1840
     },
     "tier": 10,
@@ -8627,7 +8627,7 @@
       "weight": 133780,
       "profile_id": "11285-18196-28434",
       "firepower": 73,
-      "shot_efficiency": 96,
+      "shot_efficiency": 91,
       "gun_id": 18196,
       "signal_range": null,
       "shells": [
@@ -8672,9 +8672,9 @@
       "max_ammo": 24,
       "battle_level_range_max": 11,
       "engine_id": 11285,
-      "hp": 2000,
+      "hp": 2150,
       "is_default": true,
-      "protection": 80,
+      "protection": 83,
       "suspension": {
         "tier": 10,
         "load_limit": 150000,
@@ -8692,27 +8692,27 @@
         "move_up_arc": 17,
         "fire_rate": 3.38,
         "clip_reload_time": 0.0,
-        "dispersion": 0.35,
+        "dispersion": 0.38,
         "clip_capacity": 1,
         "traverse_speed": 23.62,
         "reload_time": 17.77,
         "tier": 10,
-        "aim_time": 6.03
+        "aim_time": 5.03
       },
       "turret_id": null,
       "turret": {
         "name": "Jagdtiger",
         "weight": 50,
-        "view_range": 250,
+        "view_range": 245,
         "traverse_left_arc": 12,
-        "hp": 400,
+        "hp": 430,
         "traverse_speed": 26,
         "tier": 10,
         "traverse_right_arc": 12
       },
       "maneuverability": 16,
       "hull_weight": 95000,
-      "hull_hp": 1600
+      "hull_hp": 1720
     },
     "tier": 10,
     "tank_id": 12049,
@@ -9174,15 +9174,15 @@
     "default_profile": {
       "weight": 62150,
       "profile_id": "15637-18452-25107-30738",
-      "firepower": 76,
-      "shot_efficiency": 91,
+      "firepower": 77,
+      "shot_efficiency": 86,
       "gun_id": 18452,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 245,
-          "damage": 350
+          "damage": 340
         },
         {
           "type": "HOLLOW_CHARGE",
@@ -9238,12 +9238,12 @@
         "name": "10,5 cm Kw.K. L/52 Ausf. K",
         "weight": 3000,
         "move_up_arc": 20,
-        "fire_rate": 8.0,
+        "fire_rate": 8.33,
         "clip_reload_time": 0.0,
-        "dispersion": 0.3,
+        "dispersion": 0.33,
         "clip_capacity": 1,
         "traverse_speed": 21.88,
-        "reload_time": 7.5,
+        "reload_time": 7.2,
         "tier": 10,
         "aim_time": 3.93
       },
@@ -10024,14 +10024,14 @@
         "module_id": 22563,
         "type": "vehicleTurret"
       },
-      "19492": {
-        "name": "155 mm AT Gun T7E2",
+      "267300": {
+        "name": "155 mm AT T7E4",
         "next_modules": null,
         "next_tanks": null,
         "is_default": true,
         "price_xp": 0,
         "price_credit": 0,
-        "module_id": 19492,
+        "module_id": 267300,
         "type": "vehicleGun"
       },
       "13093": {
@@ -10057,15 +10057,15 @@
     },
     "default_profile": {
       "weight": 63871,
-      "profile_id": "13093-19492-22563-26402",
-      "firepower": 67,
-      "shot_efficiency": 92,
-      "gun_id": 19492,
+      "profile_id": "13093-22563-26402-267300",
+      "firepower": 70,
+      "shot_efficiency": 94,
+      "gun_id": 267300,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 295,
+          "penetration": 285,
           "damage": 640
         },
         {
@@ -10104,13 +10104,13 @@
       "max_ammo": 27,
       "battle_level_range_max": 11,
       "engine_id": 13093,
-      "hp": 1800,
+      "hp": 1750,
       "is_default": true,
-      "protection": 65,
+      "protection": 64,
       "suspension": {
         "tier": 10,
         "load_limit": 67000,
-        "traverse_speed": 23,
+        "traverse_speed": 25,
         "name": "T110E4",
         "weight": 8000
       },
@@ -10119,17 +10119,17 @@
       "gun": {
         "move_down_arc": 6,
         "caliber": 155,
-        "name": "155 mm AT Gun T7E2",
+        "name": "155 mm AT T7E4",
         "weight": 3371,
         "move_up_arc": 12,
-        "fire_rate": 3.9,
+        "fire_rate": 4.05,
         "clip_reload_time": 0.0,
-        "dispersion": 0.37,
+        "dispersion": 0.34,
         "clip_capacity": 1,
         "traverse_speed": 23.62,
-        "reload_time": 15.4,
+        "reload_time": 14.8,
         "tier": 10,
-        "aim_time": 5.61
+        "aim_time": 5.68
       },
       "turret_id": 22563,
       "turret": {
@@ -10137,20 +10137,20 @@
         "weight": 20000,
         "view_range": 250,
         "traverse_left_arc": 90,
-        "hp": 360,
-        "traverse_speed": 20,
+        "hp": 350,
+        "traverse_speed": 14,
         "tier": 10,
         "traverse_right_arc": 90
       },
-      "maneuverability": 29,
+      "maneuverability": 31,
       "hull_weight": 31000,
-      "hull_hp": 1440
+      "hull_hp": 1400
     },
     "tier": 10,
     "tank_id": 13089,
     "type": "AT-SPG",
     "guns": [
-      19492
+      267300
     ],
     "turrets": [
       22563
@@ -10777,25 +10777,25 @@
     "default_profile": {
       "weight": 50894,
       "profile_id": "19461-26372-30978",
-      "firepower": 69,
-      "shot_efficiency": 100,
+      "firepower": 67,
+      "shot_efficiency": 92,
       "gun_id": 26372,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
           "penetration": 303,
-          "damage": 640
+          "damage": 670
         },
         {
           "type": "HOLLOW_CHARGE",
           "penetration": 380,
-          "damage": 545
+          "damage": 570
         },
         {
           "type": "HIGH_EXPLOSIVE",
           "penetration": 90,
-          "damage": 960
+          "damage": 1000
         }
       ],
       "armor": {
@@ -10829,7 +10829,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 53900,
-        "traverse_speed": 27,
+        "traverse_speed": 35,
         "name": "Объект 268",
         "weight": 10000
       },
@@ -10841,14 +10841,14 @@
         "name": "152 мм М64",
         "weight": 6500,
         "move_up_arc": 15,
-        "fire_rate": 4.0,
+        "fire_rate": 3.75,
         "clip_reload_time": 0.0,
-        "dispersion": 0.33,
+        "dispersion": 0.38,
         "clip_capacity": 1,
         "traverse_speed": 23.62,
-        "reload_time": 15.0,
+        "reload_time": 16.0,
         "tier": 10,
-        "aim_time": 5.26
+        "aim_time": 5.31
       },
       "turret_id": null,
       "turret": {
@@ -10861,7 +10861,7 @@
         "tier": 10,
         "traverse_right_arc": 10
       },
-      "maneuverability": 39,
+      "maneuverability": 46,
       "hull_weight": 32900,
       "hull_hp": 1440
     },
@@ -11325,12 +11325,12 @@
       "weight": 36920,
       "profile_id": "20741-26115-26884-31490",
       "firepower": 83,
-      "shot_efficiency": 91,
+      "shot_efficiency": 83,
       "gun_id": 26884,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 245,
           "damage": 310
         },
@@ -11357,17 +11357,17 @@
           "rear": 47
         }
       },
-      "speed_forward": 50,
+      "speed_forward": 55,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
         "tier": 10,
         "fire_chance": 0.1,
-        "power": 580,
+        "power": 650,
         "name": "В-55",
         "weight": 700
       },
-      "max_ammo": 50,
+      "max_ammo": 60,
       "battle_level_range_max": 11,
       "engine_id": 20741,
       "hp": 1900,
@@ -11390,12 +11390,12 @@
         "move_up_arc": 17,
         "fire_rate": 9.76,
         "clip_reload_time": 0.0,
-        "dispersion": 0.3,
+        "dispersion": 0.35,
         "clip_capacity": 1,
         "traverse_speed": 33.25,
         "reload_time": 6.15,
         "tier": 10,
-        "aim_time": 2.89
+        "aim_time": 3.83
       },
       "turret_id": 26115,
       "turret": {
@@ -11408,7 +11408,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 64,
+      "maneuverability": 69,
       "hull_weight": 17320,
       "hull_hp": 1520
     },
@@ -11703,25 +11703,25 @@
     "default_profile": {
       "weight": 74571,
       "profile_id": "13093-19492-27170",
-      "firepower": 67,
-      "shot_efficiency": 93,
+      "firepower": 64,
+      "shot_efficiency": 88,
       "gun_id": 19492,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 295,
-          "damage": 640
+          "penetration": 285,
+          "damage": 680
         },
         {
           "type": "ARMOR_PIERCING_CR",
           "penetration": 375,
-          "damage": 545
+          "damage": 580
         },
         {
           "type": "HIGH_EXPLOSIVE",
           "penetration": 90,
-          "damage": 960
+          "damage": 1020
         }
       ],
       "armor": {
@@ -11755,7 +11755,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 78000,
-        "traverse_speed": 23,
+        "traverse_speed": 26,
         "name": "T110E3",
         "weight": 8000
       },
@@ -11767,14 +11767,14 @@
         "name": "155 mm AT Gun T7E2",
         "weight": 3371,
         "move_up_arc": 16,
-        "fire_rate": 3.9,
+        "fire_rate": 3.53,
         "clip_reload_time": 0.0,
-        "dispersion": 0.36,
+        "dispersion": 0.38,
         "clip_capacity": 1,
         "traverse_speed": 23.62,
-        "reload_time": 15.4,
+        "reload_time": 17.0,
         "tier": 10,
-        "aim_time": 5.27
+        "aim_time": 5.38
       },
       "turret_id": null,
       "turret": {
@@ -11787,7 +11787,7 @@
         "tier": 10,
         "traverse_right_arc": 12
       },
-      "maneuverability": 25,
+      "maneuverability": 28,
       "hull_weight": 60000,
       "hull_hp": 1440
     },
@@ -11870,7 +11870,7 @@
       "weight": 57520,
       "profile_id": "8773-14916-23618",
       "firepower": 64,
-      "shot_efficiency": 90,
+      "shot_efficiency": 93,
       "gun_id": 14916,
       "signal_range": null,
       "shells": [
@@ -11935,7 +11935,7 @@
         "move_up_arc": 12,
         "fire_rate": 4.29,
         "clip_reload_time": 0.0,
-        "dispersion": 0.36,
+        "dispersion": 0.34,
         "clip_capacity": 1,
         "traverse_speed": 26.25,
         "reload_time": 14.0,
@@ -12677,7 +12677,7 @@
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 255,
           "damage": 350
         },
@@ -12710,7 +12710,7 @@
       "engine": {
         "tier": 10,
         "fire_chance": 0.12,
-        "power": 810,
+        "power": 880,
         "name": "Continental AV-1790-7B",
         "weight": 569
       },
@@ -12755,7 +12755,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 61,
+      "maneuverability": 63,
       "hull_weight": 27700,
       "hull_hp": 1480
     },
@@ -13037,13 +13037,13 @@
       "weight": 59850,
       "profile_id": "9221-27652-32258",
       "firepower": 89,
-      "shot_efficiency": 88,
+      "shot_efficiency": 90,
       "gun_id": 27652,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 290,
+          "penetration": 300,
           "damage": 460
         },
         {
@@ -13069,13 +13069,13 @@
           "rear": 50
         }
       },
-      "speed_forward": 55,
+      "speed_forward": 50,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
         "tier": 10,
         "fire_chance": 0.15,
-        "power": 1050,
+        "power": 930,
         "name": "М-50Т",
         "weight": 700
       },
@@ -13113,16 +13113,16 @@
       "turret": {
         "name": "Объект 263",
         "weight": 170,
-        "view_range": 255,
+        "view_range": 250,
         "traverse_left_arc": 7,
-        "hp": 350,
+        "hp": 370,
         "traverse_speed": 26,
         "tier": 10,
         "traverse_right_arc": 7
       },
-      "maneuverability": 54,
+      "maneuverability": 49,
       "hull_weight": 44700,
-      "hull_hp": 1500
+      "hull_hp": 1480
     },
     "tier": 10,
     "tank_id": 14337,
@@ -13200,15 +13200,15 @@
     "default_profile": {
       "weight": 39950,
       "profile_id": "19221-20244-30739-36626",
-      "firepower": 85,
+      "firepower": 87,
       "shot_efficiency": 93,
       "gun_id": 20244,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 255,
-          "damage": 350
+          "damage": 360
         },
         {
           "type": "HOLLOW_CHARGE",
@@ -13246,9 +13246,9 @@
       "max_ammo": 60,
       "battle_level_range_max": 11,
       "engine_id": 19221,
-      "hp": 1850,
+      "hp": 1800,
       "is_default": true,
-      "protection": 43,
+      "protection": 42,
       "suspension": {
         "tier": 10,
         "load_limit": 42000,
@@ -13279,14 +13279,14 @@
         "weight": 7718,
         "view_range": 265,
         "traverse_left_arc": 180,
-        "hp": 370,
+        "hp": 360,
         "traverse_speed": 36,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 75,
       "hull_weight": 18950,
-      "hull_hp": 1480
+      "hull_hp": 1440
     },
     "tier": 10,
     "tank_id": 14609,
@@ -13811,8 +13811,8 @@
     "default_profile": {
       "weight": 54271,
       "profile_id": "17189-20516-24867-28962",
-      "firepower": 75,
-      "shot_efficiency": 88,
+      "firepower": 78,
+      "shot_efficiency": 85,
       "gun_id": 20516,
       "signal_range": null,
       "shells": [
@@ -13834,12 +13834,12 @@
       ],
       "armor": {
         "turret": {
-          "front": 152,
-          "sides": 145,
+          "front": 203,
+          "sides": 178,
           "rear": 51
         },
         "hull": {
-          "front": 203,
+          "front": 152,
           "sides": 58,
           "rear": 40
         }
@@ -13857,9 +13857,9 @@
       "max_ammo": 36,
       "battle_level_range_max": 11,
       "engine_id": 17189,
-      "hp": 2300,
+      "hp": 2350,
       "is_default": true,
-      "protection": 69,
+      "protection": 70,
       "suspension": {
         "tier": 10,
         "load_limit": 58000,
@@ -13875,14 +13875,14 @@
         "name": "120 mm Gun T179",
         "weight": 2849,
         "move_up_arc": 12,
-        "fire_rate": 6.92,
+        "fire_rate": 7.2,
         "clip_reload_time": 2.5,
-        "dispersion": 0.34,
+        "dispersion": 0.36,
         "clip_capacity": 3,
         "traverse_speed": 26.25,
-        "reload_time": 21.0,
+        "reload_time": 20.0,
         "tier": 10,
-        "aim_time": 3.74
+        "aim_time": 3.69
       },
       "turret_id": 24867,
       "turret": {
@@ -13890,14 +13890,14 @@
         "weight": 14500,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 460,
-        "traverse_speed": 36,
+        "hp": 470,
+        "traverse_speed": 23,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 37,
       "hull_weight": 24463,
-      "hull_hp": 1840
+      "hull_hp": 1880
     },
     "tier": 10,
     "tank_id": 14881,
@@ -14876,14 +14876,14 @@
         "module_id": 29955,
         "type": "vehicleTurret"
       },
-      "30468": {
-        "name": "100 мм Д-54ТС",
+      "266244": {
+        "name": "D54 M1",
         "next_modules": null,
         "next_tanks": null,
         "is_default": true,
         "price_xp": 0,
         "price_credit": 0,
-        "module_id": 30468,
+        "module_id": 266244,
         "type": "vehicleGun"
       },
       "24069": {
@@ -14906,15 +14906,15 @@
     "cost": null,
     "default_profile": {
       "weight": 35920,
-      "profile_id": "24069-29955-30468-35586",
+      "profile_id": "24069-29955-35586-266244",
       "firepower": 78,
-      "shot_efficiency": 81,
-      "gun_id": 30468,
+      "shot_efficiency": 91,
+      "gun_id": 266244,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
-          "penetration": 240,
+          "type": "ARMOR_PIERCING",
+          "penetration": 245,
           "damage": 310
         },
         {
@@ -14953,9 +14953,9 @@
       "max_ammo": 55,
       "battle_level_range_max": 11,
       "engine_id": 24069,
-      "hp": 1900,
+      "hp": 1800,
       "is_default": true,
-      "protection": 59,
+      "protection": 57,
       "suspension": {
         "tier": 10,
         "load_limit": 39000,
@@ -14968,12 +14968,12 @@
       "gun": {
         "move_down_arc": 7,
         "caliber": 100,
-        "name": "100 мм Д-54ТС",
+        "name": "D54 M1",
         "weight": 2557,
         "move_up_arc": 16,
         "fire_rate": 9.23,
         "clip_reload_time": 0.0,
-        "dispersion": 0.36,
+        "dispersion": 0.3,
         "clip_capacity": 1,
         "traverse_speed": 33.25,
         "reload_time": 6.5,
@@ -14986,20 +14986,20 @@
         "weight": 8000,
         "view_range": 260,
         "traverse_left_arc": 180,
-        "hp": 380,
+        "hp": 360,
         "traverse_speed": 48,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 72,
       "hull_weight": 17363,
-      "hull_hp": 1520
+      "hull_hp": 1440
     },
     "tier": 10,
     "tank_id": 15617,
     "type": "mediumTank",
     "guns": [
-      30468
+      266244
     ],
     "turrets": [
       29955
@@ -16103,7 +16103,7 @@
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 255,
           "damage": 350
         },
@@ -16130,13 +16130,13 @@
           "rear": 27
         }
       },
-      "speed_forward": 48,
+      "speed_forward": 50,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
         "tier": 10,
         "fire_chance": 0.1,
-        "power": 750,
+        "power": 830,
         "name": "Continental AVDS-1790-2",
         "weight": 2053
       },
@@ -16181,7 +16181,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 59,
+      "maneuverability": 63,
       "hull_weight": 24593,
       "hull_hp": 1520
     },
@@ -17236,6 +17236,18 @@
         "module_id": 2149,
         "type": "vehicleEngine"
       },
+      "3428": {
+        "name": "Tank Type 99",
+        "next_modules": null,
+        "next_tanks": [
+          5473
+        ],
+        "is_default": false,
+        "price_xp": 3000,
+        "price_credit": 0,
+        "module_id": 3428,
+        "type": "vehicleGun"
+      },
       "3426": {
         "name": "Type 2 Ho-I",
         "next_modules": null,
@@ -17245,6 +17257,19 @@
         "price_credit": 0,
         "module_id": 3426,
         "type": "vehicleChassis"
+      },
+      "3171": {
+        "name": "Type 2 Ho-I",
+        "next_modules": [
+          3684,
+          3428
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 3500,
+        "price_credit": 0,
+        "module_id": 3171,
+        "type": "vehicleTurret"
       },
       "3684": {
         "name": "Experimental Tank Shin",
@@ -17256,31 +17281,6 @@
         "price_xp": 3500,
         "price_credit": 0,
         "module_id": 3684,
-        "type": "vehicleGun"
-      },
-      "3171": {
-        "name": "Type 2 Ho-I",
-        "next_modules": [
-          3428,
-          3684
-        ],
-        "next_tanks": null,
-        "is_default": false,
-        "price_xp": 3500,
-        "price_credit": 0,
-        "module_id": 3171,
-        "type": "vehicleTurret"
-      },
-      "3428": {
-        "name": "Tank Type 99",
-        "next_modules": null,
-        "next_tanks": [
-          5473
-        ],
-        "is_default": false,
-        "price_xp": 3000,
-        "price_credit": 0,
-        "module_id": 3428,
         "type": "vehicleGun"
       },
       "1893": {
@@ -17402,8 +17402,8 @@
     "type": "mediumTank",
     "guns": [
       6500,
-      3684,
-      3428
+      3428,
+      3684
     ],
     "turrets": [
       2915,
@@ -18580,9 +18580,9 @@
       "max_ammo": 30,
       "battle_level_range_max": 9,
       "engine_id": 25621,
-      "hp": 1100,
+      "hp": 1150,
       "is_default": true,
-      "protection": 15,
+      "protection": 16,
       "suspension": {
         "tier": 7,
         "load_limit": 23000,
@@ -18605,7 +18605,7 @@
         "traverse_speed": 26.25,
         "reload_time": 14.0,
         "tier": 10,
-        "aim_time": 5.01
+        "aim_time": 5.02
       },
       "turret_id": null,
       "turret": {
@@ -18613,14 +18613,14 @@
         "weight": 850,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 220,
-        "traverse_speed": 18,
+        "hp": 230,
+        "traverse_speed": 20,
         "tier": 8,
         "traverse_right_arc": 180
       },
       "maneuverability": 26,
       "hull_weight": 5065,
-      "hull_hp": 880
+      "hull_hp": 920
     },
     "tier": 8,
     "tank_id": 16657,
@@ -19130,8 +19130,8 @@
       ],
       "armor": {
         "turret": {
-          "front": 240,
-          "sides": 187,
+          "front": 225,
+          "sides": 80,
           "rear": 65
         },
         "hull": {
@@ -19140,22 +19140,22 @@
           "rear": 55
         }
       },
-      "speed_forward": 55,
+      "speed_forward": 60,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
         "tier": 10,
         "fire_chance": 0.12,
-        "power": 580,
+        "power": 700,
         "name": "ТД-12",
         "weight": 1000
       },
       "max_ammo": 50,
       "battle_level_range_max": 11,
       "engine_id": 25861,
-      "hp": 1850,
+      "hp": 1800,
       "is_default": true,
-      "protection": 55,
+      "protection": 53,
       "suspension": {
         "tier": 10,
         "load_limit": 39000,
@@ -19184,16 +19184,16 @@
       "turret": {
         "name": "Объект 140",
         "weight": 8200,
-        "view_range": 260,
+        "view_range": 270,
         "traverse_left_arc": 180,
-        "hp": 370,
+        "hp": 360,
         "traverse_speed": 40,
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 64,
+      "maneuverability": 72,
       "hull_weight": 11620,
-      "hull_hp": 1480
+      "hull_hp": 1440
     },
     "tier": 10,
     "tank_id": 16897,
@@ -20767,8 +20767,8 @@
     "default_profile": {
       "weight": 62859,
       "profile_id": "22869-259666-260180",
-      "firepower": 79,
-      "shot_efficiency": 94,
+      "firepower": 89,
+      "shot_efficiency": 91,
       "gun_id": 260180,
       "signal_range": null,
       "shells": [
@@ -20815,11 +20815,11 @@
       "engine_id": 22869,
       "hp": 2000,
       "is_default": true,
-      "protection": 65,
+      "protection": 68,
       "suspension": {
         "tier": 10,
         "load_limit": 70000,
-        "traverse_speed": 22,
+        "traverse_speed": 32,
         "name": "FV217 Badger",
         "weight": 12000
       },
@@ -20831,14 +20831,14 @@
         "name": "OQF 123 mm Mk. 1",
         "weight": 1282,
         "move_up_arc": 20,
-        "fire_rate": 6.32,
+        "fire_rate": 7.06,
         "clip_reload_time": 0.0,
-        "dispersion": 0.33,
+        "dispersion": 0.35,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
-        "reload_time": 9.5,
+        "reload_time": 8.5,
         "tier": 10,
-        "aim_time": 4.34
+        "aim_time": 4.64
       },
       "turret_id": null,
       "turret": {
@@ -20851,7 +20851,7 @@
         "tier": 10,
         "traverse_right_arc": 10
       },
-      "maneuverability": 26,
+      "maneuverability": 35,
       "hull_weight": 48433,
       "hull_hp": 1600
     },
@@ -21339,25 +21339,25 @@
     "default_profile": {
       "weight": 48420,
       "profile_id": "12373-259411-259922-260436",
-      "firepower": 91,
-      "shot_efficiency": 90,
+      "firepower": 89,
+      "shot_efficiency": 92,
       "gun_id": 260436,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 280,
-          "damage": 460
+          "penetration": 290,
+          "damage": 410
         },
         {
           "type": "ARMOR_PIERCING_CR",
           "penetration": 370,
-          "damage": 390
+          "damage": 350
         },
         {
           "type": "HIGH_EXPLOSIVE",
           "penetration": 65,
-          "damage": 550
+          "damage": 500
         }
       ],
       "armor": {
@@ -21374,7 +21374,7 @@
       },
       "speed_forward": 40,
       "battle_level_range_min": 10,
-      "speed_backward": 18,
+      "speed_backward": 15,
       "engine": {
         "tier": 10,
         "fire_chance": 0.2,
@@ -21382,7 +21382,7 @@
         "name": "Rolls-Royce Griffon",
         "weight": 952
       },
-      "max_ammo": 90,
+      "max_ammo": 88,
       "battle_level_range_max": 11,
       "engine_id": 12373,
       "hp": 1800,
@@ -21403,12 +21403,12 @@
         "name": "OQF 123 mm Mk. 2",
         "weight": 2850,
         "move_up_arc": 8,
-        "fire_rate": 7.2,
-        "clip_reload_time": 3.0,
+        "fire_rate": 7.87,
+        "clip_reload_time": 2.5,
         "dispersion": 0.36,
-        "clip_capacity": 3,
+        "clip_capacity": 4,
         "traverse_speed": 26.25,
-        "reload_time": 19.0,
+        "reload_time": 23.0,
         "tier": 10,
         "aim_time": 4.6
       },
@@ -21858,7 +21858,7 @@
     "turrets": [
       35075
     ],
-    "name": "Т-54 облегчённый"
+    "name": "Т-54 обл."
   },
   "18209": {
     "suspensions": [
@@ -21891,8 +21891,8 @@
       "32035": {
         "name": "XM551 test bed",
         "next_modules": [
-          26148,
-          26660
+          26660,
+          26148
         ],
         "next_tanks": null,
         "is_default": false,
@@ -22211,8 +22211,8 @@
         },
         "hull": {
           "front": 38,
-          "sides": 32,
-          "rear": 27
+          "sides": 31,
+          "rear": 14
         }
       },
       "speed_forward": 36,
@@ -22230,11 +22230,11 @@
       "engine_id": 4645,
       "hp": 280,
       "is_default": true,
-      "protection": 6,
+      "protection": 5,
       "suspension": {
         "tier": 2,
         "load_limit": 11500,
-        "traverse_speed": 49,
+        "traverse_speed": 44,
         "name": "VVSS T16E2",
         "weight": 3300
       },
@@ -22253,7 +22253,7 @@
         "traverse_speed": 43.75,
         "reload_time": 6.0,
         "tier": 1,
-        "aim_time": 4.28
+        "aim_time": 4.17
       },
       "turret_id": 3619,
       "turret": {
@@ -22266,7 +22266,7 @@
         "tier": 1,
         "traverse_right_arc": 180
       },
-      "maneuverability": 54,
+      "maneuverability": 49,
       "hull_weight": 4701,
       "hull_hp": 224
     },
@@ -22993,7 +22993,7 @@
       45330,
       45586
     ],
-    "description": "Был построен компанией Henschel в 1964 году по программе замены устаревающих танков M41 Walker Bulldog в немецкой армии, где ими вооружались разведывательные батальоны танковых дивизий и другие подразделения. Базой послужила ПТ-САУ Kanonenjagdpanzer 4–5. Машина не была выпущена в серийное производство,\nно некоторые технические решения использовались\nв проектировании других танков. Количество изготовленных прототипов неизвестно.",
+    "description": "Был построен компанией Henschel в 1964 году по программе замены устаревающих танков M41 Walker Bulldog в немецкой армии, где ими вооружались разведывательные батальоны танковых дивизий и другие подразделения. Базой послужила ПТ-САУ Kanonenjagdpanzer 4–5. Машина не была выпущена в серийное производство,\r\nно некоторые технические решения использовались\r\nв проектировании других танков. Количество изготовленных прототипов неизвестно.",
     "engines": [
       17685,
       27413,
@@ -23195,7 +23195,7 @@
     "turrets": [
       38163
     ],
-    "name": "Spähpanzer Ru 251"
+    "name": "Ru 251"
   },
   "18497": {
     "suspensions": [
@@ -24880,7 +24880,7 @@
     "default_profile": {
       "weight": 40759,
       "profile_id": "19749-256802-256803-257060",
-      "firepower": 64,
+      "firepower": 72,
       "shot_efficiency": 85,
       "gun_id": 257060,
       "signal_range": null,
@@ -24903,7 +24903,7 @@
       ],
       "armor": {
         "turret": {
-          "front": 152,
+          "front": 127,
           "sides": 120,
           "rear": 51
         },
@@ -24913,7 +24913,7 @@
           "rear": 19
         }
       },
-      "speed_forward": 42,
+      "speed_forward": 50,
       "battle_level_range_min": 10,
       "speed_backward": 15,
       "engine": {
@@ -24928,7 +24928,7 @@
       "engine_id": 19749,
       "hp": 2300,
       "is_default": true,
-      "protection": 70,
+      "protection": 71,
       "suspension": {
         "tier": 10,
         "load_limit": 44000,
@@ -24944,12 +24944,12 @@
         "name": "120 mm Gun T123E6",
         "weight": 1925,
         "move_up_arc": 20,
-        "fire_rate": 6.0,
+        "fire_rate": 6.67,
         "clip_reload_time": 0.0,
         "dispersion": 0.36,
         "clip_capacity": 1,
         "traverse_speed": 30.0,
-        "reload_time": 10.0,
+        "reload_time": 9.0,
         "tier": 10,
         "aim_time": 4.42
       },
@@ -24964,7 +24964,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 45,
+      "maneuverability": 47,
       "hull_weight": 16586,
       "hull_hp": 1840
     },
@@ -25751,25 +25751,25 @@
     "default_profile": {
       "weight": 39840,
       "profile_id": "28948-32533-51986",
-      "firepower": 88,
-      "shot_efficiency": 99,
+      "firepower": 82,
+      "shot_efficiency": 100,
       "gun_id": 28948,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 279,
-          "damage": 640
+          "penetration": 300,
+          "damage": 600
         },
         {
           "type": "HOLLOW_CHARGE",
           "penetration": 334,
-          "damage": 550
+          "damage": 510
         },
         {
           "type": "HIGH_EXPLOSIVE",
           "penetration": 75,
-          "damage": 960
+          "damage": 900
         }
       ],
       "armor": {
@@ -25784,7 +25784,7 @@
           "rear": 20
         }
       },
-      "speed_forward": 50,
+      "speed_forward": 47,
       "battle_level_range_min": 10,
       "speed_backward": 15,
       "engine": {
@@ -25803,7 +25803,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 45000,
-        "traverse_speed": 24,
+        "traverse_speed": 28,
         "name": "Grille 15",
         "weight": 12000
       },
@@ -25822,7 +25822,7 @@
         "traverse_speed": 20.0,
         "reload_time": 12.0,
         "tier": 10,
-        "aim_time": 3.71
+        "aim_time": 3.8
       },
       "turret_id": null,
       "turret": {
@@ -25835,7 +25835,7 @@
         "tier": 10,
         "traverse_right_arc": 50
       },
-      "maneuverability": 43,
+      "maneuverability": 46,
       "hull_weight": 17040,
       "hull_hp": 1360
     },
@@ -26261,7 +26261,7 @@
         },
         "hull": {
           "front": 155,
-          "sides": 102,
+          "sides": 127,
           "rear": 40
         }
       },
@@ -26278,9 +26278,9 @@
       "max_ammo": 40,
       "battle_level_range_max": 11,
       "engine_id": 22613,
-      "hp": 2300,
+      "hp": 2450,
       "is_default": true,
-      "protection": 73,
+      "protection": 78,
       "suspension": {
         "tier": 10,
         "load_limit": 80000,
@@ -26303,7 +26303,7 @@
         "traverse_speed": 26.25,
         "reload_time": 10.0,
         "tier": 10,
-        "aim_time": 4.93
+        "aim_time": 4.69
       },
       "turret_id": 260947,
       "turret": {
@@ -26311,14 +26311,14 @@
         "weight": 15800,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 460,
-        "traverse_speed": 32,
+        "hp": 490,
+        "traverse_speed": 22,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 29,
       "hull_weight": 45058,
-      "hull_hp": 1840
+      "hull_hp": 1960
     },
     "tier": 10,
     "tank_id": 19281,
@@ -26686,14 +26686,14 @@
         "module_id": 261203,
         "type": "vehicleTurret"
       },
-      "262740": {
-        "name": "105 mm L7 Short",
+      "265300": {
+        "name": "L7SB",
         "next_modules": null,
         "next_tanks": null,
         "is_default": true,
         "price_xp": 0,
         "price_credit": 0,
-        "module_id": 262740,
+        "module_id": 265300,
         "type": "vehicleGun"
       },
       "13141": {
@@ -26719,15 +26719,15 @@
     },
     "default_profile": {
       "weight": 32216,
-      "profile_id": "13141-261203-261714-262740",
+      "profile_id": "13141-261203-261714-265300",
       "firepower": 74,
-      "shot_efficiency": 82,
-      "gun_id": 262740,
+      "shot_efficiency": 89,
+      "gun_id": 265300,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
-          "penetration": 240,
+          "type": "ARMOR_PIERCING",
+          "penetration": 250,
           "damage": 350
         },
         {
@@ -26781,12 +26781,12 @@
       "gun": {
         "move_down_arc": 10,
         "caliber": 105,
-        "name": "105 mm L7 Short",
+        "name": "L7SB",
         "weight": 1282,
         "move_up_arc": 20,
         "fire_rate": 7.79,
         "clip_reload_time": 0.0,
-        "dispersion": 0.35,
+        "dispersion": 0.32,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
         "reload_time": 7.7,
@@ -26797,7 +26797,7 @@
       "turret": {
         "name": "Vickers Light 105",
         "weight": 5320,
-        "view_range": 280,
+        "view_range": 260,
         "traverse_left_arc": 180,
         "hp": 340,
         "traverse_speed": 40,
@@ -26812,7 +26812,7 @@
     "tank_id": 19537,
     "type": "lightTank",
     "guns": [
-      262740
+      265300
     ],
     "turrets": [
       261203
@@ -27579,7 +27579,7 @@
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 240,
           "damage": 310
         },
@@ -27625,7 +27625,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 39000,
-        "traverse_speed": 50,
+        "traverse_speed": 45,
         "name": "Т-22 ср.",
         "weight": 6500
       },
@@ -27644,7 +27644,7 @@
         "traverse_speed": 33.25,
         "reload_time": 6.3,
         "tier": 10,
-        "aim_time": 4.26
+        "aim_time": 4.12
       },
       "turret_id": 257539,
       "turret": {
@@ -27657,7 +27657,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 65,
+      "maneuverability": 60,
       "hull_weight": 16563,
       "hull_hp": 1480
     },
@@ -27831,7 +27831,7 @@
     "turrets": [
       257555
     ],
-    "name": "Rheinmetall Skorpion G"
+    "name": "Skorpion G"
   },
   "20001": {
     "suspensions": [
@@ -28318,7 +28318,7 @@
     "default_profile": {
       "weight": 17045,
       "profile_id": "20773-258338-258339-260132",
-      "firepower": 55,
+      "firepower": 59,
       "shot_efficiency": 69,
       "gun_id": 260132,
       "signal_range": null,
@@ -28364,9 +28364,9 @@
       "max_ammo": 40,
       "battle_level_range_max": 11,
       "engine_id": 20773,
-      "hp": 1800,
+      "hp": 1700,
       "is_default": true,
-      "protection": 34,
+      "protection": 32,
       "suspension": {
         "tier": 10,
         "load_limit": 20000,
@@ -28382,12 +28382,12 @@
         "name": "152 mm XM150E4",
         "weight": 2500,
         "move_up_arc": 20,
-        "fire_rate": 3.75,
+        "fire_rate": 4.0,
         "clip_reload_time": 0.0,
         "dispersion": 0.42,
         "clip_capacity": 1,
         "traverse_speed": 27.0,
-        "reload_time": 16.0,
+        "reload_time": 15.0,
         "tier": 10,
         "aim_time": 5.82
       },
@@ -28395,16 +28395,16 @@
       "turret": {
         "name": "AR/AAV XM551 Sheridan",
         "weight": 4000,
-        "view_range": 260,
+        "view_range": 280,
         "traverse_left_arc": 180,
-        "hp": 360,
+        "hp": 340,
         "traverse_speed": 36,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 89,
       "hull_weight": 6250,
-      "hull_hp": 1440
+      "hull_hp": 1360
     },
     "tier": 10,
     "tank_id": 20257,
@@ -33051,7 +33051,7 @@
       "weight": 91480,
       "profile_id": "38677-259603-260114-260628",
       "firepower": 58,
-      "shot_efficiency": 87,
+      "shot_efficiency": 89,
       "gun_id": 260628,
       "signal_range": null,
       "shells": [
@@ -33116,12 +33116,12 @@
         "move_up_arc": 10,
         "fire_rate": 4.8,
         "clip_reload_time": 0.0,
-        "dispersion": 0.37,
+        "dispersion": 0.36,
         "clip_capacity": 1,
         "traverse_speed": 26.25,
         "reload_time": 12.5,
         "tier": 10,
-        "aim_time": 5.21
+        "aim_time": 5.63
       },
       "turret_id": 259603,
       "turret": {
@@ -33722,22 +33722,22 @@
           "rear": 70
         }
       },
-      "speed_forward": 47,
+      "speed_forward": 50,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
         "tier": 10,
         "fire_chance": 0.15,
-        "power": 1050,
+        "power": 1120,
         "name": "2x В-16",
         "weight": 2900
       },
       "max_ammo": 45,
       "battle_level_range_max": 11,
       "engine_id": 68357,
-      "hp": 2400,
+      "hp": 2300,
       "is_default": true,
-      "protection": 88,
+      "protection": 86,
       "suspension": {
         "tier": 10,
         "load_limit": 74950,
@@ -33760,7 +33760,7 @@
         "traverse_speed": 26.25,
         "reload_time": 10.0,
         "tier": 10,
-        "aim_time": 4.7
+        "aim_time": 4.3
       },
       "turret_id": 259587,
       "turret": {
@@ -33768,14 +33768,14 @@
         "weight": 13000,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 420,
+        "hp": 460,
         "traverse_speed": 26,
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 44,
+      "maneuverability": 47,
       "hull_weight": 31150,
-      "hull_hp": 1980
+      "hull_hp": 1840
     },
     "tier": 10,
     "tank_id": 22273,
@@ -34687,16 +34687,16 @@
       "engine": {
         "tier": 10,
         "fire_chance": 0.2,
-        "power": 770,
+        "power": 745,
         "name": "Continental AOSI-1490-1",
         "weight": 569
       },
       "max_ammo": 45,
       "battle_level_range_max": 11,
       "engine_id": 23845,
-      "hp": 2450,
+      "hp": 2300,
       "is_default": true,
-      "protection": 71,
+      "protection": 68,
       "suspension": {
         "tier": 10,
         "load_limit": 60050,
@@ -34732,9 +34732,9 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 31,
+      "maneuverability": 30,
       "hull_weight": 30000,
-      "hull_hp": 1990
+      "hull_hp": 1840
     },
     "tier": 10,
     "tank_id": 22817,
@@ -38289,7 +38289,7 @@
     "default_profile": {
       "weight": 17020,
       "profile_id": "71173-261635-262146-264708",
-      "firepower": 82,
+      "firepower": 71,
       "shot_efficiency": 82,
       "gun_id": 264708,
       "signal_range": null,
@@ -38317,7 +38317,7 @@
           "rear": 40
         },
         "hull": {
-          "front": 90,
+          "front": 76,
           "sides": 40,
           "rear": 40
         }
@@ -38335,9 +38335,9 @@
       "max_ammo": 43,
       "battle_level_range_max": 11,
       "engine_id": 71173,
-      "hp": 1750,
+      "hp": 1700,
       "is_default": true,
-      "protection": 51,
+      "protection": 49,
       "suspension": {
         "tier": 10,
         "load_limit": 25000,
@@ -38353,12 +38353,12 @@
         "name": "100 мм Т-100",
         "weight": 2600,
         "move_up_arc": 15,
-        "fire_rate": 9.68,
+        "fire_rate": 8.57,
         "clip_reload_time": 0.0,
         "dispersion": 0.35,
         "clip_capacity": 1,
         "traverse_speed": 33.25,
-        "reload_time": 6.2,
+        "reload_time": 7.0,
         "tier": 10,
         "aim_time": 3.61
       },
@@ -38368,14 +38368,14 @@
         "weight": 3000,
         "view_range": 260,
         "traverse_left_arc": 180,
-        "hp": 550,
+        "hp": 340,
         "traverse_speed": 40,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 90,
       "hull_weight": 6955,
-      "hull_hp": 1200
+      "hull_hp": 1360
     },
     "tier": 10,
     "tank_id": 24321,
@@ -39107,8 +39107,8 @@
     "default_profile": {
       "weight": 43530,
       "profile_id": "26661-263203-263458-265252",
-      "firepower": 64,
-      "shot_efficiency": 85,
+      "firepower": 66,
+      "shot_efficiency": 86,
       "gun_id": 265252,
       "signal_range": null,
       "shells": [
@@ -39135,7 +39135,7 @@
           "rear": 50
         },
         "hull": {
-          "front": 155,
+          "front": 140,
           "sides": 90,
           "rear": 45
         }
@@ -39171,14 +39171,14 @@
         "name": "110 mm EXP-7",
         "weight": 1630,
         "move_up_arc": 20,
-        "fire_rate": 6.32,
+        "fire_rate": 6.52,
         "clip_reload_time": 0.0,
-        "dispersion": 0.36,
+        "dispersion": 0.35,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
-        "reload_time": 9.5,
+        "reload_time": 9.2,
         "tier": 10,
-        "aim_time": 4.12
+        "aim_time": 4.02
       },
       "turret_id": 263203,
       "turret": {
@@ -39186,14 +39186,14 @@
         "weight": 9000,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 600,
-        "traverse_speed": 27,
+        "hp": 470,
+        "traverse_speed": 23,
         "tier": 9,
         "traverse_right_arc": 180
       },
       "maneuverability": 40,
       "hull_weight": 20455,
-      "hull_hp": 1750
+      "hull_hp": 1880
     },
     "tier": 10,
     "tank_id": 24609,
@@ -41844,8 +41844,8 @@
       "11777": 30000
     },
     "next_tanks": {
-      "513": 58390,
-      "5889": 54420
+      "5889": 54420,
+      "513": 58390
     },
     "modules_tree": {
       "5634": {
@@ -41931,8 +41931,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          513,
-          5889
+          5889,
+          513
         ],
         "is_default": false,
         "price_xp": 5310,
@@ -42718,7 +42718,7 @@
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 48,
+          "penetration": 51,
           "damage": 50
         }
       ],
@@ -42734,7 +42734,7 @@
           "rear": 26
         }
       },
-      "speed_forward": 44,
+      "speed_forward": 40,
       "battle_level_range_min": 2,
       "speed_backward": 20,
       "engine": {
@@ -42749,7 +42749,7 @@
       "engine_id": 293,
       "hp": 380,
       "is_default": true,
-      "protection": 7,
+      "protection": 8,
       "suspension": {
         "tier": 3,
         "load_limit": 14500,
@@ -42785,7 +42785,7 @@
         "tier": 2,
         "traverse_right_arc": 180
       },
-      "maneuverability": 76,
+      "maneuverability": 75,
       "hull_weight": 7228,
       "hull_hp": 304
     },
@@ -46727,9 +46727,9 @@
       "max_ammo": 48,
       "battle_level_range_max": 11,
       "engine_id": 11589,
-      "hp": 1800,
+      "hp": 1700,
       "is_default": true,
-      "protection": 46,
+      "protection": 44,
       "suspension": {
         "tier": 10,
         "load_limit": 28000,
@@ -46758,16 +46758,16 @@
       "turret": {
         "name": "Batignolles-Châtillon 25 t",
         "weight": 5700,
-        "view_range": 260,
+        "view_range": 270,
         "traverse_left_arc": 180,
-        "hp": 360,
+        "hp": 340,
         "traverse_speed": 36,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 93,
       "hull_weight": 10000,
-      "hull_hp": 1440
+      "hull_hp": 1360
     },
     "tier": 10,
     "tank_id": 3649,
@@ -46849,12 +46849,12 @@
       "weight": 37030,
       "profile_id": "4709-5732-6755-7266",
       "firepower": 74,
-      "shot_efficiency": 85,
+      "shot_efficiency": 82,
       "gun_id": 5732,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 245,
           "damage": 350
         },
@@ -46907,14 +46907,14 @@
       "suspension_id": 7266,
       "max_weight": 40000,
       "gun": {
-        "move_down_arc": 10,
+        "move_down_arc": 11,
         "caliber": 105,
         "name": "105 mm Rifled Gun",
         "weight": 1150,
         "move_up_arc": 13,
         "fire_rate": 7.79,
         "clip_reload_time": 0.0,
-        "dispersion": 0.34,
+        "dispersion": 0.36,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
         "reload_time": 7.7,
@@ -47398,12 +47398,12 @@
       "weight": 39568,
       "profile_id": "130-387-388-389",
       "firepower": 100,
-      "shot_efficiency": 82,
+      "shot_efficiency": 80,
       "gun_id": 388,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 245,
           "damage": 350
         },
@@ -47436,7 +47436,7 @@
       "engine": {
         "tier": 10,
         "fire_chance": 0.1,
-        "power": 632,
+        "power": 675,
         "name": "Mitsubishi 10ZF",
         "weight": 2200
       },
@@ -47463,7 +47463,7 @@
         "move_up_arc": 20,
         "fire_rate": 15.65,
         "clip_reload_time": 3.0,
-        "dispersion": 0.36,
+        "dispersion": 0.37,
         "clip_capacity": 3,
         "traverse_speed": 35.0,
         "reload_time": 5.5,
@@ -47481,7 +47481,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 60,
+      "maneuverability": 62,
       "hull_weight": 15918,
       "hull_hp": 1520
     },
@@ -47996,7 +47996,7 @@
       "4932": {
         "name": "100 mm SA47",
         "next_modules": [
-          5700
+          23108
         ],
         "next_tanks": null,
         "is_default": false,
@@ -48039,8 +48039,8 @@
         "module_id": 4676,
         "type": "vehicleGun"
       },
-      "5700": {
-        "name": "120 mm SA46",
+      "23108": {
+        "name": "120 mm SA46 mod. 1",
         "next_modules": null,
         "next_tanks": [
           6209
@@ -48048,7 +48048,7 @@
         "is_default": false,
         "price_xp": 63200,
         "price_credit": 0,
-        "module_id": 5700,
+        "module_id": 23108,
         "type": "vehicleGun"
       },
       "6213": {
@@ -48169,7 +48169,7 @@
     "tank_id": 3905,
     "type": "heavyTank",
     "guns": [
-      5700,
+      23108,
       4932,
       4676
     ],
@@ -48516,7 +48516,7 @@
           "rear": 60
         }
       },
-      "speed_forward": 50,
+      "speed_forward": 45,
       "battle_level_range_min": 10,
       "speed_backward": 20,
       "engine": {
@@ -48535,7 +48535,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 80000,
-        "traverse_speed": 30,
+        "traverse_speed": 35,
         "name": "Ho-Ri Type III",
         "weight": 11000
       },
@@ -48554,7 +48554,7 @@
         "traverse_speed": 23.62,
         "reload_time": 12.0,
         "tier": 10,
-        "aim_time": 3.88
+        "aim_time": 3.96
       },
       "turret_id": null,
       "turret": {
@@ -48567,7 +48567,7 @@
         "tier": 10,
         "traverse_right_arc": 7
       },
-      "maneuverability": 39,
+      "maneuverability": 42,
       "hull_weight": 44520,
       "hull_hp": 1400
     },
@@ -49317,7 +49317,7 @@
       "engine": {
         "tier": 10,
         "fire_chance": 0.12,
-        "power": 580,
+        "power": 670,
         "name": "12150L7",
         "weight": 935
       },
@@ -49362,7 +49362,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 61,
+      "maneuverability": 66,
       "hull_weight": 17225,
       "hull_hp": 1440
     },
@@ -50764,7 +50764,7 @@
       "weight": 61505,
       "profile_id": "3139-8258-19269-20036",
       "firepower": 57,
-      "shot_efficiency": 82,
+      "shot_efficiency": 79,
       "gun_id": 20036,
       "signal_range": null,
       "shells": [
@@ -50802,7 +50802,7 @@
       "engine": {
         "tier": 9,
         "fire_chance": 0.2,
-        "power": 1000,
+        "power": 950,
         "name": "Maybach HL 234 P45 B",
         "weight": 750
       },
@@ -50829,7 +50829,7 @@
         "move_up_arc": 15,
         "fire_rate": 4.51,
         "clip_reload_time": 0.0,
-        "dispersion": 0.38,
+        "dispersion": 0.4,
         "clip_capacity": 1,
         "traverse_speed": 26.25,
         "reload_time": 13.3,
@@ -50847,7 +50847,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 37,
+      "maneuverability": 35,
       "hull_weight": 29000,
       "hull_hp": 2000
     },
@@ -51540,7 +51540,7 @@
           "rear": 37
         },
         "hull": {
-          "front": 110,
+          "front": 100,
           "sides": 80,
           "rear": 50
         }
@@ -51560,7 +51560,7 @@
       "engine_id": 7045,
       "hp": 2350,
       "is_default": true,
-      "protection": 65,
+      "protection": 64,
       "suspension": {
         "tier": 10,
         "load_limit": 48000,
@@ -51576,14 +51576,14 @@
         "name": "12 cm akan L/40",
         "weight": 1600,
         "move_up_arc": 10,
-        "fire_rate": 10.55,
-        "clip_reload_time": 3.53,
+        "fire_rate": 12.41,
+        "clip_reload_time": 3.0,
         "dispersion": 0.36,
         "clip_capacity": 3,
         "traverse_speed": 26.0,
-        "reload_time": 10.0,
+        "reload_time": 8.5,
         "tier": 10,
-        "aim_time": 4.17
+        "aim_time": 4.19
       },
       "turret_id": 7043,
       "turret": {
@@ -51591,14 +51591,14 @@
         "weight": 15000,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 450,
-        "traverse_speed": 16,
+        "hp": 470,
+        "traverse_speed": 19,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 27,
       "hull_weight": 17398,
-      "hull_hp": 1900
+      "hull_hp": 1880
     },
     "tier": 10,
     "tank_id": 4481,
@@ -55530,7 +55530,7 @@
     "default_profile": {
       "weight": 15358,
       "profile_id": "805-9763-10530-259364",
-      "firepower": 14,
+      "firepower": 16,
       "shot_efficiency": 29,
       "gun_id": 259364,
       "signal_range": null,
@@ -55544,7 +55544,7 @@
       "armor": {
         "turret": {
           "front": 45,
-          "sides": 30,
+          "sides": 31,
           "rear": 30
         },
         "hull": {
@@ -55568,7 +55568,7 @@
       "engine_id": 805,
       "hp": 460,
       "is_default": true,
-      "protection": 8,
+      "protection": 10,
       "suspension": {
         "tier": 3,
         "load_limit": 17400,
@@ -55584,12 +55584,12 @@
         "name": "M6E1",
         "weight": 82,
         "move_up_arc": 20,
-        "fire_rate": 11.54,
+        "fire_rate": 12.5,
         "clip_reload_time": 0.0,
         "dispersion": 0.42,
         "clip_capacity": 1,
         "traverse_speed": 43.75,
-        "reload_time": 5.2,
+        "reload_time": 4.8,
         "tier": 3,
         "aim_time": 3.06
       },
@@ -59380,7 +59380,7 @@
       "engine_id": 20245,
       "hp": 1400,
       "is_default": true,
-      "protection": 48,
+      "protection": 56,
       "suspension": {
         "tier": 6,
         "load_limit": 61000,
@@ -63848,13 +63848,13 @@
     "default_profile": {
       "weight": 39938,
       "profile_id": "7812-8067-8069-8322",
-      "firepower": 66,
+      "firepower": 67,
       "shot_efficiency": 84,
       "gun_id": 7812,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 242,
           "damage": 310
         },
@@ -63894,9 +63894,9 @@
       "max_ammo": 48,
       "battle_level_range_max": 11,
       "engine_id": 8069,
-      "hp": 1900,
+      "hp": 1850,
       "is_default": true,
-      "protection": 48,
+      "protection": 47,
       "suspension": {
         "tier": 10,
         "load_limit": 43000,
@@ -63912,12 +63912,12 @@
         "name": "100 mm AK1",
         "weight": 2600,
         "move_up_arc": 20,
-        "fire_rate": 8.0,
-        "clip_reload_time": 2.0,
+        "fire_rate": 8.14,
+        "clip_reload_time": 1.5,
         "dispersion": 0.34,
         "clip_capacity": 4,
         "traverse_speed": 33.0,
-        "reload_time": 24.0,
+        "reload_time": 25.0,
         "tier": 10,
         "aim_time": 3.46
       },
@@ -63927,14 +63927,14 @@
         "weight": 9000,
         "view_range": 260,
         "traverse_left_arc": 180,
-        "hp": 360,
+        "hp": 370,
         "traverse_speed": 36,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 70,
       "hull_weight": 14838,
-      "hull_hp": 1540
+      "hull_hp": 1480
     },
     "tier": 10,
     "tank_id": 5505,
@@ -65414,7 +65414,7 @@
         "type": "vehicleGun"
       },
       "7221": {
-        "name": "12150L7",
+        "name": "12150L7PR",
         "next_modules": null,
         "next_tanks": null,
         "is_default": true,
@@ -65440,7 +65440,7 @@
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 245,
           "damage": 350
         },
@@ -65474,7 +65474,7 @@
         "tier": 10,
         "fire_chance": 0.12,
         "power": 580,
-        "name": "12150L7",
+        "name": "12150L7PR",
         "weight": 935
       },
       "max_ammo": 45,
@@ -66959,7 +66959,7 @@
         {
           "type": "HOLLOW_CHARGE",
           "penetration": 334,
-          "damage": 550
+          "damage": 545
         },
         {
           "type": "HIGH_EXPLOSIVE",
@@ -66979,7 +66979,7 @@
           "rear": 120
         }
       },
-      "speed_forward": 30,
+      "speed_forward": 32,
       "battle_level_range_min": 10,
       "speed_backward": 15,
       "engine": {
@@ -67017,7 +67017,7 @@
         "traverse_speed": 23.62,
         "reload_time": 18.5,
         "tier": 10,
-        "aim_time": 5.77
+        "aim_time": 5.8
       },
       "turret_id": 28947,
       "turret": {
@@ -67030,7 +67030,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 18,
+      "maneuverability": 19,
       "hull_weight": 52165,
       "hull_hp": 2080
     },
@@ -70516,22 +70516,22 @@
           "rear": 100
         }
       },
-      "speed_forward": 43,
+      "speed_forward": 38,
       "battle_level_range_min": 10,
       "speed_backward": 14,
       "engine": {
         "tier": 10,
         "fire_chance": 0.15,
-        "power": 750,
+        "power": 700,
         "name": "В-12",
         "weight": 1024
       },
       "max_ammo": 40,
       "battle_level_range_max": 11,
       "engine_id": 5893,
-      "hp": 2500,
+      "hp": 2650,
       "is_default": true,
-      "protection": 93,
+      "protection": 98,
       "suspension": {
         "tier": 10,
         "load_limit": 66300,
@@ -70554,7 +70554,7 @@
         "traverse_speed": 26.25,
         "reload_time": 11.35,
         "tier": 10,
-        "aim_time": 6.01
+        "aim_time": 6.03
       },
       "turret_id": 10243,
       "turret": {
@@ -70562,14 +70562,14 @@
         "weight": 14200,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 480,
+        "hp": 530,
         "traverse_speed": 14,
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 30,
+      "maneuverability": 27,
       "hull_weight": 30750,
-      "hull_hp": 2020
+      "hull_hp": 2120
     },
     "tier": 10,
     "tank_id": 6145,
@@ -71111,30 +71111,30 @@
     "default_profile": {
       "weight": 62130,
       "profile_id": "5700-8773-9283-11330",
-      "firepower": 75,
-      "shot_efficiency": 89,
+      "firepower": 70,
+      "shot_efficiency": 86,
       "gun_id": 5700,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
           "penetration": 257,
-          "damage": 400
+          "damage": 380
         },
         {
           "type": "ARMOR_PIERCING_CR",
           "penetration": 340,
-          "damage": 340
+          "damage": 320
         },
         {
           "type": "HIGH_EXPLOSIVE",
           "penetration": 65,
-          "damage": 515
+          "damage": 500
         }
       ],
       "armor": {
         "turret": {
-          "front": 150,
+          "front": 140,
           "sides": 50,
           "rear": 30
         },
@@ -71154,12 +71154,12 @@
         "name": "Maybach HL 295 F",
         "weight": 750
       },
-      "max_ammo": 57,
+      "max_ammo": 56,
       "battle_level_range_max": 11,
       "engine_id": 8773,
       "hp": 2400,
       "is_default": true,
-      "protection": 58,
+      "protection": 59,
       "suspension": {
         "tier": 10,
         "load_limit": 68000,
@@ -71175,14 +71175,14 @@
         "name": "120 mm SA46",
         "weight": 3580,
         "move_up_arc": 17,
-        "fire_rate": 6.92,
+        "fire_rate": 6.86,
         "clip_reload_time": 3.0,
-        "dispersion": 0.33,
-        "clip_capacity": 3,
+        "dispersion": 0.35,
+        "clip_capacity": 4,
         "traverse_speed": 26.25,
-        "reload_time": 20.0,
+        "reload_time": 26.0,
         "tier": 10,
-        "aim_time": 4.01
+        "aim_time": 4.43
       },
       "turret_id": 9283,
       "turret": {
@@ -71277,7 +71277,7 @@
     "default_profile": {
       "weight": 69960,
       "profile_id": "7508-12373-13395-13906",
-      "firepower": 66,
+      "firepower": 75,
       "shot_efficiency": 90,
       "gun_id": 7508,
       "signal_range": null,
@@ -71294,7 +71294,7 @@
         },
         {
           "type": "HIGH_EXPLOSIVE",
-          "penetration": 120,
+          "penetration": 170,
           "damage": 515
         }
       ],
@@ -71305,7 +71305,7 @@
           "rear": 106
         },
         "hull": {
-          "front": 159,
+          "front": 140,
           "sides": 106,
           "rear": 79
         }
@@ -71323,9 +71323,9 @@
       "max_ammo": 45,
       "battle_level_range_max": 11,
       "engine_id": 12373,
-      "hp": 2150,
+      "hp": 2300,
       "is_default": true,
-      "protection": 66,
+      "protection": 68,
       "suspension": {
         "tier": 10,
         "load_limit": 73000,
@@ -71341,12 +71341,12 @@
         "name": "120 mm Gun L1A1",
         "weight": 2850,
         "move_up_arc": 15,
-        "fire_rate": 6.19,
+        "fire_rate": 6.9,
         "clip_reload_time": 0.0,
         "dispersion": 0.33,
         "clip_capacity": 1,
         "traverse_speed": 26.25,
-        "reload_time": 9.7,
+        "reload_time": 8.7,
         "tier": 10,
         "aim_time": 3.4
       },
@@ -71354,16 +71354,16 @@
       "turret": {
         "name": "FV215",
         "weight": 16500,
-        "view_range": 255,
+        "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 430,
+        "hp": 460,
         "traverse_speed": 25,
         "tier": 10,
         "traverse_right_arc": 180
       },
       "maneuverability": 37,
       "hull_weight": 37358,
-      "hull_hp": 1720
+      "hull_hp": 1840
     },
     "tier": 10,
     "tank_id": 6225,
@@ -75045,7 +75045,7 @@
         },
         "hull": {
           "front": 230,
-          "sides": 100,
+          "sides": 120,
           "rear": 70
         }
       },
@@ -75064,11 +75064,11 @@
       "engine_id": 7477,
       "hp": 1800,
       "is_default": true,
-      "protection": 66,
+      "protection": 70,
       "suspension": {
         "tier": 10,
         "load_limit": 60000,
-        "traverse_speed": 33,
+        "traverse_speed": 36,
         "name": "WZ-113G FT",
         "weight": 10000
       },
@@ -75087,7 +75087,7 @@
         "traverse_speed": 20.0,
         "reload_time": 15.0,
         "tier": 10,
-        "aim_time": 5.27
+        "aim_time": 5.35
       },
       "turret_id": null,
       "turret": {
@@ -75100,7 +75100,7 @@
         "tier": 10,
         "traverse_right_arc": 12
       },
-      "maneuverability": 40,
+      "maneuverability": 42,
       "hull_weight": 40015,
       "hull_hp": 1440
     },
@@ -78769,13 +78769,13 @@
       "weight": 188820,
       "profile_id": "6421-9492-11539-14610",
       "firepower": 55,
-      "shot_efficiency": 76,
+      "shot_efficiency": 77,
       "gun_id": 9492,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 246,
+          "penetration": 250,
           "damage": 460
         },
         {
@@ -78791,7 +78791,7 @@
       ],
       "armor": {
         "turret": {
-          "front": 240,
+          "front": 250,
           "sides": 210,
           "rear": 210
         },
@@ -78820,7 +78820,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 192900,
-        "traverse_speed": 19,
+        "traverse_speed": 18,
         "name": "Maus",
         "weight": 37250
       },
@@ -78839,7 +78839,7 @@
         "traverse_speed": 26.25,
         "reload_time": 13.0,
         "tier": 10,
-        "aim_time": 5.67
+        "aim_time": 5.61
       },
       "turret_id": 11539,
       "turret": {
@@ -78847,14 +78847,14 @@
         "weight": 58000,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 600,
-        "traverse_speed": 14,
+        "hp": 570,
+        "traverse_speed": 13,
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 15,
+      "maneuverability": 14,
       "hull_weight": 89040,
-      "hull_hp": 2250
+      "hull_hp": 2280
     },
     "tier": 10,
     "tank_id": 6929,
@@ -80896,12 +80896,12 @@
       "weight": 39960,
       "profile_id": "8532-13141-14675-15442",
       "firepower": 75,
-      "shot_efficiency": 90,
+      "shot_efficiency": 87,
       "gun_id": 8532,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 255,
           "damage": 350
         },
@@ -80918,7 +80918,7 @@
       ],
       "armor": {
         "turret": {
-          "front": 196,
+          "front": 245,
           "sides": 196,
           "rear": 35
         },
@@ -80961,7 +80961,7 @@
         "move_up_arc": 20,
         "fire_rate": 7.89,
         "clip_reload_time": 0.0,
-        "dispersion": 0.32,
+        "dispersion": 0.34,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
         "reload_time": 7.6,
@@ -81257,20 +81257,20 @@
       "engine": {
         "tier": 10,
         "fire_chance": 0.15,
-        "power": 750,
+        "power": 710,
         "name": "MT-50TM",
         "weight": 2100
       },
       "max_ammo": 40,
       "battle_level_range_max": 11,
       "engine_id": 11141,
-      "hp": 2600,
+      "hp": 2500,
       "is_default": true,
-      "protection": 100,
+      "protection": 98,
       "suspension": {
         "tier": 10,
         "load_limit": 68000,
-        "traverse_speed": 24,
+        "traverse_speed": 28,
         "name": "60TP Lewandowskiego",
         "weight": 12000
       },
@@ -81289,7 +81289,7 @@
         "traverse_speed": 24.0,
         "reload_time": 16.5,
         "tier": 10,
-        "aim_time": 6.17
+        "aim_time": 6.34
       },
       "turret_id": 10883,
       "turret": {
@@ -81297,14 +81297,14 @@
         "weight": 14000,
         "view_range": 250,
         "traverse_left_arc": 180,
-        "hp": 520,
+        "hp": 500,
         "traverse_speed": 17,
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 28,
+      "maneuverability": 30,
       "hull_weight": 27250,
-      "hull_hp": 2080
+      "hull_hp": 2000
     },
     "tier": 10,
     "tank_id": 7297,
@@ -81391,8 +81391,8 @@
       "8708": {
         "name": "122 мм Д-25С обр. 1944 г.",
         "next_modules": [
-          18180,
-          17924
+          17924,
+          18180
         ],
         "next_tanks": [
           8193
@@ -85108,8 +85108,8 @@
           1827
         ],
         "next_tanks": [
-          3873,
-          23585
+          23585,
+          3873
         ],
         "is_default": false,
         "price_xp": 6840,
@@ -87947,8 +87947,8 @@
     "default_profile": {
       "weight": 49960,
       "profile_id": "9781-12340-13107-14130",
-      "firepower": 57,
-      "shot_efficiency": 81,
+      "firepower": 63,
+      "shot_efficiency": 85,
       "gun_id": 12340,
       "signal_range": null,
       "shells": [
@@ -87980,7 +87980,7 @@
           "rear": 60
         }
       },
-      "speed_forward": 50,
+      "speed_forward": 45,
       "battle_level_range_min": 10,
       "speed_backward": 15,
       "engine": {
@@ -88011,12 +88011,12 @@
         "name": "130 mm 59-130TA",
         "weight": 3090,
         "move_up_arc": 23,
-        "fire_rate": 4.76,
+        "fire_rate": 5.17,
         "clip_reload_time": 0.0,
-        "dispersion": 0.39,
+        "dispersion": 0.36,
         "clip_capacity": 1,
         "traverse_speed": 25.0,
-        "reload_time": 12.6,
+        "reload_time": 11.6,
         "tier": 10,
         "aim_time": 5.32
       },
@@ -88031,7 +88031,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 36,
+      "maneuverability": 35,
       "hull_weight": 20525,
       "hull_hp": 1840
     },
@@ -88108,13 +88108,13 @@
     "default_profile": {
       "weight": 34851,
       "profile_id": "8003-14914-16964-18757",
-      "firepower": 69,
+      "firepower": 71,
       "shot_efficiency": 86,
       "gun_id": 16964,
       "signal_range": null,
       "shells": [
         {
-          "type": "ARMOR_PIERCING_CR",
+          "type": "ARMOR_PIERCING",
           "penetration": 250,
           "damage": 350
         },
@@ -88141,7 +88141,7 @@
           "rear": 30
         }
       },
-      "speed_forward": 65,
+      "speed_forward": 62,
       "battle_level_range_min": 10,
       "speed_backward": 23,
       "engine": {
@@ -88172,12 +88172,12 @@
         "name": "105 mm mle. F1",
         "weight": 1282,
         "move_up_arc": 20,
-        "fire_rate": 7.32,
+        "fire_rate": 7.5,
         "clip_reload_time": 0.0,
         "dispersion": 0.34,
         "clip_capacity": 1,
         "traverse_speed": 35.0,
-        "reload_time": 8.2,
+        "reload_time": 8.0,
         "tier": 10,
         "aim_time": 4.13
       },
@@ -90525,8 +90525,8 @@
       "14372": {
         "name": "90 mm Gun M36",
         "next_modules": [
-          10276,
-          7972
+          7972,
+          10276
         ],
         "next_tanks": null,
         "is_default": true,
@@ -90609,7 +90609,7 @@
       "engine_id": 4133,
       "hp": 1550,
       "is_default": true,
-      "protection": 48,
+      "protection": 50,
       "suspension": {
         "tier": 8,
         "load_limit": 45050,
@@ -90624,7 +90624,7 @@
         "caliber": 90,
         "name": "90 mm Gun M36",
         "weight": 2080,
-        "move_up_arc": 22,
+        "move_up_arc": 20,
         "fire_rate": 8.49,
         "clip_reload_time": 0.0,
         "dispersion": 0.38,
@@ -91637,13 +91637,13 @@
       "weight": 59960,
       "profile_id": "13908-16213-17747-20306",
       "firepower": 68,
-      "shot_efficiency": 83,
+      "shot_efficiency": 84,
       "gun_id": 13908,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 310,
+          "penetration": 300,
           "damage": 930
         },
         {
@@ -91671,7 +91671,7 @@
       },
       "speed_forward": 34,
       "battle_level_range_min": 10,
-      "speed_backward": 12,
+      "speed_backward": 14,
       "engine": {
         "tier": 10,
         "fire_chance": 0.2,
@@ -91702,12 +91702,12 @@
         "move_up_arc": 15,
         "fire_rate": 2.73,
         "clip_reload_time": 0.0,
-        "dispersion": 0.45,
+        "dispersion": 0.43,
         "clip_capacity": 1,
         "traverse_speed": 23.62,
         "reload_time": 22.0,
         "tier": 10,
-        "aim_time": 6.42
+        "aim_time": 6.38
       },
       "turret_id": 17747,
       "turret": {
@@ -92137,13 +92137,13 @@
       "weight": 129530,
       "profile_id": "9492-11285-18451-23058",
       "firepower": 55,
-      "shot_efficiency": 79,
+      "shot_efficiency": 80,
       "gun_id": 9492,
       "signal_range": null,
       "shells": [
         {
           "type": "ARMOR_PIERCING",
-          "penetration": 246,
+          "penetration": 250,
           "damage": 460
         },
         {
@@ -92159,7 +92159,7 @@
       ],
       "armor": {
         "turret": {
-          "front": 250,
+          "front": 270,
           "sides": 150,
           "rear": 150
         },
@@ -92188,7 +92188,7 @@
       "suspension": {
         "tier": 10,
         "load_limit": 150000,
-        "traverse_speed": 20,
+        "traverse_speed": 25,
         "name": "E 100",
         "weight": 30000
       },
@@ -92207,7 +92207,7 @@
         "traverse_speed": 26.25,
         "reload_time": 13.0,
         "tier": 10,
-        "aim_time": 5.96
+        "aim_time": 6.18
       },
       "turret_id": 18451,
       "turret": {
@@ -92220,7 +92220,7 @@
         "tier": 10,
         "traverse_right_arc": 180
       },
-      "maneuverability": 17,
+      "maneuverability": 21,
       "hull_weight": 37000,
       "hull_hp": 2200
     },
