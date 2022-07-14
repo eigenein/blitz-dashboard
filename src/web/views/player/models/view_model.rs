@@ -48,14 +48,15 @@ impl ViewModel {
 
         let current_win_rate = actual_info.stats.random.true_win_rate();
 
+        let before =
+            Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
         let stats_delta = StatsDelta::retrieve(
             mongodb,
             realm,
             account_id,
-            actual_info.stats.random,
-            actual_info.stats.rating,
+            actual_info.stats,
             actual_tanks,
-            Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?,
+            before,
         )
         .await?;
 

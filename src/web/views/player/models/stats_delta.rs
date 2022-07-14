@@ -22,27 +22,20 @@ impl StatsDelta {
         from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        random_stats: wargaming::BasicStats,
-        rating_stats: wargaming::RatingStats,
+        stats: wargaming::AccountInfoStats,
         actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
     ) -> Result<Self> {
-        let this = match Self::retrieve_quickly(
-            from,
-            realm,
-            account_id,
-            random_stats,
-            rating_stats,
-            actual_tanks,
-            before,
-        )
-        .await?
-        {
-            Either::Left(delta) => delta,
-            Either::Right(tanks) => {
-                Self::retrieve_slowly(from, realm, account_id, tanks, before, rating_stats).await?
-            }
-        };
+        let this =
+            match Self::retrieve_quickly(from, realm, account_id, stats, actual_tanks, before)
+                .await?
+            {
+                Either::Left(delta) => delta,
+                Either::Right(tanks) => {
+                    Self::retrieve_slowly(from, realm, account_id, tanks, before, stats.rating)
+                        .await?
+                }
+            };
         Ok(this)
     }
 
@@ -55,8 +48,7 @@ impl StatsDelta {
         from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        random_stats: wargaming::BasicStats,
-        rating_stats: wargaming::RatingStats,
+        stats: wargaming::AccountInfoStats,
         mut actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
     ) -> Result<Either<Self, AHashMap<wargaming::TankId, database::TankSnapshot>>> {
@@ -88,8 +80,8 @@ impl StatsDelta {
             database::TankSnapshot::retrieve_many(from, realm, account_id, tank_last_battle_times)
                 .await?;
         Ok(Either::Left(Self {
-            random: random_stats - account_snapshot.random_stats,
-            rating: rating_stats - account_snapshot.rating_stats,
+            random: stats.random - account_snapshot.random_stats,
+            rating: stats.rating - account_snapshot.rating_stats,
             tanks: database::TankSnapshot::subtract_collections(actual_tanks, snapshots),
         }))
     }
