@@ -1,6 +1,7 @@
 use fred::pool::RedisPool;
 use fred::prelude::*;
 use fred::types::RedisKey;
+use mongodb::bson;
 use tracing::{debug, instrument};
 
 use crate::prelude::*;
@@ -28,7 +29,7 @@ impl AccountInfoCache {
             .await?
         {
             debug!(account_id = account_id, "cache hit");
-            return Ok(rmp_serde::from_slice(&blob)?);
+            return Ok(bson::from_slice(&blob)?);
         }
 
         let account_info = self
@@ -45,7 +46,7 @@ impl AccountInfoCache {
 
     #[instrument(skip_all, fields(realm = ?realm, account_id = account_info.id))]
     pub async fn put(&self, realm: Realm, account_info: &AccountInfo) -> Result {
-        let blob = rmp_serde::to_vec(&account_info)?;
+        let blob = bson::to_vec(&account_info)?;
         debug!(account_id = account_info.id, n_bytes = blob.len(), "set cache");
         self.redis
             .set(
@@ -61,6 +62,6 @@ impl AccountInfoCache {
 
     #[inline]
     fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:1:a:i:{}:{}", realm.to_str(), account_id))
+        RedisKey::from(format!("cache:2:a:i:{}:{}", realm.to_str(), account_id))
     }
 }

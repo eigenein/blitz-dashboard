@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 #[instrument(level = "debug", skip_all)]
 pub async fn compress(input: &[u8]) -> Result<Vec<u8>> {
-    let mut encoder = ZstdEncoder::with_quality(Vec::new(), Level::Fastest);
+    let mut encoder = ZstdEncoder::with_quality(Vec::new(), Level::Default);
     encoder.write_all(input).await?;
     encoder.shutdown().await?;
     let output = encoder.into_inner();

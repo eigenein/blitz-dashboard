@@ -2,6 +2,7 @@ use fred::pool::RedisPool;
 use fred::prelude::*;
 use fred::types::RedisKey;
 use futures::future::try_join;
+use mongodb::bson;
 use tracing::{debug, instrument};
 
 use crate::database;
@@ -29,34 +30,39 @@ impl AccountTanksCache {
         account_id: AccountId,
     ) -> Result<AHashMap<TankId, database::TankSnapshot>> {
         let cache_key = Self::cache_key(realm, account_id);
-
-        if let Some(blob) = self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
-            debug!(account_id, "cache hit");
-            let snapshots = rmp_serde::from_slice(&decompress(&blob).await?)
-                .context("failed to deserialize the tanks cache")?;
-            return Ok(snapshots);
-        }
-
-        let (statistics, achievements) = {
-            let get_statistics = self.api.get_tanks_stats(realm, account_id);
-            let get_achievements = self.api.get_tanks_achievements(realm, account_id);
-            try_join(get_statistics, get_achievements).await?
+        let snapshots = match self.redis.get::<Option<Vec<u8>>, _>(&cache_key).await? {
+            Some(blob) => {
+                debug!(account_id, "cache hit");
+                let blob = decompress(&blob).await?;
+                let mut root = bson::from_slice::<bson::Document>(&blob)
+                    .context("failed to deserialize the tanks cache")?;
+                bson::from_bson(root.remove("root").ok_or_else(|| anyhow!("no root"))?)?
+            }
+            None => {
+                let (statistics, achievements) = {
+                    let get_statistics = self.api.get_tanks_stats(realm, account_id);
+                    let get_achievements = self.api.get_tanks_achievements(realm, account_id);
+                    try_join(get_statistics, get_achievements).await?
+                };
+                let snapshots =
+                    database::TankSnapshot::from_vec(realm, account_id, statistics, achievements);
+                let blob = bson::to_vec(&bson::doc! {"root": bson::to_bson(&snapshots)?})?;
+                let blob = compress(&blob).await?;
+                debug!(account_id, n_bytes = blob.len(), "set cache");
+                self.redis
+                    .set(&cache_key, blob.as_slice(), Self::EXPIRE, None, false)
+                    .await?;
+                snapshots
+            }
         };
-        let snapshots =
-            database::TankSnapshot::from_vec(realm, account_id, statistics, achievements)
-                .into_iter()
-                .map(|snapshot| (snapshot.tank_id, snapshot))
-                .collect();
-        let blob = compress(&rmp_serde::to_vec(&snapshots)?).await?;
-        debug!(account_id, n_bytes = blob.len(), "set cache");
-        self.redis
-            .set(&cache_key, blob.as_slice(), Self::EXPIRE, None, false)
-            .await?;
-        Ok(snapshots)
+        Ok(snapshots
+            .into_iter()
+            .map(|snapshot| (snapshot.tank_id, snapshot))
+            .collect())
     }
 
     #[inline]
     fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:4:a:t:{}:{}", realm.to_str(), account_id))
+        RedisKey::from(format!("cache:5:a:t:{}:{}", realm.to_str(), account_id))
     }
 }
