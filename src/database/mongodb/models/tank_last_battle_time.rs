@@ -1,8 +1,7 @@
-use std::borrow::Borrow;
-
 use mongodb::bson;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::database::TankSnapshot;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -12,12 +11,20 @@ pub struct TankLastBattleTime {
     pub last_battle_time: DateTime,
 }
 
-impl<TS: Borrow<wargaming::TankStats>> From<TS> for TankLastBattleTime {
-    fn from(tank_stats: TS) -> Self {
-        let tank_stats = tank_stats.borrow();
+impl From<&wargaming::TankStats> for TankLastBattleTime {
+    fn from(tank_stats: &wargaming::TankStats) -> Self {
         Self {
             tank_id: tank_stats.tank_id,
             last_battle_time: tank_stats.last_battle_time,
+        }
+    }
+}
+
+impl From<&TankSnapshot> for TankLastBattleTime {
+    fn from(snapshot: &TankSnapshot) -> Self {
+        Self {
+            tank_id: snapshot.tank_id,
+            last_battle_time: snapshot.last_battle_time,
         }
     }
 }

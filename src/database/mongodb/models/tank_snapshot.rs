@@ -6,6 +6,7 @@ use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::time::timeout;
 
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
@@ -19,6 +20,7 @@ pub struct TankSnapshot {
     pub realm: wargaming::Realm,
 
     #[serde(rename = "lbts")]
+    #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
 
     #[serde(rename = "aid")]
@@ -52,6 +54,7 @@ impl TankSnapshot {
         }
     }
 
+    /// Constructs a vector of tank snapshots from the tanks statistics and achievements.
     pub fn from_vec(
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
@@ -71,6 +74,7 @@ impl TankSnapshot {
             .collect()
     }
 
+    /// Finds difference between the actual statistics and snapshot's statistics.
     pub fn subtract_collections(
         mut actual_tanks: AHashMap<wargaming::TankId, Self>,
         snapshots: Vec<Self>,
@@ -148,10 +152,14 @@ impl TankSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
-        Self::collection(to)
-            .update_one(query, update, options)
-            .await
-            .context("failed to upsert the tank snapshot")?;
+        timeout(
+            // Sometimes `update_one` freezes, and I don't know why.
+            StdDuration::from_secs(1),
+            Self::collection(to).update_one(query, update, options),
+        )
+        .await
+        .context("timed out to upsert the tank snapshot")?
+        .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
@@ -217,15 +225,22 @@ impl TankSnapshot {
         let start_instant = Instant::now();
         let or_clauses = tank_last_battle_times
             .into_iter()
-            .map(|item| doc! { "tid": item.tank_id, "lbts": item.last_battle_time})
+            .map(|item| {
+                doc! {
+                    "tid": item.tank_id,
+                    "lbts": item.last_battle_time,
+                }
+            })
             .collect_vec();
         debug!(n_or_clauses = or_clauses.len());
+        trace!(?or_clauses);
         if or_clauses.is_empty() {
             return Ok(Vec::new());
         }
         let snapshots: Vec<Self> = Self::collection(from)
             .find(doc! { "rlm": realm.to_str(), "aid": account_id, "$or": or_clauses }, None)
-            .await?
+            .await
+            .context("failed to find the snapshots")?
             .try_collect()
             .await?;
         debug!(

@@ -2,7 +2,9 @@ use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
+use mongodb::options::{
+    FindOneAndUpdateOptions, FindOptions, IndexOptions, ReturnDocument, UpdateOptions,
+};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::time::timeout;
@@ -37,12 +39,14 @@ impl Account {
             random: fastrand::f64(),
         }
     }
+
+    pub fn last_battle_time(mut self, last_battle_time: DateTime) -> Self {
+        self.last_battle_time = Some(last_battle_time);
+        self
+    }
 }
 
 impl Account {
-    pub const OPERATION_SET: &'static str = "$set";
-    pub const OPERATION_SET_ON_INSERT: &'static str = "$setOnInsert";
-
     #[instrument(skip_all)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [
@@ -86,21 +90,42 @@ impl Account {
         .try_flatten()
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id, operation = operation))]
-    pub async fn upsert(&self, to: &Database, operation: &str) -> Result {
+    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
+    pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
-        let update = doc! { operation: bson::to_bson(&self)? };
+        let update = doc! { "$set": bson::to_bson(&self)? };
         let options = UpdateOptions::builder().upsert(true).build();
 
         debug!("upserting…");
         let start_instant = Instant::now();
-        Self::collection(to)
-            .update_one(query, update, options)
-            .await
-            .with_context(|| format!("failed to upsert the account #{}", self.id))?;
+        timeout(
+            StdDuration::from_secs(1),
+            Self::collection(to).update_one(query, update, options),
+        )
+        .await
+        .context("timed out to upsert the account")?
+        .with_context(|| format!("failed to upsert the account #{}", self.id))?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
+    }
+
+    /// Ensures that the account exists in the database.
+    /// Does nothing if it exists, inserts – otherwise.
+    /// Returns the actual account after a possible update.
+    #[instrument(skip_all, level = "debug", fields(realm = ?self.realm, account_id = self.id))]
+    pub async fn ensure_exists(&self, in_: &Database) -> Result<Self> {
+        let filter = doc! { "rlm": self.realm.to_str(), "aid": self.id };
+        let update = doc! { "$setOnInsert": bson::to_bson(&self)? };
+        let options = FindOneAndUpdateOptions::builder()
+            .upsert(true)
+            .return_document(ReturnDocument::After)
+            .build();
+        Self::collection(in_)
+            .find_one_and_update(filter, update, options)
+            .await
+            .with_context(|| format!("failed to ensure the account #{} existence", self.id))?
+            .ok_or_else(|| anyhow!("#{} must exist but it does not", self.id))
     }
 
     #[instrument(skip_all, level = "debug")]

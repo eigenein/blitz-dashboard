@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
@@ -6,7 +5,6 @@ use std::sync::Arc;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use tokio::sync::Mutex;
-use tokio::time::timeout;
 
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::helpers::tracing::format_elapsed;
@@ -21,7 +19,7 @@ mod metrics;
 pub struct Crawler {
     api: WargamingApi,
     realm: wargaming::Realm,
-    mongodb: mongodb::Database,
+    db: mongodb::Database,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 }
 
@@ -34,7 +32,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
 
     let crawler = Crawler::new(&opts.shared).await?;
     let accounts = database::Account::get_sampled_stream(
-        crawler.mongodb.clone(),
+        crawler.db.clone(),
         opts.shared.realm,
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,
@@ -61,8 +59,6 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     crawler.run(accounts, &opts.shared.buffering, None).await
 }
 
-const TIMEOUT: StdDuration = StdDuration::from_secs(60); // FIXME.
-
 impl Crawler {
     pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
         let api = WargamingApi::new(
@@ -71,7 +67,7 @@ impl Crawler {
             opts.connections.max_api_rps,
         )?;
         let internal = &opts.connections.internal;
-        let mongodb = database::mongodb::open(&internal.mongodb_uri).await?;
+        let db = database::mongodb::open(&internal.mongodb_uri).await?;
 
         let this = Self {
             realm: opts.realm,
@@ -82,7 +78,7 @@ impl Crawler {
                 opts.log_interval,
             ))),
             api,
-            mongodb,
+            db,
         };
         Ok(this)
     }
@@ -125,15 +121,12 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                let future = crawl_account(
+                Ok(crawl_account(
                     self.api.clone(),
                     self.realm,
                     account.last_battle_time,
                     account_info,
-                    None,
-                    None,
-                );
-                Ok(future)
+                ))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -146,9 +139,12 @@ impl Crawler {
                         n_tanks = tank_snapshots.len(),
                         "scheduling the update"
                     );
-                    let mongodb = self.mongodb.clone();
+                    let db = self.db.clone();
                     let metrics = self.metrics.clone();
-                    update_account(mongodb, account, account_snapshot, tank_snapshots, metrics)
+                    async move {
+                        update_account(&db, account, account_snapshot, &tank_snapshots, metrics)
+                            .await
+                    }
                 },
             )
             .await
@@ -221,96 +217,64 @@ fn match_account_infos(
 #[instrument(
     skip_all,
     level = "debug",
-    fields(
-        account_id = account_info.id,
-        got_prefetched_tanks_stats = prefetched_tanks_stats.is_some(),
-        got_prefetched_tanks_achievements = prefetched_tanks_achievements.is_some(),
-    ),
+    fields(account_id = account_info.id),
 )]
 async fn crawl_account(
     api: WargamingApi,
     realm: wargaming::Realm,
     last_known_battle_time: Option<DateTime>,
     account_info: wargaming::AccountInfo,
-    prefetched_tanks_stats: Option<Vec<wargaming::TankStats>>,
-    prefetched_tanks_achievements: Option<Vec<wargaming::TankAchievements>>,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
     debug!(?last_known_battle_time);
 
-    let tanks_stats = match prefetched_tanks_stats {
-        Some(tanks_stats) => tanks_stats,
-        None => api.get_tanks_stats(realm, account_info.id).await?,
-    };
+    let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
     debug!(n_tanks_stats = tanks_stats.len());
     let tank_last_battle_times = tanks_stats
         .iter()
         .map_into::<database::TankLastBattleTime>()
         .collect_vec();
-
-    let updated_tanks_stats = match last_known_battle_time {
-        Some(last_known_battle_time) => tanks_stats
-            .into_iter()
-            .filter(|tank| tank.last_battle_time > last_known_battle_time)
-            .collect(),
-        None => tanks_stats,
-    };
-    let tank_snapshots = if !updated_tanks_stats.is_empty() {
-        debug!(n_updated_tanks = updated_tanks_stats.len());
-        let achievements = match prefetched_tanks_achievements {
-            Some(tanks_achievements) => tanks_achievements,
-            None => api.get_tanks_achievements(realm, account_info.id).await?,
-        };
-        database::TankSnapshot::from_vec(realm, account_info.id, updated_tanks_stats, achievements)
+    let tanks_stats = tanks_stats
+        .into_iter()
+        .filter(|tank| Some(tank.last_battle_time) > last_known_battle_time)
+        .collect_vec();
+    let tank_snapshots = if !tanks_stats.is_empty() {
+        debug!(n_updated_tanks = tanks_stats.len());
+        let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
+        database::TankSnapshot::from_vec(realm, account_info.id, tanks_stats, achievements)
     } else {
         trace!("no updated tanks");
         Vec::new()
     };
     debug!(n_tank_snapshots = tank_snapshots.len(), "crawled");
 
-    let account = database::Account {
-        id: account_info.id,
-        realm,
-        last_battle_time: Some(account_info.last_battle_time),
-        random: fastrand::f64(),
-    };
+    let account = database::Account::new(realm, account_info.id)
+        .last_battle_time(account_info.last_battle_time);
     let account_snapshot =
-        database::AccountSnapshot::new(realm, account_info, tank_last_battle_times);
+        database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
 
     Ok((account, account_snapshot, tank_snapshots))
 }
 
 #[instrument(skip_all, fields(account_id = account_snapshot.account_id))]
 async fn update_account(
-    connection: impl Borrow<mongodb::Database>,
+    in_: &mongodb::Database,
     account: database::Account,
     account_snapshot: database::AccountSnapshot,
-    tank_snapshots: Vec<database::TankSnapshot>,
+    tank_snapshots: impl IntoIterator<Item = &database::TankSnapshot>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 ) -> Result {
-    let connection = connection.borrow();
-
-    debug!(
-        last_battle_time = ?account.last_battle_time,
-        n_tank_snapshots = tank_snapshots.len(),
-        "updating account…",
-    );
+    debug!(last_battle_time = ?account.last_battle_time, "updating account…");
     let start_instant = Instant::now();
 
-    for tank_snapshot in tank_snapshots.into_iter() {
-        timeout(TIMEOUT, tank_snapshot.upsert(connection))
-            .await
-            .context("timed out to upsert the tank snapshot")??;
+    for tank_snapshot in tank_snapshots {
+        tank_snapshot.upsert(in_).await?;
     }
     debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted");
 
-    timeout(TIMEOUT, account_snapshot.upsert(connection))
-        .await
-        .context("timed out to upsert the account snapshot")??;
+    account_snapshot.upsert(in_).await?;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account snapshot upserted");
 
-    timeout(TIMEOUT, account.upsert(connection, database::Account::OPERATION_SET))
-        .await
-        .context("timed out to upsert the account")??;
+    account.upsert(in_).await?;
     debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted");
 
     let mut metrics = metrics.lock().await;

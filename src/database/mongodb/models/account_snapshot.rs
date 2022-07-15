@@ -3,6 +3,7 @@ use mongodb::bson::doc;
 use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::time::timeout;
 
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
@@ -35,7 +36,7 @@ pub struct AccountSnapshot {
 impl AccountSnapshot {
     pub fn new(
         realm: wargaming::Realm,
-        account_info: wargaming::AccountInfo,
+        account_info: &wargaming::AccountInfo,
         tank_last_battle_times: Vec<TankLastBattleTime>,
     ) -> Self {
         Self {
@@ -75,10 +76,13 @@ impl AccountSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
-        Self::collection(to)
-            .update_one(query, update, options)
-            .await
-            .context("failed to upsert the account snapshot")?;
+        timeout(
+            StdDuration::from_secs(1),
+            Self::collection(to).update_one(query, update, options),
+        )
+        .await
+        .context("timed out to insert the account snapshot")?
+        .context("failed to upsert the account snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
