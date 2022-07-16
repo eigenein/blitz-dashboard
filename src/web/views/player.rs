@@ -11,7 +11,7 @@ use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
-use crate::helpers::time::{from_days, from_months};
+use crate::helpers::time::{from_days, from_hours, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
 use crate::math::traits::{AverageDamageDealt, CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
@@ -350,6 +350,8 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
+                                (render_period_li(period, from_hours(8), "8 часов"))
+                                (render_period_li(period, from_hours(12), "12 часов"))
                                 (render_period_li(period, from_days(1), "24 часа"))
                                 (render_period_li(period, from_days(2), "2 дня"))
                                 (render_period_li(period, from_days(3), "3 дня"))
