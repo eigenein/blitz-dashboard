@@ -45,8 +45,10 @@ impl CrawlerMetrics {
     }
 
     pub fn add_lag_from(&mut self, last_battle_time: DateTime) {
-        self.lags_secs
-            .push((Utc::now() - last_battle_time).num_seconds());
+        if last_battle_time.timestamp() != 0 {
+            self.lags_secs
+                .push((Utc::now() - last_battle_time).num_seconds());
+        }
     }
 
     pub fn add_batch(&mut self, batch_len: usize, matched_len: usize) {
