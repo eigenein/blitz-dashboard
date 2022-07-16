@@ -30,16 +30,16 @@ pub struct RandomStatsSnapshot {
     pub damage_received: u32,
 
     #[serde(rename = "shts")]
-    pub n_shots: i32,
+    pub n_shots: u32,
 
     #[serde(rename = "hits")]
-    pub n_hits: i32,
+    pub n_hits: u32,
 
     #[serde(rename = "frgs")]
-    pub n_frags: i32,
+    pub n_frags: u32,
 
     #[serde(rename = "xp")]
-    pub xp: i32,
+    pub xp: u32,
 }
 
 impl NBattles for RandomStatsSnapshot {

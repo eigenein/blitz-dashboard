@@ -19,10 +19,10 @@ pub struct BasicStats {
     pub win_and_survived: u32,
     pub damage_dealt: u32,
     pub damage_received: u32,
-    pub shots: i32,
-    pub hits: i32,
-    pub frags: i32,
-    pub xp: i32,
+    pub shots: u32,
+    pub hits: u32,
+    pub frags: u32,
+    pub xp: u32,
 }
 
 impl From<&database::RandomStatsSnapshot> for BasicStats {
