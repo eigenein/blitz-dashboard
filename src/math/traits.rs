@@ -9,7 +9,7 @@ pub trait NBattles {
 }
 
 pub trait DamageDealt {
-    fn damage_dealt(&self) -> i32;
+    fn damage_dealt(&self) -> u32;
 }
 
 pub trait TrueWinRate {

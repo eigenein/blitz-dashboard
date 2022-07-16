@@ -17,8 +17,8 @@ pub struct BasicStats {
 
     pub survived_battles: u32,
     pub win_and_survived: u32,
-    pub damage_dealt: i32,
-    pub damage_received: i32,
+    pub damage_dealt: u32,
+    pub damage_received: u32,
     pub shots: i32,
     pub hits: i32,
     pub frags: i32,
@@ -74,7 +74,7 @@ impl NWins for BasicStats {
 }
 
 impl DamageDealt for BasicStats {
-    fn damage_dealt(&self) -> i32 {
+    fn damage_dealt(&self) -> u32 {
         self.damage_dealt
     }
 }
