@@ -767,7 +767,11 @@ pub async fn get(
                             colors: ['hsl(204, 71%, 39%)'],
                             series: [{{name: '', data: {}}}],
                             xaxis: {{type: 'datetime'}},
-                            tooltip: {{fixed: {{enabled: false}}, marker: {{show: false}}, x: {{format: 'MMM d, H:mm'}}}},
+                            tooltip: {{
+                                fixed: {{enabled: true, offsetY: 70}},
+                                marker: {{show: false}},
+                                x: {{format: 'MMM d, H:mm'}},
+                            }},
                             stroke: {{width: 3, curve: 'straight'}},
                             annotations: {{yaxis: [
                                 {{y: 5000, borderColor: 'hsl(217, 71%, 53%)'}},
