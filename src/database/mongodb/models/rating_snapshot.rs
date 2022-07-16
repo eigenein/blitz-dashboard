@@ -1,6 +1,5 @@
 use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::FindOptions;
 use mongodb::{bson, Collection, Database};
 use serde::Deserialize;
 
@@ -11,12 +10,11 @@ use crate::wargaming;
 #[serde_with::serde_as]
 #[derive(Deserialize)]
 pub struct RatingSnapshot {
-    #[serde(rename = "lbts")]
-    #[serde_as(as = "bson::DateTime")]
-    pub last_battle_time: DateTime,
+    #[serde(rename = "lbts_millis")]
+    pub date_timestamp_millis: i64,
 
-    #[serde(rename = "mm")]
-    pub mm_rating: wargaming::MmRating,
+    #[serde(rename = "close")]
+    pub close_rating: wargaming::MmRating,
 }
 
 impl RatingSnapshot {
@@ -31,21 +29,31 @@ impl RatingSnapshot {
         from: &Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        count: i64,
     ) -> Result<Vec<Self>> {
-        let filter = doc! {
-            "rlm": realm.to_str(),
-            "aid": account_id,
-        };
-        let options = FindOptions::builder()
-            .sort(doc! {"lbts": -1})
-            .projection(doc! {"_id": 0, "lbts": 1, "mm": 1})
-            .limit(count)
-            .build();
+        let pipeline = [
+            doc! {
+                "$match": {
+                    "rlm": realm.to_str(),
+                    "aid": account_id,
+                    "lbts": { "$gte": Utc::now() - Duration::days(14) },
+                }
+            },
+            doc! { "$sort": { "lbts": -1 } },
+            doc! {
+                "$group": {
+                    "_id": { "$subtract": [ { "$toLong": "$lbts" }, { "$mod": [ { "$toLong": "$lbts" }, 86400000 ] } ] },
+                    "lbts_millis": { "$first": { "$toLong": "$lbts"} },
+                    "close": { "$first": "$mm" },
+                },
+            },
+            doc! { "$sort": { "_id": 1 } },
+        ];
         let snapshots = Self::collection(from)
-            .find(filter, options)
-            .await?
-            .try_collect()
+            .aggregate(pipeline, None)
+            .await
+            .context("failed to retrieve rating snapshots")?
+            .try_filter_map(|document| async move { Ok(Some(bson::from_document(document)?)) })
+            .try_collect::<Vec<Self>>()
             .await?;
         Ok(snapshots)
     }

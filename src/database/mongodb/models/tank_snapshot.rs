@@ -202,11 +202,9 @@ impl TankSnapshot {
             .with_context(|| {
                 format!("failed to retrieve the latest tank snapshots for #{}", account_id)
             })?
-            .map_err(|error| anyhow!(error))
             .try_filter_map(|document| async move {
                 trace!(?document);
-                let document = from_document::<Root<Self>>(document)?;
-                Ok(Some(document.root))
+                Ok(Some(from_document::<Root<Self>>(document)?.root))
             })
             .try_collect::<Vec<Self>>()
             .await?;

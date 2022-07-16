@@ -7,7 +7,6 @@ use std::time::Instant;
 use chrono_humanize::Tense;
 use humantime::format_duration;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
-use poem::error::InternalServerError;
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
@@ -243,7 +242,7 @@ pub async fn get(
 
                     div.container {
                         div.columns.is-multiline {
-                            div class=(view_model.rating_snapshots_data.is_empty().then_some("column is-3-tablet is-3-desktop is-2-widescreen").unwrap_or("column is-5-tablet is-4-desktop is-3-widescreen")) {
+                            div class=(view_model.rating_snapshots.is_empty().then_some("column is-3-tablet is-3-desktop is-2-widescreen").unwrap_or("column is-5-tablet is-4-desktop is-3-widescreen")) {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -262,7 +261,7 @@ pub async fn get(
                                                     p.title title=(rating) { (rating) }
                                                 }
                                             }
-                                            @if !view_model.rating_snapshots_data.is_empty() {
+                                            @if !view_model.rating_snapshots.is_empty() {
                                                 div.level-item.has-text-centered {
                                                     div id="rating-chart" {}
                                                 }
@@ -750,37 +749,44 @@ pub async fn get(
 
                 (footer())
 
-                @if !view_model.rating_snapshots_data.is_empty() {
+                @if !view_model.rating_snapshots.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
-                    script { (PreEscaped(format!(r##"
-                        'use strict';
-                        const mode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-                        new ApexCharts(document.getElementById('rating-chart'), {{
-                            chart: {{
-                                type: 'line',
-                                width: 100,
-                                height: 57,
-                                sparkline: {{enabled: true}},
-                                animations: {{enabled: false}},
-                                background: 'transparent',
-                            }},
-                            colors: ['hsl(204, 71%, 39%)'],
-                            series: [{{name: '', data: {}}}],
-                            xaxis: {{type: 'datetime'}},
-                            tooltip: {{
-                                fixed: {{enabled: true, offsetY: 70}},
-                                marker: {{show: false}},
-                                x: {{format: 'MMM d, H:mm'}},
-                            }},
-                            stroke: {{width: 3, curve: 'straight'}},
-                            annotations: {{yaxis: [
-                                {{y: 5000, borderColor: 'hsl(217, 71%, 53%)'}},
-                                {{y: 4000, borderColor: 'hsl(141, 71%, 48%)'}},
-                                {{y: 3000, borderColor: 'hsl(48, 100%, 67%)'}},
-                            ]}},
-                            theme: {{mode: mode}},
-                        }}).render();
-                    "##, serde_json::to_string(&view_model.rating_snapshots_data).map_err(InternalServerError)?))) }
+                    script {
+                        (PreEscaped(r##"
+                            'use strict';
+                            const mode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                            new ApexCharts(document.getElementById('rating-chart'), {
+                                chart: {
+                                    type: 'line',
+                                    width: 100,
+                                    height: 57,
+                                    sparkline: {enabled: true},
+                                    animations: {enabled: false},
+                                    background: 'transparent',
+                                },
+                                colors: ['hsl(204, 71%, 39%)'],
+                                series: [{name: '', data: [
+                        "##))
+                        @for snapshot in &view_model.rating_snapshots {
+                            "[" (snapshot.date_timestamp_millis) "," (snapshot.close_rating.display_rating()) "],"
+                        }
+                        (PreEscaped(r##"]}],
+                                xaxis: {type: 'datetime'},
+                                tooltip: {
+                                    fixed: {enabled: true, offsetY: 70},
+                                    marker: {show: false},
+                                    x: {format: 'MMM d, H:mm'},
+                                },
+                                stroke: {width: 3, curve: 'straight'},
+                                annotations: {yaxis: [
+                                    {y: 5000, borderColor: 'hsl(217, 71%, 53%)'},
+                                    {y: 4000, borderColor: 'hsl(141, 71%, 48%)'},
+                                    {y: 3000, borderColor: 'hsl(48, 100%, 67%)'},
+                                ]},
+                                theme: {mode: mode},
+                            }).render();
+                        "##))
+                    }
                 }
             }
         }
