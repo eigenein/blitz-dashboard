@@ -154,7 +154,7 @@ impl TankSnapshot {
         let start_instant = Instant::now();
         timeout(
             // Sometimes `update_one` freezes, and I don't know why.
-            StdDuration::from_secs(1),
+            StdDuration::from_secs(10),
             Self::collection(to).update_one(query, update, options),
         )
         .await
