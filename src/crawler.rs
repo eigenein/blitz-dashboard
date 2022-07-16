@@ -121,12 +121,7 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(
-                    self.api.clone(),
-                    self.realm,
-                    account.last_battle_time,
-                    account_info,
-                ))
+                Ok(crawl_account(self.api.clone(), self.realm, account, account_info))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -222,10 +217,10 @@ fn match_account_infos(
 async fn crawl_account(
     api: WargamingApi,
     realm: wargaming::Realm,
-    last_known_battle_time: Option<DateTime>,
+    account: database::Account,
     account_info: wargaming::AccountInfo,
 ) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
-    debug!(?last_known_battle_time);
+    debug!(?account.last_battle_time);
 
     let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
     debug!(n_tanks_stats = tanks_stats.len());
@@ -235,7 +230,7 @@ async fn crawl_account(
         .collect_vec();
     let tanks_stats = tanks_stats
         .into_iter()
-        .filter(|tank| Some(tank.last_battle_time) > last_known_battle_time)
+        .filter(|tank| Some(tank.last_battle_time) > account.last_battle_time)
         .collect_vec();
     let tank_snapshots = if !tanks_stats.is_empty() {
         debug!(n_updated_tanks = tanks_stats.len());
@@ -247,8 +242,12 @@ async fn crawl_account(
     };
     debug!(n_tank_snapshots = tank_snapshots.len(), "crawled");
 
-    let account = database::Account::new(realm, account_info.id)
-        .last_battle_time(account_info.last_battle_time);
+    let account = database::Account {
+        id: account.id,
+        realm,
+        last_battle_time: Some(account_info.last_battle_time),
+        random: account.random,
+    };
     let account_snapshot =
         database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
 
