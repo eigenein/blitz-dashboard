@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::math::traits::{NBattles, NWins};
+use crate::math::traits::{DamageDealt, NBattles, NWins};
 use crate::wargaming;
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
@@ -15,6 +15,9 @@ pub struct RatingStatsSnapshot {
 
     #[serde(default, rename = "nrw")]
     pub n_wins: u32,
+
+    #[serde(default, rename = "rdmgd")]
+    pub damage_dealt: u32,
 }
 
 impl NBattles for RatingStatsSnapshot {
@@ -29,12 +32,19 @@ impl NWins for RatingStatsSnapshot {
     }
 }
 
+impl DamageDealt for RatingStatsSnapshot {
+    fn damage_dealt(&self) -> u32 {
+        self.damage_dealt
+    }
+}
+
 impl From<wargaming::RatingStats> for RatingStatsSnapshot {
     fn from(stats: wargaming::RatingStats) -> Self {
         Self {
             mm_rating: stats.mm_rating,
             n_battles: stats.basic.n_battles,
             n_wins: stats.basic.n_wins,
+            damage_dealt: stats.basic.damage_dealt,
         }
     }
 }
@@ -47,6 +57,7 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
             mm_rating: (self.mm_rating.0 - rhs.mm_rating.0).into(),
             n_battles: self.basic.n_battles - rhs.n_battles,
             n_wins: self.basic.n_wins - rhs.n_wins,
+            damage_dealt: self.basic.damage_dealt - rhs.damage_dealt,
         }
     }
 }
