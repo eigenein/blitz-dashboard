@@ -10,12 +10,12 @@ use crate::wargaming::MmRating;
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
 pub struct BasicStats {
     #[serde(rename = "battles")]
-    pub n_battles: i32,
+    pub n_battles: u32,
 
     #[serde(rename = "wins")]
-    pub n_wins: i32,
+    pub n_wins: u32,
 
-    pub survived_battles: i32,
+    pub survived_battles: u32,
     pub win_and_survived: i32,
     pub damage_dealt: i32,
     pub damage_received: i32,
@@ -62,13 +62,13 @@ impl Sub<database::RandomStatsSnapshot> for BasicStats {
 }
 
 impl NBattles for BasicStats {
-    fn n_battles(&self) -> i32 {
+    fn n_battles(&self) -> u32 {
         self.n_battles
     }
 }
 
 impl NWins for BasicStats {
-    fn n_wins(&self) -> i32 {
+    fn n_wins(&self) -> u32 {
         self.n_wins
     }
 }

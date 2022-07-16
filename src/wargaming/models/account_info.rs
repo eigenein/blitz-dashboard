@@ -51,7 +51,7 @@ pub struct AccountInfoStats {
 impl AccountInfoStats {
     #[inline]
     #[must_use]
-    pub const fn n_total_battles(&self) -> i32 {
+    pub const fn n_total_battles(&self) -> u32 {
         self.random.n_battles + self.rating.basic.n_battles
     }
 }

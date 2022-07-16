@@ -1,11 +1,11 @@
 use crate::math::statistics::ConfidenceInterval;
 
 pub trait NWins {
-    fn n_wins(&self) -> i32;
+    fn n_wins(&self) -> u32;
 }
 
 pub trait NBattles {
-    fn n_battles(&self) -> i32;
+    fn n_battles(&self) -> u32;
 }
 
 pub trait DamageDealt {

@@ -11,20 +11,20 @@ pub struct RatingStatsSnapshot {
     pub mm_rating: wargaming::MmRating,
 
     #[serde(default, rename = "nrb")]
-    pub n_battles: i32,
+    pub n_battles: u32,
 
     #[serde(default, rename = "nrw")]
-    pub n_wins: i32,
+    pub n_wins: u32,
 }
 
 impl NBattles for RatingStatsSnapshot {
-    fn n_battles(&self) -> i32 {
+    fn n_battles(&self) -> u32 {
         self.n_battles
     }
 }
 
 impl NWins for RatingStatsSnapshot {
-    fn n_wins(&self) -> i32 {
+    fn n_wins(&self) -> u32 {
         self.n_wins
     }
 }

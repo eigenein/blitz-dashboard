@@ -12,7 +12,7 @@ pub struct ConfidenceInterval {
 
 impl ConfidenceInterval {
     /// <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval>
-    pub fn wilson_score_interval(n_trials: i32, n_successes: i32, level: ConfidenceLevel) -> Self {
+    pub fn wilson_score_interval(n_trials: u32, n_successes: u32, level: ConfidenceLevel) -> Self {
         let z = level.z_value();
         let n_trials = n_trials as f64;
         let n_successes = n_successes as f64;

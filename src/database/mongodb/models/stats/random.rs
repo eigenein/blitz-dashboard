@@ -12,13 +12,13 @@ use crate::wargaming;
 #[derive(Serialize, Deserialize, Copy, Clone, Default)]
 pub struct RandomStatsSnapshot {
     #[serde(rename = "nb")]
-    pub n_battles: i32,
+    pub n_battles: u32,
 
     #[serde(rename = "nw")]
-    pub n_wins: i32,
+    pub n_wins: u32,
 
     #[serde(rename = "nsb")]
-    pub n_survived_battles: i32,
+    pub n_survived_battles: u32,
 
     #[serde(rename = "nws")]
     pub n_win_and_survived: i32,
@@ -43,13 +43,13 @@ pub struct RandomStatsSnapshot {
 }
 
 impl NBattles for RandomStatsSnapshot {
-    fn n_battles(&self) -> i32 {
+    fn n_battles(&self) -> u32 {
         self.n_battles
     }
 }
 
 impl NWins for RandomStatsSnapshot {
-    fn n_wins(&self) -> i32 {
+    fn n_wins(&self) -> u32 {
         self.n_wins
     }
 }
