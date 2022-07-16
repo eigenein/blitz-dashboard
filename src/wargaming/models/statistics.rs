@@ -16,7 +16,7 @@ pub struct BasicStats {
     pub n_wins: u32,
 
     pub survived_battles: u32,
-    pub win_and_survived: i32,
+    pub win_and_survived: u32,
     pub damage_dealt: i32,
     pub damage_received: i32,
     pub shots: i32,

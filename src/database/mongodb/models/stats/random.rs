@@ -21,7 +21,7 @@ pub struct RandomStatsSnapshot {
     pub n_survived_battles: u32,
 
     #[serde(rename = "nws")]
-    pub n_win_and_survived: i32,
+    pub n_win_and_survived: u32,
 
     #[serde(rename = "dmgd")]
     pub damage_dealt: i32,
