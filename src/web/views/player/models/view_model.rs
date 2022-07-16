@@ -8,7 +8,7 @@ use poem::web::{Path, Query};
 use sentry::protocol::IpAddress;
 
 use crate::math::statistics::ConfidenceInterval;
-use crate::math::traits::{MMRating, TrueWinRate};
+use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::models::{Params, Segments, StatsDelta};
@@ -112,7 +112,10 @@ impl ViewModel {
         let rating_snapshots_data = rating_snapshots
             .into_iter()
             .map(|snapshot| {
-                (snapshot.last_battle_time.timestamp_millis(), snapshot.display_rating())
+                (
+                    snapshot.last_battle_time.timestamp_millis(),
+                    snapshot.mm_rating.display_rating(),
+                )
             })
             .collect();
         Ok(rating_snapshots_data)

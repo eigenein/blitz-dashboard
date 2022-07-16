@@ -14,7 +14,7 @@ use poem::{handler, IntoResponse, Response};
 use self::models::*;
 use crate::helpers::time::{from_days, from_months};
 use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::math::traits::{AverageDamageDealt, CurrentWinRate, MMRating, TrueWinRate};
+use crate::math::traits::{AverageDamageDealt, CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -258,7 +258,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Сейчас" }
-                                                    @let rating = view_model.actual_info.stats.rating.display_rating();
+                                                    @let rating = view_model.actual_info.stats.rating.mm_rating.display_rating();
                                                     p.title title=(rating) { (rating) }
                                                 }
                                             }

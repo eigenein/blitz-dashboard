@@ -3,7 +3,8 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 
 use crate::database;
-use crate::math::traits::{DamageDealt, MMRating, NBattles, NWins};
+use crate::math::traits::{DamageDealt, NBattles, NWins};
+use crate::wargaming::MmRating;
 
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
@@ -84,11 +85,5 @@ pub struct RatingStats {
     pub basic: BasicStats,
 
     #[serde(default)]
-    pub mm_rating: f64,
-}
-
-impl MMRating for RatingStats {
-    fn mm_rating(&self) -> f64 {
-        self.mm_rating
-    }
+    pub mm_rating: MmRating,
 }

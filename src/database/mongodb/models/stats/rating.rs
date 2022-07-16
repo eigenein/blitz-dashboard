@@ -8,7 +8,7 @@ use crate::wargaming;
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct RatingStatsSnapshot {
     #[serde(rename = "mm")]
-    pub mm_rating: f64,
+    pub mm_rating: wargaming::MmRating,
 
     #[serde(default, rename = "nrb")]
     pub n_battles: i32,
@@ -44,7 +44,7 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
 
     fn sub(self, rhs: RatingStatsSnapshot) -> Self::Output {
         Self::Output {
-            mm_rating: self.mm_rating - rhs.mm_rating,
+            mm_rating: (self.mm_rating.0 - rhs.mm_rating.0).into(),
             n_battles: self.basic.n_battles - rhs.n_battles,
             n_wins: self.basic.n_wins - rhs.n_wins,
         }
@@ -54,7 +54,7 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
 impl RatingStatsSnapshot {
     #[must_use]
     pub fn delta(&self) -> f64 {
-        self.mm_rating * 10.0
+        self.mm_rating.0 * 10.0
     }
 
     #[must_use]

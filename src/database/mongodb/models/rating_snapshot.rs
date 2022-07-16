@@ -4,11 +4,10 @@ use mongodb::options::FindOptions;
 use mongodb::{bson, Collection, Database};
 use serde::Deserialize;
 
-use crate::math::traits::MMRating;
 use crate::prelude::*;
 use crate::wargaming;
 
-/// Projection to select only timestamps and ratings from account snapshots.
+/// Projection to select the rating chart data.
 #[serde_with::serde_as]
 #[derive(Deserialize)]
 pub struct RatingSnapshot {
@@ -17,13 +16,7 @@ pub struct RatingSnapshot {
     pub last_battle_time: DateTime,
 
     #[serde(rename = "mm")]
-    pub mm_rating: f64,
-}
-
-impl MMRating for RatingSnapshot {
-    fn mm_rating(&self) -> f64 {
-        self.mm_rating
-    }
+    pub mm_rating: wargaming::MmRating,
 }
 
 impl RatingSnapshot {
