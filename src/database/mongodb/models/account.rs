@@ -142,7 +142,6 @@ impl Account {
             "random": { "$gt": fastrand::f64() },
             "$or": [
                 { "lbts": null },
-                { "lbts": bson::DateTime::from_millis(0) }, // FIXME: remove.
                 { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
             ],
         };
