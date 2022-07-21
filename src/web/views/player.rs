@@ -438,6 +438,32 @@ pub async fn get(
                                     }
                                 }
 
+                                div.column."is-3-tablet"."is-3-desktop"."is-2-widescreen" {
+                                    div.card {
+                                        header.card-header {
+                                            p.card-header-title {
+                                                span.icon-text.is-flex-wrap-nowrap {
+                                                    span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }
+                                                    span { "Урон" }
+                                                }
+                                            }
+                                            p.card-header-icon {
+                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                            }
+                                        }
+                                        div.card-content {
+                                            div.level.is-mobile {
+                                                div.level-item.has-text-centered {
+                                                    div {
+                                                        p.heading { "За бой" }
+                                                        p.title { (format!("{:.0}", view_model.stats_delta.rating.average_damage_dealt())) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 div.column."is-7-tablet"."is-6-desktop"."is-4-widescreen" {
                                     div.card {
                                         header.card-header {
@@ -527,7 +553,7 @@ pub async fn get(
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
-                                                    span.icon { i.fa-solid.fa-house-damage {} }
+                                                    span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }
                                                     span { "Нанесенный урон" }
                                                 }
                                             }
