@@ -23,12 +23,35 @@ impl<T> Float<T> {
     }
 }
 
-impl<T: Display> Render for Float<T> {
+impl<T: Display + num_traits::Float> Render for Float<T> {
     fn render_to(&self, buffer: &mut String) {
-        write!(buffer, r#"<span title=""#).unwrap();
-        write!(Escaper::new(buffer), "{}", self.value).unwrap();
-        write!(buffer, r#"">"#).unwrap();
-        write!(Escaper::new(buffer), "{0:.1$}", self.value, self.precision).unwrap();
+        write!(buffer, r"<span").unwrap();
+        if self.value.is_finite() {
+            write!(buffer, r#" title=""#).unwrap();
+            write!(Escaper::new(buffer), "{}", self.value).unwrap();
+            write!(buffer, r#"""#).unwrap();
+        }
+        write!(buffer, ">").unwrap();
+        if self.value.is_finite() {
+            write!(Escaper::new(buffer), "{0:.1$}", self.value, self.precision).unwrap();
+        } else {
+            buffer.push('-');
+        }
         write!(buffer, "</span>").unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finite_ok() {
+        assert_eq!(Float::from(0.5).render().into_string(), r#"<span title="0.5">1</span>"#);
+    }
+
+    #[test]
+    fn infinite_ok() {
+        assert_eq!(Float::from(f64::INFINITY).render().into_string(), "<span>-</span>");
     }
 }

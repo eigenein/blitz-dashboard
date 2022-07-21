@@ -332,10 +332,7 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { "Рейтинговые бои" }
-                                                    @let damage_dealt = view_model.actual_info.stats.rating.basic.average_damage_dealt();
-                                                    p.title title=(damage_dealt) {
-                                                        (format!("{:.0}", damage_dealt))
-                                                    }
+                                                    p.title { (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt())) }
                                                 }
                                             }
                                         }
