@@ -17,9 +17,6 @@ mod tankopedia;
 mod wargaming;
 mod web;
 
-#[global_allocator]
-static ALLOCATOR: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> Result {
