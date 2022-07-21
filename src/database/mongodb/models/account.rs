@@ -3,7 +3,8 @@ use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::{
-    FindOneAndUpdateOptions, FindOptions, IndexOptions, ReturnDocument, UpdateOptions,
+    FindOneAndUpdateOptions, FindOneOptions, FindOptions, IndexOptions, ReturnDocument,
+    UpdateOptions,
 };
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
@@ -173,8 +174,9 @@ impl Account {
             "random": { "$gt": fastrand::f64() },
             "lbts": { "$gt": Utc::now() - Duration::days(1) },
         };
+        let options = FindOneOptions::builder().sort(doc! { "random": 1 }).build();
         let account = Self::collection(from)
-            .find_one(filter, None)
+            .find_one(filter, options)
             .await?
             .ok_or_else(|| anyhow!("could not sample a random account"))?;
         Ok(account)
