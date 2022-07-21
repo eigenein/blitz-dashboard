@@ -30,19 +30,10 @@ pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<Response> {
                                     form action="/search" method="GET" {
                                         div.field.is-grouped.is-grouped-centered.is-grouped-multiline {
                                             p.control {
-                                                a.button.is-rounded.is-small href="/ru/103809874" { "Invincible_Beast" }
+                                                a.button.is-rounded.is-small href="/ru/103809874" { "🇷🇺 Invincible_Beast" }
                                             }
                                             p.control {
-                                                a.button.is-rounded.is-small href="/ru/3851977" { "D_W_S" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/5303075" { "Perfect_M1nd" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/4435872" { "_n0_skill_just_luck_" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/2992069" { "Tortik" }
+                                                a.button.is-rounded.is-small href="/ru/3851977" { "🇷🇺 D_W_S" }
                                             }
                                         }
                                         (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false))
