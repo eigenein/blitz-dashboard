@@ -35,4 +35,14 @@ impl Realm {
             Self::Russia => "ru",
         }
     }
+
+    #[inline]
+    pub const fn to_emoji(self) -> &'static str {
+        match self {
+            Self::Asia => "🇨🇳",
+            Self::Europe => "🇪🇺",
+            Self::NorthAmerica => "🇺🇸",
+            Self::Russia => "🇷🇺",
+        }
+    }
 }

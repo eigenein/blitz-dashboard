@@ -167,7 +167,18 @@ impl Account {
         Ok(accounts)
     }
 
-    // TODO: retrieve one random account and implement «I'm feeling lucky».
+    pub async fn sample_account(from: &Database, realm: wargaming::Realm) -> Result<Account> {
+        let filter = doc! {
+            "rlm": realm.to_str(),
+            "random": { "$gt": fastrand::f64() },
+            "lbts": { "$gt": Utc::now() - Duration::days(1) },
+        };
+        let account = Self::collection(from)
+            .find_one(filter, None)
+            .await?
+            .ok_or_else(|| anyhow!("could not sample a random account"))?;
+        Ok(account)
+    }
 }
 
 impl Account {

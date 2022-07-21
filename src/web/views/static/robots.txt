@@ -3,5 +3,7 @@ Disallow: /*.ico$
 Disallow: /*.js$
 Disallow: /*.png$
 Disallow: /*.txt$
+Disallow: /*.webmanifest$
+Disallow: /*.svg$
 Disallow: /*?*
 Disallow: /status

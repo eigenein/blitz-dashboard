@@ -189,7 +189,7 @@ pub async fn get(
 
                 (headers())
                 link rel="canonical" href=(format!("/{}/{}", view_model.realm, view_model.actual_info.id));
-                title { (view_model.actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
+                title { (view_model.realm.to_emoji()) (view_model.actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
             }
             body {
                 (tracking_code.0)
@@ -238,7 +238,7 @@ pub async fn get(
                 }
 
                 section.section.has-background-info-light."pt-5" {
-                    p.subtitle.has-text-weight-medium { (view_model.actual_info.nickname) }
+                    p.subtitle.has-text-weight-medium { (view_model.realm.to_emoji()) (PreEscaped("&nbsp;")) (view_model.actual_info.nickname) }
 
                     div.container {
                         div.columns.is-multiline {

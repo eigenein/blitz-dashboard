@@ -37,12 +37,22 @@ pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<Response> {
                                             }
                                         }
                                         (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false))
+                                        div.field.is-grouped.is-grouped-centered {
+                                            p.control {
+                                                a.button.is-rounded.is-medium href="/random" {
+                                                    span.icon { i.fa-solid.fa-dice {} }
+                                                    span { "Мне повезет!" }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                script src="https://betteruptime.com/widgets/announcement.js" data-id="144994" async {}
             }
         }
     };
