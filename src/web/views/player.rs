@@ -572,7 +572,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_float(view_model.stats_delta.random.damage_per_battle(), 0)) }
+                                                        p.title { (Float::from(view_model.stats_delta.random.damage_per_battle())) }
                                                     }
                                                 }
                                             }
@@ -604,7 +604,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { "За бой" }
-                                                        p.title { (render_float(view_model.stats_delta.random.frags_per_battle(), 1)) }
+                                                        p.title { (Float::from(view_model.stats_delta.random.frags_per_battle()).precision(1)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {

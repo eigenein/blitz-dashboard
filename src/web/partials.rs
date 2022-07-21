@@ -1,8 +1,11 @@
+mod float;
+
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup, PreEscaped};
 use phf::phf_set;
 
+pub use self::float::*;
 use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
 use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
