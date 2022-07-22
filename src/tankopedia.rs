@@ -179,14 +179,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> Result {
             type_: TankType::Medium,
         },
         Vehicle {
-            tank_id: 22529,
-            name: Cow::Borrowed("ЛТ-432"),
-            tier: 8,
-            is_premium: true,
-            nation: Nation::Ussr,
-            type_: TankType::Light,
-        },
-        Vehicle {
             tank_id: 24849,
             name: Cow::Borrowed("Kryos"),
             tier: 6,
@@ -196,7 +188,7 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> Result {
         },
     ] {
         match vehicles.get(&vehicle.tank_id.to_string()) {
-            Some(_) => anyhow::bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
+            Some(_) => bail!("vehicle #{} is already in the tankopedia", vehicle.tank_id),
             None => vehicles.insert(vehicle.tank_id.to_string(), vehicle),
         };
     }

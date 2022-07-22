@@ -2253,8 +2253,8 @@
       "7172": {
         "name": "122 мм У-11",
         "next_modules": [
-          7428,
-          2564
+          2564,
+          7428
         ],
         "next_tanks": null,
         "is_default": true,
@@ -17236,18 +17236,6 @@
         "module_id": 2149,
         "type": "vehicleEngine"
       },
-      "3428": {
-        "name": "Tank Type 99",
-        "next_modules": null,
-        "next_tanks": [
-          5473
-        ],
-        "is_default": false,
-        "price_xp": 3000,
-        "price_credit": 0,
-        "module_id": 3428,
-        "type": "vehicleGun"
-      },
       "3426": {
         "name": "Type 2 Ho-I",
         "next_modules": null,
@@ -17257,19 +17245,6 @@
         "price_credit": 0,
         "module_id": 3426,
         "type": "vehicleChassis"
-      },
-      "3171": {
-        "name": "Type 2 Ho-I",
-        "next_modules": [
-          3684,
-          3428
-        ],
-        "next_tanks": null,
-        "is_default": false,
-        "price_xp": 3500,
-        "price_credit": 0,
-        "module_id": 3171,
-        "type": "vehicleTurret"
       },
       "3684": {
         "name": "Experimental Tank Shin",
@@ -17281,6 +17256,31 @@
         "price_xp": 3500,
         "price_credit": 0,
         "module_id": 3684,
+        "type": "vehicleGun"
+      },
+      "3171": {
+        "name": "Type 2 Ho-I",
+        "next_modules": [
+          3428,
+          3684
+        ],
+        "next_tanks": null,
+        "is_default": false,
+        "price_xp": 3500,
+        "price_credit": 0,
+        "module_id": 3171,
+        "type": "vehicleTurret"
+      },
+      "3428": {
+        "name": "Tank Type 99",
+        "next_modules": null,
+        "next_tanks": [
+          5473
+        ],
+        "is_default": false,
+        "price_xp": 3000,
+        "price_credit": 0,
+        "module_id": 3428,
         "type": "vehicleGun"
       },
       "1893": {
@@ -17402,8 +17402,8 @@
     "type": "mediumTank",
     "guns": [
       6500,
-      3428,
-      3684
+      3684,
+      3428
     ],
     "turrets": [
       2915,
@@ -18064,8 +18064,8 @@
       "31491": {
         "name": "Т-34М обр. 1941 г.",
         "next_modules": [
-          1540,
-          30980
+          30980,
+          1540
         ],
         "next_tanks": null,
         "is_default": false,
@@ -25557,9 +25557,9 @@
         "name": "7,5 cm kan m/43 strv",
         "next_modules": null,
         "next_tanks": [
-          1409,
           3713,
-          8065
+          8065,
+          1409
         ],
         "is_default": false,
         "price_xp": 5000,
@@ -33949,6 +33949,167 @@
     ],
     "name": "AE Phase I"
   },
+  "22529": {
+    "suspensions": [
+      259842
+    ],
+    "description": "В начале 60-х во ВНИИ-100 разработали несколько проектов машин на базе танка Объект 432, в компоновочной схеме которых, кроме экипажа, предусматривалось дополнительное размещение десанта. Машина не изготавливалась, существовал только эскизный проект.",
+    "engines": [
+      68613
+    ],
+    "prices_xp": null,
+    "next_tanks": null,
+    "modules_tree": {
+      "259842": {
+        "name": "ЛТ-432",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 259842,
+        "type": "vehicleChassis"
+      },
+      "259843": {
+        "name": "ЛТ-432",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 259843,
+        "type": "vehicleTurret"
+      },
+      "262660": {
+        "name": "100 мм Д-33",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 262660,
+        "type": "vehicleGun"
+      },
+      "68613": {
+        "name": "5ТДФ-С",
+        "next_modules": null,
+        "next_tanks": null,
+        "is_default": true,
+        "price_xp": 0,
+        "price_credit": 0,
+        "module_id": 68613,
+        "type": "vehicleEngine"
+      }
+    },
+    "nation": "ussr",
+    "is_premium": true,
+    "images": {
+      "preview": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd_thumbnail/R158_LT_432.png",
+      "normal": "http://glossary-ru-static.gcdn.co/icons/wotb/current/uploaded/vehicles/hd/R158_LT_432.png"
+    },
+    "cost": null,
+    "default_profile": {
+      "weight": 26920,
+      "profile_id": "68613-259842-259843-262660",
+      "firepower": 46,
+      "shot_efficiency": 62,
+      "gun_id": 262660,
+      "signal_range": null,
+      "shells": [
+        {
+          "type": "ARMOR_PIERCING_CR",
+          "penetration": 175,
+          "damage": 280
+        },
+        {
+          "type": "ARMOR_PIERCING",
+          "penetration": 235,
+          "damage": 240
+        },
+        {
+          "type": "HIGH_EXPLOSIVE",
+          "penetration": 50,
+          "damage": 350
+        }
+      ],
+      "armor": {
+        "turret": {
+          "front": 100,
+          "sides": 50,
+          "rear": 40
+        },
+        "hull": {
+          "front": 70,
+          "sides": 35,
+          "rear": 35
+        }
+      },
+      "speed_forward": 70,
+      "battle_level_range_min": 8,
+      "speed_backward": 30,
+      "engine": {
+        "tier": 8,
+        "fire_chance": 0.12,
+        "power": 670,
+        "name": "5ТДФ-С",
+        "weight": 1050
+      },
+      "max_ammo": 50,
+      "battle_level_range_max": 9,
+      "engine_id": 68613,
+      "hp": 1200,
+      "is_default": true,
+      "protection": 35,
+      "suspension": {
+        "tier": 8,
+        "load_limit": 30000,
+        "traverse_speed": 52,
+        "name": "ЛТ-432",
+        "weight": 6500
+      },
+      "suspension_id": 259842,
+      "max_weight": 30000,
+      "gun": {
+        "move_down_arc": 5,
+        "caliber": 100,
+        "name": "100 мм Д-33",
+        "weight": 1000,
+        "move_up_arc": 15,
+        "fire_rate": 6.52,
+        "clip_reload_time": 0.0,
+        "dispersion": 0.38,
+        "clip_capacity": 1,
+        "traverse_speed": 39.38,
+        "reload_time": 9.2,
+        "tier": 8,
+        "aim_time": 4.51
+      },
+      "turret_id": 259843,
+      "turret": {
+        "name": "ЛТ-432",
+        "weight": 7000,
+        "view_range": 250,
+        "traverse_left_arc": 180,
+        "hp": 230,
+        "traverse_speed": 48,
+        "tier": 8,
+        "traverse_right_arc": 180
+      },
+      "maneuverability": 82,
+      "hull_weight": 11095,
+      "hull_hp": 970
+    },
+    "tier": 8,
+    "tank_id": 22529,
+    "type": "lightTank",
+    "guns": [
+      262660
+    ],
+    "turrets": [
+      259843
+    ],
+    "name": "ЛТ-432"
+  },
   "22545": {
     "suspensions": [
       260882
@@ -41844,8 +42005,8 @@
       "11777": 30000
     },
     "next_tanks": {
-      "5889": 54420,
-      "513": 58390
+      "513": 58390,
+      "5889": 54420
     },
     "modules_tree": {
       "5634": {
@@ -41931,8 +42092,8 @@
         "name": "85 мм Д-5Т",
         "next_modules": null,
         "next_tanks": [
-          5889,
-          513
+          513,
+          5889
         ],
         "is_default": false,
         "price_xp": 5310,
@@ -44533,8 +44694,8 @@
         "name": "SA37",
         "next_modules": null,
         "next_tanks": [
-          1089,
-          9793
+          9793,
+          1089
         ],
         "is_default": false,
         "price_xp": 500,
@@ -81391,8 +81552,8 @@
       "8708": {
         "name": "122 мм Д-25С обр. 1944 г.",
         "next_modules": [
-          17924,
-          18180
+          18180,
+          17924
         ],
         "next_tanks": [
           8193
@@ -82595,8 +82756,8 @@
       "1025": 700
     },
     "next_tanks": {
-      "6913": 2500,
-      "2049": 2500
+      "2049": 2500,
+      "6913": 2500
     },
     "modules_tree": {
       "1794": {
@@ -82659,8 +82820,8 @@
         "name": "ВТ-42",
         "next_modules": null,
         "next_tanks": [
-          2049,
-          6913
+          6913,
+          2049
         ],
         "is_default": false,
         "price_xp": 1250,
@@ -84345,8 +84506,8 @@
       "14595": {
         "name": "Т-54 обр. 1949 г.",
         "next_modules": [
-          19972,
-          27396
+          27396,
+          19972
         ],
         "next_tanks": null,
         "is_default": false,
