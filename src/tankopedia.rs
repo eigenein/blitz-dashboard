@@ -38,17 +38,15 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
         .unwrap()
         .join("tankopedia")
         .join("tankopedia.json");
-    let tankopedia: Tankopedia =
+    let mut tankopedia: Tankopedia =
         serde_json::from_str::<Tankopedia>(&fs::read_to_string(&json_path)?)?
             .into_iter()
             .chain(api.get_tankopedia().await?)
             .collect();
     fs::write(&json_path, serde_json::to_string_pretty(&tankopedia)?)?;
 
-    let mut vehicles: BTreeMap<String, Vehicle> =
-        serde_json::from_value(serde_json::to_value(&tankopedia)?)?;
-    insert_missing_vehicles(&mut vehicles)?;
-    info!(n_vehicles = vehicles.len(), "finished");
+    insert_missing_vehicles(&mut tankopedia)?;
+    info!(n_vehicles = tankopedia.len(), "finished");
 
     let mut file = fs::File::create(
         Path::new(file!())
@@ -64,7 +62,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
     writeln!(&mut file, "use crate::wargaming::models::{{Nation, TankType, Vehicle}};")?;
     writeln!(&mut file)?;
     writeln!(&mut file, "pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {{")?;
-    for (_, vehicle) in vehicles.into_iter() {
+    for (_, vehicle) in tankopedia.into_iter() {
         writeln!(&mut file, "    {}_u32 => Vehicle {{", vehicle.tank_id)?;
         writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
         writeln!(&mut file, "        name: Cow::Borrowed({:?}),", vehicle.name,)?;

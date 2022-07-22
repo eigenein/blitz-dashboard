@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::wargaming::models::{Nation, TankId};
 
 /// Represents a generic vehicle from the tankopedia.
-#[derive(Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Vehicle {
     pub tank_id: TankId,
     pub name: Cow<'static, str>,
