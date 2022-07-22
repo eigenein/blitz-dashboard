@@ -18,7 +18,6 @@ pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
     pub current_win_rate: ConfidenceInterval,
-    pub battle_life_time_secs: f64,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
 }
@@ -59,19 +58,11 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let current_win_rate = actual_info.stats.random.true_win_rate();
-
         let before =
             Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;
-
-        let battle_life_time_secs = stats_delta
-            .tanks
-            .iter()
-            .map(|snapshot| snapshot.battle_life_time.num_seconds())
-            .sum::<i64>() as f64;
-
         let rating_snapshots =
             database::RatingSnapshot::retrieve_latest(db, realm, account_id).await?;
 
@@ -79,7 +70,6 @@ impl ViewModel {
             realm,
             actual_info,
             current_win_rate,
-            battle_life_time_secs,
             stats_delta,
             rating_snapshots,
         })

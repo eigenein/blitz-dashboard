@@ -5,7 +5,6 @@
 use std::time::Instant;
 
 use chrono_humanize::Tense;
-use humantime::format_duration;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
@@ -58,14 +57,6 @@ pub async fn get(
             th { "Тип" }
 
             th.has-text-right {
-                a data-sort="battle-life-time" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Время в боях" }
-                    }
-                }
-            }
-
-            th.has-text-right {
                 a data-sort="battles" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Бои" }
@@ -106,22 +97,6 @@ pub async fn get(
             }
 
             th {
-                a data-sort="wins-per-hour" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Победы в час" }
-                    }
-                }
-            }
-
-            th {
-                a data-sort="expected-wins-per-hour" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Число побед в час, скорректированное на число проведенных боев, CI 98%" { "Победы в час (интервал)" } }
-                    }
-                }
-            }
-
-            th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 98%" { "Ожидаемое золото" } }
@@ -133,14 +108,6 @@ pub async fn get(
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { "Общий урон" }
-                    }
-                }
-            }
-
-            th.has-text-right {
-                a data-sort="damage-per-minute" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span { "Урон в минуту" }
                     }
                 }
             }
@@ -577,13 +544,13 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-12-tablet"."is-4-desktop" {
+                                div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon { i.fa-solid.fa-skull-crossbones {} }
-                                                    span { "Уничтоженная техника" }
+                                                    span { "Уничтожено" }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -602,12 +569,6 @@ pub async fn get(
                                                     div {
                                                         p.heading { "За бой" }
                                                         p.title { (Float::from(view_model.stats_delta.random.frags_per_battle()).precision(1)) }
-                                                    }
-                                                }
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "В час" }
-                                                        p.title { (render_float(view_model.stats_delta.random.n_frags as f64 / view_model.battle_life_time_secs * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -683,32 +644,6 @@ pub async fn get(
                                                             (render_percentage(expected_period_survival_rate.mean))
                                                             span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
                                                         }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
-                                    div.card {
-                                        header.card-header {
-                                            p.card-header-title {
-                                                span.icon-text.is-flex-wrap-nowrap {
-                                                    span.icon.has-text-success { i.fa-solid.fa-check {} }
-                                                    span { "Победы" }
-                                                }
-                                            }
-                                            p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
-                                            }
-                                        }
-                                        div.card-content {
-                                            div.level.is-mobile {
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { "В час" }
-                                                        p.title { (render_float(view_model.stats_delta.random.n_wins as f64 / view_model.battle_life_time_secs * 3600.0, 1)) }
                                                     }
                                                 }
                                             }
@@ -846,10 +781,6 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right.is-white-space-nowrap data-sort="battle-life-time" data-value=(snapshot.battle_life_time.num_seconds()) {
-                (format_duration(snapshot.battle_life_time.to_std()?))
-            }
-
             td.has-text-right data-sort="battles" data-value=(snapshot.stats.n_battles) {
                 (snapshot.stats.n_battles)
             }
@@ -889,25 +820,6 @@ fn render_tank_tr(
                 }
             }
 
-            @let wins_per_hour = snapshot.wins_per_hour();
-            td data-sort="wins-per-hour" data-value=(wins_per_hour) {
-                span.icon-text.is-flex-wrap-nowrap {
-                    span.icon.has-text-success { i.fas.fa-check {} }
-                    span { (render_float(wins_per_hour, 1)) }
-                }
-            }
-
-            @let expected_wins_per_hour = true_win_rate * snapshot.battles_per_hour();
-            td.is-white-space-nowrap
-                data-sort="expected-wins-per-hour"
-                data-value=(expected_wins_per_hour.mean)
-            {
-                strong { (render_float(expected_wins_per_hour.mean, 1)) }
-                span.has-text-grey {
-                    (format!(" ±{:.1}", expected_wins_per_hour.margin))
-                }
-            }
-
             @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
             td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
                 span.icon-text.is-flex-wrap-nowrap {
@@ -923,11 +835,6 @@ fn render_tank_tr(
 
             td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
                 (snapshot.stats.damage_dealt)
-            }
-
-            @let damage_per_minute = snapshot.damage_per_minute();
-            td.has-text-right data-sort="damage-per-minute" data-value=(damage_per_minute) {
-                (format!("{:.0}", damage_per_minute))
             }
 
             @let damage_per_battle = snapshot.stats.damage_dealt as f64 / snapshot.stats.n_battles as f64;

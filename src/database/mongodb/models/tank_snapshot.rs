@@ -251,26 +251,6 @@ impl TankSnapshot {
 }
 
 impl TankSnapshot {
-    #[must_use]
-    #[inline]
-    pub fn wins_per_hour(&self) -> f64 {
-        self.stats.n_wins as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn battles_per_hour(&self) -> f64 {
-        self.stats.n_battles as f64 / self.battle_life_time.num_seconds() as f64 * 3600.0
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn damage_per_minute(&self) -> f64 {
-        self.stats.damage_dealt as f64 / self.battle_life_time.num_seconds() as f64 * 60.0
-    }
-}
-
-impl TankSnapshot {
     fn collection(in_: &Database) -> Collection<Self> {
         in_.collection("tank_snapshots")
     }
