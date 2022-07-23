@@ -6,6 +6,7 @@ use mongodb::bson::{doc, from_document};
 use mongodb::options::{IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::spawn;
 use tokio::time::timeout;
 
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
@@ -152,12 +153,13 @@ impl TankSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
+        let collection = Self::collection(to);
         timeout(
             // Sometimes `update_one` freezes, and I don't know why.
             StdDuration::from_secs(10),
-            Self::collection(to).update_one(query, update, options),
+            spawn(async move { collection.update_one(query, update, options).await }),
         )
-        .await
+        .await?
         .context("timed out to upsert the tank snapshot")?
         .context("failed to upsert the tank snapshot")?;
 

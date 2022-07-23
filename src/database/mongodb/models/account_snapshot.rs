@@ -3,6 +3,7 @@ use mongodb::bson::doc;
 use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::spawn;
 use tokio::time::timeout;
 
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
@@ -76,11 +77,12 @@ impl AccountSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
+        let collection = Self::collection(to);
         timeout(
             StdDuration::from_secs(10),
-            Self::collection(to).update_one(query, update, options),
+            spawn(async move { collection.update_one(query, update, options).await }),
         )
-        .await
+        .await?
         .context("timed out to insert the account snapshot")?
         .context("failed to upsert the account snapshot")?;
 

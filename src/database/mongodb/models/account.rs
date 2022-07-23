@@ -8,6 +8,7 @@ use mongodb::options::{
 };
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use tokio::spawn;
 use tokio::time::timeout;
 
 use crate::prelude::*;
@@ -80,11 +81,9 @@ impl Account {
         info!(sample_size, %min_offset, %max_offset);
         try_unfold((1, database), move |(sample_number, database)| async move {
             debug!(sample_number, "retrieving a sample…");
-            let future =
-                Account::retrieve_sample(&database, realm, sample_size, min_offset, max_offset);
-            let sample = timeout(StdDuration::from_secs(60), future) // FIXME.
-                .await
-                .with_context(|| format!("timed out to retrieve sample #{}", sample_number))??;
+            let sample =
+                Account::retrieve_sample(&database, realm, sample_size, min_offset, max_offset)
+                    .await?;
             debug!(sample_number, "retrieved");
             Ok::<_, Error>(Some((iter(sample.into_iter().map(Ok)), (sample_number + 1, database))))
         })
@@ -99,11 +98,12 @@ impl Account {
 
         debug!("upserting…");
         let start_instant = Instant::now();
+        let collection = Self::collection(to);
         timeout(
             StdDuration::from_secs(10),
-            Self::collection(to).update_one(query, update, options),
+            spawn(async move { collection.update_one(query, update, options).await }),
         )
-        .await
+        .await?
         .context("timed out to upsert the account")?
         .with_context(|| format!("failed to upsert the account #{}", self.id))?;
 
