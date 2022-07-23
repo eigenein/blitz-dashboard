@@ -20,7 +20,7 @@ pub struct Opts {
     /// Performance traces sample rate for Sentry.
     #[clap(
         long,
-        default_value = "0.05",
+        default_value = "0.01",
         env = "BLITZ_DASHBOARD_TRACES_SAMPLE_RATE"
     )]
     pub traces_sample_rate: f32,
