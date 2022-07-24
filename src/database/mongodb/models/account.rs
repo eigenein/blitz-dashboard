@@ -99,13 +99,11 @@ impl Account {
         debug!("upserting…");
         let start_instant = Instant::now();
         let collection = Self::collection(to);
-        timeout(
-            StdDuration::from_secs(10),
-            spawn(async move { collection.update_one(query, update, options).await }),
-        )
-        .await?
-        .context("timed out to upsert the account")?
-        .with_context(|| format!("failed to upsert the account #{}", self.id))?;
+        let future = spawn(async move { collection.update_one(query, update, options).await });
+        timeout(StdDuration::from_secs(10), future)
+            .await?
+            .context("timed out to upsert the account")?
+            .with_context(|| format!("failed to upsert the account #{}", self.id))?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())

@@ -155,14 +155,12 @@ impl TankSnapshot {
         debug!("upserting…");
         let start_instant = Instant::now();
         let collection = Self::collection(to);
-        timeout(
-            // Sometimes `update_one` freezes, and I don't know why.
-            StdDuration::from_secs(10),
-            spawn(async move { collection.update_one(query, update, options).await }),
-        )
-        .await?
-        .context("timed out to upsert the tank snapshot")?
-        .context("failed to upsert the tank snapshot")?;
+        let future = spawn(async move { collection.update_one(query, update, options).await });
+        // Sometimes `update_one` freezes, and I don't know why.
+        timeout(StdDuration::from_secs(10), future)
+            .await?
+            .context("timed out to upsert the tank snapshot")?
+            .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())

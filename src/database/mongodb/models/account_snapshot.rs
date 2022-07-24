@@ -79,13 +79,11 @@ impl AccountSnapshot {
         debug!("upserting…");
         let start_instant = Instant::now();
         let collection = Self::collection(to);
-        timeout(
-            StdDuration::from_secs(10),
-            spawn(async move { collection.update_one(query, update, options).await }),
-        )
-        .await?
-        .context("timed out to insert the account snapshot")?
-        .context("failed to upsert the account snapshot")?;
+        let future = spawn(async move { collection.update_one(query, update, options).await });
+        timeout(StdDuration::from_secs(10), future)
+            .await?
+            .context("timed out to insert the account snapshot")?
+            .context("failed to upsert the account snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())
