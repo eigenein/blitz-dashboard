@@ -1,6 +1,5 @@
-use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::{FindOptions, IndexOptions};
+use mongodb::options::{FindOneOptions, IndexOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::spawn;
@@ -97,16 +96,9 @@ impl AccountSnapshot {
         before: DateTime,
     ) -> Result<Option<Self>> {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id, "lbts": { "$lte": before } };
-        let options = FindOptions::builder()
-            .sort(doc! { "lbts": -1 })
-            .limit(1)
-            .build();
+        let options = FindOneOptions::builder().sort(doc! { "lbts": -1 }).build();
         let start_instant = Instant::now();
-        let this = Self::collection(from)
-            .find(filter, options)
-            .await?
-            .try_next()
-            .await?;
+        let this = Self::collection(from).find_one(filter, options).await?;
         if let Some(this) = &this {
             debug!(?this.last_battle_time, "found");
         }
