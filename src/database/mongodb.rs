@@ -3,6 +3,7 @@ use mongodb::Database;
 use crate::prelude::*;
 
 pub mod models;
+pub mod options;
 
 #[instrument(level = "debug")]
 pub async fn open(uri: &str) -> Result<Database> {

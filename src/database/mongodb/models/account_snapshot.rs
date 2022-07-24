@@ -1,11 +1,12 @@
 use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::{FindOptions, IndexOptions, UpdateOptions};
+use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::spawn;
 use tokio::time::timeout;
 
+use crate::database::mongodb::options::upsert_options;
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
@@ -73,7 +74,7 @@ impl AccountSnapshot {
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.account_id, "lbts": self.last_battle_time };
         let update = doc! { "$setOnInsert": bson::to_bson(self)? };
-        let options = UpdateOptions::builder().upsert(true).build();
+        let options = upsert_options();
 
         debug!("upserting…");
         let start_instant = Instant::now();

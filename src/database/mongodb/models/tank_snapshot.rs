@@ -3,12 +3,13 @@ use std::ops::Sub;
 use futures::TryStreamExt;
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
 use mongodb::bson::{doc, from_document};
-use mongodb::options::{IndexOptions, UpdateOptions};
+use mongodb::options::IndexOptions;
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::spawn;
 use tokio::time::timeout;
 
+use crate::database::mongodb::options::upsert_options;
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
@@ -149,7 +150,7 @@ impl TankSnapshot {
             "lbts": self.last_battle_time,
         };
         let update = doc! { "$setOnInsert": bson::to_bson(self)? };
-        let options = UpdateOptions::builder().upsert(true).build();
+        let options = upsert_options();
 
         debug!("upserting…");
         let start_instant = Instant::now();

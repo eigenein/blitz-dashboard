@@ -4,13 +4,13 @@ use futures::{Stream, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::{
     FindOneAndUpdateOptions, FindOneOptions, FindOptions, IndexOptions, ReturnDocument,
-    UpdateOptions,
 };
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use tokio::spawn;
 use tokio::time::timeout;
 
+use crate::database::mongodb::options::upsert_options;
 use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
 
@@ -94,7 +94,7 @@ impl Account {
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
         let update = doc! { "$set": bson::to_bson(&self)? };
-        let options = UpdateOptions::builder().upsert(true).build();
+        let options = upsert_options();
 
         debug!("upserting…");
         let start_instant = Instant::now();
