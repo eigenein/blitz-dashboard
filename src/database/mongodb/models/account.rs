@@ -90,7 +90,7 @@ impl Account {
         .try_flatten()
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id), err)]
+    #[instrument(skip_all, fields(account_id = self.id), err)]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
         let update = doc! { "$set": bson::to_bson(&self)? };

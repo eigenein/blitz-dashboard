@@ -52,7 +52,7 @@ impl AccountSnapshot {
 }
 
 impl AccountSnapshot {
-    #[instrument(skip_all)]
+    #[instrument(skip_all, err)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [IndexModel::builder()
             .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
@@ -67,7 +67,6 @@ impl AccountSnapshot {
 
     #[instrument(
         skip_all,
-        level = "debug",
         fields(account_id = self.account_id),
         err,
     )]
@@ -89,7 +88,7 @@ impl AccountSnapshot {
         Ok(())
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = account_id, before = ?before))]
+    #[instrument(skip_all, fields(account_id = account_id, before = ?before), err)]
     pub async fn retrieve_latest(
         from: &Database,
         realm: wargaming::Realm,

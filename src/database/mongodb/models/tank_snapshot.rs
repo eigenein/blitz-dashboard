@@ -118,7 +118,7 @@ impl Sub<TankSnapshot> for TankSnapshot {
 }
 
 impl TankSnapshot {
-    #[instrument(skip_all)]
+    #[instrument(skip_all, err)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [
             IndexModel::builder()
@@ -139,7 +139,6 @@ impl TankSnapshot {
 
     #[instrument(
         skip_all,
-        level = "debug",
         fields(account_id = self.account_id, tank_id = self.tank_id),
         err,
     )]
@@ -160,7 +159,7 @@ impl TankSnapshot {
         // Sometimes `update_one` freezes, and I don't know why.
         timeout(StdDuration::from_secs(10), future)
             .await
-            .context("timed out to upsert the tank snapshot")??
+            .with_context(|| anyhow!("timed out to upsert the tank #{} snapshot", self.tank_id))??
             .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");

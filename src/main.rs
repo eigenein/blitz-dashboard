@@ -20,23 +20,15 @@ mod web;
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> Result {
+    let opts: Opts = Opts::parse();
+    let _sentry_guard = tracing::init(opts.sentry_dsn.clone(), opts.traces_sample_rate)?;
+    info!(version = CRATE_VERSION);
+
     tokio::runtime::Builder::new_multi_thread()
         .thread_stack_size(8 * 1024 * 1024)
         .enable_all()
         .build()?
-        .block_on(async_main())
-}
-
-async fn async_main() -> Result {
-    let opts: Opts = Opts::parse();
-    let _sentry_guard = crate::tracing::init(opts.sentry_dsn.clone(), opts.traces_sample_rate)?;
-    info!(version = CRATE_VERSION);
-
-    let result = run_subcommand(opts).await;
-    if let Err(error) = &result {
-        error!("fatal error: {:#}", error);
-    }
-    result
+        .block_on(run_subcommand(opts))
 }
 
 async fn run_subcommand(opts: Opts) -> Result {
@@ -47,6 +39,6 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
     };
-    info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
+    info!(elapsed = format_elapsed(start_instant).as_str());
     result
 }
