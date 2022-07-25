@@ -98,7 +98,6 @@ impl Crawler {
             "running…",
         );
         accounts
-            .inspect_ok(|account| trace!(account.id, "sampled account"))
             // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
             .enumerate()
@@ -146,7 +145,7 @@ impl Crawler {
     }
 }
 
-#[instrument(skip_all, level = "debug", fields(batch_number = _batch_number))]
+#[instrument(skip_all, fields(batch_number = _batch_number), err)]
 async fn crawl_batch(
     api: WargamingApi,
     realm: wargaming::Realm,

@@ -200,7 +200,7 @@ impl WargamingApi {
             match self.call_once(url.clone()).await {
                 Ok(response) => match response {
                     Response::Data { data } => {
-                        trace!("ok");
+                        trace!(nr_attempt, "ok");
                         return Ok(data);
                     }
                     Response::Error { error } => {
@@ -214,7 +214,7 @@ impl WargamingApi {
                                 sleep(StdDuration::from_secs(1)).await;
                             }
                             _ => {
-                                bail!("{}/{}", error.code, message);
+                                bail!("#{} {}/{}", nr_attempt, error.code, message);
                             }
                         }
                     }
