@@ -219,9 +219,6 @@ impl WargamingApi {
                         }
                     }
                 },
-                Err(error) if error.is_timeout() => {
-                    warn!(path = url.path(), nr_attempt, "request timeout");
-                }
                 Err(error) => {
                     warn!(path = url.path(), nr_attempt, "{:#}", error);
                 }
@@ -232,32 +229,31 @@ impl WargamingApi {
     }
 
     #[tracing::instrument(skip_all, level = "trace", fields(path = url.path()))]
-    async fn call_once<T: DeserializeOwned>(
-        &self,
-        url: Url,
-    ) -> Result<Response<T>, reqwest::Error> {
+    async fn call_once<T: DeserializeOwned>(&self, url: Url) -> Result<Response<T>> {
         self.rate_limiter
             .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
             .await;
 
-        let request_id = self.request_counter.fetch_add(1, Ordering::Relaxed);
-        trace!(request_id, path = url.path(), "sending the request…");
+        let nr_request = self.request_counter.fetch_add(1, Ordering::Relaxed);
+        trace!(nr_request, path = url.path(), "sending the request…");
 
         let start_instant = Instant::now();
-        let result = self.client.get(url).send().await;
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .with_context(|| anyhow!("failed to send the request #{}", nr_request))?;
 
-        let response = match result {
-            Ok(result) => result,
-            Err(error) => {
-                return Err(error);
-            }
-        };
+        trace!(nr_request, status = response.status().as_u16());
+        let result = response
+            .error_for_status()
+            .context("HTTP error")?
+            .json::<Response<T>>()
+            .await
+            .context("failed to deserialize the response");
 
-        trace!(request_id, status = response.status().as_u16());
-        let response = response.error_for_status()?;
-        let result = response.json::<Response<T>>().await;
-
-        trace!(request_id, elapsed = format_elapsed(start_instant).as_str(), "done");
+        trace!(nr_request, elapsed = format_elapsed(start_instant).as_str(), "done");
         result
     }
 }

@@ -115,6 +115,7 @@ impl Crawler {
             // Here we have the stream of batches of accounts that need to be crawled.
             // Now buffer the batches.
             .try_buffer_unordered(buffering.n_batches)
+            .inspect_err(|error| error!("failed to crawl the batch: {:#}", error))
             // Flatten the stream of batches into the stream of non-crawled accounts.
             .try_flatten()
             // Crawl the accounts.
@@ -125,20 +126,18 @@ impl Crawler {
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
+            .inspect_err(|error| error!("failed to crawl the account: {:#}", error))
             // Make the database updates concurrent.
             .try_for_each_concurrent(
                 Some(buffering.n_updated_accounts),
                 |(account, account_snapshot, tank_snapshots)| {
-                    trace!(
-                        account_snapshot.account_id,
-                        n_tanks = tank_snapshots.len(),
-                        "scheduling the update"
-                    );
+                    trace!(account.id, n_tanks = tank_snapshots.len(), "scheduling the update");
                     let db = self.db.clone();
                     let metrics = self.metrics.clone();
                     async move {
                         update_account(&db, account, account_snapshot, &tank_snapshots, metrics)
                             .await
+                            .with_context(|| anyhow!("failed to crawl account #{}", account.id))
                     }
                 },
             )
