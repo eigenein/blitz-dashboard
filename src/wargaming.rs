@@ -228,7 +228,7 @@ impl WargamingApi {
         bail!("all attempts have failed")
     }
 
-    #[tracing::instrument(skip_all, fields(path = url.path()), err)]
+    #[tracing::instrument(skip_all, fields(path = url.path()))]
     async fn call_once<T: DeserializeOwned>(&self, url: Url) -> Result<Response<T>> {
         self.rate_limiter
             .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
