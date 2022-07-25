@@ -194,7 +194,7 @@ impl WargamingApi {
         Ok(map.remove(&account_id).flatten())
     }
 
-    #[instrument(skip_all, level = "debug", fields(path = url.path()))]
+    #[instrument(skip_all, fields(path = url.path()), err)]
     async fn call<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
         for nr_attempt in 1..=10 {
             match self.call_once(url.clone()).await {
@@ -223,12 +223,12 @@ impl WargamingApi {
                     warn!(path = url.path(), nr_attempt, "{:#}", error);
                 }
             };
-            debug!(nr_attempt, "retrying…",);
+            debug!(nr_attempt, "retrying…");
         }
         bail!("all attempts have failed")
     }
 
-    #[tracing::instrument(skip_all, level = "trace", fields(path = url.path()))]
+    #[tracing::instrument(skip_all, fields(path = url.path()), err)]
     async fn call_once<T: DeserializeOwned>(&self, url: Url) -> Result<Response<T>> {
         self.rate_limiter
             .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
@@ -245,7 +245,7 @@ impl WargamingApi {
             .await
             .with_context(|| anyhow!("failed to send the request #{}", nr_request))?;
 
-        trace!(nr_request, status = response.status().as_u16());
+        trace!(nr_request, status = ?response.status());
         let result = response
             .error_for_status()
             .context("HTTP error")?
