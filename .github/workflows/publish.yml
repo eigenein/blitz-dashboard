@@ -55,7 +55,7 @@ jobs:
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: eigenein
+          SENTRY_ORG: blitz-dashboard
           SENTRY_PROJECT: yastatist
         with:
           version: ${{ github.ref_name }}
