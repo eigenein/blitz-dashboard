@@ -90,7 +90,7 @@ impl Account {
         .try_flatten()
     }
 
-    #[instrument(skip_all, level = "debug", fields(account_id = self.id))]
+    #[instrument(skip_all, level = "debug", fields(account_id = self.id), err)]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
         let update = doc! { "$set": bson::to_bson(&self)? };
@@ -101,8 +101,8 @@ impl Account {
         let collection = Self::collection(to);
         let future = spawn(async move { collection.update_one(query, update, options).await });
         timeout(StdDuration::from_secs(10), future)
-            .await?
-            .context("timed out to upsert the account")?
+            .await
+            .context("timed out to upsert the account")??
             .with_context(|| format!("failed to upsert the account #{}", self.id))?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");

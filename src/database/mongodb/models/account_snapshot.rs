@@ -69,6 +69,7 @@ impl AccountSnapshot {
         skip_all,
         level = "debug",
         fields(account_id = self.account_id),
+        err,
     )]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! { "rlm": self.realm.to_str(), "aid": self.account_id, "lbts": self.last_battle_time };
@@ -80,8 +81,8 @@ impl AccountSnapshot {
         let collection = Self::collection(to);
         let future = spawn(async move { collection.update_one(query, update, options).await });
         timeout(StdDuration::from_secs(10), future)
-            .await?
-            .context("timed out to insert the account snapshot")?
+            .await
+            .context("timed out to insert the account snapshot")??
             .context("failed to upsert the account snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");

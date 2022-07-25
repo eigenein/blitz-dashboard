@@ -141,6 +141,7 @@ impl TankSnapshot {
         skip_all,
         level = "debug",
         fields(account_id = self.account_id, tank_id = self.tank_id),
+        err,
     )]
     pub async fn upsert(&self, to: &Database) -> Result {
         let query = doc! {
@@ -158,8 +159,8 @@ impl TankSnapshot {
         let future = spawn(async move { collection.update_one(query, update, options).await });
         // Sometimes `update_one` freezes, and I don't know why.
         timeout(StdDuration::from_secs(10), future)
-            .await?
-            .context("timed out to upsert the tank snapshot")?
+            .await
+            .context("timed out to upsert the tank snapshot")??
             .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
