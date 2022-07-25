@@ -145,7 +145,7 @@ impl Crawler {
     }
 }
 
-#[instrument(skip_all, fields(batch_number = _batch_number), err)]
+#[instrument(skip_all, level = "trace", fields(batch_number = _batch_number), err)]
 async fn crawl_batch(
     api: WargamingApi,
     realm: wargaming::Realm,
