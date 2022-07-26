@@ -243,7 +243,7 @@ impl WargamingApi {
             .get(url)
             .send()
             .await
-            .with_context(|| anyhow!("failed to send the request #{}", nr_request))?;
+            .context("failed to send the request")?;
 
         trace!(nr_request, status = ?response.status());
         let result = response
