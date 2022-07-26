@@ -103,7 +103,7 @@ impl Account {
         timeout(StdDuration::from_secs(10), future)
             .await
             .context("timed out to upsert the account")??
-            .with_context(|| format!("failed to upsert the account #{}", self.id))?;
+            .context("failed to upsert the account #{}")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
         Ok(())

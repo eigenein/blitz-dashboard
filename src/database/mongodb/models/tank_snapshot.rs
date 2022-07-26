@@ -159,7 +159,7 @@ impl TankSnapshot {
         // Sometimes `update_one` freezes, and I don't know why.
         timeout(StdDuration::from_secs(10), future)
             .await
-            .with_context(|| anyhow!("timed out to upsert the tank #{} snapshot", self.tank_id))??
+            .context("timed out to upsert the tank snapshot")??
             .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
