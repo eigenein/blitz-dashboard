@@ -802,12 +802,9 @@ fn render_tank_tr(
                 data-value=(true_win_rate.mean)
             {
                 span.icon-text.is-flex-wrap-nowrap {
-                    span {
-                        strong { span { (render_percentage(true_win_rate.mean)) } }
-                        span.has-text-grey {
-                            " ±" (render_float(100.0 * true_win_rate.margin, 1))
-                        }
-                    }
+                    strong { span { (render_percentage(true_win_rate.lower())) } }
+                    span.icon.has-text-grey-light { i.fa-solid.fa-ellipsis {} }
+                    strong { span { (render_percentage(true_win_rate.upper())) } }
                     (partial_cmp_icon(win_rate_ordering))
                 }
             }
