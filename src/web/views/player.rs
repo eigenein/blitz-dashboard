@@ -451,7 +451,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Истинный" }
+                                                        p.heading { "Интервал" }
                                                         p.title.is-white-space-nowrap {
                                                             @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
                                                             (render_percentage(true_win_rate.mean()))
@@ -602,7 +602,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Истинный" }
+                                                        p.heading { "Интервал" }
                                                         p.title.is-white-space-nowrap {
                                                             (render_percentage(period_win_rate.mean()))
                                                             span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin(), 1)) }
@@ -637,7 +637,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Истинная" }
+                                                        p.heading { "Интервал" }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
                                                             (render_percentage(expected_period_survival_rate.mean()))
