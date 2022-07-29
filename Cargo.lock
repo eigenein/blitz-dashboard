@@ -212,9 +212,9 @@ dependencies = [
 
 [[package]]
 name = "bpci"
-version = "0.1.0-beta.4"
+version = "0.1.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6078a65195f5681e58952688279626da284cc6a1b73ff69ccd993fe20418c36"
+checksum = "7f0af04df940a2800ebb5ebc2c0758236339a09c80a494bf6c081dc1a2314cbe"
 dependencies = [
  "num-traits",
  "thiserror",

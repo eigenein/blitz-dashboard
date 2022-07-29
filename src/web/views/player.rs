@@ -4,7 +4,7 @@
 
 use std::time::Instant;
 
-use bpci::{BoundedInterval, Interval};
+use bpci::Interval;
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::web::{Data, Html, Path, Query, RealIp};
@@ -580,7 +580,7 @@ pub async fn get(
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     @let period_win_rate = view_model.stats_delta.random.true_win_rate()?;
-                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.current_win_rate))) {
+                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.actual_info.stats.random.current_win_rate()))) {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -693,7 +693,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &view_model.stats_delta.tanks {
-                                                (render_tank_tr(tank, &view_model.current_win_rate)?)
+                                                (render_tank_tr(tank, view_model.actual_info.stats.random.current_win_rate())?)
                                             }
                                         }
                                         @if view_model.stats_delta.tanks.len() >= 25 {
@@ -758,14 +758,11 @@ pub async fn get(
     Ok(response)
 }
 
-fn render_tank_tr(
-    snapshot: &database::TankSnapshot,
-    account_win_rate: &BoundedInterval<f64>,
-) -> Result<Markup> {
+fn render_tank_tr(snapshot: &database::TankSnapshot, account_win_rate: f64) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
         @let true_win_rate = snapshot.stats.true_win_rate()?;
-        @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
+        @let win_rate_ordering = true_win_rate.partial_cmp(&account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
