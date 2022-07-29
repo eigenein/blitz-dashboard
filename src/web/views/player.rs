@@ -4,6 +4,7 @@
 
 use std::time::Instant;
 
+use bpci::{Interval, LowerUpperInterval};
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::web::{Data, Html, Path, Query, RealIp};
@@ -11,8 +12,7 @@ use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
 use crate::helpers::time::{from_days, from_hours, from_months};
-use crate::math::statistics::{ConfidenceInterval, ConfidenceLevel};
-use crate::math::traits::{AverageDamageDealt, CurrentWinRate, TrueWinRate};
+use crate::math::traits::*;
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -83,7 +83,7 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Процент побед, скорректированный на число боев, CI 98%" { "Процент побед (интервал)" } }
+                        span { abbr title="Процент побед, скорректированный на число боев, CI 90%" { "Процент побед (интервал)" } }
                     }
                 }
             }
@@ -99,7 +99,7 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 98%" { "Ожидаемое золото" } }
+                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 90%" { "Ожидаемое золото" } }
                     }
                 }
             }
@@ -453,9 +453,9 @@ pub async fn get(
                                                     div {
                                                         p.heading { "Истинный" }
                                                         p.title.is-white-space-nowrap {
-                                                            @let true_win_rate = view_model.stats_delta.rating.true_win_rate();
-                                                            (render_percentage(true_win_rate.mean))
-                                                            span.has-text-grey-light { " ±" (render_float(100.0 * true_win_rate.margin, 1)) }
+                                                            @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
+                                                            (render_percentage(true_win_rate.mean()))
+                                                            span.has-text-grey-light { " ±" (render_float(100.0 * true_win_rate.margin(), 1)) }
                                                         }
                                                     }
                                                 }
@@ -579,7 +579,7 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let period_win_rate = view_model.stats_delta.random.true_win_rate();
+                                    @let period_win_rate = view_model.stats_delta.random.true_win_rate()?;
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.current_win_rate))) {
                                         header.card-header {
                                             p.card-header-title {
@@ -604,8 +604,8 @@ pub async fn get(
                                                     div {
                                                         p.heading { "Истинный" }
                                                         p.title.is-white-space-nowrap {
-                                                            (render_percentage(period_win_rate.mean))
-                                                            span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin, 1)) }
+                                                            (render_percentage(period_win_rate.mean()))
+                                                            span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin(), 1)) }
                                                         }
                                                     }
                                                 }
@@ -639,10 +639,9 @@ pub async fn get(
                                                     div {
                                                         p.heading { "Истинная" }
                                                         p.title.is-white-space-nowrap {
-                                                            @let expected_period_survival_rate = ConfidenceInterval::wilson_score_interval(
-                                                                view_model.stats_delta.random.n_battles, view_model.stats_delta.random.n_survived_battles, ConfidenceLevel::default());
-                                                            (render_percentage(expected_period_survival_rate.mean))
-                                                            span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin)) }
+                                                            @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
+                                                            (render_percentage(expected_period_survival_rate.mean()))
+                                                            span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin())) }
                                                         }
                                                     }
                                                 }
@@ -761,11 +760,11 @@ pub async fn get(
 
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
-    account_win_rate: &ConfidenceInterval,
+    account_win_rate: &LowerUpperInterval<f64>,
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.stats.true_win_rate();
+        @let true_win_rate = snapshot.stats.true_win_rate()?;
         @let win_rate_ordering = true_win_rate.partial_cmp(account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -797,15 +796,15 @@ fn render_tank_tr(
                 strong { (render_percentage(win_rate)) }
             }
 
-            td.is-white-space-nowrap
+            td.is-white-space-nowrap.is-flex
                 data-sort="true-win-rate-mean"
-                data-value=(true_win_rate.mean)
+                data-value=(true_win_rate.mean())
             {
-                span.icon-text.is-flex-wrap-nowrap {
-                    strong { span { (render_percentage(true_win_rate.lower())) } }
-                    span.icon.has-text-grey-light { i.fa-solid.fa-ellipsis {} }
-                    strong { span { (render_percentage(true_win_rate.upper())) } }
+                span.icon-text.is-flex-wrap-nowrap."is-flex-grow-1".is-justify-content-space-around {
                     (partial_cmp_icon(win_rate_ordering))
+                    strong { span { (render_percentage(true_win_rate.lower())) } }
+                    span.icon.has-text-grey-light title=(true_win_rate.mean()) { i.fa-solid.fa-ellipsis {} }
+                    strong { span { (render_percentage(true_win_rate.upper())) } }
                 }
             }
 
@@ -817,14 +816,14 @@ fn render_tank_tr(
                 }
             }
 
-            @let expected_gold = 10.0 + vehicle.tier as f64 * true_win_rate;
-            td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean) {
+            @let expected_gold = true_win_rate * (vehicle.tier as f64) + 10.0;
+            td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean()) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-warning-dark { i.fas.fa-coins {} }
                     span {
-                        strong { (render_float(expected_gold.mean, 1)) }
+                        strong { (render_float(expected_gold.mean(), 1)) }
                         span.has-text-grey {
-                            (format!(" ±{:.1}", expected_gold.margin))
+                            (format!(" ±{:.1}", expected_gold.margin()))
                         }
                     }
                 }

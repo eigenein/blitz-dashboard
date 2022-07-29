@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 
+use bpci::LowerUpperInterval;
 use futures::future::try_join;
 use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::{Path, Query};
 use sentry::protocol::IpAddress;
 
-use crate::math::statistics::ConfidenceInterval;
 use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
@@ -17,7 +17,7 @@ use crate::{database, wargaming};
 pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
-    pub current_win_rate: ConfidenceInterval,
+    pub current_win_rate: LowerUpperInterval<f64>,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
 }
@@ -57,7 +57,7 @@ impl ViewModel {
         user.username = Some(actual_info.nickname.clone());
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
-        let current_win_rate = actual_info.stats.random.true_win_rate();
+        let current_win_rate = actual_info.stats.random.true_win_rate()?;
         let before =
             Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
         let stats_delta =

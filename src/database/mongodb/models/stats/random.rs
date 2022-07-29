@@ -3,7 +3,7 @@ use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
 
-use crate::math::traits::{NBattles, NWins};
+use crate::math::traits::{NBattles, NSurvivedBattles, NWins};
 use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
@@ -51,6 +51,12 @@ impl NBattles for RandomStatsSnapshot {
 impl NWins for RandomStatsSnapshot {
     fn n_wins(&self) -> u32 {
         self.n_wins
+    }
+}
+
+impl NSurvivedBattles for RandomStatsSnapshot {
+    fn n_survived_battles(&self) -> u32 {
+        self.n_survived_battles
     }
 }
 

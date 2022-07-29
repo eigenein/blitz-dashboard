@@ -163,6 +163,7 @@ dependencies = [
  "ahash",
  "anyhow",
  "async-compression",
+ "bpci",
  "chrono",
  "chrono-humanize",
  "circular-queue",
@@ -207,6 +208,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bf7fe51849ea569fd452f37822f606a5cabb684dc918707a0193fd4664ff324"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "bpci"
+version = "0.1.0-beta.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "453571aee3abc076d9647de4a3c21c892e74f40184c11aa25c8f3a6330685f17"
+dependencies = [
+ "num-traits",
+ "thiserror",
 ]
 
 [[package]]
