@@ -4,7 +4,7 @@
 
 use std::time::Instant;
 
-use bpci::{Interval, LowerUpperInterval};
+use bpci::{BoundedInterval, Interval};
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::web::{Data, Html, Path, Query, RealIp};
@@ -760,7 +760,7 @@ pub async fn get(
 
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
-    account_win_rate: &LowerUpperInterval<f64>,
+    account_win_rate: &BoundedInterval<f64>,
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 
-use bpci::LowerUpperInterval;
+use bpci::BoundedInterval;
 use futures::future::try_join;
 use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
@@ -17,7 +17,7 @@ use crate::{database, wargaming};
 pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
-    pub current_win_rate: LowerUpperInterval<f64>,
+    pub current_win_rate: BoundedInterval<f64>,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
 }

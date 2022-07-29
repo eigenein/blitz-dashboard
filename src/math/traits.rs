@@ -1,4 +1,4 @@
-use bpci::{LowerUpperInterval, NSuccessesSample, WilsonScore};
+use bpci::{BoundedInterval, NSuccessesSample, WilsonScore};
 
 use crate::math::statistics::ConfidenceLevel;
 use crate::Result;
@@ -20,22 +20,22 @@ pub trait DamageDealt {
 }
 
 pub trait TrueWinRate {
-    fn true_win_rate(&self) -> Result<LowerUpperInterval<f64>>;
+    fn true_win_rate(&self) -> Result<BoundedInterval<f64>>;
 }
 
 impl<T: NBattles + NWins> TrueWinRate for T {
-    fn true_win_rate(&self) -> Result<LowerUpperInterval<f64>> {
+    fn true_win_rate(&self) -> Result<BoundedInterval<f64>> {
         let sample = NSuccessesSample::new(self.n_battles(), self.n_wins())?;
         Ok(sample.wilson_score_with_cc(ConfidenceLevel::default().z_value()))
     }
 }
 
 pub trait TrueSurvivalRate {
-    fn true_survival_rate(&self) -> Result<LowerUpperInterval<f64>>;
+    fn true_survival_rate(&self) -> Result<BoundedInterval<f64>>;
 }
 
 impl<T: NBattles + NSurvivedBattles> TrueSurvivalRate for T {
-    fn true_survival_rate(&self) -> Result<LowerUpperInterval<f64>> {
+    fn true_survival_rate(&self) -> Result<BoundedInterval<f64>> {
         let sample = NSuccessesSample::new(self.n_battles(), self.n_survived_battles())?;
         Ok(sample.wilson_score_with_cc(ConfidenceLevel::default().z_value()))
     }

@@ -21,7 +21,7 @@ split-debuginfo = "unpacked"
 ahash = "0.7.6"
 anyhow = "1.0.56"
 async-compression = { version = "0.3.14", features = ["zstd"] }
-bpci = "0.1.0-beta.3"
+bpci = "0.1.0-beta.4"
 chrono = { version = "0.4.19" }
 chrono-humanize = "0.2.1"
 circular-queue = "0.2.6"
