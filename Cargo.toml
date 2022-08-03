@@ -19,7 +19,7 @@ split-debuginfo = "unpacked"
 
 [dependencies]
 ahash = "0.7.6"
-anyhow = "1.0.56"
+anyhow = "1.0.60"
 async-compression = { version = "0.3.14", features = ["zstd"] }
 bpci = "0.1.0-beta.7"
 chrono = { version = "0.4.19" }
