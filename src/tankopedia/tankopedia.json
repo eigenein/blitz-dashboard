@@ -4063,6 +4063,14 @@
     "nation": "uk",
     "type": "AT-SPG"
   },
+  "9841": {
+    "tank_id": 9841,
+    "name": "Rover",
+    "tier": 6,
+    "is_premium": true,
+    "nation": "other",
+    "type": "lightTank"
+  },
   "9985": {
     "tank_id": 9985,
     "name": "СУ-101",
