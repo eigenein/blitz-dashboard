@@ -60,6 +60,7 @@ pub async fn run(opts: WebOpts) -> Result {
         .at("/:realm/:account_id", get(views::player::get))
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
+        .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
         .with(Tracing)
         .with(AddData::new(mongodb))
         .with(AddData::new(TrackingCode::new(&opts)?))

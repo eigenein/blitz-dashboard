@@ -1,6 +1,6 @@
 use maud::{html, DOCTYPE};
 use poem::web::{Data, Html};
-use poem::{handler, IntoResponse, Response};
+use poem::{handler, IntoResponse};
 use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
@@ -10,7 +10,7 @@ use crate::web::TrackingCode;
 
 #[instrument(skip_all)]
 #[handler]
-pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<Response> {
+pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<impl IntoResponse> {
     clear_user();
 
     let markup = html! {
@@ -58,6 +58,5 @@ pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<Response> {
     };
 
     Ok(Html(markup.into_string())
-        .with_header("Cache-Control", "max-age=604800, stale-while-revalidate=86400")
-        .into_response())
+        .with_header("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400"))
 }

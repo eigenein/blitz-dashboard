@@ -752,7 +752,7 @@ pub async fn get(
     };
 
     let response = Html(markup.into_string())
-        .with_header("Cache-Control", "max-age=60, stale-while-revalidate=3600")
+        .with_header("Cache-Control", "public, max-age=60, stale-while-revalidate=3600")
         .into_response();
     info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
     Ok(response)
