@@ -1,7 +1,7 @@
-User-agent: *
-
 Sitemap: https://yastati.st/sitemaps/ru/sitemap.txt
 Sitemap: https://yastati.st/sitemaps/eu/sitemap.txt
+
+User-agent: *
 
 Disallow: /*.ico$
 Disallow: /*.js$
