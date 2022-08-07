@@ -1,8 +1,9 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use poem::i18n::I18NResources;
 use poem::listener::TcpListener;
-use poem::middleware::{AddData, CatchPanic, Tracing};
+use poem::middleware::{CatchPanic, Tracing};
 use poem::{get, EndpointExt, Route, Server};
 use views::r#static;
 
@@ -35,6 +36,10 @@ pub async fn run(opts: WebOpts) -> Result {
         opts.connections.internal.redis_pool_size,
     )
     .await?;
+    let i18n_resources = I18NResources::builder()
+        .add_ftl("ru", include_str!("web/i18n/ru.ftl"))
+        .add_ftl("en", include_str!("web/i18n/en.ftl"))
+        .build()?;
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
         .at("/favicon.ico", get(r#static::get_favicon))
@@ -61,13 +66,14 @@ pub async fn run(opts: WebOpts) -> Result {
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
+        .data(mongodb)
+        .data(i18n_resources)
+        .data(TrackingCode::new(&opts)?)
+        .data(AccountInfoCache::new(api.clone(), redis.clone()))
+        .data(AccountTanksCache::new(api.clone(), redis.clone()))
+        .data(redis)
+        .data(api)
         .with(Tracing)
-        .with(AddData::new(mongodb))
-        .with(AddData::new(TrackingCode::new(&opts)?))
-        .with(AddData::new(AccountInfoCache::new(api.clone(), redis.clone())))
-        .with(AddData::new(AccountTanksCache::new(api.clone(), redis.clone())))
-        .with(AddData::new(redis))
-        .with(AddData::new(api))
         .with(CatchPanic::new())
         .with(ErrorMiddleware)
         .with(SecurityHeadersMiddleware)

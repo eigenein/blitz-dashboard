@@ -7,6 +7,7 @@ use std::time::Instant;
 use bpci::Interval;
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
+use poem::i18n::Locale;
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
@@ -39,6 +40,7 @@ pub async fn get(
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
     real_ip: RealIp,
+    locale: Locale,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
     let period = query.period.0;
@@ -75,7 +77,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Процент побед" }
+                        span { (locale.text("title-victory-rate")?) }
                     }
                 }
             }
@@ -244,7 +246,7 @@ pub async fn get(
                                         p.card-header-title {
                                             span.icon-text.is-flex-wrap-nowrap {
                                                 span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                span { "Процент побед" }
+                                                span { (locale.text("title-victory-rate")?) }
                                             }
                                         }
                                     }
@@ -434,7 +436,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                    span { "Процент побед" }
+                                                    span { (locale.text("title-victory-rate")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -585,7 +587,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                    span { "Процент побед" }
+                                                    span { (locale.text("title-victory-rate")?) }
                                                 }
                                             }
                                             p.card-header-icon {
