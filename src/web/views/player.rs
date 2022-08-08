@@ -133,7 +133,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="survived-battles" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { (locale.text("title-survived-battles")?) }
+                        span { (locale.text("title-survived")?) }
                     }
                 }
             }
@@ -184,7 +184,7 @@ pub async fn get(
                                     }
                             }
 
-                            div.navbar-item title="Боев" {
+                            div.navbar-item title=(locale.text("title-total-battles-hint")?) {
                                 span.icon-text {
                                     span.icon { i.fas.fa-sort-numeric-up-alt {} }
                                     span { (view_model.actual_info.stats.n_total_battles()) }
@@ -299,7 +299,7 @@ pub async fn get(
                                         div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Случайные бои" }
+                                                    p.heading { (locale.text("title-random-battles")?) }
                                                     @let damage_dealt = view_model.actual_info.stats.random.average_damage_dealt();
                                                     p.title title=(damage_dealt) {
                                                         (format!("{:.0}", damage_dealt))
@@ -368,7 +368,7 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "За бой" }
+                                                        p.heading { (locale.text("title-per-battle")?) }
                                                         @let delta_per_battle = view_model.stats_delta.rating.delta_per_battle();
                                                         p.title.(sign_class(delta_per_battle)) title=(delta_per_battle) {
                                                             (format!("{:+.0}", delta_per_battle))
@@ -386,7 +386,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-link { i.fa-solid.fa-sort-numeric-up-alt {} }
-                                                    span { "Рейтинговые бои" }
+                                                    span { (locale.text("title-rating-battles")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -397,13 +397,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Всего" }
+                                                        p.heading { (locale.text("title-total")?) }
                                                         p.title { (view_model.stats_delta.rating.n_battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Победы" }
+                                                        p.heading { (locale.text("title-wins")?) }
                                                         p.title { (view_model.stats_delta.rating.n_wins) }
                                                     }
                                                 }
@@ -429,7 +429,7 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "За бой" }
+                                                        p.heading { (locale.text("title-per-battle")?) }
                                                         p.title { (format!("{:.0}", view_model.stats_delta.rating.average_damage_dealt())) }
                                                     }
                                                 }
@@ -501,19 +501,19 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Всего" }
+                                                        p.heading { (locale.text("title-total")?) }
                                                         p.title { (view_model.stats_delta.random.n_battles) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Победы" }
+                                                        p.heading { (locale.text("title-wins")?) }
                                                         p.title { (view_model.stats_delta.random.n_wins) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Выжил" }
+                                                        p.heading { (locale.text("title-survived")?) }
                                                         p.title { (view_model.stats_delta.random.n_survived_battles) }
                                                     }
                                                 }
@@ -539,13 +539,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Всего" }
+                                                        p.heading { (locale.text("title-total")?) }
                                                         p.title { (view_model.stats_delta.random.damage_dealt) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "За бой" }
+                                                        p.heading { (locale.text("title-per-battle")?) }
                                                         p.title { (Float::from(view_model.stats_delta.random.damage_per_battle())) }
                                                     }
                                                 }
@@ -571,13 +571,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Всего" }
+                                                        p.heading { (locale.text("title-total")?) }
                                                         p.title { (view_model.stats_delta.random.n_frags) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "За бой" }
+                                                        p.heading { (locale.text("title-per-battle")?) }
                                                         p.title { (Float::from(view_model.stats_delta.random.frags_per_battle()).precision(1)) }
                                                     }
                                                 }
