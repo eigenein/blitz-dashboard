@@ -52,16 +52,16 @@ pub async fn get(
             th {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-truck-monster {} }
-                    span { "Техника" }
+                    span { (locale.text("title-vehicle")?) }
                 }
             }
 
-            th { "Тип" }
+            th { (locale.text("title-type")?) }
 
             th.has-text-right {
                 a data-sort="battles" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Бои" }
+                        span { (locale.text("title-battles")?) }
                     }
                 }
             }
@@ -69,7 +69,7 @@ pub async fn get(
             th {
                 a data-sort="wins" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Победы" }
+                        span { (locale.text("title-wins")?) }
                     }
                 }
             }
@@ -77,7 +77,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="win-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { (locale.text("title-victory-rate")?) }
+                        span { (locale.text("title-victory-ratio")?) }
                     }
                 }
             }

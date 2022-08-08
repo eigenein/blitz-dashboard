@@ -1,1 +1,5 @@
-title-victory-rate = Victory rate
+title-battles = Battles
+title-type = Type
+title-vehicle = Vehicle
+title-victory-ratio = Victory ratio
+title-wins = Wins
