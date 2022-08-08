@@ -246,7 +246,7 @@ pub async fn get(
                                         p.card-header-title {
                                             span.icon-text.is-flex-wrap-nowrap {
                                                 span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                span { (locale.text("title-victory-rate")?) }
+                                                span { (locale.text("title-victory-ratio")?) }
                                             }
                                         }
                                     }
@@ -436,7 +436,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                    span { (locale.text("title-victory-rate")?) }
+                                                    span { (locale.text("title-victory-ratio")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -587,7 +587,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                                    span { (locale.text("title-victory-rate")?) }
+                                                    span { (locale.text("title-victory-ratio")?) }
                                                 }
                                             }
                                             p.card-header-icon {
