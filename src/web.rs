@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use poem::i18n::unic_langid::LanguageIdentifier;
 use poem::i18n::I18NResources;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, Tracing};
@@ -39,6 +40,7 @@ pub async fn run(opts: WebOpts) -> Result {
     let i18n_resources = I18NResources::builder()
         .add_ftl("ru", include_str!("web/i18n/ru.ftl"))
         .add_ftl("en", include_str!("web/i18n/en.ftl"))
+        .default_language(LanguageIdentifier::from_str("en")?)
         .build()?;
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))

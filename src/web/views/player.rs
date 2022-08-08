@@ -85,7 +85,11 @@ pub async fn get(
             th {
                 a data-sort="true-win-rate-mean" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Процент побед, скорректированный на число боев, CI 90%" { "Процент побед (интервал)" } }
+                        span {
+                            abbr title=(locale.text("title-victory-ratio-interval-abbr")?) {
+                                (locale.text("title-victory-ratio-interval")?)
+                            }
+                        }
                     }
                 }
             }
@@ -93,7 +97,7 @@ pub async fn get(
             th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Фраги за бой" }
+                        span { (locale.text("title-frags-per-battle")?) }
                     }
                 }
             }
@@ -101,7 +105,11 @@ pub async fn get(
             th {
                 a data-sort="true-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { abbr title="Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 90%" { "Ожидаемое золото" } }
+                        span {
+                            abbr title=(locale.text("title-gold-booster-interval-abbr")?) {
+                                (locale.text("title-gold-booster-interval")?)
+                            }
+                        }
                     }
                 }
             }
@@ -109,7 +117,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Общий урон" }
+                        span { (locale.text("title-damage-dealt")?) }
                     }
                 }
             }
@@ -117,7 +125,7 @@ pub async fn get(
             th.has-text-right.is-white-space-nowrap {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Урон за бой" }
+                        span { (locale.text("title-damage-dealt-per-battle")?) }
                     }
                 }
             }
@@ -125,7 +133,7 @@ pub async fn get(
             th.has-text-right {
                 a data-sort="survived-battles" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Выжил" }
+                        span { (locale.text("title-survived-battles")?) }
                     }
                 }
             }
@@ -133,7 +141,7 @@ pub async fn get(
             th {
                 a data-sort="survival-rate" {
                     span.icon-text.is-flex-wrap-nowrap {
-                        span { "Выживаемость" }
+                        span { (locale.text("title-survival-ratio")?) }
                     }
                 }
             }
@@ -183,10 +191,10 @@ pub async fn get(
                                 }
                             }
 
-                            div.navbar-item title="Возраст аккаунта" {
+                            div.navbar-item title=(locale.text("title-account-age-hint")?) {
                                 span.icon-text {
                                     @if view_model.actual_info.is_account_birthday() {
-                                        span.icon title="День рождения!" { i.fas.fa-birthday-cake.has-text-danger {} }
+                                        span.icon title=(locale.text("title-account-happy-birthday")?) { i.fas.fa-birthday-cake.has-text-danger {} }
                                     } @else {
                                         span.icon { i.far.fa-calendar-alt {} }
                                     }
@@ -217,7 +225,7 @@ pub async fn get(
                                         p.card-header-title {
                                             span.icon-text.is-flex-wrap-nowrap {
                                                 span.icon.has-text-warning { i.fa-solid.fa-star-half-stroke {} }
-                                                span { "Рейтинг" }
+                                                span { (locale.text("title-rating")?) }
                                             }
                                         }
                                     }

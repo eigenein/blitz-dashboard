@@ -1,5 +1,17 @@
+title-account-age-hint = Account age
+title-account-happy-birthday = Happy birthday!
 title-battles = Battles
+title-damage-dealt = Damage dealt
+title-damage-dealt-per-battle = Damage per battle
+title-frags-per-battle = Frags per battle
+title-gold-booster-interval = Gold booster (interval)
+title-gold-booster-interval-abbr = Gold booster yield per battle with correction on the number of battles, CI 90%
+title-rating = Rating
+title-survival-ratio = Survival rate
+title-survived-battles = Survived
 title-type = Type
 title-vehicle = Vehicle
 title-victory-ratio = Victory ratio
+title-victory-ratio-interval = Victory ratio (interval)
+title-victory-ratio-interval-abbr = Victory ratio with the correction on the number of battles, CI 90%
 title-wins = Wins

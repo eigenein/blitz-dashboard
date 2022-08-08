@@ -1,5 +1,17 @@
+title-account-age-hint = Возраст аккаунта
+title-account-happy-birthday = С днем рождения!
 title-battles = Бои
+title-damage-dealt = Нанесенный урон
+title-damage-dealt-per-battle = Урон за бой
+title-frags-per-battle = Фраги за бой
+title-gold-booster-interval = Бустер золота (интервал)
+title-gold-booster-interval-abbr = Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 90%
+title-rating = Рейтинг
+title-survival-ratio = Выживаемость
+title-survived-battles = Выжил
 title-type = Тип
 title-vehicle = Техника
 title-victory-ratio = Процент побед
+title-victory-ratio-interval = Процент побед (интервал)
+title-victory-ratio-interval-abbr = Процент побед, скорректированный на число боев, CI 90%
 title-wins = Победы
