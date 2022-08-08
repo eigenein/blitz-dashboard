@@ -324,17 +324,17 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
-                                (render_period_li(period, from_hours(8), "8 часов"))
-                                (render_period_li(period, from_hours(12), "12 часов"))
-                                (render_period_li(period, from_days(1), "24 часа"))
-                                (render_period_li(period, from_days(2), "2 дня"))
-                                (render_period_li(period, from_days(3), "3 дня"))
-                                (render_period_li(period, from_days(7), "Неделя"))
-                                (render_period_li(period, from_days(14), "2 недели"))
-                                (render_period_li(period, from_days(21), "3 недели"))
-                                (render_period_li(period, from_months(1), "Месяц"))
-                                (render_period_li(period, from_months(2), "2 месяца"))
-                                (render_period_li(period, from_months(3), "3 месяца"))
+                                (render_period_li(period, from_hours(8), locale.text("title-period-8-hours")?))
+                                (render_period_li(period, from_hours(12), locale.text("title-period-12-hours")?))
+                                (render_period_li(period, from_days(1), locale.text("title-period-24-hours")?))
+                                (render_period_li(period, from_days(2), locale.text("title-period-2-days")?))
+                                (render_period_li(period, from_days(3), locale.text("title-period-3-days")?))
+                                (render_period_li(period, from_days(7), locale.text("title-period-1-week")?))
+                                (render_period_li(period, from_days(14), locale.text("title-period-2-weeks")?))
+                                (render_period_li(period, from_days(21), locale.text("title-period-3-weeks")?))
+                                (render_period_li(period, from_months(1), locale.text("title-period-1-month")?))
+                                (render_period_li(period, from_months(2), locale.text("title-period-2-months")?))
+                                (render_period_li(period, from_months(3), locale.text("title-period-3-months")?))
                             }
                         }
                     }

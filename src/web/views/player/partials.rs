@@ -4,13 +4,9 @@ use std::time::Duration as StdDuration;
 use humantime::format_duration;
 use maud::{html, Markup};
 
-pub fn render_period_li(
-    period: StdDuration,
-    new_period: StdDuration,
-    text: &'static str,
-) -> Markup {
+pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: String) -> Markup {
     html! {
-        li.(if period == new_period { "is-active" } else { "" }) {
+        li.is-active[period == new_period] {
             a href=(format!("?period={}", format_duration(new_period))) { (text) }
         }
     }
