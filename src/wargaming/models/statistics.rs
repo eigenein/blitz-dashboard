@@ -86,4 +86,6 @@ pub struct RatingStats {
 
     #[serde(default)]
     pub mm_rating: MmRating,
+
+    pub current_season: u16,
 }

@@ -18,6 +18,9 @@ pub struct RatingStatsSnapshot {
 
     #[serde(default, rename = "rdmgd")]
     pub damage_dealt: u32,
+
+    #[serde(default, rename = "szn")]
+    pub current_season: u16,
 }
 
 impl NBattles for RatingStatsSnapshot {
@@ -45,6 +48,7 @@ impl From<wargaming::RatingStats> for RatingStatsSnapshot {
             n_battles: stats.basic.n_battles,
             n_wins: stats.basic.n_wins,
             damage_dealt: stats.basic.damage_dealt,
+            current_season: stats.current_season,
         }
     }
 }
@@ -58,6 +62,7 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
             n_battles: self.basic.n_battles - rhs.n_battles,
             n_wins: self.basic.n_wins - rhs.n_wins,
             damage_dealt: self.basic.damage_dealt - rhs.damage_dealt,
+            current_season: self.current_season,
         }
     }
 }
