@@ -15,7 +15,7 @@ pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<impl IntoRe
 
     let markup = html! {
         (DOCTYPE)
-        html lang="en" {
+        html lang="ru" {
             head {
                 (headers())
                 title { "Я – статист в World of Tanks Blitz!" }

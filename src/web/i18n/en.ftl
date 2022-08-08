@@ -1,6 +1,9 @@
+html-lang = en
 title-account-age-hint = Account age
 title-account-happy-birthday = Happy birthday!
+title-average-damage = Average damage
 title-battles = Battles
+title-damage = Damage
 title-damage-dealt = Damage dealt
 title-damage-dealt-per-battle = Damage per battle
 title-frags-per-battle = Frags per battle

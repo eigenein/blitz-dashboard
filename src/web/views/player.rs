@@ -149,7 +149,7 @@ pub async fn get(
     };
     let markup = html! {
         (DOCTYPE)
-        html lang="en" {
+        html lang=(locale.text("html-lang")?) {
             head {
                 script type="module" defer { (r##"
                     'use strict';
@@ -291,7 +291,7 @@ pub async fn get(
                                         p.card-header-title {
                                             span.icon-text.is-flex-wrap-nowrap {
                                                 span.icon { i.fa-solid.fa-solid.fa-house-damage {} }
-                                                span { "Средний урон" }
+                                                span { (locale.text("title-average-damage")?) }
                                             }
                                         }
                                     }
@@ -418,7 +418,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }
-                                                    span { "Урон" }
+                                                    span { (locale.text("title-damage")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -528,7 +528,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }
-                                                    span { "Нанесенный урон" }
+                                                    span { (locale.text("title-damage-dealt")?) }
                                                 }
                                             }
                                             p.card-header-icon {

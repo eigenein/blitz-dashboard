@@ -1,6 +1,9 @@
+html-lang = ru
 title-account-age-hint = Возраст аккаунта
 title-account-happy-birthday = С днем рождения!
+title-average-damage = Средний урон
 title-battles = Бои
+title-damage = Урон
 title-damage-dealt = Нанесенный урон
 title-damage-dealt-per-battle = Урон за бой
 title-frags-per-battle = Фраги за бой

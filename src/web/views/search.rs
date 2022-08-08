@@ -54,7 +54,7 @@ pub async fn get(
 
     let markup = html! {
         (DOCTYPE)
-        html.has-navbar-fixed-top lang="en" {
+        html.has-navbar-fixed-top lang="ru" {
             head {
                 (headers())
                 title { (params.query.0) " – Поиск статистов" }
