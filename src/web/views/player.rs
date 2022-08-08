@@ -233,7 +233,7 @@ pub async fn get(
                                         div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Сейчас" }
+                                                    p.heading { (locale.text("title-now")?) }
                                                     @let rating = view_model.actual_info.stats.rating.mm_rating.display_rating();
                                                     p.title title=(rating) { (rating) }
                                                 }
@@ -262,7 +262,7 @@ pub async fn get(
                                         div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Случайные бои" }
+                                                    p.heading { (locale.text("title-random-battles")?) }
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.random.current_win_rate();
                                                     p.title title=(win_rate) {
                                                         (format!("{:.2}", win_rate))
@@ -272,7 +272,7 @@ pub async fn get(
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Рейтинговые бои" }
+                                                    p.heading { (locale.text("title-rating-battles")?) }
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.rating.basic.current_win_rate();
                                                     p.title title=(win_rate) {
                                                         (format!("{:.2}", win_rate))
@@ -308,7 +308,7 @@ pub async fn get(
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { "Рейтинговые бои" }
+                                                    p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title { (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt())) }
                                                 }
                                             }
@@ -348,7 +348,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-warning { i.fa-solid.fa-star-half-stroke {} }
-                                                    span { "Рейтинг" }
+                                                    span { (locale.text("title-rating")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -359,7 +359,7 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Изменение" }
+                                                        p.heading { (locale.text("title-change")?) }
                                                         @let delta = view_model.stats_delta.rating.delta();
                                                         p.title.(sign_class(delta)) title=(delta) {
                                                             (format!("{:+.0}", delta))
@@ -490,7 +490,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-link { i.fa-solid.fa-sort-numeric-up-alt {} }
-                                                    span { "Случайные бои" }
+                                                    span { (locale.text("title-random-battles")?) }
                                                 }
                                             }
                                             p.card-header-icon {
