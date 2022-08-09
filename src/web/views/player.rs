@@ -455,13 +455,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Средний" }
+                                                        p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title { (render_percentage(view_model.stats_delta.rating.current_win_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Интервал" }
+                                                        p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
                                                             (render_percentage(true_win_rate.mean()))
@@ -560,7 +560,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon { i.fa-solid.fa-skull-crossbones {} }
-                                                    span { "Уничтожено" }
+                                                    span { (locale.text("title-destroyed")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -606,13 +606,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Средний" }
+                                                        p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title { (render_percentage(view_model.stats_delta.random.current_win_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Интервал" }
+                                                        p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             (render_percentage(period_win_rate.mean()))
                                                             span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin(), 1)) }
@@ -630,7 +630,7 @@ pub async fn get(
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
                                                     span.icon.has-text-danger { i.fa-solid.fa-heart {} }
-                                                    span { "Выживаемость" }
+                                                    span { (locale.text("title-survival-ratio")?) }
                                                 }
                                             }
                                             p.card-header-icon {
@@ -641,13 +641,13 @@ pub async fn get(
                                             div.level.is-mobile {
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Средняя" }
+                                                        p.heading { (locale.text("title-average-feminine")?) }
                                                         p.title { (render_percentage(view_model.stats_delta.random.survival_rate())) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { "Интервал" }
+                                                        p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
                                                             (render_percentage(expected_period_survival_rate.mean()))
@@ -678,7 +678,7 @@ pub async fn get(
                                                 div.level.is-mobile {
                                                     div.level-item.has-text-centered {
                                                         div {
-                                                            p.heading { "В среднем" }
+                                                            p.heading { (locale.text("title-on-average")?) }
                                                             p.title { (render_percentage(view_model.stats_delta.random.hit_rate())) }
                                                         }
                                                     }
