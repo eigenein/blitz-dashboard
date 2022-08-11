@@ -290,7 +290,7 @@ pub async fn get(
                                     header.card-header {
                                         p.card-header-title {
                                             span.icon-text.is-flex-wrap-nowrap {
-                                                span.icon { i.fa-solid.fa-solid.fa-house-damage {} }
+                                                span.icon.has-text-warning-dark { i.fa-solid.fa-solid.fa-house-damage {} }
                                                 span { (locale.text("title-average-damage")?) }
                                             }
                                         }
@@ -667,7 +667,7 @@ pub async fn get(
                                                 p.card-header-title {
                                                     span.icon-text.is-flex-wrap-nowrap {
                                                         span.icon.has-text-warning-dark { i.fa-solid.fa-bullseye {} }
-                                                        span { "Попадания" }
+                                                        span { (locale.text("title-hits")?) }
                                                     }
                                                 }
                                                 p.card-header-icon {

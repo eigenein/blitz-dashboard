@@ -13,6 +13,7 @@ title-destroyed = Destroyed
 title-frags-per-battle = Frags per battle
 title-gold-booster-interval = Gold booster (interval)
 title-gold-booster-interval-abbr = Gold booster yield per battle with correction on the number of battles, CI 90%
+title-hits = Hits
 title-interval = Interval
 title-now = Now
 title-on-average = On average

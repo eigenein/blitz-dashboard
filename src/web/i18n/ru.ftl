@@ -13,6 +13,7 @@ title-destroyed = Уничтожено
 title-frags-per-battle = Фраги за бой
 title-gold-booster-interval = Бустер золота (интервал)
 title-gold-booster-interval-abbr = Доходность золотого бустера за бой, скорректированная на число проведенных боев, CI 90%
+title-hits = Попадания
 title-interval = Интервал
 title-now = Сейчас
 title-on-average = В среднем
