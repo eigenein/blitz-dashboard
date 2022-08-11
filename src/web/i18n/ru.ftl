@@ -1,3 +1,5 @@
+footer-title-about = О проекте
+footer-title-support = Поддержка
 html-lang = ru
 title-account-age-hint = Возраст аккаунта
 title-account-happy-birthday = С днем рождения!

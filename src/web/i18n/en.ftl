@@ -1,3 +1,5 @@
+footer-title-about = About
+footer-title-support = Support
 html-lang = en
 title-account-age-hint = Account age
 title-account-happy-birthday = Happy birthday!

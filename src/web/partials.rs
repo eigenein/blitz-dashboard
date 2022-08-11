@@ -4,8 +4,10 @@ use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
 use maud::{html, Markup, PreEscaped};
 use phf::phf_set;
+use poem::i18n::Locale;
 
 pub use self::float::*;
+use crate::prelude::Result;
 use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
 use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
@@ -92,14 +94,13 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
     }
 }
 
-#[must_use]
-pub fn footer() -> Markup {
-    html! {
+pub fn footer(locale: &Locale) -> Result<Markup> {
+    let markup = html! {
         footer.footer {
             div.container {
                 div.columns {
                     div.column."is-3" {
-                        p.title."is-6" { "О проекте" }
+                        p.title."is-6" { (locale.text("footer-title-about")?) }
 
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
@@ -135,7 +136,7 @@ pub fn footer() -> Markup {
                     }
 
                     div.column."is-2" {
-                        p.title."is-6" { "Поддержка" }
+                        p.title."is-6" { (locale.text("footer-title-support")?) }
 
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
@@ -161,7 +162,8 @@ pub fn footer() -> Markup {
                 }
             }
         }
-    }
+    };
+    Ok(markup)
 }
 
 #[must_use]

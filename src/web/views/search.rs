@@ -2,6 +2,7 @@ pub mod models;
 
 use chrono_humanize::Tense;
 use maud::{html, Markup, DOCTYPE};
+use poem::i18n::Locale;
 use poem::web::{Data, Html, Query, Redirect};
 use poem::{handler, IntoResponse, Response};
 use tracing::instrument;
@@ -21,6 +22,7 @@ pub async fn get(
     tracking_code: Data<&TrackingCode>,
     api: Data<&WargamingApi>,
     account_info_cache: Data<&AccountInfoCache>,
+    locale: Locale,
 ) -> poem::Result<Response> {
     clear_user();
 
@@ -106,7 +108,7 @@ pub async fn get(
                 }
             }
 
-            (footer())
+            (footer(&locale)?)
         }
     };
 

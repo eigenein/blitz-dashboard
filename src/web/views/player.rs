@@ -716,7 +716,7 @@ pub async fn get(
                     }
                 }
 
-                (footer())
+                (footer(&locale)?)
 
                 @if !view_model.rating_snapshots.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
