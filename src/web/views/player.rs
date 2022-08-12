@@ -341,7 +341,7 @@ pub async fn get(
 
                     div.container {
                         @if view_model.stats_delta.rating.n_battles != 0 {
-                            div.columns.is-multiline.has-background-warning-light {
+                            div.columns.is-multiline.has-background-warning-light id="rating-columns" {
                                 div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
@@ -352,7 +352,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                a.icon.has-text-warning href="#rating-columns" { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -390,7 +390,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                a.icon.has-text-warning href="#rating-columns" { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -422,7 +422,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                a.icon.has-text-warning href="#rating-columns" { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -448,7 +448,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-warning { i.fa-solid.fa-trophy {} }
+                                                a.icon.has-text-warning href="#rating-columns" { i.fa-solid.fa-trophy {} }
                                             }
                                         }
                                         div.card-content {
@@ -483,7 +483,7 @@ pub async fn get(
                         }
 
                         @if view_model.stats_delta.random.n_battles != 0 {
-                            div.columns.is-multiline {
+                            div.columns.is-multiline id="random-columns" {
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
@@ -494,7 +494,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -532,7 +532,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -564,7 +564,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -599,7 +599,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -634,7 +634,7 @@ pub async fn get(
                                                 }
                                             }
                                             p.card-header-icon {
-                                                span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                             }
                                         }
                                         div.card-content {
@@ -671,7 +671,7 @@ pub async fn get(
                                                     }
                                                 }
                                                 p.card-header-icon {
-                                                    span.icon.has-text-grey-light { i.fa-solid.fa-dice {} }
+                                                    a.icon.has-text-grey-light href="#random-columns" { i.fa-solid.fa-dice {} }
                                                 }
                                             }
                                             div.card-content {
