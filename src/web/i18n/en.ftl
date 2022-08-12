@@ -1,8 +1,10 @@
 footer-title-about = About
+footer-title-created-with = Created with
 footer-title-support = Support
 html-lang = en
 message-not-played-random = The user hasnʼt played in <strong>random</strong> battles within this period of time.
 message-not-played-rating = The user hasnʼt played in <strong>rating</strong> battles within this period of time.
+preposition-and = and
 title-account-age-hint = Account age
 title-account-happy-birthday = Happy birthday!
 title-average-damage = Average damage

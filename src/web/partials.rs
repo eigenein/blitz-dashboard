@@ -121,8 +121,13 @@ pub fn footer(locale: &Locale) -> Result<Markup> {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-heart.has-text-danger {} }
                                 span {
-                                    "Создан с помощью " a href="https://www.rust-lang.org/" { "Rust" }
-                                    " и " a href="https://bulma.io/" { "Bulma" }
+                                    (locale.text("footer-title-created-with")?)
+                                    " "
+                                    a href="https://www.rust-lang.org/" { "Rust" }
+                                    " "
+                                    (locale.text("preposition-and")?)
+                                    " "
+                                    a href="https://bulma.io/" { "Bulma" }
                                 }
                             }
                         }

@@ -1,8 +1,10 @@
 footer-title-about = О проекте
+footer-title-created-with = Создан с помощью
 footer-title-support = Поддержка
 html-lang = ru
 message-not-played-random = Пользователь не играл в <strong>случайных</strong> боях за этот период времени.
 message-not-played-rating = Пользователь не играл в <strong>рейтинговых</strong> боях за этот период времени.
+preposition-and = и
 title-account-age-hint = Возраст аккаунта
 title-account-happy-birthday = С днем рождения!
 title-average-damage = Средний урон
