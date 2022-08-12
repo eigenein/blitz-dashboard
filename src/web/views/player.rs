@@ -477,7 +477,7 @@ pub async fn get(
                         } @else {
                             article.message.is-warning {
                                 div.message-body {
-                                    p { "Пользователь не играл в " strong { "рейтинговых" } " боях за этот период времени." }
+                                    p { (PreEscaped(locale.text("message-not-played-rating")?)) }
                                 }
                             }
                         }
@@ -691,7 +691,7 @@ pub async fn get(
                         } @else {
                             article.message {
                                 div.message-body {
-                                    p { "Пользователь не играл в " strong { "случайных" } " боях за этот период времени." }
+                                    p { (PreEscaped(locale.text("message-not-played-random")?)) }
                                 }
                             }
                         }

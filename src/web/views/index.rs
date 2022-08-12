@@ -1,4 +1,5 @@
 use maud::{html, DOCTYPE};
+use poem::i18n::Locale;
 use poem::web::{Data, Html};
 use poem::{handler, IntoResponse};
 use tracing::instrument;
@@ -10,12 +11,15 @@ use crate::web::TrackingCode;
 
 #[instrument(skip_all)]
 #[handler]
-pub async fn get(tracking_code: Data<&TrackingCode>) -> poem::Result<impl IntoResponse> {
+pub async fn get(
+    tracking_code: Data<&TrackingCode>,
+    locale: Locale,
+) -> poem::Result<impl IntoResponse> {
     clear_user();
 
     let markup = html! {
         (DOCTYPE)
-        html lang="ru" {
+        html lang=(locale.text("html-lang")?) {
             head {
                 (headers())
                 title { "Я – статист в World of Tanks Blitz!" }
