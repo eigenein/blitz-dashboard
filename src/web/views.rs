@@ -1,4 +1,5 @@
 pub mod error;
+pub mod gone;
 pub mod index;
 pub mod player;
 pub mod random;

@@ -68,6 +68,7 @@ pub async fn run(opts: WebOpts) -> Result {
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
+        .at("/analytics/vehicles/:vehicle_id", get(views::gone::get))
         .data(mongodb)
         .data(i18n_resources)
         .data(TrackingCode::new(&opts)?)
