@@ -122,7 +122,7 @@ pub async fn get(
                 }
             }
 
-            th.has-text-right.is-white-space-nowrap {
+            th.has-text-right {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-damage-dealt-per-battle")?) }
