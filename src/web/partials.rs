@@ -12,15 +12,15 @@ use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
 use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
-#[must_use]
 pub fn account_search(
     class: &str,
     realm: Realm,
     value: &str,
     has_autofocus: bool,
     has_user_secret: bool,
-) -> Markup {
-    html! {
+    locale: &Locale,
+) -> Result<Markup> {
+    let markup = html! {
         div.field.has-addons {
             div.control {
                 span.select.(class) {
@@ -35,7 +35,7 @@ pub fn account_search(
                     type="search"
                     name="query"
                     value=(value)
-                    placeholder="Никнейм"
+                    placeholder=(locale.text("placeholder-nickname")?)
                     autocomplete="nickname"
                     pattern="\\w+"
                     autocapitalize="none"
@@ -56,11 +56,12 @@ pub fn account_search(
             div.control {
                 button.button.is-link.(class) type="submit" {
                     span.icon.is-hidden-desktop { i.fas.fa-search {} }
-                    span.is-hidden-touch { "Поиск" }
+                    span.is-hidden-touch { (locale.text("button-search")?) }
                 };
             }
         }
-    }
+    };
+    Ok(markup)
 }
 
 #[must_use]

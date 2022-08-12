@@ -1,9 +1,12 @@
+button-feeling-lucky = Iʼm feeling lucky!
+button-search = Search
 footer-title-about = About
 footer-title-created-with = Created with
 footer-title-support = Support
 html-lang = en
 message-not-played-random = The user hasnʼt played in <strong>random</strong> battles within this period of time.
 message-not-played-rating = The user hasnʼt played in <strong>rating</strong> battles within this period of time.
+placeholder-nickname = Nickname
 preposition-and = and
 tank-type-at = AT-SPG
 tank-type-heavy = Heavy

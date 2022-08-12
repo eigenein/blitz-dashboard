@@ -72,7 +72,7 @@ pub async fn get(
                     div.navbar-menu {
                         div.navbar-end {
                             form.navbar-item action="/search" method="GET" {
-                                (account_search("", params.realm, &params.query.0, false, false))
+                                (account_search("", params.realm, &params.query.0, false, false, &locale)?)
                             }
                         }
                     }

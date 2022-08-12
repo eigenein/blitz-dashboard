@@ -1,9 +1,12 @@
+button-feeling-lucky = Мне повезет!
+button-search = Поиск
 footer-title-about = О проекте
 footer-title-created-with = Создан с помощью
 footer-title-support = Поддержка
 html-lang = ru
 message-not-played-random = Пользователь не играл в <strong>случайных</strong> боях за этот период времени.
 message-not-played-rating = Пользователь не играл в <strong>рейтинговых</strong> боях за этот период времени.
+placeholder-nickname = Никнейм
 preposition-and = и
 tank-type-at = ПТ
 tank-type-heavy = ТТ

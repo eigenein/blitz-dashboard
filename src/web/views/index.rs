@@ -40,12 +40,12 @@ pub async fn get(
                                                 a.button.is-rounded.is-small href="/ru/3851977" { "🇷🇺 D_W_S" }
                                             }
                                         }
-                                        (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false))
+                                        (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false, &locale)?)
                                         div.field.is-grouped.is-grouped-centered {
                                             p.control {
                                                 a.button.is-rounded.is-medium href="/random" {
                                                     span.icon { i.fa-solid.fa-dice {} }
-                                                    span { "Мне повезет!" }
+                                                    span { (locale.text("button-feeling-lucky")?) }
                                                 }
                                             }
                                         }
