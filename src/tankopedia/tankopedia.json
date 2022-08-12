@@ -1327,6 +1327,14 @@
     "nation": "uk",
     "type": "lightTank"
   },
+  "21329": {
+    "tank_id": 21329,
+    "name": "GSOR 1008",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "uk",
+    "type": "AT-SPG"
+  },
   "2145": {
     "tank_id": 2145,
     "name": "Type 97 Chi-Ha",
