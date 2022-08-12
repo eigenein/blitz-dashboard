@@ -703,7 +703,7 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &view_model.stats_delta.tanks {
-                                                (render_tank_tr(tank, view_model.actual_info.stats.random.current_win_rate())?)
+                                                (render_tank_tr(tank, view_model.actual_info.stats.random.current_win_rate(), &locale)?)
                                             }
                                         }
                                         @if view_model.stats_delta.tanks.len() >= 25 {
@@ -768,7 +768,11 @@ pub async fn get(
     Ok(response)
 }
 
-fn render_tank_tr(snapshot: &database::TankSnapshot, account_win_rate: f64) -> Result<Markup> {
+fn render_tank_tr(
+    snapshot: &database::TankSnapshot,
+    account_win_rate: f64,
+    locale: &Locale,
+) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
         @let true_win_rate = snapshot.stats.true_win_rate()?;
@@ -777,12 +781,12 @@ fn render_tank_tr(snapshot: &database::TankSnapshot, account_win_rate: f64) -> R
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle))
 
-            td.has-text-centered {
+            td.has-text-centered.is-white-space-nowrap {
                 @match vehicle.type_ {
-                    wargaming::TankType::Light => "ЛТ",
-                    wargaming::TankType::Medium => "СТ",
-                    wargaming::TankType::Heavy => "ТТ",
-                    wargaming::TankType::AT => "ПТ",
+                    wargaming::TankType::Light => (locale.text("tank-type-light")?),
+                    wargaming::TankType::Medium => (locale.text("tank-type-medium")?),
+                    wargaming::TankType::Heavy => (locale.text("tank-type-heavy")?),
+                    wargaming::TankType::AT => (locale.text("tank-type-at")?),
                     wargaming::TankType::Unknown => "",
                 }
             }
