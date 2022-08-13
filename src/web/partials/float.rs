@@ -17,7 +17,7 @@ impl<T> From<T> for Float<T> {
 }
 
 impl<T> Float<T> {
-    pub fn precision(mut self, precision: usize) -> Self {
+    pub const fn precision(mut self, precision: usize) -> Self {
         self.precision = precision;
         self
     }

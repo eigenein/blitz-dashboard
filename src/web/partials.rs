@@ -1,3 +1,4 @@
+mod account_search;
 mod float;
 
 use chrono::{DateTime, Utc};
@@ -6,12 +7,14 @@ use maud::{html, Markup, PreEscaped};
 use phf::phf_set;
 use poem::i18n::Locale;
 
+pub use self::account_search::*;
 pub use self::float::*;
 use crate::prelude::Result;
 use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
 use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
+#[deprecated]
 pub fn account_search(
     class: &str,
     realm: Realm,

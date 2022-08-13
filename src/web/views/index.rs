@@ -6,7 +6,7 @@ use tracing::instrument;
 
 use crate::helpers::sentry::clear_user;
 use crate::wargaming;
-use crate::web::partials::{account_search, headers};
+use crate::web::partials::{headers, AccountSearch};
 use crate::web::TrackingCode;
 
 #[instrument(skip_all)]
@@ -40,7 +40,12 @@ pub async fn get(
                                                 a.button.is-rounded.is-small href="/ru/3851977" { "🇷🇺 D_W_S" }
                                             }
                                         }
-                                        (account_search("is-medium is-rounded", wargaming::Realm::Russia, "", true, false, &locale)?)
+                                        (
+                                            AccountSearch::new(wargaming::Realm::Russia, &locale)
+                                                .class("is-medium is-rounded")
+                                                .has_autofocus(true)
+                                                .render()?
+                                        )
                                         div.field.is-grouped.is-grouped-centered {
                                             p.control {
                                                 a.button.is-rounded.is-medium href="/random" {
