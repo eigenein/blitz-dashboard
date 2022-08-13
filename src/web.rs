@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::time;
 
 use poem::i18n::unic_langid::LanguageIdentifier;
 use poem::i18n::I18NResources;
@@ -26,22 +27,22 @@ pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
+    let connections = &opts.connections;
     let api = WargamingApi::new(
-        &opts.connections.application_id,
-        opts.connections.api_timeout,
-        opts.connections.max_api_rps,
+        &connections.application_id,
+        connections.api_timeout,
+        connections.max_api_rps,
     )?;
-    let mongodb = crate::database::mongodb::open(&opts.connections.internal.mongodb_uri).await?;
-    let redis = redis::connect(
-        &opts.connections.internal.redis_uri,
-        opts.connections.internal.redis_pool_size,
-    )
-    .await?;
+    let mongodb = crate::database::mongodb::open(&connections.internal.mongodb_uri).await?;
+    let redis =
+        redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
+            .await?;
     let i18n_resources = I18NResources::builder()
         .add_ftl("ru", include_str!("web/i18n/ru.ftl"))
         .add_ftl("en", include_str!("web/i18n/en.ftl"))
         .default_language(LanguageIdentifier::from_str("en")?)
         .build()?;
+
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
         .at("/favicon.ico", get(r#static::get_favicon))
@@ -81,8 +82,15 @@ pub async fn run(opts: WebOpts) -> Result {
         .with(ErrorMiddleware)
         .with(SecurityHeadersMiddleware)
         .with(SentryMiddleware);
+
     Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
-        .run(app)
+        .run_with_graceful_shutdown(
+            app,
+            async move {
+                let _ = tokio::signal::ctrl_c().await;
+            },
+            Some(time::Duration::from_secs(3)),
+        )
         .await
         .map_err(Error::from)
 }
