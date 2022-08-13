@@ -74,6 +74,20 @@ impl AppData {
 
 #[instrument(skip_all)]
 async fn create_app(data: AppData) -> Result<impl IntoEndpoint> {
+    let app = create_standalone_app()
+        .await?
+        .into_endpoint()
+        .data(data.mongodb)
+        .data(data.tracking_code)
+        .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
+        .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
+        .data(data.redis)
+        .data(data.api);
+    Ok(app)
+}
+
+#[instrument(skip_all)]
+async fn create_standalone_app() -> Result<impl IntoEndpoint> {
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
         .at("/favicon.ico", get(r#static::get_favicon))
@@ -101,13 +115,7 @@ async fn create_app(data: AppData) -> Result<impl IntoEndpoint> {
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
         .at("/analytics/vehicles/:vehicle_id", get(views::gone::get))
-        .data(data.mongodb)
         .data(i18n::build_resources()?)
-        .data(data.tracking_code)
-        .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
-        .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
-        .data(data.redis)
-        .data(data.api)
         .with(Tracing)
         .with(CatchPanic::new())
         .with(ErrorMiddleware)

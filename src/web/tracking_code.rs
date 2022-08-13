@@ -9,6 +9,12 @@ use crate::prelude::*;
 #[derive(Clone)]
 pub struct TrackingCode(PreEscaped<String>);
 
+impl Default for TrackingCode {
+    fn default() -> Self {
+        Self(PreEscaped(String::new()))
+    }
+}
+
 impl TrackingCode {
     pub fn new(opts: &WebOpts) -> Result<Self> {
         let mut code = String::new();
