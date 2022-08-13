@@ -1,4 +1,6 @@
-use poem::error::{MethodNotAllowedError, NotFoundError, ParsePathError, ParseQueryError};
+use poem::error::{
+    MethodNotAllowedError, NotFoundError, ParseCookieError, ParsePathError, ParseQueryError,
+};
 use poem::http::StatusCode;
 use poem::{Endpoint, IntoResponse, Middleware, Request, Response, Result};
 
@@ -35,7 +37,10 @@ impl<E: Endpoint<Output = Response>> Endpoint for ErrorMiddlewareImpl<E> {
                 Ok(StatusCode::METHOD_NOT_ALLOWED.into_response())
             }
             Err(error) => {
-                if error.is::<ParseQueryError>() || error.is::<ParsePathError>() {
+                if error.is::<ParseQueryError>()
+                    || error.is::<ParsePathError>()
+                    || error.is::<ParseCookieError>()
+                {
                     info!(?method, ?uri, "{:#}", error);
                     Ok(StatusCode::BAD_REQUEST.into_response())
                 } else {
