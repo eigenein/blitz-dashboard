@@ -2,8 +2,6 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::time;
 
-use poem::i18n::unic_langid::LanguageIdentifier;
-use poem::i18n::I18NResources;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, CookieJarManager, Tracing};
 use poem::{get, EndpointExt, Route, Server};
@@ -18,6 +16,7 @@ use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryM
 use crate::web::tracking_code::TrackingCode;
 
 mod cookies;
+mod i18n;
 mod middleware;
 mod partials;
 mod tracking_code;
@@ -38,11 +37,6 @@ pub async fn run(opts: WebOpts) -> Result {
     let redis =
         redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
             .await?;
-    let i18n_resources = I18NResources::builder()
-        .add_ftl("ru", include_str!("web/i18n/ru.ftl"))
-        .add_ftl("en", include_str!("web/i18n/en.ftl"))
-        .default_language(LanguageIdentifier::from_str("en")?)
-        .build()?;
 
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
@@ -72,7 +66,7 @@ pub async fn run(opts: WebOpts) -> Result {
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
         .at("/analytics/vehicles/:vehicle_id", get(views::gone::get))
         .data(mongodb)
-        .data(i18n_resources)
+        .data(i18n::build_resources()?)
         .data(TrackingCode::new(&opts)?)
         .data(AccountInfoCache::new(api.clone(), redis.clone()))
         .data(AccountTanksCache::new(api.clone(), redis.clone()))

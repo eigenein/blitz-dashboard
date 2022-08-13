@@ -64,3 +64,13 @@ pub async fn get(
     Ok(Html(markup.into_string())
         .with_header("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400"))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_get_ok() -> Result {
+        Ok(())
+    }
+}
