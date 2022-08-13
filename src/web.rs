@@ -27,7 +27,8 @@ pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
-    let app = create_app(&opts).await?;
+    let app_data = AppData::initialize_from_opts(&opts).await?;
+    let app = create_app(app_data).await?;
     Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
         .run_with_graceful_shutdown(
             app,
@@ -40,19 +41,39 @@ pub async fn run(opts: WebOpts) -> Result {
         .map_err(Error::from)
 }
 
-#[instrument(skip_all)]
-async fn create_app(opts: &WebOpts) -> Result<impl IntoEndpoint> {
-    let connections = &opts.connections;
-    let api = WargamingApi::new(
-        &connections.application_id,
-        connections.api_timeout,
-        connections.max_api_rps,
-    )?;
-    let mongodb = crate::database::mongodb::open(&connections.internal.mongodb_uri).await?;
-    let redis =
-        redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
-            .await?;
+struct AppData {
+    api: WargamingApi,
+    mongodb: mongodb::Database,
+    redis: fred::pool::RedisPool,
+    tracking_code: TrackingCode,
+}
 
+impl AppData {
+    async fn initialize_from_opts(opts: &WebOpts) -> Result<Self> {
+        let connections = &opts.connections;
+
+        let api = WargamingApi::new(
+            &connections.application_id,
+            connections.api_timeout,
+            connections.max_api_rps,
+        )?;
+        let mongodb = crate::database::mongodb::open(&connections.internal.mongodb_uri).await?;
+        let redis =
+            redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
+                .await?;
+        let tracking_code = TrackingCode::new(opts)?;
+
+        Ok(Self {
+            api,
+            mongodb,
+            redis,
+            tracking_code,
+        })
+    }
+}
+
+#[instrument(skip_all)]
+async fn create_app(data: AppData) -> Result<impl IntoEndpoint> {
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
         .at("/favicon.ico", get(r#static::get_favicon))
@@ -80,13 +101,13 @@ async fn create_app(opts: &WebOpts) -> Result<impl IntoEndpoint> {
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
         .at("/analytics/vehicles/:vehicle_id", get(views::gone::get))
-        .data(mongodb)
+        .data(data.mongodb)
         .data(i18n::build_resources()?)
-        .data(TrackingCode::new(opts)?)
-        .data(AccountInfoCache::new(api.clone(), redis.clone()))
-        .data(AccountTanksCache::new(api.clone(), redis.clone()))
-        .data(redis)
-        .data(api)
+        .data(data.tracking_code)
+        .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
+        .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
+        .data(data.redis)
+        .data(data.api)
         .with(Tracing)
         .with(CatchPanic::new())
         .with(ErrorMiddleware)
