@@ -26,11 +26,11 @@ chrono = { version = "0.4.19" }
 chrono-humanize = "0.2.1"
 circular-queue = "0.2.6"
 clap = { version = "3.2.10", features = ["cargo", "derive", "env"] }
-governor = "0.4.2"
 either = "1.6.1"
 fastrand = "1.7.0"
 fred = { version = "5.1.0", default-features = false, features = ["partial-tracing", "no-client-setname"] }
 futures = { version = "0.3.21", default-features = false }
+governor = "0.4.2"
 humantime = "2.1.0"
 itertools = "0.10.3"
 maud = "0.23.0"

@@ -2,15 +2,19 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
+use std::str::FromStr;
 use std::time;
 use std::time::Instant;
 
 use bpci::Interval;
 use chrono_humanize::Tense;
+use clap::crate_version;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
+use poem::http::StatusCode;
 use poem::i18n::Locale;
 use poem::web::cookie::CookieJar;
-use poem::web::{Data, Html, Path, Query, RealIp};
+use poem::web::headers::{ETag, IfNoneMatch};
+use poem::web::{Data, Html, Path, Query, RealIp, TypedHeader};
 use poem::{handler, IntoResponse, Response};
 
 use self::models::*;
@@ -44,6 +48,7 @@ pub async fn get(
     tracking_code: Data<&TrackingCode>,
     real_ip: RealIp,
     locale: Locale,
+    none_match: Option<TypedHeader<IfNoneMatch>>,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
 
@@ -60,6 +65,19 @@ pub async fn get(
     let view_model =
         ViewModel::new(real_ip.0, path, cookies, period, *mongodb, *info_cache, *tanks_cache)
             .await?;
+
+    let etag = format!(
+        concat!("\"", crate_version!(), "-{}-{}-{}\""),
+        view_model.actual_info.last_battle_time.timestamp(),
+        period.as_secs(),
+        locale.text("html-lang")?,
+    );
+    if let Some(TypedHeader(none_match)) = none_match {
+        if !none_match.precondition_passes(&ETag::from_str(&etag).context("failed to parse ETag")?)
+        {
+            return Ok(StatusCode::NOT_MODIFIED.into_response());
+        }
+    }
 
     let vehicles_thead = html! {
         tr {
@@ -777,6 +795,7 @@ pub async fn get(
 
     let response = Html(markup.into_string())
         .with_header("Cache-Control", "public, max-age=30, stale-while-revalidate=3600")
+        .with_header("ETag", etag)
         .into_response();
     info!(elapsed = format_elapsed(start_instant).as_str(), "finished");
     Ok(response)
