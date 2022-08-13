@@ -4,7 +4,7 @@ use std::time;
 
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, CookieJarManager, Tracing};
-use poem::{get, EndpointExt, Route, Server};
+use poem::{get, EndpointExt, IntoEndpoint, Route, Server};
 use views::r#static;
 
 use crate::helpers::redis;
@@ -27,6 +27,21 @@ pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
     info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
+    let app = create_app(&opts).await?;
+    Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
+        .run_with_graceful_shutdown(
+            app,
+            async move {
+                let _ = tokio::signal::ctrl_c().await;
+            },
+            Some(time::Duration::from_secs(3)),
+        )
+        .await
+        .map_err(Error::from)
+}
+
+#[instrument(skip_all)]
+async fn create_app(opts: &WebOpts) -> Result<impl IntoEndpoint> {
     let connections = &opts.connections;
     let api = WargamingApi::new(
         &connections.application_id,
@@ -67,7 +82,7 @@ pub async fn run(opts: WebOpts) -> Result {
         .at("/analytics/vehicles/:vehicle_id", get(views::gone::get))
         .data(mongodb)
         .data(i18n::build_resources()?)
-        .data(TrackingCode::new(&opts)?)
+        .data(TrackingCode::new(opts)?)
         .data(AccountInfoCache::new(api.clone(), redis.clone()))
         .data(AccountTanksCache::new(api.clone(), redis.clone()))
         .data(redis)
@@ -78,15 +93,5 @@ pub async fn run(opts: WebOpts) -> Result {
         .with(SecurityHeadersMiddleware)
         .with(SentryMiddleware)
         .with(CookieJarManager::new());
-
-    Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
-        .run_with_graceful_shutdown(
-            app,
-            async move {
-                let _ = tokio::signal::ctrl_c().await;
-            },
-            Some(time::Duration::from_secs(3)),
-        )
-        .await
-        .map_err(Error::from)
+    Ok(app)
 }
