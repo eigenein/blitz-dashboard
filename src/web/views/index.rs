@@ -67,18 +67,12 @@ pub async fn get(
 
 #[cfg(test)]
 mod tests {
-    use poem::test::TestClient;
-    use poem::EndpointExt;
-
     use crate::prelude::*;
-    use crate::web::create_standalone_app;
-    use crate::web::tracking_code::TrackingCode;
+    use crate::web::test::create_standalone_test_client;
 
     #[tokio::test]
     async fn test_get_ok() -> Result {
-        let _sentry_guard = crate::tracing::init(None, 0.0)?;
-        let app = create_standalone_app().await?.data(TrackingCode::default());
-        let client = TestClient::new(app);
+        let (_guard, client) = create_standalone_test_client().await?;
         let response = client.get("/").send().await;
         response.assert_status_is_ok();
         Ok(())

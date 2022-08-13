@@ -4,7 +4,7 @@ use std::time;
 
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, CookieJarManager, Tracing};
-use poem::{get, EndpointExt, IntoEndpoint, Route, Server};
+use poem::{get, Endpoint, EndpointExt, Route, Server};
 use views::r#static;
 
 use crate::helpers::redis;
@@ -19,6 +19,10 @@ mod cookies;
 mod i18n;
 mod middleware;
 mod partials;
+
+#[cfg(test)]
+mod test;
+
 mod tracking_code;
 mod views;
 
@@ -73,10 +77,9 @@ impl AppData {
 }
 
 #[instrument(skip_all)]
-async fn create_app(data: AppData) -> Result<impl IntoEndpoint> {
+async fn create_app(data: AppData) -> Result<impl Endpoint> {
     let app = create_standalone_app()
         .await?
-        .into_endpoint()
         .data(data.mongodb)
         .data(data.tracking_code)
         .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
@@ -87,7 +90,7 @@ async fn create_app(data: AppData) -> Result<impl IntoEndpoint> {
 }
 
 #[instrument(skip_all)]
-async fn create_standalone_app() -> Result<impl IntoEndpoint> {
+async fn create_standalone_app() -> Result<impl Endpoint> {
     let app = Route::new()
         .at("/site.webmanifest", get(r#static::get_site_manifest))
         .at("/favicon.ico", get(r#static::get_favicon))
