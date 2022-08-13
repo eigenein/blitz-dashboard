@@ -5,7 +5,7 @@ use std::time;
 use poem::i18n::unic_langid::LanguageIdentifier;
 use poem::i18n::I18NResources;
 use poem::listener::TcpListener;
-use poem::middleware::{CatchPanic, Tracing};
+use poem::middleware::{CatchPanic, CookieJarManager, Tracing};
 use poem::{get, EndpointExt, Route, Server};
 use views::r#static;
 
@@ -17,6 +17,7 @@ use crate::wargaming::WargamingApi;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 use crate::web::tracking_code::TrackingCode;
 
+mod cookies;
 mod middleware;
 mod partials;
 mod tracking_code;
@@ -81,7 +82,8 @@ pub async fn run(opts: WebOpts) -> Result {
         .with(CatchPanic::new())
         .with(ErrorMiddleware)
         .with(SecurityHeadersMiddleware)
-        .with(SentryMiddleware);
+        .with(SentryMiddleware)
+        .with(CookieJarManager::new());
 
     Server::new(TcpListener::bind((IpAddr::from_str(&opts.host)?, opts.port)))
         .run_with_graceful_shutdown(

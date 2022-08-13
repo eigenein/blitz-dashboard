@@ -1,17 +1,20 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
+use std::time;
 
 use bpci::BoundedInterval;
 use futures::future::try_join;
 use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
-use poem::web::{Path, Query};
+use poem::web::cookie::CookieJar;
+use poem::web::Path;
 use sentry::protocol::IpAddress;
 
 use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::web::views::player::models::{PathSegments, QueryParams, StatsDelta};
+use crate::web::cookies;
+use crate::web::views::player::models::{PathSegments, StatsDelta};
 use crate::{database, wargaming};
 
 pub struct ViewModel {
@@ -23,10 +26,12 @@ pub struct ViewModel {
 }
 
 impl ViewModel {
+    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         ip_addr: Option<IpAddr>,
         Path(PathSegments { realm, account_id }): Path<PathSegments>,
-        query: Query<QueryParams>,
+        cookies: &CookieJar,
+        period: time::Duration,
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
@@ -58,13 +63,17 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let current_win_rate = actual_info.stats.random.true_win_rate()?;
-        let before =
-            Utc::now() - Duration::from_std(query.period.0).map_err(InternalServerError)?;
+        let before = Utc::now() - Duration::from_std(period).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;
         let rating_snapshots =
             database::RatingSnapshot::retrieve_latest(db, realm, account_id).await?;
+
+        cookies::Builder::new(cookies::DISPLAY_PERIOD)
+            .value(period.as_secs())
+            .expires_in(Duration::weeks(4))
+            .add_to(cookies);
 
         Ok(Self {
             realm,

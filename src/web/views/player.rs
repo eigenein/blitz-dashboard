@@ -2,12 +2,14 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
+use std::time;
 use std::time::Instant;
 
 use bpci::Interval;
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::i18n::Locale;
+use poem::web::cookie::CookieJar;
 use poem::web::{Data, Html, Path, Query, RealIp};
 use poem::{handler, IntoResponse, Response};
 
@@ -19,7 +21,7 @@ use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
 use crate::web::views::player::partials::*;
-use crate::web::TrackingCode;
+use crate::web::{cookies, TrackingCode};
 use crate::{database, format_elapsed, wargaming};
 
 mod models;
@@ -29,12 +31,13 @@ mod partials;
 #[instrument(
     skip_all,
     level = "info",
-    fields(realm = ?path.realm, account_id = path.account_id, period = ?query.period.0),
+    fields(realm = ?path.realm, account_id = path.account_id, period = ?query.period),
 )]
 #[handler]
 pub async fn get(
     path: Path<PathSegments>,
     query: Query<QueryParams>,
+    cookies: &CookieJar,
     mongodb: Data<&mongodb::Database>,
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,
@@ -43,9 +46,20 @@ pub async fn get(
     locale: Locale,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
-    let period = query.period.0;
+
+    let period = query
+        .period
+        .map(|period| Ok(period.0))
+        .or_else(|| {
+            cookies
+                .get(cookies::DISPLAY_PERIOD)
+                .map(|cookie| cookie.value().map(time::Duration::from_secs))
+        })
+        .unwrap_or(Ok(StdDuration::from_secs(86400)))?;
+
     let view_model =
-        ViewModel::new(real_ip.0, path, query, *mongodb, *info_cache, *tanks_cache).await?;
+        ViewModel::new(real_ip.0, path, cookies, period, *mongodb, *info_cache, *tanks_cache)
+            .await?;
 
     let vehicles_thead = html! {
         tr {
