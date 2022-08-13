@@ -297,8 +297,8 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.random.current_win_rate();
-                                                    p.title title=(win_rate) {
-                                                        (format!("{:.2}", win_rate))
+                                                    p.title {
+                                                        (Float::from(win_rate).precision(2))
                                                         span.has-text-grey-light { "%" }
                                                     }
                                                 }
@@ -307,8 +307,8 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.rating.basic.current_win_rate();
-                                                    p.title title=(win_rate) {
-                                                        (format!("{:.2}", win_rate))
+                                                    p.title {
+                                                        (Float::from(win_rate).precision(2))
                                                         span.has-text-grey-light { "%" }
                                                     }
                                                 }

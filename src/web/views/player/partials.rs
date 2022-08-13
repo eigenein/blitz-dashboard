@@ -4,6 +4,8 @@ use std::time::Duration as StdDuration;
 use humantime::format_duration;
 use maud::{html, Markup};
 
+use crate::web::partials::Float;
+
 pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: String) -> Markup {
     html! {
         li.is-active[period == new_period] {
@@ -36,6 +38,9 @@ pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
     }
 }
 
-pub fn render_percentage(value: f64) -> String {
-    format!("{:.1}%", value * 100.0)
+pub fn render_percentage(value: f64) -> Markup {
+    html! {
+        (Float::from(value * 100.0).precision(1))
+        span.has-text-grey-light { "%" }
+    }
 }
