@@ -4,7 +4,7 @@ use crate::helpers::serde::{deserialize_duration_seconds, serialize_duration_sec
 use crate::prelude::*;
 use crate::wargaming::models::{BasicStats, TankId};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct TankStats {
     pub tank_id: TankId,
 

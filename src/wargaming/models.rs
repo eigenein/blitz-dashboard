@@ -23,7 +23,7 @@ pub mod tank_stats;
 pub mod vehicle;
 
 /// Search accounts item.
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, Eq, PartialEq)]
 pub struct FoundAccount {
     pub nickname: String,
 

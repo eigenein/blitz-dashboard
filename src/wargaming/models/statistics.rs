@@ -7,7 +7,7 @@ use crate::math::traits::{DamageDealt, NBattles, NWins};
 use crate::wargaming::MmRating;
 
 #[must_use]
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default, Copy)]
 pub struct BasicStats {
     #[serde(rename = "battles")]
     pub n_battles: u32,

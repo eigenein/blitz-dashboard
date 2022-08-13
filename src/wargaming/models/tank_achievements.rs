@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::wargaming::TankId;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone)]
 pub struct TankAchievements {
     pub tank_id: TankId,
     pub achievements: HashMap<String, i32>,
