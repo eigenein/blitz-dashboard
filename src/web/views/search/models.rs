@@ -26,6 +26,6 @@ impl TryFrom<String> for Query {
         if value.len() > MAX_QUERY_LENGTH {
             bail!("query is tool long")
         }
-        Ok(Self(value))
+        Ok(Self(value.to_lowercase()))
     }
 }

@@ -25,12 +25,20 @@ pub fn account_search(
             div.control {
                 span.select.(class) {
                     select name="realm" {
-                        option title="Россия" value=(Realm::Russia.to_str()) selected[realm == Realm::Russia] { "🇷🇺" }
-                        option title="Европа" value=(Realm::Europe.to_str()) selected[realm == Realm::Europe] { "🇪🇺" }
+                        option
+                            title=(locale.text("option-title-russia")?)
+                            value=(Realm::Russia.to_str())
+                            selected[realm == Realm::Russia]
+                            { "🇷🇺" }
+                        option
+                            title=(locale.text("option-title-europe")?)
+                            value=(Realm::Europe.to_str())
+                            selected[realm == Realm::Europe]
+                            { "🇪🇺" }
                     }
                 }
             }
-            div.control.has-icons-left.is-expanded.(conditional_class(has_user_secret, "has-icons-right")) {
+            div.control.has-icons-left.is-expanded.has-icons-right[has_user_secret] {
                 input.input.(class)
                     type="search"
                     name="query"
@@ -136,7 +144,11 @@ pub fn footer(locale: &Locale) -> Result<Markup> {
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-id-badge.has-text-success {} }
-                                span { "Исходный код лицензирован " a href="https://opensource.org/licenses/MIT" { "MIT" } }
+                                span {
+                                    (locale.text("footer-title-source-licensed")?)
+                                    " "
+                                    a href="https://opensource.org/licenses/MIT" { "MIT" }
+                                }
                             }
                         }
                     }
@@ -147,21 +159,27 @@ pub fn footer(locale: &Locale) -> Result<Markup> {
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-comments.has-text-info {} }
-                                span { a href="https://github.com/eigenein/blitz-dashboard/discussions" { "Обсуждения" } }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/discussions" {
+                                    (locale.text("footer-title-discussions")?)
+                                } }
                             }
                         }
 
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fab.fa-github.has-text-danger {} }
-                                span { a href="https://github.com/eigenein/blitz-dashboard/issues" { "Задачи и баги" } }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/issues" {
+                                    (locale.text("footer-title-issues")?)
+                                } }
                             }
                         }
 
                         p."mt-1" {
                             span.icon-text.is-flex-wrap-nowrap {
                                 span.icon { i.fas.fa-code-branch.has-text-success {} }
-                                span { a href="https://github.com/eigenein/blitz-dashboard/pulls" { "Пул-реквесты" } }
+                                span { a href="https://github.com/eigenein/blitz-dashboard/pulls" {
+                                    (locale.text("footer-title-pull-requests")?)
+                                } }
                             }
                         }
                     }
@@ -172,31 +190,25 @@ pub fn footer(locale: &Locale) -> Result<Markup> {
     Ok(markup)
 }
 
-#[must_use]
-pub fn home_button() -> Markup {
-    html! {
+pub fn home_button(locale: &Locale) -> Result<Markup> {
+    let markup = html! {
         a.navbar-item href="/" {
-            img src="/android-chrome-192x192.png" width="28" height="28" alt="На главную";
+            img src="/android-chrome-192x192.png" width="28" height="28" alt=(locale.text("alt-home")?);
         }
-    }
+    };
+    Ok(markup)
 }
 
-#[must_use]
-pub fn conditional_class(condition: bool, class: &'static str) -> &'static str {
-    if condition { class } else { "" }
-}
-
-#[must_use]
-pub fn vehicle_th(vehicle: &Vehicle) -> Markup {
-    html! {
+pub fn vehicle_th(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
+    let markup = html! {
         th.is-white-space-nowrap {
-            (vehicle_title(vehicle))
+            (vehicle_title(vehicle, locale)?)
         }
-    }
+    };
+    Ok(markup)
 }
 
-#[must_use]
-pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
+pub fn vehicle_title(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
     let flag = match vehicle.nation {
         Nation::China => "flag-icon-cn",
         Nation::Europe => "flag-icon-eu",
@@ -220,7 +232,7 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
         ""
     };
 
-    html! {
+    let markup = html! {
         span.icon-text.is-flex-wrap-nowrap title=(vehicle.tank_id) {
             span.flag-icon.(flag) {}
             span {
@@ -233,8 +245,8 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
             @if let Ok(external_id) = to_client_id(vehicle.tank_id) {
                 span.icon {
                     a
-                        title="Открыть в Blitz Ангар"
-                        href=(format!("https://blitzhangar.com/ru/tank/{}", external_id))
+                        title=(locale.text("title-open-in-blitzhangar")?)
+                        href=(format!("https://blitzhangar.com/tank/{}", external_id))
                         target="_blank"
                         rel="noopener noreferrer"
                     {
@@ -244,7 +256,8 @@ pub fn vehicle_title(vehicle: &Vehicle) -> Markup {
             }
         }
 
-    }
+    };
+    Ok(markup)
 }
 
 #[must_use]

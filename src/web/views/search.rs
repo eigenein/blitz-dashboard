@@ -47,7 +47,7 @@ pub async fn get(
     }
     let exact_match = accounts
         .iter()
-        .position(|account| account.nickname == params.query.0)
+        .position(|account| account.nickname.to_lowercase() == params.query.0)
         .map(|index| accounts.remove(index));
     if let Some(exact_match) = &exact_match {
         account_info_cache.put(params.realm, exact_match).await?;
@@ -59,7 +59,7 @@ pub async fn get(
         html.has-navbar-fixed-top lang=(locale.text("html-lang")?) {
             head {
                 (headers())
-                title { (params.query.0) " – Поиск статистов" }
+                title { (params.query.0) " – " (locale.text("page-title-search")?) }
             }
         }
         body {
@@ -67,7 +67,7 @@ pub async fn get(
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
                 div.container {
                     div.navbar-brand {
-                        (home_button())
+                        (home_button(&locale)?)
                     }
                     div.navbar-menu {
                         div.navbar-end {
@@ -86,19 +86,19 @@ pub async fn get(
                             @if accounts.is_empty() {
                                 div.box {
                                     p.content {
-                                        "Не найдено ни одного аккаунта с подобным именем."
+                                        (locale.text("message-no-players-found")?)
                                     }
                                     p {
                                         a class="button is-info" href="https://ru.wargaming.net/registration/ru/" {
-                                            "Создать аккаунт"
+                                            (locale.text("button-create-account")?)
                                         }
                                     }
                                 }
                             }
                             @if let Some(exact_match) = exact_match {
-                                h1.title.block."is-4" { "Точное совпадение" }
+                                h1.title.block."is-4" { (locale.text("title-exact-match")?) }
                                 (account_card(params.realm, &exact_match))
-                                h1.title.block."is-4" { "Другие результаты" }
+                                h1.title.block."is-4" { (locale.text("title-other-results")?) }
                             }
                             @for account in &accounts {
                                 (account_card(params.realm, account))

@@ -22,7 +22,7 @@ pub async fn get(
         html lang=(locale.text("html-lang")?) {
             head {
                 (headers())
-                title { "Я – статист в World of Tanks Blitz!" }
+                title { (locale.text("page-title-index")?) }
             }
             body {
                 (*tracking_code)

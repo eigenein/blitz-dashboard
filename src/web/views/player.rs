@@ -166,7 +166,7 @@ pub async fn get(
 
                 (headers())
                 link rel="canonical" href=(format!("/{}/{}", view_model.realm, view_model.actual_info.id));
-                title { (view_model.realm.to_emoji()) (view_model.actual_info.nickname) " – Я – статист в World of Tanks Blitz!" }
+                title { (view_model.realm.to_emoji()) " " (view_model.actual_info.nickname) " – " (locale.text("page-title-index")?) }
             }
             body {
                 (tracking_code.0)
@@ -174,7 +174,7 @@ pub async fn get(
                 nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
                     div.container {
                         div.navbar-brand {
-                            (home_button())
+                            (home_button(&locale)?)
 
                             div.navbar-item title="Последний бой" {
                                 time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
@@ -779,7 +779,7 @@ fn render_tank_tr(
         @let win_rate_ordering = true_win_rate.partial_cmp(&account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
-            (vehicle_th(&vehicle))
+            (vehicle_th(&vehicle, locale)?)
 
             td.has-text-centered.is-white-space-nowrap {
                 @match vehicle.type_ {
