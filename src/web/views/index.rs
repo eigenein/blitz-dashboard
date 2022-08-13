@@ -75,6 +75,7 @@ mod tests {
         let (_guard, client) = create_standalone_test_client().await?;
         let response = client.get("/").send().await;
         response.assert_status_is_ok();
+        response.assert_header_exist("Cache-Control");
         Ok(())
     }
 }
