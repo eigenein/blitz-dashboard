@@ -75,6 +75,7 @@ pub async fn get(
     if let Some(TypedHeader(none_match)) = none_match {
         if !none_match.precondition_passes(&ETag::from_str(&etag).context("failed to parse ETag")?)
         {
+            info!("not modified");
             return Ok(StatusCode::NOT_MODIFIED.into_response());
         }
     }
