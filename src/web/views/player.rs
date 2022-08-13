@@ -33,8 +33,8 @@ mod partials;
 )]
 #[handler]
 pub async fn get(
-    path: Path<Segments>,
-    query: Query<Params>,
+    path: Path<PathSegments>,
+    query: Query<QueryParams>,
     mongodb: Data<&mongodb::Database>,
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,

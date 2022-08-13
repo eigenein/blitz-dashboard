@@ -7,7 +7,7 @@ pub const MIN_QUERY_LENGTH: usize = 3;
 pub const MAX_QUERY_LENGTH: usize = 24;
 
 #[derive(Deserialize)]
-pub struct Params {
+pub struct QueryParams {
     pub query: Query,
     pub realm: wargaming::Realm,
 }

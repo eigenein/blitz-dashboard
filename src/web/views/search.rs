@@ -18,7 +18,7 @@ use crate::web::TrackingCode;
 #[instrument(skip_all, level = "info", fields(query = ?params.query.0))]
 #[handler]
 pub async fn get(
-    params: Query<Params>,
+    params: Query<QueryParams>,
     tracking_code: Data<&TrackingCode>,
     api: Data<&WargamingApi>,
     account_info_cache: Data<&AccountInfoCache>,

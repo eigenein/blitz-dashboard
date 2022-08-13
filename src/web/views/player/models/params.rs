@@ -3,7 +3,7 @@ use serde::Deserialize;
 use crate::prelude::StdDuration;
 
 #[derive(Deserialize)]
-pub struct Params {
+pub struct QueryParams {
     #[serde(default)]
     pub period: Period,
 }

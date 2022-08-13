@@ -11,7 +11,7 @@ use sentry::protocol::IpAddress;
 use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::web::views::player::models::{Params, Segments, StatsDelta};
+use crate::web::views::player::models::{PathSegments, QueryParams, StatsDelta};
 use crate::{database, wargaming};
 
 pub struct ViewModel {
@@ -25,8 +25,8 @@ pub struct ViewModel {
 impl ViewModel {
     pub async fn new(
         ip_addr: Option<IpAddr>,
-        Path(Segments { realm, account_id }): Path<Segments>,
-        query: Query<Params>,
+        Path(PathSegments { realm, account_id }): Path<PathSegments>,
+        query: Query<QueryParams>,
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
