@@ -4,7 +4,7 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::math::traits::{NBattles, NSurvivedBattles, NWins};
+use crate::math::traits::{DamageDealt, DamageReceived, NBattles, NSurvivedBattles, NWins};
 use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
@@ -71,6 +71,18 @@ impl NSurvivedBattles for RandomStatsSnapshot {
     }
 }
 
+impl DamageDealt for RandomStatsSnapshot {
+    fn damage_dealt(&self) -> u64 {
+        self.damage_dealt
+    }
+}
+
+impl DamageReceived for RandomStatsSnapshot {
+    fn damage_received(&self) -> u64 {
+        self.damage_received
+    }
+}
+
 impl From<wargaming::BasicStats> for RandomStatsSnapshot {
     fn from(statistics: wargaming::BasicStats) -> Self {
         Self {
@@ -131,12 +143,6 @@ impl RandomStatsSnapshot {
     #[inline]
     pub fn frags_per_battle(&self) -> f64 {
         self.n_frags as f64 / self.n_battles as f64
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn damage_per_battle(&self) -> f64 {
-        self.damage_dealt as f64 / self.n_battles as f64
     }
 
     #[must_use]

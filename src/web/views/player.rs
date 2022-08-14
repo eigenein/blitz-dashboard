@@ -136,6 +136,14 @@ pub async fn get(
                 }
             }
 
+            th {
+                a data-sort="damage-ratio" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { (locale.text("title-damage-ratio")?) }
+                    }
+                }
+            }
+
             th.has-text-right {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
@@ -578,7 +586,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-per-battle")?) }
-                                                        p.title { (Float::from(view_model.stats_delta.random.damage_per_battle())) }
+                                                        p.title { (Float::from(view_model.stats_delta.random.average_damage_dealt())) }
                                                     }
                                                 }
                                             }
@@ -886,7 +894,7 @@ fn render_tank_tr(
             }
 
             @let frags_per_battle = snapshot.stats.frags_per_battle();
-            td data-sort="frags-per-battle" data-value=(frags_per_battle) {
+            td.has-text-centered data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
                     span { (render_float(frags_per_battle, 1)) }
@@ -906,11 +914,19 @@ fn render_tank_tr(
                 }
             }
 
+            @let damage_ratio = snapshot.stats.damage_ratio();
+            td.has-text-centered data-sort="damage-ratio" data-value=(damage_ratio) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey { i.fa-solid.fa-divide {} }
+                    strong { (Float::from(damage_ratio).precision(2)) }
+                }
+            }
+
             td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
                 (snapshot.stats.damage_dealt)
             }
 
-            @let damage_per_battle = snapshot.stats.damage_dealt as f64 / snapshot.stats.n_battles as f64;
+            @let damage_per_battle = snapshot.stats.average_damage_dealt();
             td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 (format!("{:.0}", damage_per_battle))
             }

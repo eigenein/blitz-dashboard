@@ -60,3 +60,17 @@ impl<T: NBattles + DamageDealt> AverageDamageDealt for T {
         self.damage_dealt() as f64 / self.n_battles() as f64
     }
 }
+
+pub trait DamageReceived {
+    fn damage_received(&self) -> u64;
+}
+
+pub trait DamageRatio {
+    fn damage_ratio(&self) -> f64;
+}
+
+impl<T: DamageDealt + DamageReceived> DamageRatio for T {
+    fn damage_ratio(&self) -> f64 {
+        self.damage_dealt() as f64 / self.damage_received() as f64
+    }
+}

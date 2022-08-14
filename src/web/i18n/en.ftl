@@ -73,3 +73,4 @@ title-victory-ratio-interval-abbr = Victory ratio with the correction on the num
 title-wins = Wins
 navbar-item-current-masculine = Current
 navbar-item-target-victory-ratio = Target victory ratio
+title-damage-ratio = Damage ratio

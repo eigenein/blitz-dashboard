@@ -73,3 +73,4 @@ title-victory-ratio-interval-abbr = Процент побед, скоррект�
 title-wins = Победы
 navbar-item-current-masculine = Текущий
 navbar-item-target-victory-ratio = Целевой процент побед
+title-damage-ratio = Отношение урона
