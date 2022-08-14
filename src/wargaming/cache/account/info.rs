@@ -17,7 +17,7 @@ pub struct AccountInfoCache {
 impl AccountInfoCache {
     const EXPIRE: Option<Expiration> = Some(Expiration::EX(30));
 
-    pub fn new(api: WargamingApi, redis: RedisPool) -> Self {
+    pub const fn new(api: WargamingApi, redis: RedisPool) -> Self {
         Self { api, redis }
     }
 

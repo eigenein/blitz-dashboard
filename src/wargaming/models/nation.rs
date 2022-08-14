@@ -60,7 +60,7 @@ impl Nation {
     }
 
     /// Get the client nation ID.
-    pub fn get_id(&self) -> u32 {
+    pub const fn get_id(self) -> u32 {
         match self {
             Nation::Ussr => 20000,
             Nation::Germany => 30000,

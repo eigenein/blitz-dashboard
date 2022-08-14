@@ -6,7 +6,7 @@ pub struct SemaphoreClass<T> {
 }
 
 impl<T> SemaphoreClass<T> {
-    pub fn new(value: T, threshold: T) -> Self {
+    pub const fn new(value: T, threshold: T) -> Self {
         Self { value, threshold }
     }
 }

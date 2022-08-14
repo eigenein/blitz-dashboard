@@ -14,7 +14,7 @@ pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: Stri
     }
 }
 
-pub fn partial_cmp_class(ordering: Option<Ordering>) -> &'static str {
+pub const fn partial_cmp_class(ordering: Option<Ordering>) -> &'static str {
     match ordering {
         Some(Ordering::Less) => "has-background-danger-light",
         Some(Ordering::Greater) => "has-background-success-light",

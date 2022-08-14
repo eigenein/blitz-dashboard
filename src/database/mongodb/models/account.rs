@@ -44,7 +44,7 @@ impl Account {
         }
     }
 
-    pub fn last_battle_time(mut self, last_battle_time: DateTime) -> Self {
+    pub const fn last_battle_time(mut self, last_battle_time: DateTime) -> Self {
         self.last_battle_time = Some(last_battle_time);
         self
     }

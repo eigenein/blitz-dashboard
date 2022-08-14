@@ -27,6 +27,7 @@ impl Builder {
         self.expires_at(Utc::now() + duration.into())
     }
 
+    #[allow(clippy::missing_const_for_fn)]
     pub fn build(self) -> Cookie {
         self.0
     }

@@ -15,7 +15,7 @@ pub struct AccountSearch<'a> {
 }
 
 impl<'a> AccountSearch<'a> {
-    pub fn new(realm: wargaming::Realm, locale: &'a Locale) -> Self {
+    pub const fn new(realm: wargaming::Realm, locale: &'a Locale) -> Self {
         Self {
             realm,
             locale,
