@@ -325,7 +325,7 @@ pub async fn get(
                                 }
                             }
 
-                            div.column."is-6-tablet"."is-5-desktop"."is-4-widescreen" {
+                            div.column."is-8-tablet"."is-6-desktop"."is-5-widescreen" {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -340,16 +340,25 @@ pub async fn get(
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
-                                                    @let damage_dealt = view_model.actual_info.stats.random.average_damage_dealt();
-                                                    p.title title=(damage_dealt) {
-                                                        (format!("{:.0}", damage_dealt))
+                                                    p.title {
+                                                        (Float::from(view_model.actual_info.stats.random.average_damage_dealt()))
+                                                        (PreEscaped("&nbsp;"))
+                                                        span.has-text-grey { "(" }
+                                                        (Float::from(view_model.actual_info.stats.random.damage_ratio()).precision(1))
+                                                        span.has-text-grey { "×)" }
                                                     }
                                                 }
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
-                                                    p.title { (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt())) }
+                                                    p.title {
+                                                        (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
+                                                        (PreEscaped("&nbsp;"))
+                                                        span.has-text-grey { "(" }
+                                                        (Float::from(view_model.actual_info.stats.rating.basic.damage_ratio()).precision(1))
+                                                        span.has-text-grey { "×)" }
+                                                    }
                                                 }
                                             }
                                         }

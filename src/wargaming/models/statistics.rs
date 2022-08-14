@@ -3,7 +3,7 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 
 use crate::database;
-use crate::math::traits::{DamageDealt, NBattles, NWins};
+use crate::math::traits::{DamageDealt, DamageReceived, NBattles, NWins};
 use crate::wargaming::MmRating;
 
 #[must_use]
@@ -76,6 +76,12 @@ impl NWins for BasicStats {
 impl DamageDealt for BasicStats {
     fn damage_dealt(&self) -> u64 {
         self.damage_dealt
+    }
+}
+
+impl DamageReceived for BasicStats {
+    fn damage_received(&self) -> u64 {
+        self.damage_received
     }
 }
 
