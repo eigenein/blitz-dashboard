@@ -16,7 +16,7 @@ pub trait NSurvivedBattles {
 }
 
 pub trait DamageDealt {
-    fn damage_dealt(&self) -> u32;
+    fn damage_dealt(&self) -> u64;
 }
 
 pub trait TrueWinRate {

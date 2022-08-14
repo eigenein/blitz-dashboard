@@ -7,6 +7,7 @@ use mongodb::options::{
 };
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use serde_with::TryFromInto;
 use tokio::spawn;
 use tokio::time::timeout;
 
@@ -18,6 +19,7 @@ use crate::{format_elapsed, wargaming};
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Account {
     /// Wargaming.net account ID.
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "aid")]
     pub id: wargaming::AccountId,
 

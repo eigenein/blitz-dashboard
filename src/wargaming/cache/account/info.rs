@@ -62,6 +62,6 @@ impl AccountInfoCache {
 
     #[inline]
     fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:2:a:i:{}:{}", realm.to_str(), account_id))
+        RedisKey::from(format!("cache:3:a:i:{}:{}", realm.to_str(), account_id))
     }
 }

@@ -2,6 +2,7 @@ use mongodb::bson::doc;
 use mongodb::options::{FindOneOptions, IndexOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::{Deserialize, Serialize};
+use serde_with::TryFromInto;
 use tokio::spawn;
 use tokio::time::timeout;
 
@@ -21,6 +22,7 @@ pub struct AccountSnapshot {
     #[serde_as(as = "bson::DateTime")]
     pub last_battle_time: DateTime,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "aid")]
     pub account_id: wargaming::AccountId,
 

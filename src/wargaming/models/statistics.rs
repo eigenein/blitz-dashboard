@@ -17,12 +17,12 @@ pub struct BasicStats {
 
     pub survived_battles: u32,
     pub win_and_survived: u32,
-    pub damage_dealt: u32,
-    pub damage_received: u32,
+    pub damage_dealt: u64,
+    pub damage_received: u64,
     pub shots: u32,
     pub hits: u32,
     pub frags: u32,
-    pub xp: u32,
+    pub xp: u64,
 }
 
 impl From<&database::RandomStatsSnapshot> for BasicStats {
@@ -74,7 +74,7 @@ impl NWins for BasicStats {
 }
 
 impl DamageDealt for BasicStats {
-    fn damage_dealt(&self) -> u32 {
+    fn damage_dealt(&self) -> u64 {
         self.damage_dealt
     }
 }

@@ -1,23 +1,28 @@
 use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
+use serde_with::TryFromInto;
 
 use crate::math::traits::{DamageDealt, NBattles, NWins};
 use crate::wargaming;
 
+#[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct RatingStatsSnapshot {
     #[serde(rename = "mm")]
     pub mm_rating: wargaming::MmRating,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(default, rename = "nrb")]
     pub n_battles: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(default, rename = "nrw")]
     pub n_wins: u32,
 
+    #[serde_as(as = "TryFromInto<i64>")]
     #[serde(default, rename = "rdmgd")]
-    pub damage_dealt: u32,
+    pub damage_dealt: u64,
 
     #[serde(default, rename = "szn")]
     pub current_season: u16,
@@ -36,7 +41,7 @@ impl NWins for RatingStatsSnapshot {
 }
 
 impl DamageDealt for RatingStatsSnapshot {
-    fn damage_dealt(&self) -> u32 {
+    fn damage_dealt(&self) -> u64 {
         self.damage_dealt
     }
 }

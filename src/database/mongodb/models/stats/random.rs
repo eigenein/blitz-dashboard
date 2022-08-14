@@ -2,6 +2,7 @@ use std::iter::Sum;
 use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
+use serde_with::TryFromInto;
 
 use crate::math::traits::{NBattles, NSurvivedBattles, NWins};
 use crate::wargaming;
@@ -11,35 +12,45 @@ use crate::wargaming;
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone, Default)]
 pub struct RandomStatsSnapshot {
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "nb")]
     pub n_battles: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "nw")]
     pub n_wins: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "nsb")]
     pub n_survived_battles: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "nws")]
     pub n_win_and_survived: u32,
 
+    #[serde_as(as = "TryFromInto<i64>")]
     #[serde(rename = "dmgd")]
-    pub damage_dealt: u32,
+    pub damage_dealt: u64,
 
+    #[serde_as(as = "TryFromInto<i64>")]
     #[serde(rename = "dmgr")]
-    pub damage_received: u32,
+    pub damage_received: u64,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "shts")]
     pub n_shots: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "hits")]
     pub n_hits: u32,
 
+    #[serde_as(as = "TryFromInto<i32>")]
     #[serde(rename = "frgs")]
     pub n_frags: u32,
 
+    #[serde_as(as = "TryFromInto<i64>")]
     #[serde(rename = "xp")]
-    pub xp: u32,
+    pub xp: u64,
 }
 
 impl NBattles for RandomStatsSnapshot {

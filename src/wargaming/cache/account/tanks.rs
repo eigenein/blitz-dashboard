@@ -63,6 +63,6 @@ impl AccountTanksCache {
 
     #[inline]
     fn cache_key(realm: Realm, account_id: AccountId) -> RedisKey {
-        RedisKey::from(format!("cache:5:a:t:{}:{}", realm.to_str(), account_id))
+        RedisKey::from(format!("cache:6:a:t:{}:{}", realm.to_str(), account_id))
     }
 }

@@ -31,7 +31,7 @@ impl From<&TankSnapshot> for TankLastBattleTime {
 
 impl Serialize for TankLastBattleTime {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        (self.tank_id, bson::DateTime::from(self.last_battle_time)).serialize(serializer)
+        ((self.tank_id as i32), bson::DateTime::from(self.last_battle_time)).serialize(serializer)
     }
 }
 

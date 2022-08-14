@@ -52,6 +52,7 @@ impl ViewModel {
         if let Some(last_known_battle_time) = last_known_battle_time {
             // Only crawl when the last battle time has been updated.
             if actual_info.last_battle_time > last_known_battle_time {
+                info!("crawling the account…");
                 Self::crawl_account(db, realm, &actual_info, last_known_battle_time, &actual_tanks)
                     .await
                     .map_err(poem::Error::from)?;
