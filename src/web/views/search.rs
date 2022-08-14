@@ -15,6 +15,8 @@ use crate::wargaming::{AccountInfo, Realm, WargamingApi};
 use crate::web::partials::*;
 use crate::web::TrackingCode;
 
+const COLUMN_CLASS: &str = "is-12-tablet is-8-desktop is-6-widescreen";
+
 #[instrument(skip_all, level = "info", fields(query = ?params.query.0))]
 #[handler]
 pub async fn get(
@@ -65,48 +67,45 @@ pub async fn get(
         body {
             (tracking_code.0)
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
-                div.container {
-                    div.navbar-brand {
-                        (home_button(&locale)?)
-                    }
-                    div.navbar-menu {
-                        div.navbar-end {
-                            form.navbar-item action="/search" method="GET" {
-                                (
-                                    AccountSearch::new(params.realm, &locale)
-                                        .value(&params.query.0)
-                                        .try_into_markup()?
-                                )
-                            }
+                div.navbar-item.is-expanded.columns.is-centered {
+                    div.column.(COLUMN_CLASS) {
+                        form action="/search" method="GET" {
+                            (
+                                AccountSearch::new(params.realm, &locale)
+                                    .value(&params.query.0)
+                                    .try_into_markup()?
+                            )
                         }
                     }
                 }
             }
 
-            section.section."p-0"."m-6" {
-                div.container {
-                    div.columns.is-centered {
-                        div.column."is-6-widescreen"."is-10-tablet" {
-                            @if accounts.is_empty() {
-                                div.box {
-                                    p.content {
-                                        (locale.text("message-no-players-found")?)
-                                    }
-                                    p {
-                                        a class="button is-info" href="https://ru.wargaming.net/registration/ru/" {
-                                            (locale.text("button-create-account")?)
-                                        }
+            section.section {
+                div.columns.is-centered {
+                    div.column.(COLUMN_CLASS) {
+                        @if accounts.is_empty() {
+                            div.box {
+                                p.content {
+                                    (locale.text("message-no-players-found")?)
+                                }
+                                p {
+                                    a class="button is-info" href="https://ru.wargaming.net/registration/ru/" {
+                                        (locale.text("button-create-account")?)
                                     }
                                 }
                             }
-                            @if let Some(exact_match) = exact_match {
-                                h1.title.block."is-4" { (locale.text("title-exact-match")?) }
-                                (account_card(params.realm, &exact_match))
-                                h1.title.block."is-4" { (locale.text("title-other-results")?) }
-                            }
-                            @for account in &accounts {
-                                (account_card(params.realm, account))
-                            }
+                        }
+
+                        @if let Some(exact_match) = &exact_match {
+                            h1.title.block."is-4" { (locale.text("title-exact-match")?) }
+                            (account_card(params.realm, exact_match))
+                        }
+
+                        @if exact_match.is_some() {
+                            h1.title.block."is-4" { (locale.text("title-other-results")?) }
+                        }
+                        @for account in &accounts {
+                            (account_card(params.realm, account))
                         }
                     }
                 }
