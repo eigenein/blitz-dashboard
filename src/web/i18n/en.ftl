@@ -71,3 +71,4 @@ title-victory-ratio = Victory ratio
 title-victory-ratio-interval = Victory ratio (interval)
 title-victory-ratio-interval-abbr = Victory ratio with the correction on the number of battles, CI 90%
 title-wins = Wins
+navbar-item-current-masculine = Current

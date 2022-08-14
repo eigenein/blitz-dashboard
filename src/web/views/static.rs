@@ -61,6 +61,12 @@ pub async fn get_table_js() -> impl IntoResponse {
 
 #[inline]
 #[handler]
+pub async fn get_navbar_js() -> impl IntoResponse {
+    Static("application/javascript", include_bytes!("static/navbar.js"))
+}
+
+#[inline]
+#[handler]
 pub async fn get_theme_css() -> impl IntoResponse {
     Static("text/css", include_bytes!("static/theme.css"))
 }

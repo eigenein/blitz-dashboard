@@ -171,7 +171,7 @@ pub async fn get(
     };
     let markup = html! {
         (DOCTYPE)
-        html lang=(locale.text("html-lang")?) {
+        html.has-navbar-fixed-bottom lang=(locale.text("html-lang")?) {
             head {
                 script type="module" defer { (r##"
                     'use strict';
@@ -184,6 +184,12 @@ pub async fn get(
                             initSortableTable(vehicles, 'battles');
                         }
                     })();
+                "##) }
+
+                script type="module" defer { (r##"
+                    'use strict';
+                    import { init } from '/static/navbar.js?v1';
+                    init();
                 "##) }
 
                 (headers())
@@ -743,6 +749,32 @@ pub async fn get(
                 }
 
                 (footer(&locale)?)
+
+                nav.navbar.is-fixed-bottom.has-shadow role="navigation" aria-label="dropdown navigation" {
+                    div.navbar-brand {
+                        a.navbar-burger role="button" data-target="bottomNavbar" aria-label="menu" aria-expanded="false" {
+                            span aria-hidden="true" {}
+                            span aria-hidden="true" {}
+                            span aria-hidden="true" {}
+                        }
+                    }
+                    div.navbar-menu id="bottomNavbar" {
+                        div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                            a.navbar-link {
+                                span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                span { "Target victory ratio" }
+                            }
+                            div.navbar-dropdown {
+                                a.navbar-item {
+                                    (locale.text("navbar-item-current-masculine")?)
+                                    " ("
+                                    (Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2))
+                                    "%)"
+                                }
+                            }
+                        }
+                    }
+                }
 
                 @if !view_model.rating_snapshots.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}

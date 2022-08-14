@@ -65,18 +65,13 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let current_win_rate = actual_info.stats.random.true_win_rate()?;
-        let period = Self::get_period(query, cookies)?;
+        let period = Self::refresh_display_period(query, cookies)?;
         let before = Utc::now() - Duration::from_std(period).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;
         let rating_snapshots =
             database::RatingSnapshot::retrieve_latest(db, realm, account_id).await?;
-
-        cookies::Builder::new(cookies::DISPLAY_PERIOD)
-            .value(period.as_secs())
-            .expires_in(Duration::weeks(4))
-            .add_to(cookies);
 
         Ok(Self {
             realm,
@@ -130,8 +125,8 @@ impl ViewModel {
         })
     }
 
-    fn get_period(query: &QueryParams, cookies: &CookieJar) -> Result<time::Duration> {
-        query
+    fn refresh_display_period(query: &QueryParams, cookies: &CookieJar) -> Result<time::Duration> {
+        let period = query
             .period
             .map(|period| Ok(period.0))
             .or_else(|| {
@@ -142,6 +137,11 @@ impl ViewModel {
                         .context("failed to parse the period cookie")
                 })
             })
-            .unwrap_or(Ok(StdDuration::from_secs(86400)))
+            .unwrap_or(Ok(StdDuration::from_secs(86400)))?;
+        cookies::Builder::new(cookies::DISPLAY_PERIOD)
+            .value(period.as_secs())
+            .expires_in(Duration::weeks(4))
+            .add_to(cookies);
+        Ok(period)
     }
 }

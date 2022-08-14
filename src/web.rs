@@ -100,6 +100,7 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/android-chrome-512x512.png", get(r#static::get_android_chrome_512x512))
         .at("/apple-touch-icon.png", get(r#static::get_apple_touch_icon))
         .at("/static/table.js", get(r#static::get_table_js))
+        .at("/static/navbar.js", get(r#static::get_navbar_js))
         .at("/static/theme.css", get(r#static::get_theme_css))
         .at("/robots.txt", get(r#static::get_robots_txt))
         .at("/static/flags/cn.svg", get(r#static::get_cn_svg))
