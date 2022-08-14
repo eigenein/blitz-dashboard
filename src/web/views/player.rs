@@ -760,16 +760,23 @@ pub async fn get(
                     }
                     div.navbar-menu id="bottomNavbar" {
                         div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                            @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                span { "Target victory ratio" }
+                                span {
+                                    (current_win_rate)
+                                    span.has-text-grey { "%" }
+                                }
                             }
                             div.navbar-dropdown {
+                                div.navbar-item {
+                                    (locale.text("navbar-item-target-victory-ratio")?)
+                                }
+                                hr.navbar-divider;
                                 a.navbar-item {
-                                    (locale.text("navbar-item-current-masculine")?)
-                                    " ("
-                                    (Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2))
-                                    "%)"
+                                    strong { (locale.text("navbar-item-current-masculine")?) }
+                                    (PreEscaped("&nbsp;"))
+                                    span.has-text-grey { " (" (current_win_rate) "%)" }
                                 }
                             }
                         }

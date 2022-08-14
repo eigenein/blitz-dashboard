@@ -72,3 +72,4 @@ title-victory-ratio-interval = Процент побед (интервал)
 title-victory-ratio-interval-abbr = Процент побед, скорректированный на число боев, CI 90%
 title-wins = Победы
 navbar-item-current-masculine = Текущий
+navbar-item-target-victory-ratio = Целевой процент побед
