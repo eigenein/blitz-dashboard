@@ -9,6 +9,8 @@ use tracing::instrument;
 
 use self::models::*;
 use crate::helpers::sentry::clear_user;
+use crate::math::traits::*;
+use crate::prelude::*;
 use crate::wargaming;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::{AccountInfo, Realm, WargamingApi};
@@ -94,18 +96,24 @@ pub async fn get(
                                     }
                                 }
                             }
-                        }
+                        } @else {
+                            div.menu {
+                                p.menu-label { (locale.text("title-exact-match")?) }
+                                ul.menu-list {
+                                    @if let Some(exact_match) = &exact_match {
+                                        (account_item(params.realm, exact_match, &locale)?)
+                                    }
+                                }
 
-                        @if let Some(exact_match) = &exact_match {
-                            h1.title.block."is-4" { (locale.text("title-exact-match")?) }
-                            (account_card(params.realm, exact_match))
-                        }
-
-                        @if exact_match.is_some() {
-                            h1.title.block."is-4" { (locale.text("title-other-results")?) }
-                        }
-                        @for account in &accounts {
-                            (account_card(params.realm, account))
+                                @if exact_match.is_some() {
+                                    p.menu-label { (locale.text("title-other-results")?) }
+                                }
+                                ul.menu-list {
+                                    @for account in &accounts {
+                                        (account_item(params.realm, account, &locale)?)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -118,18 +126,38 @@ pub async fn get(
     Ok(Html(markup.into_string()).into_response())
 }
 
-fn account_card(realm: Realm, account_info: &AccountInfo) -> Markup {
-    html! {
-        div.box {
-            p.title."is-5" {
-                a href=(format!("/{}/{}", realm, account_info.id)) { (account_info.nickname) }
-            }
-            p.subtitle."is-6" {
-                span.icon-text.has-text-grey {
-                    span.icon { i.far.fa-dot-circle {} }
-                    span { (datetime(account_info.last_battle_time, Tense::Past)) }
+fn account_item(realm: Realm, account_info: &AccountInfo, locale: &Locale) -> Result<Markup> {
+    let markup = html! {
+        li {
+            a href=(format!("/{}/{}", realm, account_info.id)) {
+                p."is-size-5"."py-1" {
+                    span.has-text-link { (account_info.nickname) }
+                }
+                p."is-size-6"."py-1".has-text-grey {
+                    (locale.text("title-last-played")?)
+                    " "
+                    strong { (datetime(account_info.last_battle_time, Tense::Past)) }
+                }
+                p."is-size-6"."py-1" {
+                    span.icon-text."mr-4" title=(locale.text("title-battles")?) {
+                        span.icon.has-text-link { i.fa-solid.fa-star-half-stroke {} }
+                        strong { (account_info.stats.n_total_battles()) }
+                    }
+                    span.icon-text."mr-4" {
+                        span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                        (Float::from(account_info.stats.random.current_win_rate() * 100.0).precision(2))
+                    }
+                    span.icon-text."mr-4" {
+                        span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }
+                        (Float::from(account_info.stats.random.average_damage_dealt()))
+                    }
+                    span.icon-text."mr-4" {
+                        span.icon.has-text-warning { i.fa-solid.fa-star-half-stroke {} }
+                        (account_info.stats.rating.mm_rating.display_rating())
+                    }
                 }
             }
         }
-    }
+    };
+    Ok(markup)
 }

@@ -1,43 +1,47 @@
-use std::fmt::{Display, Write};
+use std::fmt::Display;
 
-use maud::{Escaper, Render};
+use maud::{html, Markup, Render};
 
-pub struct Float<T> {
+pub struct Float<'a, T> {
     value: T,
     precision: usize,
+    class: Option<&'a str>,
 }
 
-impl<T> From<T> for Float<T> {
+impl<T> From<T> for Float<'_, T> {
     fn from(value: T) -> Self {
         Self {
             value,
             precision: 0,
+            class: None,
         }
     }
 }
 
-impl<T> Float<T> {
+impl<'a, T> Float<'a, T> {
     pub const fn precision(mut self, precision: usize) -> Self {
         self.precision = precision;
         self
     }
+
+    #[allow(dead_code)]
+    pub const fn class(mut self, class: &'a str) -> Self {
+        self.class = Some(class);
+        self
+    }
 }
 
-impl<T: Display + num_traits::Float> Render for Float<T> {
-    fn render_to(&self, buffer: &mut String) {
-        write!(buffer, r"<span").unwrap();
-        if self.value.is_finite() {
-            write!(buffer, r#" title=""#).unwrap();
-            write!(Escaper::new(buffer), "{}", self.value).unwrap();
-            write!(buffer, r#"""#).unwrap();
+impl<T: Display + num_traits::Float> Render for Float<'_, T> {
+    fn render(&self) -> Markup {
+        html! {
+            @if self.value.is_finite() {
+                span.(self.class.unwrap_or("")) title=(self.value) {
+                    (format!("{0:.1$}", self.value, self.precision))
+                }
+            } @else {
+                span { "-" }
+            }
         }
-        write!(buffer, ">").unwrap();
-        if self.value.is_finite() {
-            write!(Escaper::new(buffer), "{0:.1$}", self.value, self.precision).unwrap();
-        } else {
-            buffer.push('-');
-        }
-        write!(buffer, "</span>").unwrap();
     }
 }
 
@@ -47,7 +51,13 @@ mod tests {
 
     #[test]
     fn finite_ok() {
-        assert_eq!(Float::from(0.5).render().into_string(), r#"<span title="0.5">1</span>"#);
+        assert_eq!(
+            Float::from(0.5)
+                .class("has-text-grey")
+                .render()
+                .into_string(),
+            r#"<span class="has-text-grey" title="0.5">1</span>"#
+        );
     }
 
     #[test]
