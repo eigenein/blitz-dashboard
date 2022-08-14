@@ -349,7 +349,10 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-damage-ratio-random-short")?) }
                                                     p.title {
-                                                        (Float::from(view_model.actual_info.stats.random.damage_ratio()).precision(1))
+                                                        @let damage_ratio = view_model.actual_info.stats.random.damage_ratio();
+                                                        span.(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                            (Float::from(damage_ratio).precision(1))
+                                                        }
                                                         span.has-text-grey { "×" }
                                                     }
                                                 }
@@ -366,7 +369,10 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-damage-ratio-rating-short")?) }
                                                     p.title {
-                                                        (Float::from(view_model.actual_info.stats.rating.basic.damage_ratio()).precision(1))
+                                                        @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
+                                                        span.(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                            (Float::from(damage_ratio).precision(1))
+                                                        }
                                                         span.has-text-grey { "×" }
                                                     }
                                                 }

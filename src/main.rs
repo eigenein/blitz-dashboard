@@ -1,4 +1,4 @@
-#![warn(clippy::all)]
+#![warn(clippy::all, clippy::missing_const_for_fn)]
 
 use clap::Parser;
 use helpers::tracing;

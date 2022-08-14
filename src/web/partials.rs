@@ -1,5 +1,7 @@
 mod account_search;
+mod colors;
 mod float;
+mod semaphore;
 
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
@@ -8,7 +10,9 @@ use phf::phf_set;
 use poem::i18n::Locale;
 
 pub use self::account_search::*;
+pub use self::colors::*;
 pub use self::float::*;
+pub use self::semaphore::*;
 use crate::prelude::Result;
 use crate::wargaming::models::tank_id::to_client_id;
 use crate::wargaming::{Nation, TankId, TankType, Vehicle};
