@@ -1,7 +1,7 @@
 use maud::{html, Markup};
 use poem::i18n::Locale;
 
-use crate::prelude::Result;
+use crate::prelude::*;
 use crate::wargaming;
 use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
 
@@ -46,7 +46,7 @@ impl<'a> AccountSearch<'a> {
         self
     }
 
-    pub fn render(self) -> Result<Markup> {
+    pub fn try_into_markup(self) -> Result<Markup> {
         let class = self.class.unwrap_or("");
         let markup = html! {
             div.field.has-addons {
@@ -98,5 +98,13 @@ impl<'a> AccountSearch<'a> {
             }
         };
         Ok(markup)
+    }
+}
+
+impl TryInto<Markup> for AccountSearch<'_> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Markup> {
+        self.try_into_markup()
     }
 }

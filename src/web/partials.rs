@@ -11,69 +11,7 @@ pub use self::account_search::*;
 pub use self::float::*;
 use crate::prelude::Result;
 use crate::wargaming::models::tank_id::to_client_id;
-use crate::wargaming::{Nation, Realm, TankId, TankType, Vehicle};
-use crate::web::views::search::models::{MAX_QUERY_LENGTH, MIN_QUERY_LENGTH};
-
-#[deprecated]
-pub fn account_search(
-    class: &str,
-    realm: Realm,
-    value: &str,
-    has_autofocus: bool,
-    has_user_secret: bool,
-    locale: &Locale,
-) -> Result<Markup> {
-    let markup = html! {
-        div.field.has-addons {
-            div.control {
-                span.select.(class) {
-                    select name="realm" {
-                        option
-                            title=(locale.text("option-title-russia")?)
-                            value=(Realm::Russia.to_str())
-                            selected[realm == Realm::Russia]
-                            { "🇷🇺" }
-                        option
-                            title=(locale.text("option-title-europe")?)
-                            value=(Realm::Europe.to_str())
-                            selected[realm == Realm::Europe]
-                            { "🇪🇺" }
-                    }
-                }
-            }
-            div.control.has-icons-left.is-expanded.has-icons-right[has_user_secret] {
-                input.input.(class)
-                    type="search"
-                    name="query"
-                    value=(value)
-                    placeholder=(locale.text("placeholder-nickname")?)
-                    autocomplete="nickname"
-                    pattern="\\w+"
-                    autocapitalize="none"
-                    minlength=(MIN_QUERY_LENGTH)
-                    maxlength=(MAX_QUERY_LENGTH)
-                    spellcheck="false"
-                    autocorrect="off"
-                    aria-label="search"
-                    aria-haspopup="false"
-                    size="20"
-                    autofocus[has_autofocus]
-                    required;
-                span.icon.is-left.(class) { i class="fas fa-user" {} }
-                @if has_user_secret {
-                    span.icon.is-right.(class) { i class="fas fa-user-secret" {} }
-                }
-            }
-            div.control {
-                button.button.is-link.(class) type="submit" {
-                    span.icon.is-hidden-desktop { i.fas.fa-search {} }
-                    span.is-hidden-touch { (locale.text("button-search")?) }
-                };
-            }
-        }
-    };
-    Ok(markup)
-}
+use crate::wargaming::{Nation, TankId, TankType, Vehicle};
 
 #[must_use]
 pub fn headers() -> Markup {

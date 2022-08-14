@@ -12,7 +12,7 @@ use crate::helpers::sentry::clear_user;
 use crate::wargaming;
 use crate::wargaming::cache::account::info::AccountInfoCache;
 use crate::wargaming::{AccountInfo, Realm, WargamingApi};
-use crate::web::partials::{account_search, datetime, footer, headers, home_button};
+use crate::web::partials::*;
 use crate::web::TrackingCode;
 
 #[instrument(skip_all, level = "info", fields(query = ?params.query.0))]
@@ -72,7 +72,11 @@ pub async fn get(
                     div.navbar-menu {
                         div.navbar-end {
                             form.navbar-item action="/search" method="GET" {
-                                (account_search("", params.realm, &params.query.0, false, false, &locale)?)
+                                (
+                                    AccountSearch::new(params.realm, &locale)
+                                        .value(&params.query.0)
+                                        .try_into_markup()?
+                                )
                             }
                         }
                     }

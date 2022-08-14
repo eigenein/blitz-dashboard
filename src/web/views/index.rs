@@ -44,7 +44,7 @@ pub async fn get(
                                             AccountSearch::new(wargaming::Realm::Russia, &locale)
                                                 .class("is-medium is-rounded")
                                                 .has_autofocus(true)
-                                                .render()?
+                                                .try_into_markup()?
                                         )
                                         div.field.is-grouped.is-grouped-centered {
                                             p.control {

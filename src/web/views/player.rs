@@ -240,7 +240,11 @@ pub async fn get(
                         div.navbar-menu.is-active {
                             div.navbar-end {
                                 form.navbar-item action="/search" method="GET" {
-                                    (account_search("", view_model.realm, "", false, view_model.actual_info.is_prerelease_account(), &locale)?)
+                                    (
+                                        AccountSearch::new(view_model.realm, &locale)
+                                            .has_user_secret(view_model.actual_info.is_prerelease_account())
+                                            .try_into_markup()?
+                                    )
                                 }
                             }
                         }
