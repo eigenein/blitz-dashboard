@@ -70,8 +70,11 @@ pub async fn get(
             (tracking_code.0)
             nav.navbar.has-shadow.is-fixed-top role="navigation" aria-label="main navigation" {
                 div.navbar-item.is-expanded.columns.is-centered {
-                    div.column.(COLUMN_CLASS) {
-                        form action="/search" method="GET" {
+                    div.column.is-flex.is-flex-direction-row.(COLUMN_CLASS) {
+                        a."px-4"."is-flex"."is-align-self-center" href="/" {
+                            img src="/android-chrome-192x192.png" width="28" height="28" alt=(locale.text("alt-home")?);
+                        }
+                        form."is-flex-grow-1" action="/search" method="GET" {
                             (
                                 AccountSearch::new(params.realm, &locale)
                                     .value(&params.query.0)
@@ -98,9 +101,9 @@ pub async fn get(
                             }
                         } @else {
                             div.menu {
-                                p.menu-label { (locale.text("title-exact-match")?) }
-                                ul.menu-list {
-                                    @if let Some(exact_match) = &exact_match {
+                                @if let Some(exact_match) = &exact_match {
+                                    p.menu-label { (locale.text("title-exact-match")?) }
+                                    ul.menu-list {
                                         (account_item(params.realm, exact_match, &locale)?)
                                     }
                                 }
