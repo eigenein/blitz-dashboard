@@ -74,3 +74,7 @@ title-wins = Wins
 navbar-item-current-masculine = Current
 navbar-item-target-victory-ratio = Target victory ratio
 title-damage-ratio = Damage ratio
+title-random-battles-short = Random
+title-rating-battles-short = Rating
+title-damage-ratio-random-short = RDM ratio
+title-damage-ratio-rating-short = RTG ratio

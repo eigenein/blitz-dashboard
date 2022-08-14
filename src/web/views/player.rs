@@ -325,7 +325,7 @@ pub async fn get(
                                 }
                             }
 
-                            div.column."is-8-tablet"."is-6-desktop"."is-5-widescreen" {
+                            div.column."is-9-tablet"."is-7-desktop"."is-5-widescreen" {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -339,25 +339,35 @@ pub async fn get(
                                         div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { (locale.text("title-random-battles")?) }
+                                                    p.heading { (locale.text("title-random-battles-short")?) }
                                                     p.title {
                                                         (Float::from(view_model.actual_info.stats.random.average_damage_dealt()))
-                                                        (PreEscaped("&nbsp;"))
-                                                        span.has-text-grey { "(" }
-                                                        (Float::from(view_model.actual_info.stats.random.damage_ratio()).precision(1))
-                                                        span.has-text-grey { "×)" }
                                                     }
                                                 }
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { (locale.text("title-rating-battles")?) }
+                                                    p.heading { (locale.text("title-damage-ratio-random-short")?) }
+                                                    p.title {
+                                                        (Float::from(view_model.actual_info.stats.random.damage_ratio()).precision(1))
+                                                        span.has-text-grey { "×" }
+                                                    }
+                                                }
+                                            }
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { (locale.text("title-rating-battles-short")?) }
                                                     p.title {
                                                         (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
-                                                        (PreEscaped("&nbsp;"))
-                                                        span.has-text-grey { "(" }
+                                                    }
+                                                }
+                                            }
+                                            div.level-item.has-text-centered {
+                                                div {
+                                                    p.heading { (locale.text("title-damage-ratio-rating-short")?) }
+                                                    p.title {
                                                         (Float::from(view_model.actual_info.stats.rating.basic.damage_ratio()).precision(1))
-                                                        span.has-text-grey { "×)" }
+                                                        span.has-text-grey { "×" }
                                                     }
                                                 }
                                             }

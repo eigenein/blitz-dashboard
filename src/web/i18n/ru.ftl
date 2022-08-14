@@ -74,3 +74,7 @@ title-wins = Победы
 navbar-item-current-masculine = Текущий
 navbar-item-target-victory-ratio = Целевой процент побед
 title-damage-ratio = Отношение урона
+title-random-battles-short = Случайные
+title-rating-battles-short = Рейтинговые
+title-damage-ratio-random-short = RDM отн.
+title-damage-ratio-rating-short = RTG отн.
