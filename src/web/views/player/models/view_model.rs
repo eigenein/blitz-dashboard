@@ -14,7 +14,7 @@ use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::cookies;
-use crate::web::views::player::models::{PathSegments, StatsDelta};
+use crate::web::views::player::models::{PathSegments, QueryParams, StatsDelta};
 use crate::{database, wargaming};
 
 pub struct ViewModel {
@@ -23,6 +23,7 @@ pub struct ViewModel {
     pub current_win_rate: BoundedInterval<f64>,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
+    pub period: time::Duration,
 }
 
 impl ViewModel {
@@ -31,7 +32,7 @@ impl ViewModel {
         ip_addr: Option<IpAddr>,
         Path(PathSegments { realm, account_id }): Path<PathSegments>,
         cookies: &CookieJar,
-        period: time::Duration,
+        query: &QueryParams,
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
@@ -64,6 +65,7 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let current_win_rate = actual_info.stats.random.true_win_rate()?;
+        let period = Self::get_period(query, cookies)?;
         let before = Utc::now() - Duration::from_std(period).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
@@ -82,6 +84,7 @@ impl ViewModel {
             current_win_rate,
             stats_delta,
             rating_snapshots,
+            period,
         })
     }
 
@@ -125,5 +128,20 @@ impl ViewModel {
             other: BTreeMap::from([("realm".to_string(), serde_json::to_value(realm)?)]),
             ..Default::default()
         })
+    }
+
+    fn get_period(query: &QueryParams, cookies: &CookieJar) -> Result<time::Duration> {
+        query
+            .period
+            .map(|period| Ok(period.0))
+            .or_else(|| {
+                cookies.get(cookies::DISPLAY_PERIOD).map(|cookie| {
+                    cookie
+                        .value()
+                        .map(time::Duration::from_secs)
+                        .context("failed to parse the period cookie")
+                })
+            })
+            .unwrap_or(Ok(StdDuration::from_secs(86400)))
     }
 }

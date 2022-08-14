@@ -3,7 +3,6 @@
 //! «Abandon hope, all ye who enter here».
 
 use std::str::FromStr;
-use std::time;
 use std::time::Instant;
 
 use bpci::Interval;
@@ -25,7 +24,7 @@ use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
 use crate::web::views::player::partials::*;
-use crate::web::{cookies, TrackingCode};
+use crate::web::TrackingCode;
 use crate::{database, format_elapsed, wargaming};
 
 mod models;
@@ -52,24 +51,14 @@ pub async fn get(
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
 
-    let period = query
-        .period
-        .map(|period| Ok(period.0))
-        .or_else(|| {
-            cookies
-                .get(cookies::DISPLAY_PERIOD)
-                .map(|cookie| cookie.value().map(time::Duration::from_secs))
-        })
-        .unwrap_or(Ok(StdDuration::from_secs(86400)))?;
-
     let view_model =
-        ViewModel::new(real_ip.0, path, cookies, period, *mongodb, *info_cache, *tanks_cache)
+        ViewModel::new(real_ip.0, path, cookies, &query, *mongodb, *info_cache, *tanks_cache)
             .await?;
 
     let etag = format!(
         concat!("\"", crate_version!(), "-{}-{}-{}\""),
         view_model.actual_info.last_battle_time.timestamp(),
-        period.as_secs(),
+        view_model.period.as_secs(),
         locale.text("html-lang")?,
     );
     if let Some(TypedHeader(none_match)) = none_match {
@@ -361,17 +350,17 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
-                                (render_period_li(period, from_hours(8), locale.text("title-period-8-hours")?))
-                                (render_period_li(period, from_hours(12), locale.text("title-period-12-hours")?))
-                                (render_period_li(period, from_days(1), locale.text("title-period-24-hours")?))
-                                (render_period_li(period, from_days(2), locale.text("title-period-2-days")?))
-                                (render_period_li(period, from_days(3), locale.text("title-period-3-days")?))
-                                (render_period_li(period, from_days(7), locale.text("title-period-1-week")?))
-                                (render_period_li(period, from_days(14), locale.text("title-period-2-weeks")?))
-                                (render_period_li(period, from_days(21), locale.text("title-period-3-weeks")?))
-                                (render_period_li(period, from_months(1), locale.text("title-period-1-month")?))
-                                (render_period_li(period, from_months(2), locale.text("title-period-2-months")?))
-                                (render_period_li(period, from_months(3), locale.text("title-period-3-months")?))
+                                (render_period_li(view_model.period, from_hours(8), locale.text("title-period-8-hours")?))
+                                (render_period_li(view_model.period, from_hours(12), locale.text("title-period-12-hours")?))
+                                (render_period_li(view_model.period, from_days(1), locale.text("title-period-24-hours")?))
+                                (render_period_li(view_model.period, from_days(2), locale.text("title-period-2-days")?))
+                                (render_period_li(view_model.period, from_days(3), locale.text("title-period-3-days")?))
+                                (render_period_li(view_model.period, from_days(7), locale.text("title-period-1-week")?))
+                                (render_period_li(view_model.period, from_days(14), locale.text("title-period-2-weeks")?))
+                                (render_period_li(view_model.period, from_days(21), locale.text("title-period-3-weeks")?))
+                                (render_period_li(view_model.period, from_months(1), locale.text("title-period-1-month")?))
+                                (render_period_li(view_model.period, from_months(2), locale.text("title-period-2-months")?))
+                                (render_period_li(view_model.period, from_months(3), locale.text("title-period-3-months")?))
                             }
                         }
                     }
