@@ -1,12 +1,16 @@
 use human_repr::HumanCount;
 use maud::{html, Markup, Render};
 
-pub struct HumanFloat<T>(pub T);
+pub struct HumanFloat(pub f64);
 
-impl<T: HumanCount + Render + Copy> Render for HumanFloat<T> {
+impl Render for HumanFloat {
     fn render(&self) -> Markup {
         html! {
-            span title=(self.0) { (self.0.human_count_bare()) }
+            @if self.0.is_finite() {
+                span title=(self.0) { (self.0.human_count_bare()) }
+            } @else {
+                span { "-" }
+            }
         }
     }
 }

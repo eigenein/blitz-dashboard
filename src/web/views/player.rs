@@ -600,7 +600,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-total")?) }
-                                                        p.title { (HumanFloat(view_model.stats_delta.random.damage_dealt)) }
+                                                        p.title { (HumanFloat(view_model.stats_delta.random.damage_dealt as f64)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -959,7 +959,7 @@ fn render_tank_tr(
             }
 
             td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
-                (HumanFloat(snapshot.stats.damage_dealt))
+                (HumanFloat(snapshot.stats.damage_dealt as f64))
             }
 
             @let damage_per_battle = snapshot.stats.average_damage_dealt();
