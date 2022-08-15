@@ -19,7 +19,7 @@ pub enum ConfidenceLevel {
 }
 
 impl ConfidenceLevel {
-    pub const fn z_value(&self) -> f64 {
+    pub const fn z_value(self) -> f64 {
         match self {
             Self::Z80 => 1.28,
             Self::Z85 => 1.440,

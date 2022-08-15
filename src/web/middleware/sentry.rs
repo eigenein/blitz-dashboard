@@ -23,7 +23,7 @@ impl<E: Endpoint> Endpoint for SentryMiddlewareImpl<E> {
     type Output = E::Output;
 
     async fn call(&self, request: Request) -> Result<Self::Output> {
-        let transaction = self.start_transaction(&request);
+        let transaction = SentryMiddlewareImpl::<E>::start_transaction(&request);
         self.configure_scope(&request).await?;
         let result = self.ep.call(request).await;
         transaction.finish();
@@ -32,7 +32,7 @@ impl<E: Endpoint> Endpoint for SentryMiddlewareImpl<E> {
 }
 
 impl<E> SentryMiddlewareImpl<E> {
-    fn start_transaction(&self, request: &Request) -> Transaction {
+    fn start_transaction(request: &Request) -> Transaction {
         let context = TransactionContext::new(request.uri().path(), request.method().as_str());
         start_transaction(context)
     }

@@ -19,8 +19,7 @@ mod generated;
 pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
     generated::GENERATED
         .get(&tank_id)
-        .map(Cow::Borrowed)
-        .unwrap_or_else(|| Cow::Owned(Vehicle::new_hardcoded(tank_id)))
+        .map_or_else(|| Cow::Owned(Vehicle::new_hardcoded(tank_id)), Cow::Borrowed)
 }
 
 /// Updates the bundled `tankopedia.json` and generates the bundled [`phf::Map`] with the tankopedia.
@@ -62,7 +61,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
     writeln!(&mut file, "use crate::wargaming::models::{{Nation, TankType, Vehicle}};")?;
     writeln!(&mut file)?;
     writeln!(&mut file, "pub static GENERATED: phf::Map<u32, Vehicle> = phf::phf_map! {{")?;
-    for (_, vehicle) in tankopedia.into_iter() {
+    for (_, vehicle) in tankopedia {
         writeln!(&mut file, "    {}_u32 => Vehicle {{", vehicle.tank_id)?;
         writeln!(&mut file, "        tank_id: {:?},", vehicle.tank_id)?;
         writeln!(&mut file, "        name: Cow::Borrowed({:?}),", vehicle.name,)?;

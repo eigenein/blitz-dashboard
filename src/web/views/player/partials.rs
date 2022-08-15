@@ -6,7 +6,7 @@ use maud::{html, Markup};
 
 use crate::web::partials::Float;
 
-pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: String) -> Markup {
+pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: &str) -> Markup {
     html! {
         li.is-active[period == new_period] {
             a href=(format!("?period={}", format_duration(new_period))) { (text) }

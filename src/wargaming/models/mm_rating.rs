@@ -6,7 +6,7 @@ pub struct MmRating(pub f64);
 
 impl MmRating {
     #[must_use]
-    pub fn display_rating(&self) -> i32 {
+    pub fn display_rating(self) -> i32 {
         (self.0 * 10.0 + 3000.0) as i32
     }
 }

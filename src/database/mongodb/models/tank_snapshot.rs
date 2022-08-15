@@ -47,7 +47,7 @@ impl TankSnapshot {
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
         stats: wargaming::TankStats,
-        _achievements: wargaming::TankAchievements,
+        _achievements: &wargaming::TankAchievements,
     ) -> Self {
         Self {
             realm,
@@ -72,7 +72,7 @@ impl TankSnapshot {
         merge_join_by(stats, achievements, |left, right| left.tank_id.cmp(&right.tank_id))
             .filter_map(|item| match item {
                 EitherOrBoth::Both(stats, achievements) => {
-                    Some(Self::from(realm, account_id, stats, achievements))
+                    Some(Self::from(realm, account_id, stats, &achievements))
                 }
                 _ => None,
             })
