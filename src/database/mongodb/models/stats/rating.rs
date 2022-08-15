@@ -3,32 +3,33 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::math::traits::{DamageDealt, NBattles, NWins};
+use crate::helpers::serde::is_default;
+use crate::math::traits::*;
 use crate::wargaming;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct RatingStatsSnapshot {
-    #[serde(rename = "mm")]
+    #[serde(default, rename = "mm", skip_serializing_if = "is_default")]
     pub mm_rating: wargaming::MmRating,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(default, rename = "nrb")]
+    #[serde(default, rename = "nrb", skip_serializing_if = "is_default")]
     pub n_battles: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(default, rename = "nrw")]
+    #[serde(default, rename = "nrw", skip_serializing_if = "is_default")]
     pub n_wins: u32,
 
     #[serde_as(as = "TryFromInto<i64>")]
-    #[serde(default, rename = "rdmgd")]
+    #[serde(default, rename = "rdmgd", skip_serializing_if = "is_default")]
     pub damage_dealt: u64,
 
     #[serde_as(as = "TryFromInto<i64>")]
-    #[serde(default, rename = "rdmgr")]
+    #[serde(default, rename = "rdmgr", skip_serializing_if = "is_default")]
     pub damage_received: u64,
 
-    #[serde(default, rename = "szn")]
+    #[serde(default, rename = "szn", skip_serializing_if = "is_default")]
     pub current_season: u16,
 }
 

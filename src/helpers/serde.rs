@@ -13,3 +13,7 @@ pub fn deserialize_duration_seconds<'de, D: serde::Deserializer<'de>>(
 ) -> Result<Duration, D::Error> {
     Ok(Duration::seconds(i64::deserialize(deserializer)?))
 }
+
+pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+    value == &T::default()
+}

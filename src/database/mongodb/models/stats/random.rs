@@ -4,7 +4,8 @@ use std::ops::Sub;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::math::traits::{DamageDealt, DamageReceived, NBattles, NSurvivedBattles, NWins};
+use crate::helpers::serde::is_default;
+use crate::math::traits::*;
 use crate::wargaming;
 
 /// This is a part of the other models, there's no dedicated collection
@@ -13,43 +14,43 @@ use crate::wargaming;
 #[derive(Serialize, Deserialize, Copy, Clone, Default)]
 pub struct RandomStatsSnapshot {
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "nb")]
+    #[serde(default, rename = "nb", skip_serializing_if = "is_default")]
     pub n_battles: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "nw")]
+    #[serde(default, rename = "nw", skip_serializing_if = "is_default")]
     pub n_wins: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "nsb")]
+    #[serde(default, rename = "nsb", skip_serializing_if = "is_default")]
     pub n_survived_battles: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "nws")]
+    #[serde(default, rename = "nws", skip_serializing_if = "is_default")]
     pub n_win_and_survived: u32,
 
     #[serde_as(as = "TryFromInto<i64>")]
-    #[serde(rename = "dmgd")]
+    #[serde(default, rename = "dmgd", skip_serializing_if = "is_default")]
     pub damage_dealt: u64,
 
     #[serde_as(as = "TryFromInto<i64>")]
-    #[serde(rename = "dmgr")]
+    #[serde(default, rename = "dmgr", skip_serializing_if = "is_default")]
     pub damage_received: u64,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "shts")]
+    #[serde(default, rename = "shts", skip_serializing_if = "is_default")]
     pub n_shots: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "hits")]
+    #[serde(default, rename = "hits", skip_serializing_if = "is_default")]
     pub n_hits: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(rename = "frgs")]
+    #[serde(default, rename = "frgs", skip_serializing_if = "is_default")]
     pub n_frags: u32,
 
     #[serde_as(as = "TryFromInto<i64>")]
-    #[serde(rename = "xp")]
+    #[serde(default, rename = "xp", skip_serializing_if = "is_default")]
     pub xp: u64,
 }
 
