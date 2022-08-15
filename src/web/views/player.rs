@@ -943,7 +943,7 @@ fn render_tank_tr(
             td.has-text-centered data-sort="damage-ratio" data-value=(damage_ratio) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey { i.fa-solid.fa-divide {} }
-                    strong { (Float::from(damage_ratio).precision(2)) }
+                    strong.(SemaphoreClass::new(damage_ratio, 1.0)) { (Float::from(damage_ratio).precision(2)) }
                 }
             }
 
