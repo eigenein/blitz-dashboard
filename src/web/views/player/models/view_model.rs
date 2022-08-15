@@ -47,7 +47,8 @@ impl ViewModel {
 
         let last_known_battle_time = database::Account::new(realm, account_id)
             .ensure_exists(db)
-            .await?
+            .await
+            .context("failed to ensure the account existence")?
             .last_battle_time;
         // Do not crawl unknown accounts.
         if let Some(last_known_battle_time) = last_known_battle_time {
@@ -56,6 +57,7 @@ impl ViewModel {
                 info!("crawling the account…");
                 Self::crawl_account(db, realm, &actual_info, last_known_battle_time, &actual_tanks)
                     .await
+                    .context("failed to crawl the account")
                     .map_err(poem::Error::from)?;
             }
         }
