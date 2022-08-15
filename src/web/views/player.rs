@@ -357,11 +357,13 @@ pub async fn get(
                                                     p.title {
                                                         (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
                                                         @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
-                                                        span."is-size-4".has-text-grey { " (" }
-                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
-                                                            (Float::from(damage_ratio).precision(1))
+                                                        @if damage_ratio.is_finite() {
+                                                            span."is-size-4".has-text-grey { " (" }
+                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                                (Float::from(damage_ratio).precision(1))
+                                                            }
+                                                            span."is-size-4".has-text-grey { "×)" }
                                                         }
-                                                        span."is-size-4".has-text-grey { "×)" }
                                                     }
                                                 }
                                             }
