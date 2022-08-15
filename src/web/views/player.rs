@@ -325,7 +325,7 @@ pub async fn get(
                                 }
                             }
 
-                            div.column."is-7-tablet"."is-6-desktop"."is-5-widescreen" {
+                            div.column."is-6-tablet"."is-5-desktop"."is-4-widescreen" {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -341,7 +341,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
                                                     p.title {
-                                                        (Float::from(view_model.actual_info.stats.random.average_damage_dealt()))
+                                                        (HumanFloat(view_model.actual_info.stats.random.average_damage_dealt()))
                                                         @let damage_ratio = view_model.actual_info.stats.random.damage_ratio();
                                                         span."is-size-4".has-text-grey { " (" }
                                                         span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
@@ -355,7 +355,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title {
-                                                        (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
+                                                        (HumanFloat(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
                                                         @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
                                                         @if damage_ratio.is_finite() {
                                                             span."is-size-4".has-text-grey { " (" }
@@ -600,7 +600,7 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-total")?) }
-                                                        p.title { (view_model.stats_delta.random.damage_dealt) }
+                                                        p.title { (HumanFloat(view_model.stats_delta.random.damage_dealt)) }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -959,7 +959,7 @@ fn render_tank_tr(
             }
 
             td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
-                (snapshot.stats.damage_dealt)
+                (HumanFloat(snapshot.stats.damage_dealt))
             }
 
             @let damage_per_battle = snapshot.stats.average_damage_dealt();

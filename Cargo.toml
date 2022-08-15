@@ -31,6 +31,7 @@ fastrand = "1.7.0"
 fred = { version = "5.1.0", default-features = false, features = ["partial-tracing", "no-client-setname"] }
 futures = { version = "0.3.21", default-features = false }
 governor = "0.4.2"
+human-repr = "1.0.1"
 humantime = "2.1.0"
 itertools = "0.10.3"
 maud = "0.23.0"

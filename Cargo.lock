@@ -229,6 +229,7 @@ dependencies = [
  "fred",
  "futures 0.3.23",
  "governor",
+ "human-repr",
  "humantime 2.1.0",
  "itertools",
  "maud",
@@ -1173,6 +1174,12 @@ name = "httpdate"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
+
+[[package]]
+name = "human-repr"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0fb489e3108b684bba475a4cb9804260365870e2f60058265e3d0a3b309bdb1"
 
 [[package]]
 name = "humantime"
