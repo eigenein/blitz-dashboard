@@ -325,7 +325,7 @@ pub async fn get(
                                 }
                             }
 
-                            div.column."is-9-tablet"."is-7-desktop"."is-5-widescreen" {
+                            div.column."is-7-tablet"."is-6-desktop"."is-5-widescreen" {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
@@ -339,41 +339,29 @@ pub async fn get(
                                         div.level.is-mobile {
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { (locale.text("title-random-battles-short")?) }
+                                                    p.heading { (locale.text("title-random-battles")?) }
                                                     p.title {
                                                         (Float::from(view_model.actual_info.stats.random.average_damage_dealt()))
-                                                    }
-                                                }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { (locale.text("title-damage-ratio-random-short")?) }
-                                                    p.title {
                                                         @let damage_ratio = view_model.actual_info.stats.random.damage_ratio();
-                                                        span.(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                        span."is-size-4".has-text-grey { " (" }
+                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
                                                             (Float::from(damage_ratio).precision(1))
                                                         }
-                                                        span.has-text-grey { "×" }
+                                                        span."is-size-4".has-text-grey { "×)" }
                                                     }
                                                 }
                                             }
                                             div.level-item.has-text-centered {
                                                 div {
-                                                    p.heading { (locale.text("title-rating-battles-short")?) }
+                                                    p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title {
                                                         (Float::from(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
-                                                    }
-                                                }
-                                            }
-                                            div.level-item.has-text-centered {
-                                                div {
-                                                    p.heading { (locale.text("title-damage-ratio-rating-short")?) }
-                                                    p.title {
                                                         @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
-                                                        span.(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                        span."is-size-4".has-text-grey { " (" }
+                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
                                                             (Float::from(damage_ratio).precision(1))
                                                         }
-                                                        span.has-text-grey { "×" }
+                                                        span."is-size-4".has-text-grey { "×)" }
                                                     }
                                                 }
                                             }
@@ -495,7 +483,9 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-per-battle")?) }
-                                                        p.title { (format!("{:.0}", view_model.stats_delta.rating.average_damage_dealt())) }
+                                                        p.title {
+                                                            (format!("{:.0}", view_model.stats_delta.rating.average_damage_dealt()))
+                                                        }
                                                     }
                                                 }
                                             }
@@ -530,7 +520,10 @@ pub async fn get(
                                                         p.title.is-white-space-nowrap {
                                                             @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
                                                             (render_percentage(true_win_rate.mean()))
-                                                            span.has-text-grey-light { " ±" (render_float(100.0 * true_win_rate.margin(), 1)) }
+                                                            span."is-size-4" {
+                                                                span.has-text-grey-light { " ±" }
+                                                                (render_float(100.0 * true_win_rate.margin(), 1))
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -611,7 +604,15 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-per-battle")?) }
-                                                        p.title { (Float::from(view_model.stats_delta.random.average_damage_dealt())) }
+                                                        p.title {
+                                                            (Float::from(view_model.stats_delta.random.average_damage_dealt()))
+                                                            @let damage_ratio = view_model.stats_delta.random.damage_ratio();
+                                                            span.has-text-grey."is-size-4" { " (" }
+                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                                (Float::from(damage_ratio).precision(1))
+                                                            }
+                                                            span.has-text-grey."is-size-4" { "×)" }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -680,7 +681,10 @@ pub async fn get(
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             (render_percentage(period_win_rate.mean()))
-                                                            span.has-text-grey-light { " ±" (render_float(100.0 * period_win_rate.margin(), 1)) }
+                                                            span."is-size-4" {
+                                                                span.has-text-grey-light { " ±" }
+                                                                (render_float(100.0 * period_win_rate.margin(), 1))
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -716,7 +720,10 @@ pub async fn get(
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
                                                             (render_percentage(expected_period_survival_rate.mean()))
-                                                            span.has-text-grey-light { (format!(" ±{:.1}", 100.0 * expected_period_survival_rate.margin())) }
+                                                            span."is-size-4" {
+                                                                span.has-text-grey-light { " ±" }
+                                                                (Float::from(100.0 * expected_period_survival_rate.margin()).precision(1))
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -791,25 +798,27 @@ pub async fn get(
                             span aria-hidden="true" {}
                         }
                     }
-                    div.navbar-menu id="bottomNavbar" {
-                        div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
-                            @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
-                            a.navbar-link {
-                                span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                span {
-                                    (current_win_rate)
-                                    span.has-text-grey { "%" }
+                    div.container {
+                        div.navbar-menu id="bottomNavbar" {
+                            div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                                @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
+                                a.navbar-link {
+                                    span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                    span {
+                                        (current_win_rate)
+                                        span.has-text-grey { "%" }
+                                    }
                                 }
-                            }
-                            div.navbar-dropdown {
-                                div.navbar-item {
-                                    (locale.text("navbar-item-target-victory-ratio")?)
-                                }
-                                hr.navbar-divider;
-                                a.navbar-item {
-                                    strong { (locale.text("navbar-item-current-masculine")?) }
-                                    (PreEscaped("&nbsp;"))
-                                    span.has-text-grey { " (" (current_win_rate) "%)" }
+                                div.navbar-dropdown {
+                                    div.navbar-item {
+                                        (locale.text("navbar-item-target-victory-ratio")?)
+                                    }
+                                    hr.navbar-divider;
+                                    a.navbar-item {
+                                        strong { (locale.text("navbar-item-current-masculine")?) }
+                                        (PreEscaped("&nbsp;"))
+                                        span.has-text-grey { " (" (current_win_rate) "%)" }
+                                    }
                                 }
                             }
                         }
