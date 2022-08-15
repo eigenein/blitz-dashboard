@@ -306,7 +306,7 @@ pub async fn get(
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.random.current_win_rate();
                                                     p.title {
                                                         (Float::from(win_rate).precision(2))
-                                                        span.has-text-grey-light { "%" }
+                                                        (CARD_PERCENTAGE_SIGN)
                                                     }
                                                 }
                                             }
@@ -316,7 +316,7 @@ pub async fn get(
                                                     @let win_rate = 100.0 * view_model.actual_info.stats.rating.basic.current_win_rate();
                                                     p.title {
                                                         (Float::from(win_rate).precision(2))
-                                                        span.has-text-grey-light { "%" }
+                                                        (CARD_PERCENTAGE_SIGN)
                                                     }
                                                 }
                                             }
@@ -513,7 +513,10 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
-                                                        p.title { (render_percentage(view_model.stats_delta.rating.current_win_rate())) }
+                                                        p.title {
+                                                            (Float::from(view_model.stats_delta.rating.current_win_rate() * 100.0).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
+                                                        }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -521,7 +524,8 @@ pub async fn get(
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
-                                                            (render_percentage(true_win_rate.mean()))
+                                                            (Float::from(true_win_rate.mean() * 100.0).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
                                                             span."is-size-4" {
                                                                 span.has-text-grey-light { " ±" }
                                                                 (render_float(100.0 * true_win_rate.margin(), 1))
@@ -675,17 +679,21 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
-                                                        p.title { (render_percentage(view_model.stats_delta.random.current_win_rate())) }
+                                                        p.title {
+                                                            (Float::from(100.0 * view_model.stats_delta.random.current_win_rate()).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
+                                                        }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (render_percentage(period_win_rate.mean()))
+                                                            (Float::from(100.0 * period_win_rate.mean()).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
                                                             span."is-size-4" {
                                                                 span.has-text-grey-light { " ±" }
-                                                                (render_float(100.0 * period_win_rate.margin(), 1))
+                                                                (Float::from(100.0 * period_win_rate.margin()).precision(1))
                                                             }
                                                         }
                                                     }
@@ -713,7 +721,10 @@ pub async fn get(
                                                 div.level-item.has-text-centered {
                                                     div {
                                                         p.heading { (locale.text("title-average-feminine")?) }
-                                                        p.title { (render_percentage(view_model.stats_delta.random.survival_rate())) }
+                                                        p.title {
+                                                            (Float::from(100.0 * view_model.stats_delta.random.survival_rate()).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
+                                                        }
                                                     }
                                                 }
                                                 div.level-item.has-text-centered {
@@ -721,7 +732,8 @@ pub async fn get(
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
                                                             @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
-                                                            (render_percentage(expected_period_survival_rate.mean()))
+                                                            (Float::from(100.0 * expected_period_survival_rate.mean()).precision(1))
+                                                            (CARD_PERCENTAGE_SIGN)
                                                             span."is-size-4" {
                                                                 span.has-text-grey-light { " ±" }
                                                                 (Float::from(100.0 * expected_period_survival_rate.margin()).precision(1))
@@ -753,7 +765,10 @@ pub async fn get(
                                                     div.level-item.has-text-centered {
                                                         div {
                                                             p.heading { (locale.text("title-on-average")?) }
-                                                            p.title { (render_percentage(view_model.stats_delta.random.hit_rate())) }
+                                                            p.title {
+                                                                (Float::from(100.0 * view_model.stats_delta.random.hit_rate()).precision(1))
+                                                                (CARD_PERCENTAGE_SIGN)
+                                                            }
                                                         }
                                                     }
                                                 }
