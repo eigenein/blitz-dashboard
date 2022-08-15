@@ -344,7 +344,7 @@ pub async fn get(
                                                         (HumanFloat(view_model.actual_info.stats.random.average_damage_dealt()))
                                                         @let damage_ratio = view_model.actual_info.stats.random.damage_ratio();
                                                         span."is-size-4".has-text-grey { " (" }
-                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio).threshold(1.0)) {
                                                             (Float::from(damage_ratio).precision(1))
                                                         }
                                                         span."is-size-4".has-text-grey { "×)" }
@@ -359,7 +359,7 @@ pub async fn get(
                                                         @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
                                                         @if damage_ratio.is_finite() {
                                                             span."is-size-4".has-text-grey { " (" }
-                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio).threshold(1.0)) {
                                                                 (Float::from(damage_ratio).precision(1))
                                                             }
                                                             span."is-size-4".has-text-grey { "×)" }
@@ -416,7 +416,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-change")?) }
                                                         @let delta = view_model.stats_delta.rating.delta();
-                                                        p.title.(sign_class(delta)) title=(delta) {
+                                                        p.title.(SemaphoreClass::new(delta)) title=(delta) {
                                                             (format!("{:+.0}", delta))
                                                         }
                                                     }
@@ -425,7 +425,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-per-battle")?) }
                                                         @let delta_per_battle = view_model.stats_delta.rating.delta_per_battle();
-                                                        p.title.(sign_class(delta_per_battle)) title=(delta_per_battle) {
+                                                        p.title.(SemaphoreClass::new(delta_per_battle)) title=(delta_per_battle) {
                                                             (format!("{:+.0}", delta_per_battle))
                                                         }
                                                     }
@@ -610,7 +610,7 @@ pub async fn get(
                                                             (Float::from(view_model.stats_delta.random.average_damage_dealt()))
                                                             @let damage_ratio = view_model.stats_delta.random.damage_ratio();
                                                             span.has-text-grey."is-size-4" { " (" }
-                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio, 1.0)) {
+                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio).threshold(1.0)) {
                                                                 (Float::from(damage_ratio).precision(1))
                                                             }
                                                             span.has-text-grey."is-size-4" { "×)" }
@@ -954,7 +954,7 @@ fn render_tank_tr(
             td.has-text-centered data-sort="damage-ratio" data-value=(damage_ratio) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey { i.fa-solid.fa-divide {} }
-                    strong.(SemaphoreClass::new(damage_ratio, 1.0)) { (Float::from(damage_ratio).precision(2)) }
+                    strong.(SemaphoreClass::new(damage_ratio).threshold(1.0)) { (Float::from(damage_ratio).precision(2)) }
                 }
             }
 

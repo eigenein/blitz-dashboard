@@ -6,7 +6,7 @@ mod semaphore;
 
 use chrono::{DateTime, Utc};
 use chrono_humanize::{Accuracy, HumanTime, Tense};
-use maud::{html, Markup, PreEscaped};
+use maud::{html, Markup};
 use phf::phf_set;
 use poem::i18n::Locale;
 
@@ -213,17 +213,6 @@ pub fn render_float(value: f64, precision: usize) -> Markup {
         span title=(value) {
             (format!("{:.1$}", value, precision))
         }
-    }
-}
-
-#[must_use]
-pub fn sign_class(value: f64) -> PreEscaped<&'static str> {
-    if value > 0.0 {
-        PreEscaped("has-text-success")
-    } else if value < 0.0 {
-        PreEscaped("has-text-danger")
-    } else {
-        PreEscaped("")
     }
 }
 
