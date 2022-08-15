@@ -43,7 +43,7 @@ impl RatingSnapshot {
                 "$group": {
                     "_id": { "$subtract": [ { "$toLong": "$lbts" }, { "$mod": [ { "$toLong": "$lbts" }, 86400000 ] } ] },
                     "lbts_millis": { "$first": { "$toLong": "$lbts"} },
-                    "close": { "$first": "$mm" },
+                    "close": { "$first": { "$ifNull": [ "$mm", 0.0 ] } },
                 },
             },
             doc! { "$sort": { "_id": 1 } },
@@ -52,9 +52,13 @@ impl RatingSnapshot {
             .aggregate(pipeline, None)
             .await
             .context("failed to retrieve rating snapshots")?
-            .try_filter_map(|document| async move { Ok(Some(bson::from_document(document)?)) })
+            .map_err(Error::from)
+            .try_filter_map(|document| async move {
+                Ok(Some(bson::from_document(document).context("failed to parse the document")?))
+            })
             .try_collect::<Vec<Self>>()
-            .await?;
+            .await
+            .context("failed to collect rating snapshots")?;
         Ok(snapshots)
     }
 }
