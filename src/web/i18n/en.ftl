@@ -78,3 +78,5 @@ title-random-battles-short = Random
 title-rating-battles-short = Rating
 title-damage-ratio-random-short = RDM ratio
 title-damage-ratio-rating-short = RTG ratio
+hint-significantly-lower-than-target = Victory rate is significantly lower than the target one
+hint-significantly-higher-than-target = Victory rate is significantly higher than the target one

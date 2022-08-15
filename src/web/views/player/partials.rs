@@ -3,7 +3,9 @@ use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
 use maud::{html, Markup, PreEscaped};
+use poem::i18n::Locale;
 
+use crate::prelude::*;
 use crate::web::partials::Float;
 
 pub const CARD_PERCENTAGE_SIGN: PreEscaped<&'static str> =
@@ -25,20 +27,21 @@ pub const fn partial_cmp_class(ordering: Option<Ordering>) -> &'static str {
     }
 }
 
-pub fn partial_cmp_icon(ordering: Option<Ordering>) -> Markup {
-    match ordering {
+pub fn partial_cmp_icon(ordering: Option<Ordering>, locale: &Locale) -> Result<Markup> {
+    let markup = match ordering {
         Some(Ordering::Less) => html! {
-            span.icon.has-text-danger title="Игра на этом танке уменьшает общий процент побед на аккаунте" {
+            span.icon.has-text-danger title=(locale.text("hint-significantly-lower-than-target")?) {
                 i.fas.fa-thumbs-down {}
             }
         },
         Some(Ordering::Greater) => html! {
-            span.icon.has-text-success title="Игра на этом танке увеличивает общий процент побед на аккаунте" {
+            span.icon.has-text-success title=(locale.text("hint-significantly-higher-than-target")?) {
                 i.fas.fa-thumbs-up {}
             }
         },
         _ => html! {},
-    }
+    };
+    Ok(markup)
 }
 
 pub fn render_percentage(value: f64) -> Markup {

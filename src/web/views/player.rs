@@ -937,7 +937,7 @@ fn render_tank_tr(
                 data-value=(true_win_rate.mean())
             {
                 span.icon-text.is-flex-wrap-nowrap."is-flex-grow-1".is-justify-content-space-around {
-                    (partial_cmp_icon(win_rate_ordering))
+                    (partial_cmp_icon(win_rate_ordering, locale)?)
                     strong { span { (render_percentage(true_win_rate.lower())) } }
                     span.icon.has-text-grey-light title=(true_win_rate.mean()) { i.fa-solid.fa-ellipsis {} }
                     strong { span { (render_percentage(true_win_rate.upper())) } }
