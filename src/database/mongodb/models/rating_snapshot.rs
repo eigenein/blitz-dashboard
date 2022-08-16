@@ -29,6 +29,7 @@ impl RatingSnapshot {
         from: &Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
+        season: u16,
     ) -> Result<Vec<Self>> {
         let pipeline = [
             doc! {
@@ -36,6 +37,7 @@ impl RatingSnapshot {
                     "rlm": realm.to_str(),
                     "aid": account_id,
                     "lbts": { "$gte": Utc::now() - Duration::days(14) },
+                    "szn": season as i32,
                 }
             },
             doc! { "$sort": { "lbts": -1 } },
@@ -48,6 +50,7 @@ impl RatingSnapshot {
             },
             doc! { "$sort": { "_id": 1 } },
         ];
+        let start_instant = Instant::now();
         let snapshots = Self::collection(from)
             .aggregate(pipeline, None)
             .await
@@ -59,6 +62,7 @@ impl RatingSnapshot {
             .try_collect::<Vec<Self>>()
             .await
             .context("failed to collect rating snapshots")?;
+        debug!(elapsed = ?start_instant.elapsed());
         Ok(snapshots)
     }
 }

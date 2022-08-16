@@ -7,7 +7,6 @@ use itertools::Itertools;
 use tokio::sync::Mutex;
 
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::helpers::tracing::format_elapsed;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::WargamingApi;
@@ -266,19 +265,19 @@ async fn update_account(
     for tank_snapshot in tank_snapshots {
         tank_snapshot.upsert(in_).await?;
     }
-    debug!(elapsed = format_elapsed(start_instant).as_str(), "tanks upserted");
+    debug!(elapsed = ?start_instant.elapsed(), "tanks upserted");
 
     account_snapshot.upsert(in_).await?;
-    debug!(elapsed = format_elapsed(start_instant).as_str(), "account snapshot upserted");
+    debug!(elapsed = ?start_instant.elapsed(), "account snapshot upserted");
 
     account.upsert(in_).await?;
-    debug!(elapsed = format_elapsed(start_instant).as_str(), "account upserted");
+    debug!(elapsed = ?start_instant.elapsed(), "account upserted");
 
     let mut metrics = metrics.lock().await;
     metrics.add_account(account_snapshot.account_id);
     metrics.add_lag_from(account_snapshot.last_battle_time);
     drop(metrics);
 
-    debug!(elapsed = format_elapsed(start_instant).as_str(), "all done");
+    debug!(elapsed = ?start_instant.elapsed(), "all done");
     Ok(())
 }

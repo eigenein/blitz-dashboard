@@ -74,8 +74,15 @@ impl ViewModel {
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;
-        let rating_snapshots =
-            database::RatingSnapshot::retrieve_latest(db, realm, account_id).await?;
+
+        let current_season = actual_info.stats.rating.current_season;
+        let rating_snapshots = match current_season {
+            0 => Vec::new(),
+            _ => {
+                database::RatingSnapshot::retrieve_latest(db, realm, account_id, current_season)
+                    .await?
+            }
+        };
 
         Ok(Self {
             realm,
