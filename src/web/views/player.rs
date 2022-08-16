@@ -16,19 +16,24 @@ use poem::web::headers::{ETag, IfNoneMatch};
 use poem::web::{Data, Html, Path, Query, RealIp, TypedHeader};
 use poem::{handler, IntoResponse, Response};
 
-use self::models::*;
+use self::params::QueryParams;
+use self::partials::*;
+use self::path::PathSegments;
+use self::view_model::ViewModel;
 use crate::helpers::time::{from_days, from_hours, from_months};
 use crate::math::traits::*;
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
-use crate::web::views::player::partials::*;
 use crate::web::TrackingCode;
 use crate::{database, format_elapsed, wargaming};
 
-mod models;
+mod params;
 mod partials;
+mod path;
+mod stats_delta;
+mod view_model;
 
 #[allow(clippy::too_many_arguments)]
 #[instrument(

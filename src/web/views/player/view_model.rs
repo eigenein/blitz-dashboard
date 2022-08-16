@@ -14,7 +14,9 @@ use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::cookies;
-use crate::web::views::player::models::{PathSegments, QueryParams, StatsDelta};
+use crate::web::views::player::params::QueryParams;
+use crate::web::views::player::path::PathSegments;
+use crate::web::views::player::stats_delta::StatsDelta;
 use crate::{database, wargaming};
 
 pub struct ViewModel {
