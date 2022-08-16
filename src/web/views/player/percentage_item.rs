@@ -5,12 +5,12 @@ use maud::{html, Markup, Render};
 use crate::web::partials::*;
 use crate::web::views::player::view_constants::*;
 
-pub struct Percentage {
+pub struct PercentageItem {
     ratio: f64,
     precision: usize,
 }
 
-impl From<f64> for Percentage {
+impl From<f64> for PercentageItem {
     fn from(ratio: f64) -> Self {
         Self {
             ratio,
@@ -19,14 +19,14 @@ impl From<f64> for Percentage {
     }
 }
 
-impl Percentage {
+impl PercentageItem {
     pub const fn precision(mut self, precision: usize) -> Self {
         self.precision = precision;
         self
     }
 }
 
-impl Render for Percentage {
+impl Render for PercentageItem {
     fn render(&self) -> Markup {
         html! {
             (Float::from(100.0 * self.ratio).precision(self.precision))

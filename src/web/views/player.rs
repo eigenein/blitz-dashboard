@@ -16,10 +16,11 @@ use poem::web::headers::{ETag, IfNoneMatch};
 use poem::web::{Data, Html, Path, Query, RealIp, TypedHeader};
 use poem::{handler, IntoResponse, Response};
 
+use self::interval_item::IntervalItem;
 use self::params::QueryParams;
 use self::partials::*;
 use self::path::PathSegments;
-use self::percentage::Percentage;
+use self::percentage_item::PercentageItem;
 use self::view_model::ViewModel;
 use crate::helpers::time::{from_days, from_hours, from_months};
 use crate::math::traits::*;
@@ -30,10 +31,11 @@ use crate::web::partials::*;
 use crate::web::TrackingCode;
 use crate::{database, wargaming};
 
+mod interval_item;
 mod params;
 mod partials;
 mod path;
-mod percentage;
+mod percentage_item;
 mod stats_delta;
 mod view_constants;
 mod view_model;
@@ -312,7 +314,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
                                                     p.title {
-                                                        (Percentage::from(view_model.actual_info.stats.random.current_win_rate()).precision(2))
+                                                        (PercentageItem::from(view_model.actual_info.stats.random.current_win_rate()).precision(2))
                                                     }
                                                 }
                                             }
@@ -320,7 +322,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title {
-                                                        (Percentage::from(view_model.actual_info.stats.rating.basic.current_win_rate()).precision(2))
+                                                        (PercentageItem::from(view_model.actual_info.stats.rating.basic.current_win_rate()).precision(2))
                                                     }
                                                 }
                                             }
@@ -518,7 +520,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title {
-                                                            (Percentage::from(view_model.stats_delta.rating.current_win_rate()))
+                                                            (PercentageItem::from(view_model.stats_delta.rating.current_win_rate()))
                                                         }
                                                     }
                                                 }
@@ -526,12 +528,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            @let true_win_rate = view_model.stats_delta.rating.true_win_rate()?;
-                                                            (Percentage::from(true_win_rate.mean()))
-                                                            span."is-size-4" {
-                                                                span.has-text-grey-light { " ±" }
-                                                                (render_float(100.0 * true_win_rate.margin(), 1))
-                                                            }
+                                                            (IntervalItem(view_model.stats_delta.rating.true_win_rate()?))
                                                         }
                                                     }
                                                 }
@@ -682,7 +679,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title {
-                                                            (Percentage::from(view_model.stats_delta.random.current_win_rate()))
+                                                            (PercentageItem::from(view_model.stats_delta.random.current_win_rate()))
                                                         }
                                                     }
                                                 }
@@ -690,11 +687,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (Percentage::from(period_win_rate.mean()))
-                                                            span."is-size-4" {
-                                                                span.has-text-grey-light { " ±" }
-                                                                (Float::from(100.0 * period_win_rate.margin()).precision(1))
-                                                            }
+                                                            (IntervalItem(period_win_rate))
                                                         }
                                                     }
                                                 }
@@ -722,7 +715,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-average-feminine")?) }
                                                         p.title {
-                                                            (Percentage::from(view_model.stats_delta.random.survival_rate()))
+                                                            (PercentageItem::from(view_model.stats_delta.random.survival_rate()))
                                                         }
                                                     }
                                                 }
@@ -730,12 +723,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            @let expected_period_survival_rate = view_model.stats_delta.random.true_survival_rate()?;
-                                                            (Percentage::from(expected_period_survival_rate.mean()))
-                                                            span."is-size-4" {
-                                                                span.has-text-grey-light { " ±" }
-                                                                (Float::from(100.0 * expected_period_survival_rate.margin()).precision(1))
-                                                            }
+                                                            (IntervalItem(view_model.stats_delta.random.true_survival_rate()?))
                                                         }
                                                     }
                                                 }
@@ -764,7 +752,7 @@ pub async fn get(
                                                         div {
                                                             p.heading { (locale.text("title-on-average")?) }
                                                             p.title {
-                                                                (Percentage::from(view_model.stats_delta.random.hit_rate()))
+                                                                (PercentageItem::from(view_model.stats_delta.random.hit_rate()))
                                                             }
                                                         }
                                                     }
