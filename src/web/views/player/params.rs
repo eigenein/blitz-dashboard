@@ -1,3 +1,5 @@
+//! URL query params.
+
 use serde::Deserialize;
 
 use crate::prelude::StdDuration;

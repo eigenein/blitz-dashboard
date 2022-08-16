@@ -2,14 +2,11 @@ use std::cmp::Ordering;
 use std::time::Duration as StdDuration;
 
 use humantime::format_duration;
-use maud::{html, Markup, PreEscaped};
+use maud::{html, Markup};
 use poem::i18n::Locale;
 
 use crate::prelude::*;
 use crate::web::partials::Float;
-
-pub const CARD_PERCENTAGE_SIGN: PreEscaped<&'static str> =
-    PreEscaped(r#"<span class="has-text-grey-light is-size-4">%</span>"#);
 
 pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: &str) -> Markup {
     html! {

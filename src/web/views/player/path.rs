@@ -1,3 +1,5 @@
+//! URL path segments.
+
 use serde::Deserialize;
 
 use crate::wargaming;
