@@ -16,6 +16,7 @@ use poem::web::headers::{ETag, IfNoneMatch};
 use poem::web::{Data, Html, Path, Query, RealIp, TypedHeader};
 use poem::{handler, IntoResponse, Response};
 
+use self::damage_item::DamageItem;
 use self::interval_item::IntervalItem;
 use self::params::QueryParams;
 use self::partials::*;
@@ -31,6 +32,7 @@ use crate::web::partials::*;
 use crate::web::TrackingCode;
 use crate::{database, wargaming};
 
+mod damage_item;
 mod interval_item;
 mod params;
 mod partials;
@@ -347,13 +349,10 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
                                                     p.title {
-                                                        (HumanFloat(view_model.actual_info.stats.random.average_damage_dealt()))
-                                                        @let damage_ratio = view_model.actual_info.stats.random.damage_ratio();
-                                                        span."is-size-4".has-text-grey { " (" }
-                                                        span."is-size-4".(SemaphoreClass::new(damage_ratio).threshold(1.0)) {
-                                                            (Float::from(damage_ratio).precision(1))
-                                                        }
-                                                        span."is-size-4".has-text-grey { "×)" }
+                                                        (DamageItem::new(
+                                                            view_model.actual_info.stats.random.average_damage_dealt(),
+                                                            view_model.actual_info.stats.random.damage_ratio(),
+                                                        ))
                                                     }
                                                 }
                                             }
@@ -361,15 +360,10 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title {
-                                                        (HumanFloat(view_model.actual_info.stats.rating.basic.average_damage_dealt()))
-                                                        @let damage_ratio = view_model.actual_info.stats.rating.basic.damage_ratio();
-                                                        @if damage_ratio.is_finite() {
-                                                            span."is-size-4".has-text-grey { " (" }
-                                                            span."is-size-4".(SemaphoreClass::new(damage_ratio).threshold(1.0)) {
-                                                                (Float::from(damage_ratio).precision(1))
-                                                            }
-                                                            span."is-size-4".has-text-grey { "×)" }
-                                                        }
+                                                        (DamageItem::new(
+                                                            view_model.actual_info.stats.rating.basic.average_damage_dealt(),
+                                                            view_model.actual_info.stats.rating.basic.damage_ratio(),
+                                                        ))
                                                     }
                                                 }
                                             }
@@ -492,7 +486,10 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-per-battle")?) }
                                                         p.title {
-                                                            (format!("{:.0}", view_model.stats_delta.rating.average_damage_dealt()))
+                                                            (DamageItem::new(
+                                                                view_model.stats_delta.rating.average_damage_dealt(),
+                                                                view_model.stats_delta.rating.damage_ratio(),
+                                                            ))
                                                         }
                                                     }
                                                 }

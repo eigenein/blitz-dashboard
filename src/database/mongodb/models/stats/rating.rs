@@ -51,6 +51,12 @@ impl DamageDealt for RatingStatsSnapshot {
     }
 }
 
+impl DamageReceived for RatingStatsSnapshot {
+    fn damage_received(&self) -> u64 {
+        self.damage_received
+    }
+}
+
 impl From<wargaming::RatingStats> for RatingStatsSnapshot {
     fn from(stats: wargaming::RatingStats) -> Self {
         Self {
