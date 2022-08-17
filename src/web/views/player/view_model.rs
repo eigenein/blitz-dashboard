@@ -24,7 +24,7 @@ pub struct ViewModel {
     pub actual_info: wargaming::AccountInfo,
     pub current_win_rate: BoundedInterval<f64>,
     pub stats_delta: StatsDelta,
-    pub rating_snapshots: Vec<database::RatingSnapshot>,
+    pub rating_snapshots: Vec<database::DeprecatedRatingSnapshot>,
     pub period: time::Duration,
 }
 
@@ -79,8 +79,13 @@ impl ViewModel {
         let rating_snapshots = match current_season {
             0 => Vec::new(),
             _ => {
-                database::RatingSnapshot::retrieve_latest(db, realm, account_id, current_season)
-                    .await?
+                database::DeprecatedRatingSnapshot::retrieve_latest(
+                    db,
+                    realm,
+                    account_id,
+                    current_season,
+                )
+                .await?
             }
         };
 

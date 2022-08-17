@@ -9,7 +9,7 @@ use crate::wargaming;
 /// Projection to select the rating chart data.
 #[serde_with::serde_as]
 #[derive(Deserialize)]
-pub struct RatingSnapshot {
+pub struct DeprecatedRatingSnapshot {
     #[serde(rename = "lbts_millis")]
     pub date_timestamp_millis: i64,
 
@@ -17,13 +17,13 @@ pub struct RatingSnapshot {
     pub close_rating: wargaming::MmRating,
 }
 
-impl RatingSnapshot {
+impl DeprecatedRatingSnapshot {
     fn collection(in_: &Database) -> Collection<Self> {
         in_.collection("account_snapshots")
     }
 }
 
-impl RatingSnapshot {
+impl DeprecatedRatingSnapshot {
     #[instrument(level = "debug", skip_all, fields(realm = ?realm, account_id = account_id))]
     pub async fn retrieve_latest(
         from: &Database,
