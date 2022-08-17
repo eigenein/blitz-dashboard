@@ -120,6 +120,15 @@ impl ViewModel {
         database::AccountSnapshot::new(realm, account_info, tank_last_battle_times)
             .upsert(into)
             .await?;
+        if let Some(rating_snapshot) = database::RatingSnapshot::new(
+            realm,
+            account_info.id,
+            account_info.stats.rating.current_season,
+            account_info.last_battle_time,
+            account_info.stats.rating.mm_rating,
+        ) {
+            rating_snapshot.upsert(into).await?;
+        }
         database::Account::new(realm, account_info.id)
             .last_battle_time(account_info.last_battle_time)
             .upsert(into)

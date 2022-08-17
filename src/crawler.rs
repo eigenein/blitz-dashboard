@@ -6,12 +6,14 @@ use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use tokio::sync::Mutex;
 
+use crate::crawler::crawled_data::CrawledData;
 use crate::crawler::metrics::CrawlerMetrics;
 use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 use crate::{database, wargaming};
 
+mod crawled_data;
 mod metrics;
 
 #[derive(Clone)]
@@ -126,19 +128,21 @@ impl Crawler {
             .try_buffer_unordered(buffering.n_buffered_accounts)
             .inspect_err(|error| error!("failed to crawl the account: {:#}", error))
             // Make the database updates concurrent.
-            .try_for_each_concurrent(
-                Some(buffering.n_updated_accounts),
-                |(account, account_snapshot, tank_snapshots)| {
-                    trace!(account.id, n_tanks = tank_snapshots.len(), "scheduling the update");
-                    let db = self.db.clone();
-                    let metrics = self.metrics.clone();
-                    async move {
-                        update_account(&db, account, account_snapshot, &tank_snapshots, metrics)
-                            .await
-                            .with_context(|| anyhow!("failed to crawl account #{}", account.id))
-                    }
-                },
-            )
+            .try_for_each_concurrent(Some(buffering.n_updated_accounts), |crawled_data| {
+                let account_id = crawled_data.account.id;
+                trace!(
+                    account_id,
+                    n_tanks = crawled_data.tank_snapshots.len(),
+                    "scheduling the update"
+                );
+                let db = self.db.clone();
+                let metrics = self.metrics.clone();
+                async move {
+                    update_account(&db, crawled_data, metrics)
+                        .await
+                        .with_context(|| anyhow!("failed to update account #{}", account_id))
+                }
+            })
             .await
             .context("crawler stream has failed")
     }
@@ -216,7 +220,7 @@ async fn crawl_account(
     realm: wargaming::Realm,
     account: database::Account,
     account_info: wargaming::AccountInfo,
-) -> Result<(database::Account, database::AccountSnapshot, Vec<database::TankSnapshot>)> {
+) -> Result<CrawledData> {
     debug!(?account.last_battle_time);
 
     let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
@@ -247,30 +251,38 @@ async fn crawl_account(
     };
     let account_snapshot =
         database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
+    let rating_snapshot = database::RatingSnapshot::new(
+        realm,
+        account.id,
+        account_info.stats.rating.current_season,
+        account_info.last_battle_time,
+        account_info.stats.rating.mm_rating,
+    );
 
-    Ok((account, account_snapshot, tank_snapshots))
+    Ok(CrawledData {
+        account,
+        account_snapshot,
+        tank_snapshots,
+        rating_snapshot,
+    })
 }
 
-#[instrument(skip_all, fields(account_id = account_snapshot.account_id))]
+#[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]
 async fn update_account(
     in_: &mongodb::Database,
-    account: database::Account,
-    account_snapshot: database::AccountSnapshot,
-    tank_snapshots: impl IntoIterator<Item = &database::TankSnapshot>,
+    crawled_data: CrawledData,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 ) -> Result {
     let start_instant = Instant::now();
-    debug!(last_battle_time = ?account.last_battle_time, "updating account…");
+    debug!(last_battle_time = ?crawled_data.account.last_battle_time, "updating account…");
 
-    database::TankSnapshot::upsert_many(in_, tank_snapshots).await?;
-    account_snapshot.upsert(in_).await?;
-    account.upsert(in_).await?;
+    crawled_data.upsert(in_).await?;
 
     let mut metrics = metrics.lock().await;
-    metrics.add_account(account_snapshot.account_id);
-    metrics.add_lag_from(account_snapshot.last_battle_time);
+    metrics.add_account(crawled_data.account_snapshot.account_id);
+    metrics.add_lag_from(crawled_data.account_snapshot.last_battle_time);
     drop(metrics);
 
-    debug!(elapsed = ?start_instant.elapsed(), "all done");
+    debug!(elapsed = ?start_instant.elapsed());
     Ok(())
 }
