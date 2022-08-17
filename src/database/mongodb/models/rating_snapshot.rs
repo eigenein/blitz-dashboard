@@ -33,19 +33,15 @@ pub struct RatingSnapshot {
 }
 
 impl RatingSnapshot {
-    pub fn new(
-        realm: wargaming::Realm,
-        account_id: wargaming::AccountId,
-        season: u16,
-        last_battle_time: DateTime,
-        rating: wargaming::MmRating,
-    ) -> Option<Self> {
-        (season != 0).then(|| Self {
+    pub fn new(realm: wargaming::Realm, account_info: &wargaming::AccountInfo) -> Option<Self> {
+        let has_rating = account_info.stats.rating.current_season != 0
+            && account_info.stats.rating.calibration_battles_left == 0;
+        has_rating.then(|| Self {
             realm,
-            account_id,
-            season,
-            date: last_battle_time.date().and_hms(0, 0, 0),
-            close_rating: rating,
+            account_id: account_info.id,
+            season: account_info.stats.rating.current_season,
+            date: account_info.last_battle_time.date().and_hms(0, 0, 0),
+            close_rating: account_info.stats.rating.mm_rating,
         })
     }
 }

@@ -251,13 +251,7 @@ async fn crawl_account(
     };
     let account_snapshot =
         database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
-    let rating_snapshot = database::RatingSnapshot::new(
-        realm,
-        account.id,
-        account_info.stats.rating.current_season,
-        account_info.last_battle_time,
-        account_info.stats.rating.mm_rating,
-    );
+    let rating_snapshot = database::RatingSnapshot::new(realm, &account_info);
 
     Ok(CrawledData {
         account,
