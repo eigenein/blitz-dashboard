@@ -1,5 +1,6 @@
+use futures::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::IndexOptions;
+use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{bson, Collection, Database, IndexModel};
 use serde::Deserialize;
 use serde_with::TryFromInto;
@@ -23,15 +24,18 @@ pub struct RatingSnapshot {
     #[serde(default, rename = "szn")]
     pub season: u16,
 
-    /// Denotes beginning of the day.
+    /// Even though this a `DateTime`, actually the time is always 00:00:00.
+    /// We're only interested in a date.
     #[serde(rename = "dt")]
     #[serde_as(as = "bson::DateTime")]
     pub date: DateTime,
 
+    /// The last seen rating during the day.
     #[serde(default, rename = "cl")]
     pub close_rating: wargaming::MmRating,
 }
 
+/// Implements ways to instantiate a structure.
 impl RatingSnapshot {
     pub fn new(realm: wargaming::Realm, account_info: &wargaming::AccountInfo) -> Option<Self> {
         let has_rating = account_info.stats.rating.current_season != 0
@@ -46,6 +50,7 @@ impl RatingSnapshot {
     }
 }
 
+/// Implements the common database-related functions.
 impl RatingSnapshot {
     fn collection(in_: &Database) -> Collection<Self> {
         in_.collection("rating_snapshots")
@@ -65,6 +70,7 @@ impl RatingSnapshot {
     }
 }
 
+/// Implements logic-related queries.
 impl RatingSnapshot {
     #[instrument(
         skip_all,
@@ -92,5 +98,32 @@ impl RatingSnapshot {
 
         debug!(elapsed = ?start_instant.elapsed(), "upserted");
         Ok(())
+    }
+
+    #[instrument(
+        skip_all,
+        level = "debug",
+        fields(realm = ?realm, account_id = account_id, season = season),
+    )]
+    pub async fn retrieve_season(
+        from: &Database,
+        realm: wargaming::Realm,
+        account_id: wargaming::AccountId,
+        season: u16,
+    ) -> Result<Vec<Self>> {
+        let filter = doc! {
+            "rlm": realm.to_str(),
+            "aid": account_id,
+            "szn": season as i32
+        };
+        let options = FindOptions::builder().sort(doc! { "dt": -1 }).build();
+        let snapshots = Self::collection(from)
+            .find(filter, options)
+            .await
+            .context("failed to query the ratings")?
+            .try_collect()
+            .await
+            .context("failed to collect the ratings")?;
+        Ok(snapshots)
     }
 }

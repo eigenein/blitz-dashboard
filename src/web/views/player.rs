@@ -827,7 +827,7 @@ pub async fn get(
                 @if !view_model.rating_snapshots.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
                     script {
-                        (PreEscaped(r##"
+                        (PreEscaped("
                             'use strict';
                             const mode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
                             new ApexCharts(document.getElementById('rating-chart'), {
@@ -841,16 +841,16 @@ pub async fn get(
                                 },
                                 colors: ['hsl(204, 71%, 39%)'],
                                 series: [{name: '', data: [
-                        "##))
+                        "))
                         @for snapshot in &view_model.rating_snapshots {
-                            "[" (snapshot.date_timestamp_millis) "," (snapshot.close_rating.display_rating()) "],"
+                            "[" (snapshot.date.timestamp_millis()) "," (snapshot.close_rating.display_rating()) "],"
                         }
-                        (PreEscaped(r##"]}],
+                        (PreEscaped("]}],
                                 xaxis: {type: 'datetime'},
                                 tooltip: {
                                     fixed: {enabled: true, offsetY: 70},
                                     marker: {show: false},
-                                    x: {format: 'MMM d, H:mm'},
+                                    x: {format: 'MMM d'},
                                 },
                                 stroke: {width: 3, curve: 'straight'},
                                 annotations: {yaxis: [
@@ -860,7 +860,7 @@ pub async fn get(
                                 ]},
                                 theme: {mode: mode},
                             }).render();
-                        "##))
+                        "))
                     }
                 }
             }
