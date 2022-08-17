@@ -175,10 +175,12 @@ impl Account {
             "lbts": { "$gt": Utc::now() - Duration::days(1) },
         };
         let options = FindOneOptions::builder().sort(doc! { "random": 1 }).build();
+        let start_instant = Instant::now();
         let account = Self::collection(from)
             .find_one(filter, options)
             .await?
             .ok_or_else(|| anyhow!("could not sample a random account"))?;
+        debug!(elapsed = ?start_instant.elapsed());
         Ok(account)
     }
 }
