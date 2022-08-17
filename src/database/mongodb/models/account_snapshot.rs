@@ -8,7 +8,6 @@ use tokio::time::timeout;
 
 use crate::database::mongodb::options::upsert_options;
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
-use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -86,7 +85,7 @@ impl AccountSnapshot {
             .context("timed out to insert the account snapshot")??
             .context("failed to upsert the account snapshot")?;
 
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
+        debug!(elapsed = ?start_instant.elapsed(), "upserted");
         Ok(())
     }
 

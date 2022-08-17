@@ -145,7 +145,7 @@ impl TankSnapshot {
         fields(account_id = self.account_id, tank_id = self.tank_id),
         err,
     )]
-    pub async fn upsert(&self, to: &Database) -> Result {
+    pub async fn upsert(&self, into: &Database) -> Result {
         let query = doc! {
             "rlm": self.realm.to_str(),
             "aid": self.account_id,
@@ -157,7 +157,7 @@ impl TankSnapshot {
 
         debug!("upserting…");
         let start_instant = Instant::now();
-        let collection = Self::collection(to);
+        let collection = Self::collection(into);
         let future = spawn(async move { collection.update_one(query, update, options).await });
         // Sometimes `update_one` freezes, and I don't know why.
         timeout(StdDuration::from_secs(10), future)
@@ -166,6 +166,19 @@ impl TankSnapshot {
             .context("failed to upsert the tank snapshot")?;
 
         debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
+        Ok(())
+    }
+
+    #[instrument(skip_all, level = "debug")]
+    pub async fn upsert_many(
+        into: &Database,
+        snapshots: impl IntoIterator<Item = &Self>,
+    ) -> Result {
+        let start_instant = Instant::now();
+        for snapshot in snapshots {
+            snapshot.upsert(into).await?;
+        }
+        debug!(elapsed = ?start_instant.elapsed());
         Ok(())
     }
 

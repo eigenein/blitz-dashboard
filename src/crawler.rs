@@ -259,19 +259,12 @@ async fn update_account(
     tank_snapshots: impl IntoIterator<Item = &database::TankSnapshot>,
     metrics: Arc<Mutex<CrawlerMetrics>>,
 ) -> Result {
-    debug!(last_battle_time = ?account.last_battle_time, "updating account…");
     let start_instant = Instant::now();
+    debug!(last_battle_time = ?account.last_battle_time, "updating account…");
 
-    for tank_snapshot in tank_snapshots {
-        tank_snapshot.upsert(in_).await?;
-    }
-    debug!(elapsed = ?start_instant.elapsed(), "tanks upserted");
-
+    database::TankSnapshot::upsert_many(in_, tank_snapshots).await?;
     account_snapshot.upsert(in_).await?;
-    debug!(elapsed = ?start_instant.elapsed(), "account snapshot upserted");
-
     account.upsert(in_).await?;
-    debug!(elapsed = ?start_instant.elapsed(), "account upserted");
 
     let mut metrics = metrics.lock().await;
     metrics.add_account(account_snapshot.account_id);

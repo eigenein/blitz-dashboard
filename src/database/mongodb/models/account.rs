@@ -107,7 +107,7 @@ impl Account {
             .context("timed out to upsert the account")??
             .context("failed to upsert the account #{}")?;
 
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
+        debug!(elapsed = ?start_instant.elapsed(), "upserted");
         Ok(())
     }
 
