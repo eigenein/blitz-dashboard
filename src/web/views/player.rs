@@ -803,10 +803,8 @@ pub async fn get(
                                 @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
                                 a.navbar-link {
                                     span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                    span {
-                                        (current_win_rate)
-                                        span.has-text-grey { "%" }
-                                    }
+                                    (current_win_rate)
+                                    span.has-text-grey { "%" }
                                 }
                                 div.navbar-dropdown {
                                     div.navbar-item {
@@ -817,6 +815,24 @@ pub async fn get(
                                         strong { (locale.text("navbar-item-current-masculine")?) }
                                         (PreEscaped("&nbsp;"))
                                         span.has-text-grey { " (" (current_win_rate) "%)" }
+                                    }
+                                }
+                            }
+
+                            div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                                a.navbar-link {
+                                    span.icon.has-text-info { i.fa-solid.fa-p {} }
+                                    span { "90" }
+                                    span.has-text-grey { "%" }
+                                }
+                                div.navbar-dropdown {
+                                    div.navbar-item {
+                                        (locale.text("navbar-item-confidence-level")?)
+                                    }
+                                    hr.navbar-divider;
+                                    a.navbar-item {
+                                        span { "90" }
+                                        span.has-text-grey { "%" }
                                     }
                                 }
                             }

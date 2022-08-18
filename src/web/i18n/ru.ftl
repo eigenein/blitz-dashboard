@@ -80,3 +80,4 @@ title-damage-ratio-random-short = RDM отн.
 title-damage-ratio-rating-short = RTG отн.
 hint-significantly-lower-than-target = Процент побед значительно ниже, чем целевой
 hint-significantly-higher-than-target = Процент побед значительно выше, чем целевой
+navbar-item-confidence-level = Уровень доверия
