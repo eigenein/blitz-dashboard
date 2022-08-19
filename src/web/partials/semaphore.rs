@@ -1,13 +1,13 @@
 use maud::Render;
 
 #[must_use]
-pub struct SemaphoreClass<T> {
-    value: T,
+pub struct SemaphoreClass<V, T> {
+    value: V,
     threshold: T,
 }
 
-impl<T: Default> SemaphoreClass<T> {
-    pub fn new(value: T) -> Self {
+impl<V, T: Default> SemaphoreClass<V, T> {
+    pub fn new(value: V) -> Self {
         Self {
             value,
             threshold: Default::default(),
@@ -15,14 +15,14 @@ impl<T: Default> SemaphoreClass<T> {
     }
 }
 
-impl<T: Copy> SemaphoreClass<T> {
+impl<V, T: Copy> SemaphoreClass<V, T> {
     pub const fn threshold(mut self, threshold: T) -> Self {
         self.threshold = threshold;
         self
     }
 }
 
-impl<T: PartialOrd> Render for SemaphoreClass<T> {
+impl<V: PartialOrd<T>, T> Render for SemaphoreClass<V, T> {
     fn render_to(&self, buffer: &mut String) {
         if self.value > self.threshold {
             buffer.push_str("has-text-success");

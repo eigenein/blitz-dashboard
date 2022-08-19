@@ -436,7 +436,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-change")?) }
                                                         @let delta = view_model.stats_delta.rating.delta();
-                                                        p.title.(SemaphoreClass::new(delta)) title=(delta) {
+                                                        p.title.(SemaphoreClass::<_, f64>::new(delta)) title=(delta) {
                                                             (format!("{:+.0}", delta))
                                                         }
                                                     }
