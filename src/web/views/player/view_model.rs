@@ -9,7 +9,7 @@ use poem::web::cookie::CookieJar;
 use poem::web::Path;
 use sentry::protocol::IpAddress;
 
-use crate::math::traits::TrueWinRate;
+use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
@@ -21,6 +21,7 @@ pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
     pub current_win_rate: BoundedInterval<f64>,
+    pub target_victory_ratio: f64,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
@@ -70,6 +71,9 @@ impl ViewModel {
             .stats
             .random
             .true_win_rate(preferences.confidence_level)?;
+        let target_victory_ratio = preferences
+            .target_victory_ratio
+            .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =
@@ -91,6 +95,7 @@ impl ViewModel {
             stats_delta,
             rating_snapshots,
             preferences,
+            target_victory_ratio,
         })
     }
 

@@ -31,7 +31,7 @@ use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
-use crate::web::views::player::display_preferences::DisplayPreferences;
+use crate::web::views::player::display_preferences::{DisplayPreferences, TargetVictoryRatio};
 use crate::web::{cookies, TrackingCode};
 use crate::{database, wargaming};
 
@@ -43,6 +43,7 @@ mod partials;
 mod path;
 mod percentage_item;
 mod stats_delta;
+mod target_victory_ratio;
 mod view_constants;
 mod view_model;
 
@@ -680,7 +681,7 @@ pub async fn get(
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     @let period_win_rate = view_model.stats_delta.random.true_win_rate(view_model.preferences.confidence_level)?;
-                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.actual_info.stats.random.current_win_rate()))) {
+                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.target_victory_ratio))) {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -798,7 +799,7 @@ pub async fn get(
                                             @for tank in &view_model.stats_delta.tanks {
                                                 (render_tank_tr(
                                                     tank,
-                                                    view_model.actual_info.stats.random.current_win_rate(),
+                                                    view_model.target_victory_ratio,
                                                     view_model.preferences.confidence_level,
                                                     &locale,
                                                 )?)
@@ -826,10 +827,9 @@ pub async fn get(
                     }
                     div.navbar-menu id="bottomNavbar" {
                         div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
-                            @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                (current_win_rate)
+                                (Float::from(100.0 * view_model.target_victory_ratio).precision(2))
                                 span.has-text-grey { "%" }
                             }
                             div.navbar-dropdown {
@@ -837,11 +837,24 @@ pub async fn get(
                                     (locale.text("navbar-item-target-victory-ratio")?)
                                 }
                                 hr.navbar-divider;
-                                a.navbar-item {
-                                    strong { (locale.text("navbar-item-current-masculine")?) }
-                                    (PreEscaped("&nbsp;"))
-                                    span.has-text-grey { " (" (current_win_rate) "%)" }
+                                form method="post" {
+                                    input type="hidden" name="target_victory_ratio" value="Current";
+                                    a.navbar-item onclick="this.parentNode.submit()" {
+                                        strong { (locale.text("navbar-item-current-masculine")?) }
+                                        (PreEscaped("&nbsp;"))
+                                        span.has-text-grey { " (" (Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2)) "%)" }
+                                    }
                                 }
+                                (target_victory_ratio_item(TargetVictoryRatio::P50, "P50"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P55, "P55"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P60, "P60"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P65, "P65"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P70, "P70"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P75, "P75"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P80, "P80"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P85, "P85"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P90, "P90"))
+                                (target_victory_ratio_item(TargetVictoryRatio::P95, "P95"))
                             }
                         }
 
@@ -855,6 +868,9 @@ pub async fn get(
                                     (locale.text("navbar-item-confidence-level")?)
                                 }
                                 hr.navbar-divider;
+                                (confidence_level_item(ConfidenceLevel::Z50, "Z50"))
+                                (confidence_level_item(ConfidenceLevel::Z70, "Z70"))
+                                (confidence_level_item(ConfidenceLevel::Z75, "Z75"))
                                 (confidence_level_item(ConfidenceLevel::Z80, "Z80"))
                                 (confidence_level_item(ConfidenceLevel::Z85, "Z85"))
                                 (confidence_level_item(ConfidenceLevel::Z87, "Z87"))
@@ -924,14 +940,14 @@ pub async fn get(
 
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
-    account_win_rate: f64,
+    target_victory_ratio: f64,
     confidence_level: ConfidenceLevel,
     locale: &Locale,
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
         @let true_win_rate = snapshot.stats.true_win_rate(confidence_level)?;
-        @let win_rate_ordering = true_win_rate.partial_cmp(&account_win_rate);
+        @let win_rate_ordering = true_win_rate.partial_cmp(&target_victory_ratio);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
             (vehicle_th(&vehicle, locale)?)
@@ -1033,6 +1049,15 @@ fn confidence_level_item(level: ConfidenceLevel, value: &str) -> Markup {
         form method="post" {
             input name="confidence_level" type="hidden" value=(value);
             a.navbar-item onclick="this.parentNode.submit()" { (level) }
+        }
+    }
+}
+
+fn target_victory_ratio_item(ratio: TargetVictoryRatio, value: &str) -> Markup {
+    html! {
+        form method="post" {
+            input type="hidden" name="target_victory_ratio" value=(value);
+            a.navbar-item onclick="this.parentNode.submit()" { (ratio) }
         }
     }
 }
