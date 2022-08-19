@@ -797,43 +797,41 @@ pub async fn get(
                             span aria-hidden="true" {}
                         }
                     }
-                    div.container {
-                        div.navbar-menu id="bottomNavbar" {
-                            div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
-                                @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
-                                a.navbar-link {
-                                    span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                    (current_win_rate)
-                                    span.has-text-grey { "%" }
+                    div.navbar-menu id="bottomNavbar" {
+                        div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                            @let current_win_rate = Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2);
+                            a.navbar-link {
+                                span.icon.has-text-info { i.fa-solid.fa-percentage {} }
+                                (current_win_rate)
+                                span.has-text-grey { "%" }
+                            }
+                            div.navbar-dropdown {
+                                div.navbar-item {
+                                    (locale.text("navbar-item-target-victory-ratio")?)
                                 }
-                                div.navbar-dropdown {
-                                    div.navbar-item {
-                                        (locale.text("navbar-item-target-victory-ratio")?)
-                                    }
-                                    hr.navbar-divider;
-                                    a.navbar-item {
-                                        strong { (locale.text("navbar-item-current-masculine")?) }
-                                        (PreEscaped("&nbsp;"))
-                                        span.has-text-grey { " (" (current_win_rate) "%)" }
-                                    }
+                                hr.navbar-divider;
+                                a.navbar-item {
+                                    strong { (locale.text("navbar-item-current-masculine")?) }
+                                    (PreEscaped("&nbsp;"))
+                                    span.has-text-grey { " (" (current_win_rate) "%)" }
                                 }
                             }
+                        }
 
-                            div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
-                                a.navbar-link {
-                                    span.icon.has-text-info { i.fa-solid.fa-p {} }
+                        div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
+                            a.navbar-link {
+                                span.icon.has-text-info { i.fa-solid.fa-p {} }
+                                span { "90" }
+                                span.has-text-grey { "%" }
+                            }
+                            div.navbar-dropdown {
+                                div.navbar-item {
+                                    (locale.text("navbar-item-confidence-level")?)
+                                }
+                                hr.navbar-divider;
+                                a.navbar-item {
                                     span { "90" }
                                     span.has-text-grey { "%" }
-                                }
-                                div.navbar-dropdown {
-                                    div.navbar-item {
-                                        (locale.text("navbar-item-confidence-level")?)
-                                    }
-                                    hr.navbar-divider;
-                                    a.navbar-item {
-                                        span { "90" }
-                                        span.has-text-grey { "%" }
-                                    }
                                 }
                             }
                         }

@@ -5,9 +5,7 @@ export function init() {
 
     $navbarBurgers.forEach(element => {
         element.addEventListener('click', () => {
-            const target = element.dataset.target;
-            const $target = document.getElementById(target);
-
+            const $target = document.getElementById(element.dataset.target);
             element.classList.toggle('is-active');
             $target.classList.toggle('is-active');
         });
