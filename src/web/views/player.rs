@@ -13,12 +13,12 @@ use poem::http::StatusCode;
 use poem::i18n::Locale;
 use poem::web::cookie::CookieJar;
 use poem::web::headers::{ETag, IfNoneMatch};
-use poem::web::{Data, Html, Path, Query, RealIp, TypedHeader};
+use poem::web::{Data, Form, Html, Path, RealIp, Redirect, TypedHeader};
 use poem::{handler, IntoResponse, Response};
 
 use self::damage_item::DamageItem;
+use self::display_preferences::UpdateDisplayPreferences;
 use self::interval_item::IntervalItem;
-use self::params::QueryParams;
 use self::partials::*;
 use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
@@ -29,12 +29,13 @@ use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
-use crate::web::TrackingCode;
+use crate::web::views::player::display_preferences::DisplayPreferences;
+use crate::web::{cookies, TrackingCode};
 use crate::{database, wargaming};
 
 mod damage_item;
+mod display_preferences;
 mod interval_item;
-mod params;
 mod partials;
 mod path;
 mod percentage_item;
@@ -42,16 +43,36 @@ mod stats_delta;
 mod view_constants;
 mod view_model;
 
+/// Updates display preferences.
 #[allow(clippy::too_many_arguments)]
 #[instrument(
     skip_all,
     level = "info",
-    fields(realm = ?path.realm, account_id = path.account_id, period = ?query.period),
+    fields(realm = ?path.realm, account_id = path.account_id),
+)]
+#[handler]
+pub async fn post(
+    path: Path<PathSegments>,
+    Form(update_preferences): Form<UpdateDisplayPreferences>,
+    cookies: &CookieJar,
+) -> poem::Result<Redirect> {
+    let cookie_preferences = UpdateDisplayPreferences::from(cookies);
+    cookies::Builder::new(UpdateDisplayPreferences::COOKIE_NAME)
+        .value(&DisplayPreferences::from(cookie_preferences + update_preferences))
+        .expires_in(Duration::weeks(4))
+        .add_to(cookies);
+    Ok(Redirect::see_other(format!("/{}/{}", path.realm, path.account_id)))
+}
+
+#[allow(clippy::too_many_arguments)]
+#[instrument(
+    skip_all,
+    level = "info",
+    fields(realm = ?path.realm, account_id = path.account_id),
 )]
 #[handler]
 pub async fn get(
     path: Path<PathSegments>,
-    query: Query<QueryParams>,
     cookies: &CookieJar,
     mongodb: Data<&mongodb::Database>,
     info_cache: Data<&AccountInfoCache>,
@@ -64,8 +85,7 @@ pub async fn get(
     let start_instant = Instant::now();
 
     let view_model =
-        ViewModel::new(real_ip.0, path, cookies, &query, *mongodb, *info_cache, *tanks_cache)
-            .await?;
+        ViewModel::new(real_ip.0, path, cookies, *mongodb, *info_cache, *tanks_cache).await?;
 
     let etag = format!(
         concat!("\"", crate_version!(), "-{}-{}-{}\""),

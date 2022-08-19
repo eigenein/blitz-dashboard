@@ -4,8 +4,6 @@ use serde::Serialize;
 
 use crate::prelude::DateTime;
 
-pub const DISPLAY_PERIOD: &str = "display-period";
-
 pub struct Builder(Cookie);
 
 impl Builder {

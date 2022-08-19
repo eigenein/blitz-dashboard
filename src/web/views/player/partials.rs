@@ -11,7 +11,10 @@ use crate::web::partials::Float;
 pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: &str) -> Markup {
     html! {
         li.is-active[period == new_period] {
-            a href=(format!("?period={}", format_duration(new_period))) { (text) }
+            form method="POST" {
+                input type="hidden" name="period" value=(format_duration(new_period));
+                a onclick="this.parentNode.submit()" { (text) }
+            }
         }
     }
 }

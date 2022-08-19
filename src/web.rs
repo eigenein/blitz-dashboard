@@ -114,7 +114,7 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/static/flags/xx.svg", get(r#static::get_xx_svg))
         .at("/", get(views::index::get))
         .at("/search", get(views::search::get))
-        .at("/:realm/:account_id", get(views::player::get))
+        .at("/:realm/:account_id", get(views::player::get).post(views::player::post))
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))

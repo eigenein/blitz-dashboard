@@ -13,8 +13,7 @@ use sentry::protocol::IpAddress;
 use crate::math::traits::TrueWinRate;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
-use crate::web::cookies;
-use crate::web::views::player::params::QueryParams;
+use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
 use crate::web::views::player::stats_delta::StatsDelta;
 use crate::{database, wargaming};
@@ -34,7 +33,6 @@ impl ViewModel {
         ip_addr: Option<IpAddr>,
         Path(PathSegments { realm, account_id }): Path<PathSegments>,
         cookies: &CookieJar,
-        query: &QueryParams,
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
@@ -69,7 +67,8 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let current_win_rate = actual_info.stats.random.true_win_rate()?;
-        let period = Self::refresh_display_period(query, cookies)?;
+        let preferences = DisplayPreferences::from(cookies);
+        let period = preferences.period.0;
         let before = Utc::now() - Duration::from_std(period).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
@@ -136,25 +135,5 @@ impl ViewModel {
             other: BTreeMap::from([("realm".to_string(), serde_json::to_value(realm)?)]),
             ..Default::default()
         })
-    }
-
-    fn refresh_display_period(query: &QueryParams, cookies: &CookieJar) -> Result<time::Duration> {
-        let period = query
-            .period
-            .map(|period| Ok(period.0))
-            .or_else(|| {
-                cookies.get(cookies::DISPLAY_PERIOD).map(|cookie| {
-                    cookie
-                        .value()
-                        .map(time::Duration::from_secs)
-                        .context("failed to parse the period cookie")
-                })
-            })
-            .unwrap_or(Ok(StdDuration::from_secs(86400)))?;
-        cookies::Builder::new(cookies::DISPLAY_PERIOD)
-            .value(period.as_secs())
-            .expires_in(Duration::weeks(4))
-            .add_to(cookies);
-        Ok(period)
     }
 }
