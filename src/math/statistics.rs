@@ -15,24 +15,22 @@ pub enum ConfidenceLevel {
     Z97,
     Z98,
     Z99,
-    Z99_99,
 }
 
 impl ConfidenceLevel {
     pub const fn z_value(self) -> f64 {
         match self {
-            Self::Z80 => 1.28,
-            Self::Z85 => 1.440,
-            Self::Z87 => 1.51,
-            Self::Z88 => 1.5548,
-            Self::Z89 => 1.598,
-            Self::Z90 => 1.645,
-            Self::Z95 => 1.960,
-            Self::Z96 => 2.054,
-            Self::Z97 => 2.17009,
-            Self::Z98 => 2.326,
-            Self::Z99 => 2.576,
-            Self::Z99_99 => 3.29053,
+            Self::Z80 => 1.281551,
+            Self::Z85 => 1.439531,
+            Self::Z87 => 1.514101,
+            Self::Z88 => 1.554773,
+            Self::Z89 => 1.598193,
+            Self::Z90 => 1.644853,
+            Self::Z95 => 1.959964,
+            Self::Z96 => 2.053749,
+            Self::Z97 => 2.170091,
+            Self::Z98 => 2.326348,
+            Self::Z99 => 2.575829,
         }
     }
 }
