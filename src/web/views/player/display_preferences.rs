@@ -67,7 +67,7 @@ pub struct DisplayPreferences {
 impl From<UpdateDisplayPreferences> for DisplayPreferences {
     fn from(update: UpdateDisplayPreferences) -> Self {
         Self {
-            period: update.period.unwrap_or_default(),
+            period: update.period.unwrap_or(time::Duration::from_secs(86400)),
             confidence_level: update.confidence_level.unwrap_or_default(),
             target_victory_ratio: update.target_victory_ratio.unwrap_or_default(),
         }
