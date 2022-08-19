@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
-use std::time;
 
 use bpci::BoundedInterval;
 use futures::future::try_join;
@@ -24,7 +23,7 @@ pub struct ViewModel {
     pub current_win_rate: BoundedInterval<f64>,
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
-    pub period: time::Duration,
+    pub preferences: DisplayPreferences,
 }
 
 impl ViewModel {
@@ -66,10 +65,13 @@ impl ViewModel {
         user.username = Some(actual_info.nickname.clone());
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
-        let current_win_rate = actual_info.stats.random.true_win_rate()?;
         let preferences = DisplayPreferences::from(cookies);
-        let period = preferences.period.0;
-        let before = Utc::now() - Duration::from_std(period).map_err(InternalServerError)?;
+        let current_win_rate = actual_info
+            .stats
+            .random
+            .true_win_rate(preferences.confidence_level)?;
+        let before =
+            Utc::now() - Duration::from_std(preferences.period.0).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;
@@ -88,7 +90,7 @@ impl ViewModel {
             current_win_rate,
             stats_delta,
             rating_snapshots,
-            period,
+            preferences,
         })
     }
 

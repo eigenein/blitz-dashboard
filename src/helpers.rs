@@ -1,5 +1,6 @@
 pub mod average;
 pub mod compression;
+pub mod hash;
 pub mod redis;
 pub mod sentry;
 pub mod serde;

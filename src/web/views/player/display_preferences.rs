@@ -4,13 +4,17 @@ use std::time;
 use poem::web::cookie::{Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::StdDuration;
+use crate::math::statistics::ConfidenceLevel;
+use crate::prelude::*;
 
 /// Form & cookie.
 #[derive(Deserialize, Default)]
 pub struct UpdateDisplayPreferences {
     #[serde(default)]
     pub period: Option<Period>,
+
+    #[serde(default)]
+    pub confidence_level: Option<ConfidenceLevel>,
 }
 
 impl UpdateDisplayPreferences {
@@ -39,21 +43,23 @@ impl Add<UpdateDisplayPreferences> for UpdateDisplayPreferences {
     fn add(self, rhs: UpdateDisplayPreferences) -> Self::Output {
         Self {
             period: rhs.period.or(self.period),
+            confidence_level: rhs.confidence_level.or(self.confidence_level),
         }
     }
 }
 
 /// Display preferences.
-#[derive(Serialize)]
+#[derive(Serialize, Hash)]
 pub struct DisplayPreferences {
-    #[serde(default)]
     pub period: Period,
+    pub confidence_level: ConfidenceLevel,
 }
 
 impl From<UpdateDisplayPreferences> for DisplayPreferences {
     fn from(update: UpdateDisplayPreferences) -> Self {
         Self {
             period: update.period.unwrap_or_default(),
+            confidence_level: update.confidence_level.unwrap_or_default(),
         }
     }
 }
@@ -64,7 +70,7 @@ impl From<&CookieJar> for DisplayPreferences {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Hash)]
 #[serde(try_from = "String", into = "String")]
 pub struct Period(pub StdDuration);
 

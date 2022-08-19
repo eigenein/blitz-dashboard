@@ -7,7 +7,6 @@ use std::time::Instant;
 
 use bpci::Interval;
 use chrono_humanize::Tense;
-use clap::crate_version;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::http::StatusCode;
 use poem::i18n::Locale;
@@ -23,7 +22,9 @@ use self::partials::*;
 use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
 use self::view_model::ViewModel;
+use crate::helpers::hash::hash_digest;
 use crate::helpers::time::{from_days, from_hours, from_months};
+use crate::math::statistics::ConfidenceLevel;
 use crate::math::traits::*;
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
@@ -33,6 +34,7 @@ use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::{cookies, TrackingCode};
 use crate::{database, wargaming};
 
+mod confidence_level;
 mod damage_item;
 mod display_preferences;
 mod interval_item;
@@ -60,6 +62,7 @@ pub async fn post(
     cookies::Builder::new(UpdateDisplayPreferences::COOKIE_NAME)
         .value(&DisplayPreferences::from(cookie_preferences + update_preferences))
         .expires_in(Duration::weeks(4))
+        .set_path("/")
         .add_to(cookies);
     Ok(Redirect::see_other(format!("/{}/{}", path.realm, path.account_id)))
 }
@@ -88,10 +91,8 @@ pub async fn get(
         ViewModel::new(real_ip.0, path, cookies, *mongodb, *info_cache, *tanks_cache).await?;
 
     let etag = format!(
-        concat!("\"", crate_version!(), "-{}-{}-{}\""),
-        view_model.actual_info.last_battle_time.timestamp(),
-        view_model.period.as_secs(),
-        locale.text("html-lang")?,
+        r#""{}""#,
+        hash_digest(&(view_model.actual_info.last_battle_time, &view_model.preferences))
     );
     if let Some(TypedHeader(none_match)) = none_match {
         if !none_match.precondition_passes(&ETag::from_str(&etag).context("failed to parse ETag")?)
@@ -399,17 +400,17 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
-                                (render_period_li(view_model.period, from_hours(8), &locale.text("title-period-8-hours")?))
-                                (render_period_li(view_model.period, from_hours(12), &locale.text("title-period-12-hours")?))
-                                (render_period_li(view_model.period, from_days(1), &locale.text("title-period-24-hours")?))
-                                (render_period_li(view_model.period, from_days(2), &locale.text("title-period-2-days")?))
-                                (render_period_li(view_model.period, from_days(3), &locale.text("title-period-3-days")?))
-                                (render_period_li(view_model.period, from_days(7), &locale.text("title-period-1-week")?))
-                                (render_period_li(view_model.period, from_days(14), &locale.text("title-period-2-weeks")?))
-                                (render_period_li(view_model.period, from_days(21), &locale.text("title-period-3-weeks")?))
-                                (render_period_li(view_model.period, from_months(1), &locale.text("title-period-1-month")?))
-                                (render_period_li(view_model.period, from_months(2), &locale.text("title-period-2-months")?))
-                                (render_period_li(view_model.period, from_months(3), &locale.text("title-period-3-months")?))
+                                (render_period_li(view_model.preferences.period.0, from_hours(8), &locale.text("title-period-8-hours")?))
+                                (render_period_li(view_model.preferences.period.0, from_hours(12), &locale.text("title-period-12-hours")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(1), &locale.text("title-period-24-hours")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(2), &locale.text("title-period-2-days")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(3), &locale.text("title-period-3-days")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(7), &locale.text("title-period-1-week")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(14), &locale.text("title-period-2-weeks")?))
+                                (render_period_li(view_model.preferences.period.0, from_days(21), &locale.text("title-period-3-weeks")?))
+                                (render_period_li(view_model.preferences.period.0, from_months(1), &locale.text("title-period-1-month")?))
+                                (render_period_li(view_model.preferences.period.0, from_months(2), &locale.text("title-period-2-months")?))
+                                (render_period_li(view_model.preferences.period.0, from_months(3), &locale.text("title-period-3-months")?))
                             }
                         }
                     }
@@ -545,7 +546,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.rating.true_win_rate()?))
+                                                            (IntervalItem(view_model.stats_delta.rating.true_win_rate(view_model.preferences.confidence_level)?))
                                                         }
                                                     }
                                                 }
@@ -677,7 +678,7 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let period_win_rate = view_model.stats_delta.random.true_win_rate()?;
+                                    @let period_win_rate = view_model.stats_delta.random.true_win_rate(view_model.preferences.confidence_level)?;
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.actual_info.stats.random.current_win_rate()))) {
                                         header.card-header {
                                             p.card-header-title {
@@ -740,7 +741,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.random.true_survival_rate()?))
+                                                            (IntervalItem(view_model.stats_delta.random.true_survival_rate(view_model.preferences.confidence_level)?))
                                                         }
                                                     }
                                                 }
@@ -794,7 +795,12 @@ pub async fn get(
                                         thead { (vehicles_thead) }
                                         tbody {
                                             @for tank in &view_model.stats_delta.tanks {
-                                                (render_tank_tr(tank, view_model.actual_info.stats.random.current_win_rate(), &locale)?)
+                                                (render_tank_tr(
+                                                    tank,
+                                                    view_model.actual_info.stats.random.current_win_rate(),
+                                                    view_model.preferences.confidence_level,
+                                                    &locale,
+                                                )?)
                                             }
                                         }
                                         @if view_model.stats_delta.tanks.len() >= 25 {
@@ -841,18 +847,24 @@ pub async fn get(
                         div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-p {} }
-                                span { "90" }
-                                span.has-text-grey { "%" }
+                                (view_model.preferences.confidence_level)
                             }
                             div.navbar-dropdown {
                                 div.navbar-item {
                                     (locale.text("navbar-item-confidence-level")?)
                                 }
                                 hr.navbar-divider;
-                                a.navbar-item {
-                                    span { "90" }
-                                    span.has-text-grey { "%" }
-                                }
+                                (confidence_level_item(ConfidenceLevel::Z80, "Z80"))
+                                (confidence_level_item(ConfidenceLevel::Z85, "Z85"))
+                                (confidence_level_item(ConfidenceLevel::Z87, "Z87"))
+                                (confidence_level_item(ConfidenceLevel::Z88, "Z88"))
+                                (confidence_level_item(ConfidenceLevel::Z89, "Z89"))
+                                (confidence_level_item(ConfidenceLevel::Z90, "Z90"))
+                                (confidence_level_item(ConfidenceLevel::Z95, "Z95"))
+                                (confidence_level_item(ConfidenceLevel::Z96, "Z96"))
+                                (confidence_level_item(ConfidenceLevel::Z97, "Z97"))
+                                (confidence_level_item(ConfidenceLevel::Z98, "Z98"))
+                                (confidence_level_item(ConfidenceLevel::Z99, "Z99"))
                             }
                         }
                     }
@@ -912,11 +924,12 @@ pub async fn get(
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
     account_win_rate: f64,
+    confidence_level: ConfidenceLevel,
     locale: &Locale,
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.stats.true_win_rate()?;
+        @let true_win_rate = snapshot.stats.true_win_rate(confidence_level)?;
         @let win_rate_ordering = true_win_rate.partial_cmp(&account_win_rate);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -1012,4 +1025,13 @@ fn render_tank_tr(
         }
     };
     Ok(markup)
+}
+
+fn confidence_level_item(level: ConfidenceLevel, value: &str) -> Markup {
+    html! {
+        form method="post" {
+            input name="confidence_level" type="hidden" value=(value);
+            a.navbar-item onclick="this.parentNode.submit()" { (level) }
+        }
+    }
 }

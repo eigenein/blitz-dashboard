@@ -25,6 +25,11 @@ impl Builder {
         self.expires_at(Utc::now() + duration.into())
     }
 
+    pub fn set_path(mut self, path: impl Into<String>) -> Self {
+        self.0.set_path(path);
+        self
+    }
+
     #[allow(clippy::missing_const_for_fn)]
     pub fn build(self) -> Cookie {
         self.0
