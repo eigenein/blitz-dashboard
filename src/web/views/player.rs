@@ -3,6 +3,7 @@
 //! «Abandon hope, all ye who enter here».
 
 use std::str::FromStr;
+use std::time;
 use std::time::Instant;
 
 use bpci::Interval;
@@ -400,17 +401,17 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
-                                (render_period_li(view_model.preferences.period.0, from_hours(8), &locale.text("title-period-8-hours")?))
-                                (render_period_li(view_model.preferences.period.0, from_hours(12), &locale.text("title-period-12-hours")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(1), &locale.text("title-period-24-hours")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(2), &locale.text("title-period-2-days")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(3), &locale.text("title-period-3-days")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(7), &locale.text("title-period-1-week")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(14), &locale.text("title-period-2-weeks")?))
-                                (render_period_li(view_model.preferences.period.0, from_days(21), &locale.text("title-period-3-weeks")?))
-                                (render_period_li(view_model.preferences.period.0, from_months(1), &locale.text("title-period-1-month")?))
-                                (render_period_li(view_model.preferences.period.0, from_months(2), &locale.text("title-period-2-months")?))
-                                (render_period_li(view_model.preferences.period.0, from_months(3), &locale.text("title-period-3-months")?))
+                                (render_period_li(view_model.preferences.period, from_hours(8), &locale.text("title-period-8-hours")?)?)
+                                (render_period_li(view_model.preferences.period, from_hours(12), &locale.text("title-period-12-hours")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(1), &locale.text("title-period-24-hours")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(2), &locale.text("title-period-2-days")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(3), &locale.text("title-period-3-days")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(7), &locale.text("title-period-1-week")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(14), &locale.text("title-period-2-weeks")?)?)
+                                (render_period_li(view_model.preferences.period, from_days(21), &locale.text("title-period-3-weeks")?)?)
+                                (render_period_li(view_model.preferences.period, from_months(1), &locale.text("title-period-1-month")?)?)
+                                (render_period_li(view_model.preferences.period, from_months(2), &locale.text("title-period-2-months")?)?)
+                                (render_period_li(view_model.preferences.period, from_months(3), &locale.text("title-period-3-months")?)?)
                             }
                         }
                     }
@@ -1034,4 +1035,20 @@ fn confidence_level_item(level: ConfidenceLevel, value: &str) -> Markup {
             a.navbar-item onclick="this.parentNode.submit()" { (level) }
         }
     }
+}
+
+fn render_period_li(
+    period: time::Duration,
+    new_period: time::Duration,
+    text: &str,
+) -> Result<Markup> {
+    let markup = html! {
+        li.is-active[period == new_period] {
+            form method="POST" {
+                input type="hidden" name="period" value=(new_period.as_secs());
+                a onclick="this.parentNode.submit()" { (text) }
+            }
+        }
+    };
+    Ok(markup)
 }

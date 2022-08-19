@@ -1,23 +1,10 @@
 use std::cmp::Ordering;
-use std::time::Duration as StdDuration;
 
-use humantime::format_duration;
 use maud::{html, Markup};
 use poem::i18n::Locale;
 
 use crate::prelude::*;
 use crate::web::partials::Float;
-
-pub fn render_period_li(period: StdDuration, new_period: StdDuration, text: &str) -> Markup {
-    html! {
-        li.is-active[period == new_period] {
-            form method="POST" {
-                input type="hidden" name="period" value=(format_duration(new_period));
-                a onclick="this.parentNode.submit()" { (text) }
-            }
-        }
-    }
-}
 
 pub const fn partial_cmp_class(ordering: Option<Ordering>) -> &'static str {
     match ordering {

@@ -71,7 +71,7 @@ impl ViewModel {
             .random
             .true_win_rate(preferences.confidence_level)?;
         let before =
-            Utc::now() - Duration::from_std(preferences.period.0).map_err(InternalServerError)?;
+            Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
                 .await?;

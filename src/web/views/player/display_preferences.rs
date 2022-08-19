@@ -5,13 +5,14 @@ use poem::web::cookie::{Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 
 use crate::math::statistics::ConfidenceLevel;
-use crate::prelude::*;
 
 /// Form & cookie.
+#[serde_with::serde_as]
 #[derive(Deserialize, Default)]
 pub struct UpdateDisplayPreferences {
     #[serde(default)]
-    pub period: Option<Period>,
+    #[serde_as(as = "Option<serde_with::DurationSeconds>")]
+    pub period: Option<time::Duration>,
 
     #[serde(default)]
     pub confidence_level: Option<ConfidenceLevel>,
@@ -49,9 +50,12 @@ impl Add<UpdateDisplayPreferences> for UpdateDisplayPreferences {
 }
 
 /// Display preferences.
+#[serde_with::serde_as]
 #[derive(Serialize, Hash)]
 pub struct DisplayPreferences {
-    pub period: Period,
+    #[serde_as(as = "serde_with::DurationSeconds")]
+    pub period: time::Duration,
+
     pub confidence_level: ConfidenceLevel,
 }
 
@@ -67,29 +71,5 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
 impl From<&CookieJar> for DisplayPreferences {
     fn from(jar: &CookieJar) -> Self {
         Self::from(UpdateDisplayPreferences::from(jar))
-    }
-}
-
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, Hash)]
-#[serde(try_from = "String", into = "String")]
-pub struct Period(pub StdDuration);
-
-impl Default for Period {
-    fn default() -> Self {
-        Self(time::Duration::from_secs(86400))
-    }
-}
-
-impl TryFrom<String> for Period {
-    type Error = humantime::DurationError;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        humantime::parse_duration(&value).map(Self)
-    }
-}
-
-impl From<Period> for String {
-    fn from(period: Period) -> Self {
-        humantime::format_duration(period.0).to_string()
     }
 }
