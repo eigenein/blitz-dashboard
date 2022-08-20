@@ -7,6 +7,8 @@ use mongodb::options::IndexOptions;
 use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
+use tokio::spawn;
+use tokio::time::timeout;
 
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
@@ -204,12 +206,15 @@ impl TankSnapshot {
 
         let start_instant = Instant::now();
         debug!("running the pipeline…");
-        let stream = Self::collection(from)
-            .aggregate(pipeline, None)
+        let collection = Self::collection(from);
+        let future = spawn(async move { collection.aggregate(pipeline, None).await });
+        let cursor = timeout(time::Duration::from_secs(30), future)
             .await
+            .context("timed out to retrieve the latest tanks snapshots")??
             .with_context(|| {
                 format!("failed to retrieve the latest tank snapshots for #{}", account_id)
-            })?
+            })?;
+        let stream = cursor
             .try_filter_map(|document| async move {
                 trace!(?document);
                 Ok(Some(from_document::<Root<Self>>(document)?.root))
