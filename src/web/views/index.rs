@@ -41,7 +41,7 @@ pub async fn get(
                                             }
                                         }
                                         (
-                                            AccountSearch::new(wargaming::Realm::Russia, &locale)
+                                            AccountSearch::new(wargaming::Realm::Europe, &locale)
                                                 .class("is-medium is-rounded")
                                                 .has_autofocus(true)
                                                 .try_into_markup()?
