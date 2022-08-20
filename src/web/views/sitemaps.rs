@@ -14,7 +14,7 @@ pub async fn get_sitemap(
     Path(realm): Path<String>,
 ) -> Result<impl IntoResponse> {
     let start_instant = Instant::now();
-    let stream = database::AccountEntry::retrieve_page(&db, &realm, 1000).await?;
+    let stream = database::AccountIdProjection::retrieve_page(&db, &realm, 1000).await?;
     info!(elapsed_secs = ?start_instant.elapsed(), "stream ready");
     let stream = stream.map(move |account| {
         account.map(|account| {

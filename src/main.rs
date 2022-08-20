@@ -22,6 +22,7 @@ mod math;
 mod opts;
 mod prelude;
 mod tankopedia;
+mod trainer;
 mod wargaming;
 mod web;
 
@@ -46,6 +47,7 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
+        Subcommand::Train(opts) => trainer::run(opts).await,
     };
     info!(elapsed = format_elapsed(start_instant).as_str());
     result

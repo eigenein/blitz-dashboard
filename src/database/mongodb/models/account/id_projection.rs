@@ -9,16 +9,16 @@ use crate::prelude::*;
 use crate::wargaming;
 
 #[derive(Deserialize, Copy, Clone)]
-pub struct AccountEntry {
+pub struct AccountIdProjection {
     #[serde(rename = "aid")]
     pub id: wargaming::AccountId,
 }
 
-impl TypedDocument for AccountEntry {
+impl TypedDocument for AccountIdProjection {
     const NAME: &'static str = "accounts";
 }
 
-impl AccountEntry {
+impl AccountIdProjection {
     pub async fn retrieve_page(
         from: &Database,
         realm: &str,

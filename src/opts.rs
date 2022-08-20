@@ -35,6 +35,7 @@ pub enum Subcommand {
     CrawlAccounts(CrawlAccountsOpts),
     ImportTankopedia(ImportTankopediaOpts),
     Web(WebOpts),
+    Train(TrainOpts),
 }
 
 /// Runs the web application.
@@ -254,4 +255,17 @@ pub struct InternalConnectionOpts {
         env = "BLITZ_DASHBOARD_MONGODB_URI"
     )]
     pub mongodb_uri: String,
+}
+
+#[derive(Parser)]
+pub struct TrainOpts {
+    #[clap(flatten)]
+    pub connections: InternalConnectionOpts,
+
+    #[clap(
+        long,
+        parse(try_from_str = humantime::parse_duration),
+        env = "BLITZ_DASHBOARD_TRAINER_PERIOD",
+    )]
+    pub train_period: time::Duration,
 }

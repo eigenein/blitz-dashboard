@@ -9,9 +9,18 @@ use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
+pub use self::id_projection::*;
+pub use self::random::*;
+pub use self::rating::*;
+pub use self::tank_last_battle_time::*;
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
+
+mod id_projection;
+mod random;
+mod rating;
+mod tank_last_battle_time;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Copy, Clone)]
