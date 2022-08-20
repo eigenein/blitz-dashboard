@@ -243,47 +243,45 @@ pub async fn get(
                 (tracking_code.0)
 
                 nav.navbar.has-shadow role="navigation" aria-label="main navigation" {
-                    div.container {
-                        div.navbar-brand {
-                            (home_button(&locale)?)
+                    div.navbar-brand {
+                        (home_button(&locale)?)
 
-                            div.navbar-item title="Последний бой" {
-                                time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
-                                    datetime=(view_model.actual_info.last_battle_time.to_rfc3339())
-                                    title=(view_model.actual_info.last_battle_time) {
-                                        (datetime(view_model.actual_info.last_battle_time, Tense::Past))
-                                    }
-                            }
-
-                            div.navbar-item title=(locale.text("title-total-battles-hint")?) {
-                                span.icon-text {
-                                    span.icon { i.fas.fa-sort-numeric-up-alt {} }
-                                    span { (view_model.actual_info.stats.n_total_battles()) }
+                        div.navbar-item title="Последний бой" {
+                            time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
+                                datetime=(view_model.actual_info.last_battle_time.to_rfc3339())
+                                title=(view_model.actual_info.last_battle_time) {
+                                    (datetime(view_model.actual_info.last_battle_time, Tense::Past))
                                 }
-                            }
+                        }
 
-                            div.navbar-item title=(locale.text("title-account-age-hint")?) {
-                                span.icon-text {
-                                    @if view_model.actual_info.is_account_birthday() {
-                                        span.icon title=(locale.text("title-account-happy-birthday")?) { i.fas.fa-birthday-cake.has-text-danger {} }
-                                    } @else {
-                                        span.icon { i.far.fa-calendar-alt {} }
-                                    }
-                                    span title=(view_model.actual_info.created_at) {
-                                        (datetime(view_model.actual_info.created_at, Tense::Present))
-                                    }
+                        div.navbar-item title=(locale.text("title-total-battles-hint")?) {
+                            span.icon-text {
+                                span.icon { i.fas.fa-sort-numeric-up-alt {} }
+                                span { (view_model.actual_info.stats.n_total_battles()) }
+                            }
+                        }
+
+                        div.navbar-item title=(locale.text("title-account-age-hint")?) {
+                            span.icon-text {
+                                @if view_model.actual_info.is_account_birthday() {
+                                    span.icon title=(locale.text("title-account-happy-birthday")?) { i.fas.fa-birthday-cake.has-text-danger {} }
+                                } @else {
+                                    span.icon { i.far.fa-calendar-alt {} }
+                                }
+                                span title=(view_model.actual_info.created_at) {
+                                    (datetime(view_model.actual_info.created_at, Tense::Present))
                                 }
                             }
                         }
-                        div.navbar-menu.is-active {
-                            div.navbar-end {
-                                form.navbar-item action="/search" method="GET" {
-                                    (
-                                        AccountSearch::new(view_model.realm, &locale)
-                                            .has_user_secret(view_model.actual_info.is_prerelease_account())
-                                            .try_into_markup()?
-                                    )
-                                }
+                    }
+                    div.navbar-menu.is-active {
+                        div.navbar-end {
+                            form.navbar-item action="/search" method="GET" {
+                                (
+                                    AccountSearch::new(view_model.realm, &locale)
+                                        .has_user_secret(view_model.actual_info.is_prerelease_account())
+                                        .try_into_markup()?
+                                )
                             }
                         }
                     }
