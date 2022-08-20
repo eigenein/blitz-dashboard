@@ -131,7 +131,7 @@ impl TankSnapshot {
                     .map(|actual_tank| (snapshot, actual_tank))
             })
             .filter_map(|(snapshot, actual_tank)| {
-                (actual_tank.stats.n_battles != snapshot.stats.n_battles)
+                (actual_tank.stats.n_battles > snapshot.stats.n_battles)
                     .then(|| actual_tank - snapshot)
             })
             .collect();
