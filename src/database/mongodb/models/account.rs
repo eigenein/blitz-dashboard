@@ -9,7 +9,7 @@ use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::database::mongodb::traits::{TypedDocument, Upsert};
+use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
 
@@ -34,6 +34,26 @@ pub struct Account {
 
 impl TypedDocument for Account {
     const NAME: &'static str = "accounts";
+}
+
+#[async_trait]
+impl Indexes for Account {
+    type I = [IndexModel; 3];
+
+    fn indexes() -> Self::I {
+        [
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "aid": 1 })
+                .options(IndexOptions::builder().unique(true).build())
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "lbts": -1 })
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "random": 1 })
+                .build(),
+        ]
+    }
 }
 
 impl Account {
@@ -68,27 +88,6 @@ impl Upsert for Account {
 }
 
 impl Account {
-    #[instrument(skip_all)]
-    pub async fn ensure_indexes(on: &Database) -> Result {
-        let indexes = [
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "aid": 1 })
-                .options(IndexOptions::builder().unique(true).build())
-                .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1 })
-                .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "random": 1 })
-                .build(),
-        ];
-        Self::collection(on)
-            .create_indexes(indexes, None)
-            .await
-            .context("failed to create the indexes on accounts")?;
-        Ok(())
-    }
-
     #[instrument(skip_all, level = "debug")]
     pub fn get_sampled_stream(
         database: Database,

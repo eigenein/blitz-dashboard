@@ -1,5 +1,6 @@
 use mongodb::Database;
 
+use crate::database::mongodb::traits::Indexes;
 use crate::prelude::*;
 
 pub mod models;

@@ -4,7 +4,7 @@ use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::database::mongodb::traits::{TypedDocument, Upsert};
+use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
 use crate::prelude::*;
 use crate::wargaming;
@@ -35,6 +35,17 @@ pub struct AccountSnapshot {
 
 impl TypedDocument for AccountSnapshot {
     const NAME: &'static str = "account_snapshots";
+}
+
+impl Indexes for AccountSnapshot {
+    type I = [IndexModel; 1];
+
+    fn indexes() -> Self::I {
+        [IndexModel::builder()
+            .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
+            .options(IndexOptions::builder().unique(true).build())
+            .build()]
+    }
 }
 
 impl AccountSnapshot {
@@ -74,19 +85,6 @@ impl Upsert for AccountSnapshot {
 }
 
 impl AccountSnapshot {
-    #[instrument(skip_all, err)]
-    pub async fn ensure_indexes(on: &Database) -> Result {
-        let indexes = [IndexModel::builder()
-            .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
-            .options(IndexOptions::builder().unique(true).build())
-            .build()];
-        Self::collection(on)
-            .create_indexes(indexes, None)
-            .await
-            .context("failed to create the indexes on account snapshots")?;
-        Ok(())
-    }
-
     #[instrument(skip_all, fields(account_id = account_id, before = ?before), err)]
     pub async fn retrieve_latest(
         from: &Database,

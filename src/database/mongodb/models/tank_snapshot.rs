@@ -8,7 +8,7 @@ use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
-use crate::database::mongodb::traits::{TypedDocument, Upsert};
+use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
@@ -42,6 +42,23 @@ pub struct TankSnapshot {
 
 impl TypedDocument for TankSnapshot {
     const NAME: &'static str = "tank_snapshots";
+}
+
+impl Indexes for TankSnapshot {
+    type I = [IndexModel; 2];
+
+    fn indexes() -> Self::I {
+        [
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "aid": 1, "tid": 1, "lbts": -1 })
+                .options(IndexOptions::builder().unique(true).build())
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
+                .options(IndexOptions::builder().build())
+                .build(),
+        ]
+    }
 }
 
 #[async_trait]
@@ -141,25 +158,6 @@ impl Sub<TankSnapshot> for TankSnapshot {
 }
 
 impl TankSnapshot {
-    #[instrument(skip_all, err)]
-    pub async fn ensure_indexes(on: &Database) -> Result {
-        let indexes = [
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "aid": 1, "tid": 1, "lbts": -1 })
-                .options(IndexOptions::builder().unique(true).build())
-                .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
-                .options(IndexOptions::builder().build())
-                .build(),
-        ];
-        Self::collection(on)
-            .create_indexes(indexes, None)
-            .await
-            .context("failed to create the indexes on tank snapshots")?;
-        Ok(())
-    }
-
     #[instrument(skip_all, level = "debug")]
     pub async fn upsert_many(
         into: &Database,

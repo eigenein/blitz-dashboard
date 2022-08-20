@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use mongodb::bson::Document;
 use mongodb::options::{UpdateModifications, UpdateOptions, WriteConcern};
-use mongodb::{Collection, Database};
+use mongodb::{Collection, Database, IndexModel};
 use tokio::spawn;
 use tokio::time::timeout;
 
@@ -14,6 +14,22 @@ pub trait TypedDocument: 'static + Sized + Send {
     #[inline]
     fn collection(in_: &Database) -> Collection<Self> {
         in_.collection(Self::NAME)
+    }
+}
+
+#[async_trait]
+pub trait Indexes: TypedDocument + Sync {
+    type I: IntoIterator<Item = IndexModel> + Send;
+
+    fn indexes() -> Self::I;
+
+    #[instrument(skip_all, err)]
+    async fn ensure_indexes(on: &Database) -> Result {
+        Self::collection(on)
+            .create_indexes(Self::indexes(), None)
+            .await
+            .with_context(|| format!("failed to create the indexes in `{}`", Self::NAME))?;
+        Ok(())
     }
 }
 

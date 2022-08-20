@@ -5,7 +5,7 @@ use mongodb::{bson, Database, IndexModel};
 use serde::Deserialize;
 use serde_with::TryFromInto;
 
-use crate::database::mongodb::traits::{TypedDocument, Upsert};
+use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -52,18 +52,15 @@ impl RatingSnapshot {
     }
 }
 
-impl RatingSnapshot {
-    #[instrument(skip_all, err)]
-    pub async fn ensure_indexes(on: &Database) -> Result {
-        let indexes = [IndexModel::builder()
+#[async_trait]
+impl Indexes for RatingSnapshot {
+    type I = [IndexModel; 1];
+
+    fn indexes() -> Self::I {
+        [IndexModel::builder()
             .keys(doc! { "rlm": 1, "aid": 1, "szn": -1, "dt": -1 })
             .options(IndexOptions::builder().unique(true).build())
-            .build()];
-        Self::collection(on)
-            .create_indexes(indexes, None)
-            .await
-            .context("failed to create the indexes on rating snapshots")?;
-        Ok(())
+            .build()]
     }
 }
 
