@@ -31,16 +31,22 @@ pub async fn run(opts: TrainOpts) -> Result {
 
     let similarities = calculate_similarities(&train_set, &vehicle_stats);
 
-    for (tank_id, similarity) in similarities
-        .get(&18241)
-        .unwrap()
-        .iter()
-        .copied()
-        .sorted_by(|(_, corr_1), (_, corr_2)| corr_2.total_cmp(corr_1))
-        .take(10)
+    for (tank_id_1, tank_id_2, similarity) in similarities
+        .into_iter()
+        .flat_map(|(tank_id_1, entries)| {
+            entries
+                .into_iter()
+                .filter(move |(tank_id_2, _)| *tank_id_2 < tank_id_1)
+                .map(move |(tank_id_2, similarity)| (tank_id_1, tank_id_2, similarity))
+        })
+        .sorted_by(|(_, _, similarity_1), (_, _, similarity_2)| {
+            similarity_2.total_cmp(similarity_1)
+        })
+        .take(100)
     {
-        let vehicle = tankopedia::get_vehicle(tank_id);
-        info!(type_ = ?vehicle.type_, tier = vehicle.tier, name = ?vehicle.name, similarity);
+        let vehicle_1 = tankopedia::get_vehicle(tank_id_1);
+        let vehicle_2 = tankopedia::get_vehicle(tank_id_2);
+        info!(name_1 = ?vehicle_1.name, name_2 = ?vehicle_2.name, similarity);
     }
 
     Ok(())

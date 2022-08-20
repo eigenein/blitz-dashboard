@@ -46,15 +46,17 @@ impl TypedDocument for TrainItem {
 }
 
 impl Indexes for TrainItem {
-    type I = [IndexModel; 2];
+    type I = [IndexModel; 3];
 
     fn indexes() -> Self::I {
         [
-            // 1. Optimizes search queries by realm & last battle time.
-            // 2. Ensures that the upserts work correctly.
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1, "aid": 1, "tid": 1 })
+                .keys(doc! { "rlm": 1, "aid": 1, "tid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
+                .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "lbts": -1 })
+                .options(IndexOptions::builder().build())
                 .build(),
             // Ensures expiration of the items.
             IndexModel::builder()
@@ -71,7 +73,6 @@ impl Upsert for TrainItem {
     fn query(&self) -> Document {
         doc! {
             "rlm": self.realm.to_str(),
-            "lbts": self.last_battle_time,
             "aid": self.account_id,
             "tid": self.tank_id,
         }
