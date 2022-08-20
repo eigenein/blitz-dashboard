@@ -1,12 +1,10 @@
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document};
 use mongodb::options::{FindOneOptions, IndexOptions};
-use mongodb::{bson, Collection, Database, IndexModel};
+use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
-use tokio::spawn;
-use tokio::time::timeout;
 
-use crate::database::mongodb::options::upsert_options;
+use crate::database::mongodb::traits::{TypedDocument, Upsert};
 use crate::database::{RandomStatsSnapshot, RatingStatsSnapshot, TankLastBattleTime};
 use crate::prelude::*;
 use crate::wargaming;
@@ -35,6 +33,10 @@ pub struct AccountSnapshot {
     pub tank_last_battle_times: Vec<TankLastBattleTime>,
 }
 
+impl TypedDocument for AccountSnapshot {
+    const NAME: &'static str = "account_snapshots";
+}
+
 impl AccountSnapshot {
     pub fn new(
         realm: wargaming::Realm,
@@ -52,6 +54,25 @@ impl AccountSnapshot {
     }
 }
 
+#[async_trait]
+impl Upsert for AccountSnapshot {
+    type Update = Document;
+
+    #[inline]
+    fn query(&self) -> Document {
+        doc! {
+            "rlm": self.realm.to_str(),
+            "aid": self.account_id,
+            "lbts": self.last_battle_time,
+        }
+    }
+
+    #[inline]
+    fn update(&self) -> Result<Self::Update> {
+        Ok(doc! { "$setOnInsert": bson::to_bson(self)? })
+    }
+}
+
 impl AccountSnapshot {
     #[instrument(skip_all, err)]
     pub async fn ensure_indexes(on: &Database) -> Result {
@@ -63,29 +84,6 @@ impl AccountSnapshot {
             .create_indexes(indexes, None)
             .await
             .context("failed to create the indexes on account snapshots")?;
-        Ok(())
-    }
-
-    #[instrument(
-        skip_all,
-        fields(account_id = self.account_id),
-        err,
-    )]
-    pub async fn upsert(&self, to: &Database) -> Result {
-        let query = doc! { "rlm": self.realm.to_str(), "aid": self.account_id, "lbts": self.last_battle_time };
-        let update = doc! { "$setOnInsert": bson::to_bson(self)? };
-        let options = upsert_options();
-
-        debug!("upserting…");
-        let start_instant = Instant::now();
-        let collection = Self::collection(to);
-        let future = spawn(async move { collection.update_one(query, update, options).await });
-        timeout(StdDuration::from_secs(10), future)
-            .await
-            .context("timed out to insert the account snapshot")??
-            .context("failed to upsert the account snapshot")?;
-
-        debug!(elapsed = ?start_instant.elapsed(), "upserted");
         Ok(())
     }
 
@@ -105,11 +103,5 @@ impl AccountSnapshot {
         }
         debug!(elapsed_secs = start_instant.elapsed().as_secs_f32());
         Ok(this)
-    }
-}
-
-impl AccountSnapshot {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("account_snapshots")
     }
 }

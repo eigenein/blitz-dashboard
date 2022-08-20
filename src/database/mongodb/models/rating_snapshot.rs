@@ -1,13 +1,11 @@
 use futures::TryStreamExt;
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document};
 use mongodb::options::{FindOptions, IndexOptions};
-use mongodb::{bson, Collection, Database, IndexModel};
+use mongodb::{bson, Database, IndexModel};
 use serde::Deserialize;
 use serde_with::TryFromInto;
-use tokio::spawn;
-use tokio::time::timeout;
 
-use crate::database::mongodb::options::upsert_options;
+use crate::database::mongodb::traits::{TypedDocument, Upsert};
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -35,7 +33,10 @@ pub struct RatingSnapshot {
     pub close_rating: wargaming::MmRating,
 }
 
-/// Implements ways to instantiate a structure.
+impl TypedDocument for RatingSnapshot {
+    const NAME: &'static str = "rating_snapshots";
+}
+
 impl RatingSnapshot {
     pub fn new(realm: wargaming::Realm, account_info: &wargaming::AccountInfo) -> Option<Self> {
         let has_rating = account_info.stats.rating.current_season != 0
@@ -51,12 +52,7 @@ impl RatingSnapshot {
     }
 }
 
-/// Implements the common database-related functions.
 impl RatingSnapshot {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("rating_snapshots")
-    }
-
     #[instrument(skip_all, err)]
     pub async fn ensure_indexes(on: &Database) -> Result {
         let indexes = [IndexModel::builder()
@@ -71,36 +67,27 @@ impl RatingSnapshot {
     }
 }
 
-/// Implements logic-related queries.
-impl RatingSnapshot {
-    #[instrument(
-        skip_all,
-        fields(account_id = self.account_id),
-        err,
-    )]
-    pub async fn upsert(&self, to: &Database) -> Result {
-        let query = doc! {
+#[async_trait]
+impl Upsert for RatingSnapshot {
+    type Update = Document;
+
+    #[inline]
+    fn query(&self) -> Document {
+        doc! {
             "rlm": self.realm.to_str(),
             "aid": self.account_id,
             "szn": self.season as i32,
             "dt": self.date,
-        };
-        let update = doc! { "$set": { "cl": self.close_rating.0 } };
-        let options = upsert_options();
-
-        debug!("upserting…");
-        let start_instant = Instant::now();
-        let collection = Self::collection(to);
-        let future = spawn(async move { collection.update_one(query, update, options).await });
-        timeout(StdDuration::from_secs(10), future)
-            .await
-            .context("timed out to insert the rating snapshot")??
-            .context("failed to upsert the rating snapshot")?;
-
-        debug!(elapsed = ?start_instant.elapsed(), "upserted");
-        Ok(())
+        }
     }
 
+    #[inline]
+    fn update(&self) -> Result<Self::Update> {
+        Ok(doc! { "$set": { "cl": self.close_rating.0 } })
+    }
+}
+
+impl RatingSnapshot {
     #[instrument(
         skip_all,
         level = "debug",

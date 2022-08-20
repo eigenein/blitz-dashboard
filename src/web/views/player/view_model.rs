@@ -9,6 +9,7 @@ use poem::web::cookie::CookieJar;
 use poem::web::Path;
 use sentry::protocol::IpAddress;
 
+use crate::database::mongodb::traits::Upsert;
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};

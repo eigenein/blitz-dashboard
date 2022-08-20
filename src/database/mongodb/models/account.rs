@@ -1,17 +1,15 @@
 use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document};
 use mongodb::options::{
     FindOneAndUpdateOptions, FindOneOptions, FindOptions, IndexOptions, ReturnDocument,
 };
-use mongodb::{bson, Collection, Database, IndexModel};
+use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
-use tokio::spawn;
-use tokio::time::timeout;
 
-use crate::database::mongodb::options::upsert_options;
+use crate::database::mongodb::traits::{TypedDocument, Upsert};
 use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
 
@@ -34,6 +32,10 @@ pub struct Account {
     pub random: f64,
 }
 
+impl TypedDocument for Account {
+    const NAME: &'static str = "accounts";
+}
+
 impl Account {
     pub fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
         Self {
@@ -47,6 +49,21 @@ impl Account {
     pub const fn last_battle_time(mut self, last_battle_time: DateTime) -> Self {
         self.last_battle_time = Some(last_battle_time);
         self
+    }
+}
+
+#[async_trait]
+impl Upsert for Account {
+    type Update = Document;
+
+    #[inline]
+    fn query(&self) -> Document {
+        doc! { "rlm": self.realm.to_str(), "aid": self.id }
+    }
+
+    #[inline]
+    fn update(&self) -> Result<Self::Update> {
+        Ok(doc! { "$set": bson::to_bson(&self)? })
     }
 }
 
@@ -90,25 +107,6 @@ impl Account {
             Ok::<_, Error>(Some((iter(sample.into_iter().map(Ok)), (sample_number + 1, database))))
         })
         .try_flatten()
-    }
-
-    #[instrument(skip_all, fields(account_id = self.id), err)]
-    pub async fn upsert(&self, to: &Database) -> Result {
-        let query = doc! { "rlm": self.realm.to_str(), "aid": self.id };
-        let update = doc! { "$set": bson::to_bson(&self)? };
-        let options = upsert_options();
-
-        debug!("upserting…");
-        let start_instant = Instant::now();
-        let collection = Self::collection(to);
-        let future = spawn(async move { collection.update_one(query, update, options).await });
-        timeout(StdDuration::from_secs(10), future)
-            .await
-            .context("timed out to upsert the account")??
-            .context("failed to upsert the account #{}")?;
-
-        debug!(elapsed = ?start_instant.elapsed(), "upserted");
-        Ok(())
     }
 
     /// Ensures that the account exists in the database.
@@ -182,11 +180,5 @@ impl Account {
             .ok_or_else(|| anyhow!("could not sample a random account"))?;
         debug!(elapsed = ?start_instant.elapsed());
         Ok(account)
-    }
-}
-
-impl Account {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("accounts")
     }
 }

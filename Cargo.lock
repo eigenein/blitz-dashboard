@@ -219,6 +219,7 @@ dependencies = [
  "ahash 0.8.0",
  "anyhow",
  "async-compression",
+ "async-trait",
  "bpci",
  "chrono",
  "chrono-humanize",

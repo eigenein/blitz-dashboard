@@ -1,6 +1,7 @@
 use mongodb::Database;
 
 use crate::database;
+use crate::database::mongodb::traits::Upsert;
 use crate::prelude::*;
 
 pub struct CrawledData {

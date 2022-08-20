@@ -1,9 +1,10 @@
 use futures::Stream;
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
-use mongodb::{Collection, Database};
+use mongodb::Database;
 use serde::Deserialize;
 
+use crate::database::mongodb::traits::TypedDocument;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -11,6 +12,10 @@ use crate::wargaming;
 pub struct AccountEntry {
     #[serde(rename = "aid")]
     pub id: wargaming::AccountId,
+}
+
+impl TypedDocument for AccountEntry {
+    const NAME: &'static str = "accounts";
 }
 
 impl AccountEntry {
@@ -26,11 +31,5 @@ impl AccountEntry {
             .projection(doc! { "_id": 0, "aid": 1 })
             .build();
         Ok(Self::collection(from).find(filter, options).await?)
-    }
-}
-
-impl AccountEntry {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("accounts")
     }
 }

@@ -2,15 +2,13 @@ use std::ops::Sub;
 
 use futures::TryStreamExt;
 use itertools::{merge_join_by, EitherOrBoth, Itertools};
-use mongodb::bson::{doc, from_document};
+use mongodb::bson::{doc, from_document, Document};
 use mongodb::options::IndexOptions;
-use mongodb::{bson, Collection, Database, IndexModel};
+use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
-use tokio::spawn;
-use tokio::time::timeout;
 
-use crate::database::mongodb::options::upsert_options;
+use crate::database::mongodb::traits::{TypedDocument, Upsert};
 use crate::database::{RandomStatsSnapshot, Root, TankLastBattleTime};
 use crate::helpers::tracing::format_elapsed;
 use crate::prelude::*;
@@ -40,6 +38,28 @@ pub struct TankSnapshot {
 
     #[serde(flatten)]
     pub stats: RandomStatsSnapshot,
+}
+
+impl TypedDocument for TankSnapshot {
+    const NAME: &'static str = "tank_snapshots";
+}
+
+#[async_trait]
+impl Upsert for TankSnapshot {
+    type Update = Document;
+
+    fn query(&self) -> Document {
+        doc! {
+            "rlm": self.realm.to_str(),
+            "aid": self.account_id,
+            "tid": self.tank_id,
+            "lbts": self.last_battle_time,
+        }
+    }
+
+    fn update(&self) -> Result<Self::Update> {
+        Ok(doc! { "$setOnInsert": bson::to_bson(self)? })
+    }
 }
 
 impl TankSnapshot {
@@ -140,35 +160,6 @@ impl TankSnapshot {
         Ok(())
     }
 
-    #[instrument(
-        skip_all,
-        fields(account_id = self.account_id, tank_id = self.tank_id),
-        err,
-    )]
-    pub async fn upsert(&self, into: &Database) -> Result {
-        let query = doc! {
-            "rlm": self.realm.to_str(),
-            "aid": self.account_id,
-            "tid": self.tank_id,
-            "lbts": self.last_battle_time,
-        };
-        let update = doc! { "$setOnInsert": bson::to_bson(self)? };
-        let options = upsert_options();
-
-        debug!("upserting…");
-        let start_instant = Instant::now();
-        let collection = Self::collection(into);
-        let future = spawn(async move { collection.update_one(query, update, options).await });
-        // Sometimes `update_one` freezes, and I don't know why.
-        timeout(StdDuration::from_secs(10), future)
-            .await
-            .context("timed out to upsert the tank snapshot")??
-            .context("failed to upsert the tank snapshot")?;
-
-        debug!(elapsed = format_elapsed(start_instant).as_str(), "upserted");
-        Ok(())
-    }
-
     #[instrument(skip_all, level = "debug")]
     pub async fn upsert_many(
         into: &Database,
@@ -264,11 +255,5 @@ impl TankSnapshot {
             "done"
         );
         Ok(snapshots)
-    }
-}
-
-impl TankSnapshot {
-    fn collection(in_: &Database) -> Collection<Self> {
-        in_.collection("tank_snapshots")
     }
 }

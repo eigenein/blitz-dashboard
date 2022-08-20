@@ -1,6 +1,7 @@
 pub use std::time::{Duration as StdDuration, Instant};
 
 pub use anyhow::{anyhow, bail, Context, Error};
+pub use async_trait::async_trait;
 pub use chrono::{Datelike, Duration, TimeZone, Utc};
 pub use tracing::{debug, debug_span, error, info, info_span, instrument, trace, warn};
 pub use tracing_futures::Instrument;
