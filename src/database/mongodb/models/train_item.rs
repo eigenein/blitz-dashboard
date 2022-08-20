@@ -1,8 +1,12 @@
+mod vehicle_stats;
+
+use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, Document};
 use mongodb::options::IndexOptions;
 use mongodb::{bson, IndexModel};
 use serde::{Deserialize, Serialize};
 
+pub use self::vehicle_stats::*;
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::database::TankSnapshot;
 use crate::helpers::serde::is_default;
@@ -88,5 +92,20 @@ impl TrainItem {
             n_wins: actual_snapshot.stats.n_wins - previous_snapshot.stats.n_wins,
             n_battles: actual_snapshot.stats.n_battles - previous_snapshot.stats.n_battles,
         }
+    }
+
+    #[instrument(skip_all, fields(after = ?after))]
+    pub async fn retrieve_all(
+        from: &mongodb::Database,
+        realm: wargaming::Realm,
+        after: DateTime,
+    ) -> Result<impl Stream<Item = Result<Self>>> {
+        let filter = doc! { "rlm": realm.to_str(), "lbts": { "$gte": after } };
+        let stream = Self::collection(from)
+            .find(filter, None)
+            .await
+            .context("failed to query train items")?
+            .map_err(Error::from);
+        Ok(stream)
     }
 }

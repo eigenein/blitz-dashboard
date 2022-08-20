@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, Default, Serialize, Deserialize, Hash)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize, Hash, Debug)]
 pub enum ConfidenceLevel {
     Z50,
     Z70,

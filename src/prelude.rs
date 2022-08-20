@@ -13,3 +13,8 @@ pub type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 pub type DateTime = chrono::DateTime<Utc>;
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
+
+#[inline]
+pub fn now() -> DateTime {
+    Utc::now()
+}
