@@ -280,7 +280,7 @@ pub struct TrainOpts {
 
     #[clap(
         long,
-        default_value = "85",
+        default_value = "95",
         ignore_case = true,
         value_parser = EnumValueParser::<ConfidenceLevel>::new(),
         env = "BLITZ_DASHBOARD_TRAINER_CONFIDENCE_LEVEL"
