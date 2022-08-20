@@ -79,20 +79,14 @@ impl Upsert for TrainItem {
 }
 
 impl TrainItem {
-    pub fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &Option<TankSnapshot>) -> Self {
+    pub fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &TankSnapshot) -> Self {
         Self {
             realm: actual_snapshot.realm,
             account_id: actual_snapshot.account_id,
             tank_id: actual_snapshot.tank_id,
             last_battle_time: actual_snapshot.last_battle_time,
-            n_wins: actual_snapshot.stats.n_wins
-                - previous_snapshot
-                    .map(|s| s.stats.n_wins)
-                    .unwrap_or_default(),
-            n_battles: actual_snapshot.stats.n_battles
-                - previous_snapshot
-                    .map(|s| s.stats.n_battles)
-                    .unwrap_or_default(),
+            n_wins: actual_snapshot.stats.n_wins - previous_snapshot.stats.n_wins,
+            n_battles: actual_snapshot.stats.n_battles - previous_snapshot.stats.n_battles,
         }
     }
 }
