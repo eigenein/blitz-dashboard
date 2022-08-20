@@ -10,6 +10,7 @@
 
 use clap::Parser;
 use helpers::tracing;
+use sentry::integrations::anyhow::capture_anyhow;
 
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
@@ -50,5 +51,8 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::Train(opts) => trainer::run(opts).await,
     };
     info!(elapsed = format_elapsed(start_instant).as_str());
+    if let Err(error) = &result {
+        capture_anyhow(error);
+    }
     result
 }

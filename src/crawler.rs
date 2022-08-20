@@ -311,9 +311,10 @@ async fn gather_train_items(
         .collect();
     let mut train_items = Vec::new();
     for actual_snapshot in actual_snapshots {
-        if actual_snapshot.last_battle_time >= deadline {
-            if let Some(previous_snapshot) = previous_snapshots.remove(&actual_snapshot.tank_id) {
-                train_items.push(database::TrainItem::new(actual_snapshot, &previous_snapshot));
+        if let Some(previous_snapshot) = previous_snapshots.remove(&actual_snapshot.tank_id) {
+            if let Some(train_item) = database::TrainItem::new(actual_snapshot, &previous_snapshot)
+            {
+                train_items.push(train_item);
             }
         }
     }

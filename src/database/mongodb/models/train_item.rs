@@ -15,7 +15,7 @@ use crate::prelude::*;
 use crate::wargaming;
 
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TrainItem {
     #[serde(rename = "rlm")]
     pub realm: wargaming::Realm,
@@ -83,14 +83,21 @@ impl Upsert for TrainItem {
 }
 
 impl TrainItem {
-    pub const fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &TankSnapshot) -> Self {
-        Self {
-            realm: actual_snapshot.realm,
-            account_id: actual_snapshot.account_id,
-            tank_id: actual_snapshot.tank_id,
-            last_battle_time: actual_snapshot.last_battle_time,
-            n_wins: actual_snapshot.stats.n_wins - previous_snapshot.stats.n_wins,
-            n_battles: actual_snapshot.stats.n_battles - previous_snapshot.stats.n_battles,
+    pub const fn new(
+        actual_snapshot: &TankSnapshot,
+        previous_snapshot: &TankSnapshot,
+    ) -> Option<Self> {
+        if actual_snapshot.stats.n_battles > previous_snapshot.stats.n_battles {
+            Some(Self {
+                realm: actual_snapshot.realm,
+                account_id: actual_snapshot.account_id,
+                tank_id: actual_snapshot.tank_id,
+                last_battle_time: actual_snapshot.last_battle_time,
+                n_wins: actual_snapshot.stats.n_wins - previous_snapshot.stats.n_wins,
+                n_battles: actual_snapshot.stats.n_battles - previous_snapshot.stats.n_battles,
+            })
+        } else {
+            None
         }
     }
 
