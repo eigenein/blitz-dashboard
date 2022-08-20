@@ -106,16 +106,20 @@ impl Sub<RandomStatsSnapshot> for RandomStatsSnapshot {
 
     fn sub(self, rhs: RandomStatsSnapshot) -> Self::Output {
         Self {
-            n_battles: self.n_battles - rhs.n_battles,
-            n_wins: self.n_wins - rhs.n_wins,
-            n_survived_battles: self.n_survived_battles - rhs.n_survived_battles,
-            n_win_and_survived: self.n_win_and_survived - rhs.n_win_and_survived,
-            damage_dealt: self.damage_dealt - rhs.damage_dealt,
-            damage_received: self.damage_received - rhs.damage_received,
-            n_shots: self.n_shots - rhs.n_shots,
-            n_hits: self.n_hits - rhs.n_hits,
-            n_frags: self.n_frags - rhs.n_frags,
-            xp: self.xp - rhs.xp,
+            n_battles: self.n_battles.saturating_sub(rhs.n_battles),
+            n_wins: self.n_wins.saturating_sub(rhs.n_wins),
+            n_survived_battles: self
+                .n_survived_battles
+                .saturating_sub(rhs.n_survived_battles),
+            n_win_and_survived: self
+                .n_win_and_survived
+                .saturating_sub(rhs.n_win_and_survived),
+            damage_dealt: self.damage_dealt.saturating_sub(rhs.damage_dealt),
+            damage_received: self.damage_received.saturating_sub(rhs.damage_received),
+            n_shots: self.n_shots.saturating_sub(rhs.n_shots),
+            n_hits: self.n_hits.saturating_sub(rhs.n_hits),
+            n_frags: self.n_frags.saturating_sub(rhs.n_frags),
+            xp: self.xp.saturating_sub(rhs.xp),
         }
     }
 }

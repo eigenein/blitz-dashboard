@@ -76,10 +76,13 @@ impl Sub<RatingStatsSnapshot> for wargaming::RatingStats {
     fn sub(self, rhs: RatingStatsSnapshot) -> Self::Output {
         Self::Output {
             mm_rating: (self.mm_rating.0 - rhs.mm_rating.0).into(),
-            n_battles: self.basic.n_battles - rhs.n_battles,
-            n_wins: self.basic.n_wins - rhs.n_wins,
-            damage_dealt: self.basic.damage_dealt - rhs.damage_dealt,
-            damage_received: self.basic.damage_received - rhs.damage_received,
+            n_battles: self.basic.n_battles.saturating_sub(rhs.n_battles),
+            n_wins: self.basic.n_wins.saturating_sub(rhs.n_wins),
+            damage_dealt: self.basic.damage_dealt.saturating_sub(rhs.damage_dealt),
+            damage_received: self
+                .basic
+                .damage_received
+                .saturating_sub(rhs.damage_received),
             current_season: self.current_season,
         }
     }
