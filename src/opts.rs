@@ -91,6 +91,16 @@ pub struct CrawlerOpts {
 
     #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_HEARTBEAT_URL")]
     pub heartbeat_url: Option<String>,
+
+    /// If specified, enables gathering the recommender system's train data
+    /// to the database.
+    /// Highly experimental, use with caution.
+    #[clap(
+        long,
+        parse(try_from_str = humantime::parse_duration),
+        env = "BLITZ_DASHBOARD_CRAWLER_TRAIN_PERIOD",
+    )]
+    pub train_period: Option<time::Duration>,
 }
 
 /// Updates the bundled Tankopedia module.
@@ -240,7 +250,7 @@ pub struct InternalConnectionOpts {
     /// MongoDB connection URI
     #[structopt(
         long = "mongodb-uri",
-        default_value = "mongodb://localhost/yastatist?compressors=zstd",
+        default_value = "mongodb://localhost/yastatist?directConnection=true",
         env = "BLITZ_DASHBOARD_MONGODB_URI"
     )]
     pub mongodb_uri: String,

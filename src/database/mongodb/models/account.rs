@@ -42,13 +42,16 @@ impl Indexes for Account {
 
     fn indexes() -> Self::I {
         [
+            // Ensures the single entry for each account.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
+            // Optimizes the crawler's range query.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "lbts": -1 })
                 .build(),
+            // Optimizes the crawler's range query.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "random": 1 })
                 .build(),

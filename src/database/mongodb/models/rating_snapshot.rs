@@ -57,10 +57,13 @@ impl Indexes for RatingSnapshot {
     type I = [IndexModel; 1];
 
     fn indexes() -> Self::I {
-        [IndexModel::builder()
-            .keys(doc! { "rlm": 1, "aid": 1, "szn": -1, "dt": -1 })
-            .options(IndexOptions::builder().unique(true).build())
-            .build()]
+        [
+            // Ensures the only entry per account per season per day.
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "aid": 1, "szn": -1, "dt": -1 })
+                .options(IndexOptions::builder().unique(true).build())
+                .build(),
+        ]
     }
 }
 

@@ -40,7 +40,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         Duration::from_std(opts.max_offset)?,
     );
     crawler
-        .run(accounts, &opts.shared.buffering, opts.heartbeat_url)
+        .run(
+            accounts,
+            &opts.shared.buffering,
+            opts.heartbeat_url,
+            opts.train_period.map(Duration::from_std).transpose()?,
+        )
         .await
 }
 
@@ -57,7 +62,9 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
         .map(|account_id| database::Account::new(opts.shared.realm, account_id))
         .map(Ok);
     let crawler = Crawler::new(&opts.shared).await?;
-    crawler.run(accounts, &opts.shared.buffering, None).await
+    crawler
+        .run(accounts, &opts.shared.buffering, None, None)
+        .await
 }
 
 impl Crawler {
@@ -90,6 +97,7 @@ impl Crawler {
         accounts: impl Stream<Item = Result<database::Account>>,
         buffering: &BufferingOpts,
         heartbeat_url: Option<String>,
+        train_period: Option<Duration>,
     ) -> Result {
         info!(
             realm = ?self.realm,
@@ -122,7 +130,14 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(self.api.clone(), self.realm, account, account_info))
+                Ok(crawl_account(
+                    self.api.clone(),
+                    self.db.clone(),
+                    self.realm,
+                    account,
+                    account_info,
+                    train_period,
+                ))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -217,9 +232,11 @@ fn match_account_infos(
 )]
 async fn crawl_account(
     api: WargamingApi,
+    db: mongodb::Database,
     realm: wargaming::Realm,
     account: database::Account,
     account_info: wargaming::AccountInfo,
+    train_period: Option<Duration>,
 ) -> Result<CrawledData> {
     debug!(?account.last_battle_time);
 
@@ -253,12 +270,53 @@ async fn crawl_account(
         database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
     let rating_snapshot = database::RatingSnapshot::new(realm, &account_info);
 
+    let train_items = if let Some(train_period) = train_period {
+        gather_train_items(&db, realm, account.id, &tank_snapshots, train_period).await?
+    } else {
+        Vec::new()
+    };
+
     Ok(CrawledData {
         account,
         account_snapshot,
         tank_snapshots,
         rating_snapshot,
+        train_items,
     })
+}
+
+/// Gather the recommender system's train data.
+/// Highly experimental.
+#[instrument(level = "debug", skip_all, fields(account_id = account_id))]
+async fn gather_train_items(
+    db: &mongodb::Database,
+    realm: wargaming::Realm,
+    account_id: wargaming::AccountId,
+    actual_snapshots: &[database::TankSnapshot],
+    train_period: Duration,
+) -> Result<Vec<database::TrainItem>> {
+    let deadline = Utc::now() - train_period;
+    let tank_ids = actual_snapshots
+        .iter()
+        .filter(|snapshot| snapshot.last_battle_time >= deadline)
+        .map(|snapshot| snapshot.tank_id)
+        .collect_vec();
+    let mut previous_snapshots: AHashMap<_, _> =
+        database::TankSnapshot::retrieve_latest_tank_snapshots(
+            db, realm, account_id, deadline, &tank_ids,
+        )
+        .await?
+        .into_iter()
+        .map(|snapshot| (snapshot.tank_id, snapshot))
+        .collect();
+    let mut train_items = Vec::new();
+    for actual_snapshot in actual_snapshots {
+        if actual_snapshot.last_battle_time >= deadline {
+            let previous_snapshot = previous_snapshots.remove(&actual_snapshot.tank_id);
+            train_items.push(database::TrainItem::new(actual_snapshot, &previous_snapshot));
+        }
+    }
+    Ok(train_items)
 }
 
 #[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]

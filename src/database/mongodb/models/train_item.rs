@@ -4,6 +4,7 @@ use mongodb::{bson, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
+use crate::database::TankSnapshot;
 use crate::helpers::serde::is_default;
 use crate::helpers::time::from_months;
 use crate::prelude::*;
@@ -45,10 +46,13 @@ impl Indexes for TrainItem {
 
     fn indexes() -> Self::I {
         [
+            // 1. Optimizes search queries by realm & last battle time.
+            // 2. Ensures that the upserts work correctly.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "lbts": -1, "aid": 1, "tid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
+            // Ensures expiration of the items.
             IndexModel::builder()
                 .keys(doc! { "lbts": 1 })
                 .options(IndexOptions::builder().expire_after(from_months(1)).build())
@@ -71,5 +75,24 @@ impl Upsert for TrainItem {
 
     fn update(&self) -> Result<Self::Update> {
         Ok(doc! { "$set": bson::to_bson(&self)? })
+    }
+}
+
+impl TrainItem {
+    pub fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &Option<TankSnapshot>) -> Self {
+        Self {
+            realm: actual_snapshot.realm,
+            account_id: actual_snapshot.account_id,
+            tank_id: actual_snapshot.tank_id,
+            last_battle_time: actual_snapshot.last_battle_time,
+            n_wins: actual_snapshot.stats.n_wins
+                - previous_snapshot
+                    .map(|s| s.stats.n_wins)
+                    .unwrap_or_default(),
+            n_battles: actual_snapshot.stats.n_battles
+                - previous_snapshot
+                    .map(|s| s.stats.n_battles)
+                    .unwrap_or_default(),
+        }
     }
 }

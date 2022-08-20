@@ -49,10 +49,12 @@ impl Indexes for TankSnapshot {
 
     fn indexes() -> Self::I {
         [
+            // Ensures the only entry for each tank & last battle time.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1, "tid": 1, "lbts": -1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
+            // Optimizes the last battle time range queries for an account.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
                 .options(IndexOptions::builder().build())
