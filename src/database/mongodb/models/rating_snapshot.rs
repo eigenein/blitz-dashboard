@@ -39,7 +39,8 @@ pub struct RatingSnapshot {
 impl RatingSnapshot {
     pub fn new(realm: wargaming::Realm, account_info: &wargaming::AccountInfo) -> Option<Self> {
         let has_rating = account_info.stats.rating.current_season != 0
-            && account_info.stats.rating.calibration_battles_left == 0;
+            // This is bad, but there's no telling other than that.
+            && account_info.stats.rating.mm_rating.0 != 0.0;
         has_rating.then(|| Self {
             realm,
             account_id: account_info.id,

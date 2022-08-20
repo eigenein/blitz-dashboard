@@ -94,6 +94,4 @@ pub struct RatingStats {
     pub mm_rating: MmRating,
 
     pub current_season: u16,
-
-    pub calibration_battles_left: u16,
 }
