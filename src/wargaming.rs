@@ -45,7 +45,7 @@ impl WargamingApi {
 
     pub fn new(
         application_id: &str,
-        timeout: StdDuration,
+        timeout: time::Duration,
         max_rps: NonZeroU32,
     ) -> Result<WargamingApi> {
         info!(max_rps);
@@ -211,7 +211,7 @@ impl WargamingApi {
                             }
                             "SOURCE_NOT_AVAILABLE" => {
                                 warn!(error.code, nr_attempt, "source not available");
-                                sleep(StdDuration::from_secs(1)).await;
+                                sleep(time::Duration::from_secs(1)).await;
                             }
                             _ => {
                                 bail!("#{} {}/{}", nr_attempt, error.code, message);
@@ -231,7 +231,7 @@ impl WargamingApi {
     #[tracing::instrument(skip_all, fields(path = url.path()))]
     async fn call_once<T: DeserializeOwned>(&self, url: Url) -> Result<Response<T>> {
         self.rate_limiter
-            .until_ready_with_jitter(Jitter::up_to(StdDuration::from_millis(100)))
+            .until_ready_with_jitter(Jitter::up_to(time::Duration::from_millis(100)))
             .await;
 
         let nr_request = self.request_counter.fetch_add(1, Ordering::Relaxed);

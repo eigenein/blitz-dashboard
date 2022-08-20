@@ -11,7 +11,6 @@ use crate::opts::ImportTankopediaOpts;
 use crate::prelude::*;
 use crate::wargaming::models::{Nation, TankId, TankType, Vehicle};
 use crate::wargaming::{Tankopedia, WargamingApi};
-use crate::StdDuration;
 
 mod generated;
 
@@ -29,7 +28,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
 
     let api = WargamingApi::new(
         &opts.application_id,
-        StdDuration::from_secs(30),
+        time::Duration::from_secs(30),
         NonZeroU32::new(10).unwrap(),
     )?;
     let json_path = Path::new(file!())

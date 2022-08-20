@@ -9,7 +9,7 @@ use crate::wargaming;
 
 pub struct CrawlerMetrics {
     lag_percentile: usize,
-    log_interval: StdDuration,
+    log_interval: time::Duration,
 
     reset_instant: Instant,
     average_batch_fill_level: Average,
@@ -24,7 +24,7 @@ impl CrawlerMetrics {
         request_counter: &AtomicU32,
         lag_percentile: usize,
         lag_window_size: usize,
-        log_interval: StdDuration,
+        log_interval: time::Duration,
     ) -> Self {
         info!(lag_percentile, lag_window_size, ?log_interval);
         Self {
@@ -69,7 +69,7 @@ impl CrawlerMetrics {
         }
     }
 
-    fn log(&self, request_counter: u32, elapsed: StdDuration) {
+    fn log(&self, request_counter: u32, elapsed: time::Duration) {
         let elapsed_secs = elapsed.as_secs_f64();
         let elapsed_mins = elapsed_secs / 60.0;
         let n_requests = request_counter - self.start_request_count;

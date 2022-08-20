@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::helpers::serde::is_default;
+use crate::helpers::time::from_months;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -50,11 +51,7 @@ impl Indexes for TrainItem {
                 .build(),
             IndexModel::builder()
                 .keys(doc! { "lbts": 1 })
-                .options(
-                    IndexOptions::builder()
-                        .expire_after(time::Duration::from_secs(86400 * 30))
-                        .build(),
-                )
+                .options(IndexOptions::builder().expire_after(from_months(1)).build())
                 .build(),
         ]
     }

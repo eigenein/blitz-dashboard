@@ -46,7 +46,7 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
     Ok(guard)
 }
 
-pub fn format_duration(duration: StdDuration) -> String {
+pub fn format_duration(duration: time::Duration) -> String {
     humantime::format_duration(duration).to_string()
 }
 

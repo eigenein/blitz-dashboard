@@ -1,5 +1,5 @@
 pub use std::time;
-pub use std::time::{Duration as StdDuration, Instant};
+pub use std::time::Instant;
 
 pub use anyhow::{anyhow, bail, Context, Error};
 pub use async_trait::async_trait;

@@ -69,7 +69,7 @@ pub struct CrawlerOpts {
         parse(try_from_str = humantime::parse_duration),
         env = "BLITZ_DASHBOARD_CRAWLER_MIN_OFFSET",
     )]
-    pub min_offset: StdDuration,
+    pub min_offset: time::Duration,
 
     /// Maximum last battle time offset.
     #[clap(
@@ -78,7 +78,7 @@ pub struct CrawlerOpts {
         parse(try_from_str = humantime::parse_duration),
         env = "BLITZ_DASHBOARD_CRAWLER_MAX_OFFSET",
     )]
-    pub max_offset: StdDuration,
+    pub max_offset: time::Duration,
 
     /// Number of accounts to sample from the database in one query.
     #[clap(
@@ -181,7 +181,7 @@ pub struct SharedCrawlerOpts {
         parse(try_from_str = humantime::parse_duration),
         env = "BLITZ_DASHBOARD_CRAWLER_LOG_INTERVAL",
     )]
-    pub log_interval: StdDuration,
+    pub log_interval: time::Duration,
 
     #[structopt(
         long,
@@ -216,7 +216,7 @@ pub struct ConnectionOpts {
         parse(try_from_str = humantime::parse_duration),
         env = "BLITZ_DASHBOARD_API_TIMEOUT",
     )]
-    pub api_timeout: StdDuration,
+    pub api_timeout: time::Duration,
 
     /// Maximum number of requests per second for the API.
     #[clap(long, env = "BLITZ_DASHBOARD_MAX_API_RPS", default_value = "19")]

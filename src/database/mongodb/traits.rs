@@ -51,7 +51,7 @@ pub trait Upsert: TypedDocument {
         let start_instant = Instant::now();
         let collection = Self::collection(to);
         let future = spawn(async move { collection.update_one(query, update, options).await });
-        timeout(StdDuration::from_secs(10), future)
+        timeout(time::Duration::from_secs(10), future)
             .await
             .with_context(|| format!("timed out to upsert into `{}`", Self::NAME))??
             .with_context(|| format!("failed to upsert into `{}`", Self::NAME))?;
@@ -63,7 +63,7 @@ pub trait Upsert: TypedDocument {
     #[inline]
     fn upsert_options() -> UpdateOptions {
         let write_concern = WriteConcern::builder()
-            .w_timeout(StdDuration::from_secs(5))
+            .w_timeout(time::Duration::from_secs(5))
             .build();
         UpdateOptions::builder()
             .upsert(true)
