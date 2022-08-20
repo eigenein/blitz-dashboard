@@ -79,7 +79,7 @@ impl Upsert for TrainItem {
 }
 
 impl TrainItem {
-    pub fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &TankSnapshot) -> Self {
+    pub const fn new(actual_snapshot: &TankSnapshot, previous_snapshot: &TankSnapshot) -> Self {
         Self {
             realm: actual_snapshot.realm,
             account_id: actual_snapshot.account_id,
