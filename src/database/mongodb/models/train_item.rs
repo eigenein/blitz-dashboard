@@ -31,7 +31,7 @@ pub struct TrainItem {
     pub last_battle_time: DateTime,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(default, rename = "nb", skip_serializing_if = "is_default")]
+    #[serde(rename = "nb")]
     pub n_battles: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
