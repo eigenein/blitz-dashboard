@@ -16,7 +16,6 @@ pub const fn from_months(months: u64) -> time::Duration {
     time::Duration::from_secs(months * 2630016)
 }
 
-#[allow(dead_code)]
 pub const fn from_years(years: u64) -> time::Duration {
     time::Duration::from_secs(years * 31557600)
 }

@@ -24,7 +24,7 @@ use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
 use self::view_model::ViewModel;
 use crate::helpers::hash::hash_digest;
-use crate::helpers::time::{from_days, from_hours, from_months};
+use crate::helpers::time::{from_days, from_hours, from_months, from_years};
 use crate::math::statistics::ConfidenceLevel;
 use crate::math::traits::*;
 use crate::prelude::*;
@@ -411,6 +411,8 @@ pub async fn get(
                                 (render_period_li(view_model.preferences.period, from_months(1), &locale.text("title-period-1-month")?)?)
                                 (render_period_li(view_model.preferences.period, from_months(2), &locale.text("title-period-2-months")?)?)
                                 (render_period_li(view_model.preferences.period, from_months(3), &locale.text("title-period-3-months")?)?)
+                                (render_period_li(view_model.preferences.period, from_months(6), &locale.text("title-period-6-months")?)?)
+                                (render_period_li(view_model.preferences.period, from_years(1), &locale.text("title-period-1-year")?)?)
                             }
                         }
                     }
