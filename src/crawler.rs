@@ -125,14 +125,7 @@ impl Crawler {
             .map(|item| {
                 let (account, account_info) = item?;
                 trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(
-                    self.api.clone(),
-                    self.db.clone(),
-                    self.realm,
-                    account,
-                    account_info,
-                    enable_train,
-                ))
+                Ok(crawl_account(self.api.clone(), self.realm, account, account_info, enable_train))
             })
             // Buffer the accounts.
             .try_buffer_unordered(buffering.n_buffered_accounts)
@@ -227,7 +220,6 @@ fn match_account_infos(
 )]
 async fn crawl_account(
     api: WargamingApi,
-    db: mongodb::Database,
     realm: wargaming::Realm,
     account: database::Account,
     account_info: wargaming::AccountInfo,
@@ -241,6 +233,15 @@ async fn crawl_account(
         .iter()
         .map_into::<database::TankLastBattleTime>()
         .collect_vec();
+    let partial_tank_stats = tanks_stats
+        .iter()
+        .map_into::<database::PartialTankStats>()
+        .collect_vec();
+    let train_items = if enable_train {
+        gather_train_items(&account, &tanks_stats)
+    } else {
+        Vec::new()
+    };
     let tanks_stats = tanks_stats
         .into_iter()
         .filter(|tank| Some(tank.last_battle_time) > account.last_battle_time)
@@ -259,18 +260,12 @@ async fn crawl_account(
         id: account.id,
         realm,
         last_battle_time: Some(account_info.last_battle_time),
-        random: account.random,
+        random: fastrand::f64(),
+        partial_tank_stats,
     };
     let account_snapshot =
         database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
     let rating_snapshot = database::RatingSnapshot::new(realm, &account_info);
-
-    let train_items = if enable_train {
-        gather_train_items(&db, realm, account.id, &tank_snapshots, account_info.last_battle_time)
-            .await?
-    } else {
-        Vec::new()
-    };
 
     Ok(CrawledData {
         account,
@@ -283,40 +278,36 @@ async fn crawl_account(
 
 /// Gather the recommender system's train data.
 /// Highly experimental.
-#[instrument(level = "debug", skip_all, fields(account_id = account_id))]
-async fn gather_train_items(
-    db: &mongodb::Database,
-    realm: wargaming::Realm,
-    account_id: wargaming::AccountId,
-    new_snapshots: &[database::TankSnapshot],
-    last_battle_time: DateTime,
-) -> Result<Vec<database::TrainItem>> {
-    let tank_ids = new_snapshots
+#[instrument(level = "debug", skip_all, fields(account_id = account.id))]
+fn gather_train_items(
+    account: &database::Account,
+    actual_tank_stats: &[wargaming::TankStats],
+) -> Vec<database::TrainItem> {
+    let previous_partial_tank_stats = account
+        .partial_tank_stats
         .iter()
-        .map(|snapshot| snapshot.tank_id)
-        .collect_vec();
-    let mut previous_snapshots: AHashMap<_, _> =
-        database::TankSnapshot::retrieve_latest_tank_snapshots(
-            db,
-            realm,
-            account_id,
-            last_battle_time,
-            &tank_ids,
-        )
-        .await?
-        .into_iter()
-        .map(|snapshot| (snapshot.tank_id, snapshot))
-        .collect();
-    let mut train_items = Vec::new();
-    for actual_snapshot in new_snapshots {
-        if let Some(previous_snapshot) = previous_snapshots.remove(&actual_snapshot.tank_id) {
-            if let Some(train_item) = database::TrainItem::new(actual_snapshot, &previous_snapshot)
-            {
-                train_items.push(train_item);
-            }
-        }
-    }
-    Ok(train_items)
+        .map(|stats| (stats.tank_id, (stats.n_battles, stats.n_wins)))
+        .collect::<AHashMap<_, _>>();
+    actual_tank_stats
+        .iter()
+        .filter_map(|stats| {
+            previous_partial_tank_stats
+                .get(&stats.tank_id)
+                .and_then(|(n_battles, n_wins)| {
+                    let differs = stats.all.n_battles != 0
+                        && stats.all.n_battles > *n_battles
+                        && stats.all.n_wins >= *n_wins;
+                    differs.then(|| database::TrainItem {
+                        realm: account.realm,
+                        account_id: account.id,
+                        tank_id: stats.tank_id,
+                        last_battle_time: stats.last_battle_time,
+                        n_battles: stats.all.n_wins - n_wins,
+                        n_wins: stats.all.n_battles - n_battles,
+                    })
+                })
+        })
+        .collect()
 }
 
 #[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]

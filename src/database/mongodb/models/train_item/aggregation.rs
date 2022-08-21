@@ -45,7 +45,12 @@ impl TrainAggregation {
         since: DateTime,
     ) -> Result<Vec<Self>> {
         let pipeline = [
-            doc! { "$match": { "rlm": realm.to_str(), "lbts": { "$gte": since } } },
+            doc! {
+                "$match": {
+                    "rlm": realm.to_str(),
+                    "lbts": { "$gte": since },
+                }
+            },
             doc! {
                 "$group": {
                     "_id": "$tid",
@@ -76,7 +81,12 @@ impl TrainAggregation {
         since: DateTime,
     ) -> Result<impl Stream<Item = Result<Self>>> {
         let pipeline = [
-            doc! { "$match": { "rlm": realm.to_str(), "lbts": { "$gte": since } } },
+            doc! {
+                "$match": {
+                    "rlm": realm.to_str(),
+                    "lbts": { "$gte": since },
+                }
+            },
             doc! {
                 "$group": {
                     "_id": { "aid": "$aid", "tid": "$tid" },

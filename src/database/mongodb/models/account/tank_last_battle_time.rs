@@ -1,7 +1,6 @@
 use mongodb::bson;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::database::TankSnapshot;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -20,21 +19,14 @@ impl From<&wargaming::TankStats> for TankLastBattleTime {
     }
 }
 
-impl From<&TankSnapshot> for TankLastBattleTime {
-    fn from(snapshot: &TankSnapshot) -> Self {
-        Self {
-            tank_id: snapshot.tank_id,
-            last_battle_time: snapshot.last_battle_time,
-        }
-    }
-}
-
+// TODO: use `serde_with::TryFromInto` instead.
 impl Serialize for TankLastBattleTime {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         ((self.tank_id as i32), bson::DateTime::from(self.last_battle_time)).serialize(serializer)
     }
 }
 
+// TODO: use `serde_with::TryFromInto` instead.
 impl<'de> Deserialize<'de> for TankLastBattleTime {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let (tank_id, last_battle_time) =

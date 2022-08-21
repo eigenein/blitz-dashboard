@@ -2,14 +2,13 @@ use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, Document};
-use mongodb::options::{
-    FindOneAndUpdateOptions, FindOneOptions, FindOptions, IndexOptions, ReturnDocument,
-};
+use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
 pub use self::id_projection::*;
+pub use self::partial_tank_stats::*;
 pub use self::random::*;
 pub use self::rating::*;
 pub use self::tank_last_battle_time::*;
@@ -18,12 +17,13 @@ use crate::prelude::*;
 use crate::{format_elapsed, wargaming};
 
 mod id_projection;
+mod partial_tank_stats;
 mod random;
 mod rating;
 mod tank_last_battle_time;
 
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Account {
     /// Wargaming.net account ID.
     #[serde_as(as = "TryFromInto<i32>")]
@@ -39,6 +39,9 @@ pub struct Account {
 
     /// Used to select random accounts from the database.
     pub random: f64,
+
+    #[serde(default, rename = "pts")]
+    pub partial_tank_stats: Vec<PartialTankStats>,
 }
 
 impl TypedDocument for Account {
@@ -75,12 +78,8 @@ impl Account {
             realm,
             last_battle_time: None,
             random: fastrand::f64(),
+            partial_tank_stats: Vec::new(),
         }
-    }
-
-    pub const fn last_battle_time(mut self, last_battle_time: DateTime) -> Self {
-        self.last_battle_time = Some(last_battle_time);
-        self
     }
 }
 
@@ -122,20 +121,16 @@ impl Account {
 
     /// Ensures that the account exists in the database.
     /// Does nothing if it exists, inserts – otherwise.
-    /// Returns the actual account after a possible update.
     #[instrument(skip_all, level = "debug", fields(realm = ?self.realm, account_id = self.id))]
-    pub async fn ensure_exists(&self, in_: &Database) -> Result<Self> {
+    pub async fn ensure_exists(&self, in_: &Database) -> Result {
         let filter = doc! { "rlm": self.realm.to_str(), "aid": self.id };
         let update = doc! { "$setOnInsert": bson::to_bson(&self)? };
-        let options = FindOneAndUpdateOptions::builder()
-            .upsert(true)
-            .return_document(ReturnDocument::After)
-            .build();
+        let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
-            .find_one_and_update(filter, update, options)
+            .update_one(filter, update, options)
             .await
-            .with_context(|| format!("failed to ensure the account #{} existence", self.id))?
-            .ok_or_else(|| anyhow!("#{} must exist but it does not", self.id))
+            .with_context(|| format!("failed to ensure the account #{} existence", self.id))?;
+        Ok(())
     }
 
     #[instrument(skip_all, level = "debug")]

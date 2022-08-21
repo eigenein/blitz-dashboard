@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 pub use self::aggregation::*;
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
-use crate::database::TankSnapshot;
 use crate::helpers::serde::is_default;
 use crate::helpers::time::from_months;
 use crate::prelude::*;
@@ -75,27 +74,5 @@ impl Upsert for TrainItem {
 
     fn update(&self) -> Result<Self::Update> {
         Ok(doc! { "$setOnInsert": bson::to_bson(&self)? })
-    }
-}
-
-impl TrainItem {
-    pub const fn new(
-        actual_snapshot: &TankSnapshot,
-        previous_snapshot: &TankSnapshot,
-    ) -> Option<Self> {
-        if actual_snapshot.stats.n_battles > previous_snapshot.stats.n_battles
-            && actual_snapshot.stats.n_wins >= previous_snapshot.stats.n_wins
-        {
-            Some(Self {
-                realm: actual_snapshot.realm,
-                account_id: actual_snapshot.account_id,
-                tank_id: actual_snapshot.tank_id,
-                last_battle_time: actual_snapshot.last_battle_time,
-                n_wins: actual_snapshot.stats.n_wins - previous_snapshot.stats.n_wins,
-                n_battles: actual_snapshot.stats.n_battles - previous_snapshot.stats.n_battles,
-            })
-        } else {
-            None
-        }
     }
 }
