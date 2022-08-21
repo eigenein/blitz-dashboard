@@ -196,7 +196,12 @@ impl TankSnapshot {
                 },
             },
             doc! { "$sort": { "lbts": -1_i32 } },
-            doc! { "$group": { "_id": "$tid", "root": { "$first": "$$ROOT" } } },
+            doc! {
+                "$group": {
+                    "_id": { "rlm": "$rlm", "aid": "$aid", "tid": "$tid" },
+                    "root": { "$first": "$$ROOT" }
+                }
+            },
         ];
 
         let start_instant = Instant::now();
