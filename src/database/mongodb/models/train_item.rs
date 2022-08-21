@@ -1,12 +1,11 @@
-mod vehicle_stats;
+mod aggregation;
 
-use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, Document};
 use mongodb::options::IndexOptions;
 use mongodb::{bson, IndexModel};
 use serde::{Deserialize, Serialize};
 
-pub use self::vehicle_stats::*;
+pub use self::aggregation::*;
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::database::TankSnapshot;
 use crate::helpers::serde::is_default;
@@ -46,19 +45,14 @@ impl TypedDocument for TrainItem {
 }
 
 impl Indexes for TrainItem {
-    type I = [IndexModel; 3];
+    type I = [IndexModel; 2];
 
     fn indexes() -> Self::I {
         [
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "aid": 1, "tid": 1 })
+                .keys(doc! { "rlm": 1, "lbts": -1, "tid": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1 })
-                .options(IndexOptions::builder().build())
-                .build(),
-            // Ensures expiration of the items.
             IndexModel::builder()
                 .keys(doc! { "lbts": 1 })
                 .options(IndexOptions::builder().expire_after(from_months(1)).build())
@@ -73,13 +67,14 @@ impl Upsert for TrainItem {
     fn query(&self) -> Document {
         doc! {
             "rlm": self.realm.to_str(),
+            "lbts": self.last_battle_time,
             "aid": self.account_id,
             "tid": self.tank_id,
         }
     }
 
     fn update(&self) -> Result<Self::Update> {
-        Ok(doc! { "$set": bson::to_bson(&self)? })
+        Ok(doc! { "$setOnInsert": bson::to_bson(&self)? })
     }
 }
 
@@ -88,7 +83,9 @@ impl TrainItem {
         actual_snapshot: &TankSnapshot,
         previous_snapshot: &TankSnapshot,
     ) -> Option<Self> {
-        if actual_snapshot.stats.n_battles > previous_snapshot.stats.n_battles {
+        if actual_snapshot.stats.n_battles > previous_snapshot.stats.n_battles
+            && actual_snapshot.stats.n_wins >= previous_snapshot.stats.n_wins
+        {
             Some(Self {
                 realm: actual_snapshot.realm,
                 account_id: actual_snapshot.account_id,
@@ -100,20 +97,5 @@ impl TrainItem {
         } else {
             None
         }
-    }
-
-    #[instrument(skip_all, fields(after = ?after))]
-    pub async fn retrieve_all(
-        from: &mongodb::Database,
-        realm: wargaming::Realm,
-        after: DateTime,
-    ) -> Result<impl Stream<Item = Result<Self>>> {
-        let filter = doc! { "rlm": realm.to_str(), "lbts": { "$gte": after } };
-        let stream = Self::collection(from)
-            .find(filter, None)
-            .await
-            .context("failed to query train items")?
-            .map_err(Error::from);
-        Ok(stream)
     }
 }

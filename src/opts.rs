@@ -94,15 +94,8 @@ pub struct CrawlerOpts {
     #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_HEARTBEAT_URL")]
     pub heartbeat_url: Option<String>,
 
-    /// If specified, enables gathering the recommender system's train data
-    /// to the database.
-    /// Highly experimental, use with caution.
-    #[clap(
-        long,
-        parse(try_from_str = humantime::parse_duration),
-        env = "BLITZ_DASHBOARD_CRAWLER_TRAIN_PERIOD",
-    )]
-    pub train_period: Option<time::Duration>,
+    #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_ENABLE_TRAIN")]
+    pub enable_train: bool,
 }
 
 /// Updates the bundled Tankopedia module.

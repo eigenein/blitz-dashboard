@@ -47,7 +47,7 @@ impl TypedDocument for TankSnapshot {
 }
 
 impl Indexes for TankSnapshot {
-    type I = [IndexModel; 2];
+    type I = [IndexModel; 1];
 
     fn indexes() -> Self::I {
         [
@@ -55,11 +55,6 @@ impl Indexes for TankSnapshot {
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1, "tid": 1, "lbts": -1 })
                 .options(IndexOptions::builder().unique(true).build())
-                .build(),
-            // Optimizes the last battle time range queries for an account.
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "aid": 1, "lbts": -1 })
-                .options(IndexOptions::builder().build())
                 .build(),
         ]
     }
