@@ -868,6 +868,7 @@ pub async fn get(
                                     (locale.text("navbar-item-confidence-level")?)
                                 }
                                 hr.navbar-divider;
+                                (confidence_level_item(ConfidenceLevel::Z45, "Z45"))
                                 (confidence_level_item(ConfidenceLevel::Z50, "Z50"))
                                 (confidence_level_item(ConfidenceLevel::Z70, "Z70"))
                                 (confidence_level_item(ConfidenceLevel::Z75, "Z75"))

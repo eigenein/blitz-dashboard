@@ -6,6 +6,7 @@ impl Render for ConfidenceLevel {
     fn render(&self) -> Markup {
         html! {
             @match self {
+                Self::Z45 => { "45" },
                 Self::Z50 => { "50" },
                 Self::Z70 => { "70" },
                 Self::Z75 => { "75" },

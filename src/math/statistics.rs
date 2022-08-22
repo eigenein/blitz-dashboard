@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[allow(dead_code)]
 #[derive(Copy, Clone, Default, Serialize, Deserialize, Hash, Debug)]
 pub enum ConfidenceLevel {
+    Z45,
     Z50,
     Z70,
     Z75,
@@ -25,6 +26,7 @@ pub enum ConfidenceLevel {
 impl ConfidenceLevel {
     pub const fn z_value(self) -> f64 {
         match self {
+            Self::Z45 => 0.597760,
             Self::Z50 => 0.674490,
             Self::Z70 => 1.036433,
             Self::Z75 => 1.15035,

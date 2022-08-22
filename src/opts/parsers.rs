@@ -65,6 +65,7 @@ impl clap::ValueEnum for ConfidenceLevel {
 
     fn to_possible_value<'a>(&self) -> Option<PossibleValue<'a>> {
         match self {
+            ConfidenceLevel::Z45 => Some(PossibleValue::new("45")),
             ConfidenceLevel::Z50 => Some(PossibleValue::new("50")),
             ConfidenceLevel::Z70 => Some(PossibleValue::new("70")),
             ConfidenceLevel::Z75 => Some(PossibleValue::new("75")),
