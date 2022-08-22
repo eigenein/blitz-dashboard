@@ -21,9 +21,8 @@ pub async fn run(opts: TrainOpts) -> Result {
             .into_iter()
             .map(|vehicle| Ok((vehicle.tank_id, vehicle.victory_ratio(z_level)?)))
             .collect::<Result<AHashMap<wargaming::TankId, f64>>>()?;
-    let tank_ids = vehicle_stats.keys().copied().collect_vec();
 
-    info!(n_vehicles = vehicle_stats.len(), "vehicle stats ready, querying the train set…");
+    info!(n_vehicles = vehicle_stats.len(), "querying the train set…");
 
     let train_set =
         database::TrainAggregation::aggregate_by_account_tanks(&db, opts.realm, deadline)
@@ -32,6 +31,7 @@ pub async fn run(opts: TrainOpts) -> Result {
 
     let train_set = build_matrix(&vehicle_stats, Box::pin(train_set), z_level).await?;
 
+    let tank_ids = vehicle_stats.keys().copied().collect_vec();
     let similarities = calculate_similarities(&train_set, &tank_ids);
     for (tank_id_1, tank_id_2, similarity) in similarities
         .into_iter()
@@ -62,16 +62,18 @@ async fn build_matrix(
 ) -> Result<CscMatrix<f64>> {
     info!(z_level, n_vehicles = vehicle_stats.len());
 
+    let mut n_battles = 0;
     let mut matrix = CooMatrix::new(u32::MAX as usize, u16::MAX as usize);
     while let Some(item) = train_set.try_next().await? {
         if let Some(vehicle_victory_ratio) = vehicle_stats.get(&item.tank_id) {
             let value = item.victory_ratio(z_level)? - vehicle_victory_ratio;
             debug_assert!(value.is_finite(), "item = {:?}", item);
+            n_battles += item.n_battles as usize;
             matrix.push(item.account_id as usize, item.tank_id as usize, value);
         }
     }
 
-    info!(matrix.nnz = matrix.nnz(), "COO matrix is ready, converting…");
+    info!(matrix.nnz = matrix.nnz(), n_battles, "converting…");
     Ok(CscMatrix::from(&matrix))
 }
 
