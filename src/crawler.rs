@@ -302,6 +302,7 @@ fn gather_train_items(
                         account_id: account.id,
                         tank_id: stats.tank_id,
                         last_battle_time: stats.last_battle_time,
+                        // TODO: check `n_battles >= n_wins`.
                         n_battles: stats.all.n_battles - n_battles,
                         n_wins: stats.all.n_wins - n_wins,
                     })

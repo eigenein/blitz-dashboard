@@ -1,5 +1,10 @@
 use std::collections::hash_map::Entry;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::ops::AddAssign;
 
+use ahash::AHashMap;
+use bpci::{Interval, NSuccessesSample, WilsonScore};
 use futures::{Stream, TryStreamExt};
 use itertools::Itertools;
 use nalgebra_sparse::{CooMatrix, CscMatrix};
@@ -10,28 +15,30 @@ use crate::{database, tankopedia, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
     let db = database::mongodb::open(&opts.connections.mongodb_uri).await?;
-    let deadline = now() - Duration::from_std(opts.train_period)?;
+
+    let since = now() - Duration::from_std(opts.train_period)?;
+    info!(?since, "querying train set…");
+
+    let train_set = database::TrainItem::stream(&db, opts.realm, since).await?;
+    let (by_vehicle, by_account_tank) = aggregate_train_set(Box::pin(train_set)).await?;
+
     let z_level = opts.confidence_level.z_value();
 
-    info!(?deadline, "querying the vehicle stats…");
-    let vehicle_stats =
-        database::TrainAggregation::aggregate_by_vehicles(&db, opts.realm, deadline)
-            .await
-            .context("failed to aggregate vehicle stats")?
-            .into_iter()
-            .map(|vehicle| Ok((vehicle.tank_id, vehicle.victory_ratio(z_level)?)))
-            .collect::<Result<AHashMap<wargaming::TankId, f64>>>()?;
+    info!(n_vehicles = by_vehicle.len(), "calculating vehicle victory ratios…");
+    let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
 
-    info!(n_vehicles = vehicle_stats.len(), "querying the train set…");
+    info!(n_tanks = by_account_tank.len(), "calculating account/tank victory ratios…");
+    let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
 
-    let train_set =
-        database::TrainAggregation::aggregate_by_account_tanks(&db, opts.realm, deadline)
-            .await
-            .context("failed to aggregate the train set")?;
+    info!("building matrix…");
+    let train_set = build_matrix(&by_vehicle, by_account_tank);
 
-    let train_set = build_matrix(&vehicle_stats, Box::pin(train_set), z_level).await?;
-
-    let tank_ids = vehicle_stats.keys().copied().collect_vec();
+    let tank_ids = by_vehicle.keys().copied().collect_vec();
+    info!(
+        train_set.nnz = train_set.nnz(),
+        n_vehicles = tank_ids.len(),
+        "calculating similarities…"
+    );
     let similarities = calculate_similarities(&train_set, &tank_ids);
     for (tank_id_1, tank_id_2, similarity) in similarities
         .into_iter()
@@ -54,27 +61,102 @@ pub async fn run(opts: TrainOpts) -> Result {
     Ok(())
 }
 
-#[instrument(level = "info", skip_all)]
-async fn build_matrix(
-    vehicle_stats: &AHashMap<wargaming::TankId, f64>,
-    mut train_set: impl Stream<Item = Result<database::TrainAggregation>> + Unpin,
-    z_level: f64,
-) -> Result<CscMatrix<f64>> {
-    info!(z_level, n_vehicles = vehicle_stats.len());
+struct Sample {
+    n_battles: u32,
+    n_wins: u32,
+}
 
-    let mut n_battles = 0;
-    let mut matrix = CooMatrix::new(u32::MAX as usize, u16::MAX as usize);
+impl From<&database::TrainItem> for Sample {
+    fn from(item: &database::TrainItem) -> Self {
+        Self {
+            n_battles: item.n_battles,
+            n_wins: item.n_wins,
+        }
+    }
+}
+
+impl AddAssign<&database::TrainItem> for Sample {
+    fn add_assign(&mut self, rhs: &database::TrainItem) {
+        self.n_battles += rhs.n_battles;
+        self.n_wins += rhs.n_wins;
+    }
+}
+
+impl Sample {
+    fn victory_ratio(&self, z_level: f64) -> Result<f64> {
+        Ok(NSuccessesSample::new(self.n_battles, self.n_wins)?
+            .wilson_score_with_cc(z_level)
+            .mean())
+    }
+}
+
+#[instrument(level = "info", skip_all)]
+async fn aggregate_train_set(
+    mut train_set: impl Stream<Item = Result<database::TrainItem>> + Unpin,
+) -> Result<(
+    AHashMap<wargaming::TankId, Sample>,
+    AHashMap<(wargaming::TankId, wargaming::AccountId), Sample>,
+)> {
+    info!("aggregating…");
+    let mut by_vehicle = AHashMap::default();
+    let mut by_account_tank = AHashMap::default();
     while let Some(item) = train_set.try_next().await? {
-        if let Some(vehicle_victory_ratio) = vehicle_stats.get(&item.tank_id) {
-            let value = item.victory_ratio(z_level)? - vehicle_victory_ratio;
-            debug_assert!(value.is_finite(), "item = {:?}", item);
-            n_battles += item.n_battles as usize;
-            matrix.push(item.account_id as usize, item.tank_id as usize, value);
+        match by_vehicle.entry(item.tank_id) {
+            Entry::Vacant(entry) => {
+                entry.insert(Sample::from(&item));
+            }
+            Entry::Occupied(mut entry) => {
+                *entry.get_mut() += &item;
+            }
+        }
+        match by_account_tank.entry((item.tank_id, item.account_id)) {
+            Entry::Vacant(entry) => {
+                entry.insert(Sample::from(&item));
+            }
+            Entry::Occupied(mut entry) => {
+                *entry.get_mut() += &item;
+            }
+        }
+    }
+    Ok((by_vehicle, by_account_tank))
+}
+
+#[instrument(level = "info", skip_all)]
+fn calculate_victory_ratios<K: Eq + Hash + Debug>(
+    mapping: AHashMap<K, Sample>,
+    z_level: f64,
+) -> AHashMap<K, f64> {
+    mapping
+        .into_iter()
+        .filter_map(|(key, sample)| match sample.victory_ratio(z_level) {
+            Ok(victory_ratio) => Some((key, victory_ratio)),
+            Err(error) => {
+                warn!(?key, "{:?}", error);
+                None
+            }
+        })
+        .collect()
+}
+
+#[instrument(level = "info", skip_all)]
+fn build_matrix(
+    by_vehicle: &AHashMap<wargaming::TankId, f64>,
+    by_account_tank: AHashMap<(wargaming::TankId, wargaming::AccountId), f64>,
+) -> CscMatrix<f64> {
+    let mut matrix = CooMatrix::new(u32::MAX as usize, u16::MAX as usize);
+
+    for ((tank_id, account_id), victory_ratio) in by_account_tank {
+        if let Some(vehicle_victory_ratio) = by_vehicle.get(&tank_id) {
+            matrix.push(
+                account_id as usize,
+                tank_id as usize,
+                victory_ratio - vehicle_victory_ratio,
+            );
         }
     }
 
-    info!(matrix.nnz = matrix.nnz(), n_battles, "converting…");
-    Ok(CscMatrix::from(&matrix))
+    info!(matrix.nnz = matrix.nnz(), "converting…");
+    CscMatrix::from(&matrix)
 }
 
 #[instrument(level = "info", skip_all)]
@@ -82,8 +164,6 @@ fn calculate_similarities(
     train_set: &CscMatrix<f64>,
     tank_ids: &[wargaming::TankId],
 ) -> AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>> {
-    info!(train_set.nnz = train_set.nnz(), n_vehicles = tank_ids.len());
-
     let mut similarities = AHashMap::default();
     for tank_id_1 in tank_ids.iter().copied() {
         for tank_id_2 in tank_ids.iter().copied() {

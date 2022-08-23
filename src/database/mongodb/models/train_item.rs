@@ -1,11 +1,9 @@
-mod aggregation;
-
+use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, Document};
 use mongodb::options::IndexOptions;
-use mongodb::{bson, IndexModel};
+use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
-pub use self::aggregation::*;
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
 use crate::helpers::serde::is_default;
 use crate::helpers::time::from_months;
@@ -74,5 +72,25 @@ impl Upsert for TrainItem {
 
     fn update(&self) -> Result<Self::Update> {
         Ok(doc! { "$setOnInsert": bson::to_bson(&self)? })
+    }
+}
+
+impl TrainItem {
+    #[instrument(level = "info", skip_all, fields(realm = ?realm, since = ?since))]
+    pub async fn stream(
+        from: &Database,
+        realm: wargaming::Realm,
+        since: DateTime,
+    ) -> Result<impl Stream<Item = Result<Self>>> {
+        let filter = doc! {
+            "rlm": realm.to_str(),
+            "lbts": { "$gte": since },
+        };
+        let stream = Self::collection(from)
+            .find(filter, None)
+            .await
+            .context("failed to query train items")?
+            .map_err(Error::from);
+        Ok(stream)
     }
 }
