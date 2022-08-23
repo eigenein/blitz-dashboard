@@ -2,13 +2,16 @@ use std::collections::hash_map::Entry;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::AddAssign;
+use std::sync::Arc;
 
 use ahash::AHashMap;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
-use futures::{Stream, TryStreamExt};
+use futures::future::ready;
+use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use nalgebra_sparse::csc::CscCol;
 use nalgebra_sparse::{CooMatrix, CscMatrix};
+use tokio::spawn;
 
 use crate::opts::TrainOpts;
 use crate::prelude::*;
@@ -37,7 +40,7 @@ pub async fn run(opts: TrainOpts) -> Result {
     let train_set = build_matrix(&by_vehicle, by_account_tank);
 
     let tank_ids = by_vehicle.keys().copied().collect_vec();
-    let similarities = calculate_similarities(&train_set, &tank_ids);
+    let similarities = calculate_similarities(train_set, &tank_ids, opts.buffering).await?;
     for (tank_id_1, tank_id_2, similarity) in similarities
         .into_iter()
         .flat_map(|(tank_id_1, entries)| {
@@ -174,45 +177,53 @@ fn build_matrix(
 }
 
 #[instrument(level = "info", skip_all)]
-fn calculate_similarities(
-    train_set: &CscMatrix<f64>,
+async fn calculate_similarities(
+    train_set: CscMatrix<f64>,
     tank_ids: &[wargaming::TankId],
-) -> AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>> {
+    buffering: usize,
+) -> Result<AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>>> {
     info!(nnz = train_set.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
     let start_instant = Instant::now();
 
+    let train_set = Arc::new(train_set);
+    let mut stream = stream::iter(tank_ids)
+        .flat_map(|tank_id_1| stream::iter(tank_ids).map(|tank_id_2| (*tank_id_1, *tank_id_2)))
+        .filter(|(tank_id_1, tank_id_2)| ready(tank_id_2 < tank_id_1))
+        .map(|(tank_id_1, tank_id_2)| {
+            let train_set = Arc::clone(&train_set);
+            spawn(async move {
+                let column_1 = train_set.col(tank_id_1 as usize);
+                let column_2 = train_set.col(tank_id_2 as usize);
+                (tank_id_1, tank_id_2, similarity(&column_1, &column_2))
+            })
+        })
+        .buffer_unordered(buffering);
+
     let mut similarities = AHashMap::default();
-    for tank_id_1 in tank_ids.iter().copied() {
-        for tank_id_2 in tank_ids.iter().copied() {
-            if tank_id_2 >= tank_id_1 {
-                continue;
+    while let Some((tank_id_1, tank_id_2, similarity)) = stream.try_next().await? {
+        if !similarity.is_finite() {
+            continue;
+        }
+        match similarities.entry(tank_id_1) {
+            Entry::Vacant(entry) => {
+                entry.insert(vec![(tank_id_2, similarity)]);
             }
-            let similarity =
-                similarity(&train_set.col(tank_id_1 as usize), &train_set.col(tank_id_2 as usize));
-            if !similarity.is_finite() {
-                continue;
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().push((tank_id_2, similarity));
             }
-            match similarities.entry(tank_id_1) {
-                Entry::Vacant(entry) => {
-                    entry.insert(vec![(tank_id_2, similarity)]);
-                }
-                Entry::Occupied(mut entry) => {
-                    entry.get_mut().push((tank_id_2, similarity));
-                }
+        }
+        match similarities.entry(tank_id_2) {
+            Entry::Vacant(entry) => {
+                entry.insert(vec![(tank_id_1, similarity)]);
             }
-            match similarities.entry(tank_id_2) {
-                Entry::Vacant(entry) => {
-                    entry.insert(vec![(tank_id_1, similarity)]);
-                }
-                Entry::Occupied(mut entry) => {
-                    entry.get_mut().push((tank_id_1, similarity));
-                }
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().push((tank_id_1, similarity));
             }
         }
     }
 
     info!(elapsed = ?start_instant.elapsed());
-    similarities
+    Ok(similarities)
 }
 
 fn similarity(column_1: &CscCol<f64>, column_2: &CscCol<f64>) -> f64 {

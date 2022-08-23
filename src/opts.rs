@@ -279,4 +279,7 @@ pub struct TrainOpts {
         env = "BLITZ_DASHBOARD_TRAINER_CONFIDENCE_LEVEL"
     )]
     pub confidence_level: ConfidenceLevel,
+
+    #[clap(long, default_value = "1", env = "BLITZ_DASHBOARD_TRAINER_BUFFERING")]
+    pub buffering: usize,
 }
