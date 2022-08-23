@@ -1,6 +1,7 @@
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, from_document};
+use mongodb::options::AggregateOptions;
 use serde::Deserialize;
 
 use crate::database::mongodb::traits::TypedDocument;
@@ -98,8 +99,9 @@ impl TrainAggregation {
             doc! { "$set": { "aid": "$_id.aid", "tid": "$_id.tid" } },
             doc! { "$unset": "_id" },
         ];
+        let options = AggregateOptions::builder().allow_disk_use(true).build();
         let stream = Self::collection(from)
-            .aggregate(pipeline, None)
+            .aggregate(pipeline, options)
             .await?
             .map_err(Error::from)
             .try_filter_map(|document| async move {
