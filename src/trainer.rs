@@ -7,6 +7,7 @@ use ahash::AHashMap;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use futures::{Stream, TryStreamExt};
 use itertools::Itertools;
+use nalgebra_sparse::csc::CscCol;
 use nalgebra_sparse::{CooMatrix, CscMatrix};
 
 use crate::opts::TrainOpts;
@@ -27,18 +28,15 @@ pub async fn run(opts: TrainOpts) -> Result {
     info!(n_vehicles = by_vehicle.len(), "calculating vehicle victory ratios…");
     let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
 
-    info!(n_tanks = by_account_tank.len(), "calculating account/tank victory ratios…");
+    info!(
+        n_account_tanks = by_account_tank.len(),
+        "calculating account⨯tank victory ratios…"
+    );
     let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
 
-    info!("building matrix…");
     let train_set = build_matrix(&by_vehicle, by_account_tank);
 
     let tank_ids = by_vehicle.keys().copied().collect_vec();
-    info!(
-        train_set.nnz = train_set.nnz(),
-        n_vehicles = tank_ids.len(),
-        "calculating similarities…"
-    );
     let similarities = calculate_similarities(&train_set, &tank_ids);
     for (tank_id_1, tank_id_2, similarity) in similarities
         .into_iter()
@@ -61,6 +59,7 @@ pub async fn run(opts: TrainOpts) -> Result {
     Ok(())
 }
 
+#[derive(Copy, Clone)]
 struct Sample {
     n_battles: u32,
     n_wins: u32,
@@ -75,15 +74,15 @@ impl From<&database::TrainItem> for Sample {
     }
 }
 
-impl AddAssign<&database::TrainItem> for Sample {
-    fn add_assign(&mut self, rhs: &database::TrainItem) {
+impl AddAssign<&Self> for Sample {
+    fn add_assign(&mut self, rhs: &Self) {
         self.n_battles += rhs.n_battles;
         self.n_wins += rhs.n_wins;
     }
 }
 
 impl Sample {
-    fn victory_ratio(&self, z_level: f64) -> Result<f64> {
+    fn victory_ratio(self, z_level: f64) -> Result<f64> {
         Ok(NSuccessesSample::new(self.n_battles, self.n_wins)?
             .wilson_score_with_cc(z_level)
             .mean())
@@ -98,26 +97,39 @@ async fn aggregate_train_set(
     AHashMap<(wargaming::TankId, wargaming::AccountId), Sample>,
 )> {
     info!("aggregating…");
-    let mut by_vehicle = AHashMap::default();
+
     let mut by_account_tank = AHashMap::default();
+    let mut n_battles = 0;
+    let start_instant = Instant::now();
+
     while let Some(item) = train_set.try_next().await? {
-        match by_vehicle.entry(item.tank_id) {
-            Entry::Vacant(entry) => {
-                entry.insert(Sample::from(&item));
-            }
-            Entry::Occupied(mut entry) => {
-                *entry.get_mut() += &item;
-            }
-        }
+        n_battles += item.n_battles;
+        let sample = Sample::from(&item);
+
         match by_account_tank.entry((item.tank_id, item.account_id)) {
             Entry::Vacant(entry) => {
-                entry.insert(Sample::from(&item));
+                entry.insert(sample);
             }
             Entry::Occupied(mut entry) => {
-                *entry.get_mut() += &item;
+                *entry.get_mut() += &sample;
             }
         }
     }
+    info!(n_battles, elapsed = ?start_instant.elapsed(), "account⨯tank ready");
+
+    let mut by_vehicle = AHashMap::default();
+    for ((tank_id, _), sample) in &by_account_tank {
+        match by_vehicle.entry(*tank_id) {
+            Entry::Vacant(entry) => {
+                entry.insert(*sample);
+            }
+            Entry::Occupied(mut entry) => {
+                *entry.get_mut() += sample;
+            }
+        }
+    }
+
+    info!(n_battles, elapsed = ?start_instant.elapsed(), "finished");
     Ok((by_vehicle, by_account_tank))
 }
 
@@ -143,6 +155,8 @@ fn build_matrix(
     by_vehicle: &AHashMap<wargaming::TankId, f64>,
     by_account_tank: AHashMap<(wargaming::TankId, wargaming::AccountId), f64>,
 ) -> CscMatrix<f64> {
+    info!(n_account_tanks = by_account_tank.len(), "building matrix…");
+    let start_instant = Instant::now();
     let mut matrix = CooMatrix::new(u32::MAX as usize, u16::MAX as usize);
 
     for ((tank_id, account_id), victory_ratio) in by_account_tank {
@@ -155,7 +169,7 @@ fn build_matrix(
         }
     }
 
-    info!(matrix.nnz = matrix.nnz(), "converting…");
+    info!(matrix.nnz = matrix.nnz(), elapsed = ?start_instant.elapsed(), "converting…");
     CscMatrix::from(&matrix)
 }
 
@@ -164,13 +178,17 @@ fn calculate_similarities(
     train_set: &CscMatrix<f64>,
     tank_ids: &[wargaming::TankId],
 ) -> AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>> {
+    info!(nnz = train_set.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
+    let start_instant = Instant::now();
+
     let mut similarities = AHashMap::default();
     for tank_id_1 in tank_ids.iter().copied() {
         for tank_id_2 in tank_ids.iter().copied() {
             if tank_id_2 >= tank_id_1 {
                 continue;
             }
-            let similarity = similarity(train_set, tank_id_1, tank_id_2);
+            let similarity =
+                similarity(&train_set.col(tank_id_1 as usize), &train_set.col(tank_id_2 as usize));
             if !similarity.is_finite() {
                 continue;
             }
@@ -192,33 +210,20 @@ fn calculate_similarities(
             }
         }
     }
+
+    info!(elapsed = ?start_instant.elapsed());
     similarities
 }
 
-fn similarity(
-    train_set: &CscMatrix<f64>,
-    tank_id_1: wargaming::TankId,
-    tank_id_2: wargaming::TankId,
-) -> f64 {
-    let col_1 = train_set.col(tank_id_1 as usize);
-    let col_2 = train_set.col(tank_id_2 as usize);
-
-    let users_1 = col_1
-        .row_indices()
-        .iter()
-        .copied()
-        .zip(col_1.values().iter().copied());
-    let users_2 = col_2
-        .row_indices()
-        .iter()
-        .copied()
-        .zip(col_2.values().iter().copied());
+fn similarity(column_1: &CscCol<f64>, column_2: &CscCol<f64>) -> f64 {
+    let users_1 = column_1.row_indices().iter().zip(column_1.values().iter());
+    let users_2 = column_2.row_indices().iter().zip(column_2.values().iter());
     let numerator: f64 = users_1
         .merge_join_by(users_2, |(i, _), (j, _)| i.cmp(j))
         .filter_map(|item| item.both().map(|((_, x), (_, y))| (x, y)))
         .map(|(x, y)| x * y)
         .sum();
-    let denominator_1: f64 = col_1.values().iter().map(|x| x * x).sum();
-    let denominator_2: f64 = col_2.values().iter().map(|y| y * y).sum();
+    let denominator_1: f64 = column_1.values().iter().map(|x| x * x).sum();
+    let denominator_2: f64 = column_2.values().iter().map(|y| y * y).sum();
     numerator / denominator_1.sqrt() / denominator_2.sqrt()
 }

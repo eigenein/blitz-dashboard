@@ -83,7 +83,7 @@ impl TrainItem {
         since: DateTime,
     ) -> Result<impl Stream<Item = Result<Self>>> {
         let filter = doc! {
-            "rlm": realm.to_str(),
+            // TODO: "rlm": realm.to_str(),
             "lbts": { "$gte": since },
         };
         let stream = Self::collection(from)
