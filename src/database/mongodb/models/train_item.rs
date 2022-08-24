@@ -76,22 +76,23 @@ impl Upsert for TrainItem {
 }
 
 impl TrainItem {
-    #[instrument(level = "info", skip_all, fields(realm = ?realm, since = ?since))]
+    #[instrument(level = "info", skip_all)]
     pub async fn stream(
         from: &Database,
-        realm: wargaming::Realm,
         since: DateTime,
     ) -> Result<impl Stream<Item = Result<Self>>> {
         let filter = doc! {
-            // TODO: "rlm": realm.to_str(),
             "lbts": { "$gte": since },
         };
         let options = FindOptions::builder().projection(doc! { "_id": 0 }).build();
+        info!(?since, "querying train set…");
+        let start_instant = Instant::now();
         let stream = Self::collection(from)
             .find(filter, options)
             .await
             .context("failed to query train items")?
             .map_err(Error::from);
+        info!(elapsed = ?start_instant.elapsed());
         Ok(stream)
     }
 }

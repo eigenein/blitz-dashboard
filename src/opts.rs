@@ -253,16 +253,13 @@ pub struct InternalConnectionOpts {
 
 #[derive(Parser)]
 pub struct TrainOpts {
-    #[clap(flatten)]
-    pub connections: InternalConnectionOpts,
-
-    #[clap(
-        long,
-        ignore_case = true,
-        value_parser = EnumValueParser::<wargaming::Realm>::new(),
-        env = "BLITZ_DASHBOARD_TRAINER_REALM",
+    /// MongoDB connection URI
+    #[structopt(
+        long = "mongodb-uri",
+        default_value = "mongodb://localhost/yastatist?directConnection=true",
+        env = "BLITZ_DASHBOARD_MONGODB_URI"
     )]
-    pub realm: wargaming::Realm,
+    pub mongodb_uri: String,
 
     #[clap(
         long,

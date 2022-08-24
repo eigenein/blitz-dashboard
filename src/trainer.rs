@@ -8,23 +8,21 @@ use ahash::AHashMap;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
+use mongodb::Database;
 use nalgebra_sparse::csc::CscCol;
 use nalgebra_sparse::{CooMatrix, CscMatrix};
 use tokio::spawn;
 
+use crate::database::mongodb::traits::Upsert;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
-use crate::{database, tankopedia, wargaming};
+use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
-    let db = database::mongodb::open(&opts.connections.mongodb_uri).await?;
-
+    let db = database::mongodb::open(&opts.mongodb_uri).await?;
     let since = now() - Duration::from_std(opts.train_period)?;
-    info!(?since, "querying train set…");
-
-    let train_set = database::TrainItem::stream(&db, opts.realm, since).await?;
+    let train_set = database::TrainItem::stream(&db, since).await?;
     let (by_vehicle, by_account_tank) = aggregate_train_set(Box::pin(train_set)).await?;
-
     let z_level = opts.confidence_level.z_value();
 
     info!(n_vehicles = by_vehicle.len(), "calculating vehicle victory ratios…");
@@ -37,28 +35,9 @@ pub async fn run(opts: TrainOpts) -> Result {
     let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
 
     let train_set = build_matrix(&by_vehicle, by_account_tank);
-
     let tank_ids = by_vehicle.keys().copied().collect_vec();
     let similarities = calculate_similarities(train_set, &tank_ids, opts.buffering).await?;
-
-    for (tank_id_1, tank_id_2, similarity) in similarities
-        .into_iter()
-        .flat_map(|(tank_id_1, entries)| {
-            entries
-                .into_iter()
-                .filter(move |(tank_id_2, _)| *tank_id_2 < tank_id_1)
-                .map(move |(tank_id_2, similarity)| (tank_id_1, tank_id_2, similarity))
-        })
-        .sorted_by(|(_, _, similarity_1), (_, _, similarity_2)| {
-            similarity_2.total_cmp(similarity_1)
-        })
-        .take(50)
-    {
-        let vehicle_1 = tankopedia::get_vehicle(tank_id_1);
-        let vehicle_2 = tankopedia::get_vehicle(tank_id_2);
-        info!(name_1 = ?vehicle_1.name, name_2 = ?vehicle_2.name, similarity);
-    }
-
+    update_database(&db, similarities).await?;
     Ok(())
 }
 
@@ -252,4 +231,27 @@ fn dot_product(column_1: &CscCol<f64>, column_2: &CscCol<f64>) -> f64 {
 
 fn magnitude(column: &CscCol<f64>) -> f64 {
     column.values().iter().map(|x| x * x).sum::<f64>().sqrt()
+}
+
+#[instrument(level = "info", skip_all)]
+async fn update_database(
+    db: &Database,
+    similarities: impl IntoIterator<
+        Item = (wargaming::TankId, impl IntoIterator<Item = (wargaming::TankId, f64)>),
+    >,
+) -> Result {
+    info!("updating the database…");
+    let start_instant = Instant::now();
+    for (tank_id, entries) in similarities {
+        let model = database::VehicleModel {
+            tank_id,
+            similarities: entries
+                .into_iter()
+                .filter(|(_, similarity)| *similarity > 0.0)
+                .collect(),
+        };
+        model.upsert(db).await?;
+    }
+    info!(elapsed = ?start_instant.elapsed(), "updated");
+    Ok(())
 }
