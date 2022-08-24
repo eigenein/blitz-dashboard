@@ -196,6 +196,14 @@ pub async fn get(
             }
 
             th.has-text-right {
+                a data-sort="accuracy" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { (locale.text("title-hits")?) }
+                    }
+                }
+            }
+
+            th.has-text-right {
                 a data-sort="survived-battles" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-survived")?) }
@@ -772,7 +780,7 @@ pub async fn get(
                                                         div {
                                                             p.heading { (locale.text("title-on-average")?) }
                                                             p.title {
-                                                                (PercentageItem::from(view_model.stats_delta.random.hit_rate()))
+                                                                (PercentageItem::from(view_model.stats_delta.random.accuracy()))
                                                             }
                                                         }
                                                     }
@@ -1021,12 +1029,29 @@ fn render_tank_tr(
             }
 
             td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
-                (HumanFloat(snapshot.stats.damage_dealt as f64))
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey-light { i.fa-solid.fa-house-damage {} }
+                    (HumanFloat(snapshot.stats.damage_dealt as f64))
+                }
             }
 
             @let damage_per_battle = snapshot.stats.average_damage_dealt();
             td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
-                (format!("{:.0}", damage_per_battle))
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey-light { i.fa-solid.fa-house-damage {} }
+                    (format!("{:.0}", damage_per_battle))
+                }
+            }
+
+            @let accuracy = snapshot.stats.accuracy();
+            td.has-text-right data-sort="accuracy" data-value=(accuracy) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey-light { i.fa-solid.fa-bullseye {} }
+                    span {
+                        (Float::from(100.0 * accuracy))
+                        span.has-text-grey { "%" }
+                    }
+                }
             }
 
             td.has-text-right data-sort="survived-battles" data-value=(snapshot.stats.n_survived_battles) {

@@ -40,6 +40,7 @@ pub async fn run(opts: TrainOpts) -> Result {
 
     let tank_ids = by_vehicle.keys().copied().collect_vec();
     let similarities = calculate_similarities(train_set, &tank_ids, opts.buffering).await?;
+
     for (tank_id_1, tank_id_2, similarity) in similarities
         .into_iter()
         .flat_map(|(tank_id_1, entries)| {

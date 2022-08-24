@@ -50,7 +50,7 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::Web(opts) => web::run(opts).await,
         Subcommand::Train(opts) => trainer::run(opts).await,
     };
-    info!(elapsed = format_elapsed(start_instant).as_str(), "the command has finished");
+    info!(elapsed = ?start_instant.elapsed(), "the command has finished");
     if let Err(error) = &result {
         capture_anyhow(error);
     }

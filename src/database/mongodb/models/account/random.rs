@@ -158,7 +158,7 @@ impl RandomStatsSnapshot {
 
     #[must_use]
     #[inline]
-    pub fn hit_rate(&self) -> f64 {
+    pub fn accuracy(&self) -> f64 {
         self.n_hits as f64 / self.n_shots as f64
     }
 }

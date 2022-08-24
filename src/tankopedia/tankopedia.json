@@ -3471,6 +3471,14 @@
     "nation": "uk",
     "type": "lightTank"
   },
+  "7009": {
+    "tank_id": 7009,
+    "name": "Type 57",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "japan",
+    "type": "heavyTank"
+  },
   "7025": {
     "tank_id": 7025,
     "name": "Vulcan",
