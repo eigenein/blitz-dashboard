@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 use ahash::AHashMap;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
-use futures::future::ready;
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use nalgebra_sparse::csc::CscCol;
@@ -185,16 +184,30 @@ async fn calculate_similarities(
     info!(nnz = train_set.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
     let start_instant = Instant::now();
 
+    let vehicle_magnitudes: Vec<_> = tank_ids
+        .iter()
+        .copied()
+        .map(|tank_id| (tank_id, magnitude(&train_set.col(tank_id as usize))))
+        .collect();
+
+    let iter_vehicle_pairs = vehicle_magnitudes
+        .iter()
+        .flat_map(|(tank_id_1, magnitude_1)| {
+            vehicle_magnitudes.iter().map(|(tank_id_2, magnitude_2)| {
+                (*tank_id_1, *magnitude_1, *tank_id_2, *magnitude_2)
+            })
+        })
+        .filter(|(tank_id_1, _, tank_id_2, _)| tank_id_2 < tank_id_1);
+
     let train_set = Arc::new(train_set);
-    let mut stream = stream::iter(tank_ids)
-        .flat_map(|tank_id_1| stream::iter(tank_ids).map(|tank_id_2| (*tank_id_1, *tank_id_2)))
-        .filter(|(tank_id_1, tank_id_2)| ready(tank_id_2 < tank_id_1))
-        .map(|(tank_id_1, tank_id_2)| {
+    let mut stream = stream::iter(iter_vehicle_pairs)
+        .map(|(tank_id_1, magnitude_1, tank_id_2, magnitude_2)| {
             let train_set = Arc::clone(&train_set);
             spawn(async move {
                 let column_1 = train_set.col(tank_id_1 as usize);
                 let column_2 = train_set.col(tank_id_2 as usize);
-                (tank_id_1, tank_id_2, similarity(&column_1, &column_2))
+                let similarity = dot_product(&column_1, &column_2) / magnitude_1 / magnitude_2;
+                (tank_id_1, tank_id_2, similarity)
             })
         })
         .buffer_unordered(buffering);
@@ -226,15 +239,16 @@ async fn calculate_similarities(
     Ok(similarities)
 }
 
-fn similarity(column_1: &CscCol<f64>, column_2: &CscCol<f64>) -> f64 {
-    let users_1 = column_1.row_indices().iter().zip(column_1.values().iter());
-    let users_2 = column_2.row_indices().iter().zip(column_2.values().iter());
-    let numerator: f64 = users_1
-        .merge_join_by(users_2, |(i, _), (j, _)| i.cmp(j))
+fn dot_product(column_1: &CscCol<f64>, column_2: &CscCol<f64>) -> f64 {
+    let values_1 = column_1.row_indices().iter().zip(column_1.values().iter());
+    let values_2 = column_2.row_indices().iter().zip(column_2.values().iter());
+    values_1
+        .merge_join_by(values_2, |(i, _), (j, _)| i.cmp(j))
         .filter_map(|item| item.both().map(|((_, x), (_, y))| (x, y)))
         .map(|(x, y)| x * y)
-        .sum();
-    let denominator_1: f64 = column_1.values().iter().map(|x| x * x).sum();
-    let denominator_2: f64 = column_2.values().iter().map(|y| y * y).sum();
-    numerator / denominator_1.sqrt() / denominator_2.sqrt()
+        .sum::<f64>()
+}
+
+fn magnitude(column: &CscCol<f64>) -> f64 {
+    column.values().iter().map(|x| x * x).sum::<f64>().sqrt()
 }

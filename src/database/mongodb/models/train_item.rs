@@ -1,6 +1,6 @@
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::{doc, Document};
-use mongodb::options::IndexOptions;
+use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
@@ -86,8 +86,9 @@ impl TrainItem {
             // TODO: "rlm": realm.to_str(),
             "lbts": { "$gte": since },
         };
+        let options = FindOptions::builder().projection(doc! { "_id": 0 }).build();
         let stream = Self::collection(from)
-            .find(filter, None)
+            .find(filter, options)
             .await
             .context("failed to query train items")?
             .map_err(Error::from);
