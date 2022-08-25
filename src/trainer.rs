@@ -27,7 +27,7 @@ pub async fn run(opts: TrainOpts) -> Result {
     let mut pointer = ObjectId::from_bytes([0; 12]);
     let mut train_set: Vec<database::TrainItem> = Vec::new();
     loop {
-        {
+        pointer = {
             let since = now() - Duration::from_std(opts.train_period)?;
 
             info!(n_train_items = train_set.len(), "evicting outdated items…");
@@ -40,26 +40,31 @@ pub async fn run(opts: TrainOpts) -> Result {
                 train_set.push(item);
             }
 
+            *train_set
+                .iter()
+                .map(|item| &item.object_id)
+                .max()
+                .ok_or_else(|| anyhow!("failed to find the maximum train item's object ID"))?
+        };
+
+        let similarities = {
             let (by_vehicle, by_account_tank) = aggregate_train_set(&train_set);
 
             info!(n_vehicles = by_vehicle.len(), "calculating per vehicle victory ratios…");
             let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
 
-            info!(n_account_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
-            let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
+            let (ratings, tank_ids) = {
+                info!(n_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
+                let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
+                let ratings = build_matrix(&by_vehicle, by_account_tank);
+                let tank_ids = by_vehicle.keys().copied().collect_vec();
+                (ratings, tank_ids)
+            };
 
-            let ratings = build_matrix(&by_vehicle, by_account_tank);
-            let tank_ids = by_vehicle.keys().copied().collect_vec();
-            let similarities = calculate_similarities(ratings, &tank_ids, opts.buffering).await?;
+            calculate_similarities(ratings, &tank_ids, opts.buffering).await?
+        };
 
-            update_database(&db, similarities).await?;
-        }
-
-        pointer = *train_set
-            .iter()
-            .map(|item| &item.object_id)
-            .max()
-            .ok_or_else(|| anyhow!("failed to find the maximum train item's object ID"))?;
+        update_database(&db, similarities).await?;
 
         info!(?opts.train_interval, %pointer, "sleeping…");
         sleep(opts.train_interval).await;

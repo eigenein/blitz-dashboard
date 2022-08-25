@@ -91,16 +91,21 @@ jobs:
         run: |
           rsync -avz blitz-dashboard yastatist:/home/pi/bin/blitz-dashboard
 
-      - name: Restart web
+      - name: Restart Web
         run: |
           ssh yastatist "sudo systemctl restart web; systemctl status --lines=0 web"
 
-      - name: Restart crawler (RU)
+      - name: Restart Crawler (RU)
         if: ${{ true }}
         run: |
           ssh yastatist "sudo systemctl restart crawler-ru; systemctl status --lines=0 crawler-ru"
 
-      - name: Restart crawler (EU)
+      - name: Restart Crawler (EU)
         if: ${{ true }}
         run: |
           ssh yastatist "sudo systemctl restart crawler-eu; systemctl status --lines=0 crawler-eu"
+
+      - name: Restart Trainer
+        if: ${{ true }}
+        run: |
+          ssh yastatist "sudo systemctl restart trainer; systemctl status --lines=0 trainer"
