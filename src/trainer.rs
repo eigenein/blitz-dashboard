@@ -242,13 +242,18 @@ async fn update_database(
 ) -> Result {
     info!("updating the database…");
     let start_instant = Instant::now();
-    for (tank_id, entries) in similarities {
+    for (source_id, entries) in similarities {
+        let similar_vehicles = entries
+            .into_iter()
+            .filter(|(_, similarity)| *similarity > 0.0)
+            .map(|(target_id, similarity)| database::SimilarVehicle {
+                tank_id: target_id,
+                similarity,
+            })
+            .collect();
         let model = database::VehicleModel {
-            tank_id,
-            similarities: entries
-                .into_iter()
-                .filter(|(_, similarity)| *similarity > 0.0)
-                .collect(),
+            tank_id: source_id,
+            similar: similar_vehicles,
         };
         model.upsert(db).await?;
     }
