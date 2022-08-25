@@ -27,31 +27,33 @@ pub async fn run(opts: TrainOpts) -> Result {
     let mut pointer = ObjectId::from_bytes([0; 12]);
     let mut train_set: Vec<database::TrainItem> = Vec::new();
     loop {
-        let since = now() - Duration::from_std(opts.train_period)?;
+        {
+            let since = now() - Duration::from_std(opts.train_period)?;
 
-        info!(n_train_items = train_set.len(), "evicting outdated items…");
-        train_set.retain(|item| item.last_battle_time >= since);
+            info!(n_train_items = train_set.len(), "evicting outdated items…");
+            train_set.retain(|item| item.last_battle_time >= since);
 
-        let mut stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
+            let mut stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
 
-        info!("reading new items…");
-        while let Some(item) = stream.try_next().await? {
-            train_set.push(item);
+            info!("reading new items…");
+            while let Some(item) = stream.try_next().await? {
+                train_set.push(item);
+            }
+
+            let (by_vehicle, by_account_tank) = aggregate_train_set(&train_set);
+
+            info!(n_vehicles = by_vehicle.len(), "calculating per vehicle victory ratios…");
+            let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
+
+            info!(n_account_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
+            let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
+
+            let ratings = build_matrix(&by_vehicle, by_account_tank);
+            let tank_ids = by_vehicle.keys().copied().collect_vec();
+            let similarities = calculate_similarities(ratings, &tank_ids, opts.buffering).await?;
+
+            update_database(&db, similarities).await?;
         }
-
-        let (by_vehicle, by_account_tank) = aggregate_train_set(&train_set);
-
-        info!(n_vehicles = by_vehicle.len(), "calculating per vehicle victory ratios…");
-        let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
-
-        info!(n_account_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
-        let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
-
-        let ratings = build_matrix(&by_vehicle, by_account_tank);
-        let tank_ids = by_vehicle.keys().copied().collect_vec();
-        let similarities = calculate_similarities(ratings, &tank_ids, opts.buffering).await?;
-
-        update_database(&db, similarities).await?;
 
         pointer = *train_set
             .iter()
