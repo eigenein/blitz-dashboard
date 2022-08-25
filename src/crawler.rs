@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
+use mongodb::bson::oid::ObjectId;
 use tokio::sync::Mutex;
 
 use crate::crawler::crawled_data::CrawledData;
@@ -298,6 +299,7 @@ fn gather_train_items(
                         && stats.all.n_battles > *n_battles
                         && stats.all.n_wins >= *n_wins;
                     differs.then(|| database::TrainItem {
+                        object_id: ObjectId::from_bytes([0; 12]),
                         realm: account.realm,
                         account_id: account.id,
                         tank_id: stats.tank_id,

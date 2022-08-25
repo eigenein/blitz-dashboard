@@ -6,12 +6,14 @@ use std::sync::Arc;
 
 use ahash::AHashMap;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
-use futures::{stream, Stream, StreamExt, TryStreamExt};
+use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
+use mongodb::bson::oid::ObjectId;
 use mongodb::Database;
 use nalgebra_sparse::csc::CscCol;
 use nalgebra_sparse::{CooMatrix, CscMatrix};
 use tokio::spawn;
+use tokio::time::sleep;
 
 use crate::database::mongodb::traits::Upsert;
 use crate::opts::TrainOpts;
@@ -20,25 +22,46 @@ use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
     let db = database::mongodb::open(&opts.mongodb_uri).await?;
-    let since = now() - Duration::from_std(opts.train_period)?;
-    let train_set = database::TrainItem::stream(&db, since).await?;
-    let (by_vehicle, by_account_tank) = aggregate_train_set(Box::pin(train_set)).await?;
     let z_level = opts.confidence_level.z_value();
 
-    info!(n_vehicles = by_vehicle.len(), "calculating vehicle victory ratios…");
-    let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
+    let mut pointer = ObjectId::from_bytes([0; 12]);
+    let mut train_set: Vec<database::TrainItem> = Vec::new();
+    loop {
+        let since = now() - Duration::from_std(opts.train_period)?;
 
-    info!(
-        n_account_tanks = by_account_tank.len(),
-        "calculating account⨯tank victory ratios…"
-    );
-    let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
+        info!(n_train_items = train_set.len(), "evicting outdated items…");
+        train_set.retain(|item| item.last_battle_time >= since);
 
-    let train_set = build_matrix(&by_vehicle, by_account_tank);
-    let tank_ids = by_vehicle.keys().copied().collect_vec();
-    let similarities = calculate_similarities(train_set, &tank_ids, opts.buffering).await?;
-    update_database(&db, similarities).await?;
-    Ok(())
+        let mut stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
+
+        info!("reading new items…");
+        while let Some(item) = stream.try_next().await? {
+            train_set.push(item);
+        }
+
+        let (by_vehicle, by_account_tank) = aggregate_train_set(&train_set);
+
+        info!(n_vehicles = by_vehicle.len(), "calculating per vehicle victory ratios…");
+        let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
+
+        info!(n_account_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
+        let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
+
+        let ratings = build_matrix(&by_vehicle, by_account_tank);
+        let tank_ids = by_vehicle.keys().copied().collect_vec();
+        let similarities = calculate_similarities(ratings, &tank_ids, opts.buffering).await?;
+
+        update_database(&db, similarities).await?;
+
+        pointer = *train_set
+            .iter()
+            .map(|item| &item.object_id)
+            .max()
+            .ok_or_else(|| anyhow!("failed to find the maximum train item's object ID"))?;
+
+        info!(?opts.train_interval, %pointer, "sleeping…");
+        sleep(opts.train_interval).await;
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -72,21 +95,21 @@ impl Sample {
 }
 
 #[instrument(level = "info", skip_all)]
-async fn aggregate_train_set(
-    mut train_set: impl Stream<Item = Result<database::TrainItem>> + Unpin,
-) -> Result<(
+fn aggregate_train_set(
+    train_set: &[database::TrainItem],
+) -> (
     AHashMap<wargaming::TankId, Sample>,
     AHashMap<(wargaming::TankId, wargaming::AccountId), Sample>,
-)> {
-    info!("aggregating…");
+) {
+    info!(n_items = train_set.len(), "aggregating…");
 
     let mut by_account_tank = AHashMap::default();
     let mut n_battles = 0;
     let start_instant = Instant::now();
 
-    while let Some(item) = train_set.try_next().await? {
+    for item in train_set {
         n_battles += item.n_battles;
-        let sample = Sample::from(&item);
+        let sample = Sample::from(item);
 
         match by_account_tank.entry((item.tank_id, item.account_id)) {
             Entry::Vacant(entry) => {
@@ -112,7 +135,7 @@ async fn aggregate_train_set(
     }
 
     info!(n_battles, elapsed = ?start_instant.elapsed(), "finished");
-    Ok((by_vehicle, by_account_tank))
+    (by_vehicle, by_account_tank)
 }
 
 #[instrument(level = "info", skip_all)]
@@ -157,17 +180,17 @@ fn build_matrix(
 
 #[instrument(level = "info", skip_all)]
 async fn calculate_similarities(
-    train_set: CscMatrix<f64>,
+    ratings: CscMatrix<f64>,
     tank_ids: &[wargaming::TankId],
     buffering: usize,
 ) -> Result<AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>>> {
-    info!(nnz = train_set.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
+    info!(nnz = ratings.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
     let start_instant = Instant::now();
 
     let vehicle_magnitudes: Vec<_> = tank_ids
         .iter()
         .copied()
-        .map(|tank_id| (tank_id, magnitude(&train_set.col(tank_id as usize))))
+        .map(|tank_id| (tank_id, magnitude(&ratings.col(tank_id as usize))))
         .collect();
 
     let iter_vehicle_pairs = vehicle_magnitudes
@@ -179,7 +202,7 @@ async fn calculate_similarities(
         })
         .filter(|(tank_id_1, _, tank_id_2, _)| tank_id_2 < tank_id_1);
 
-    let train_set = Arc::new(train_set);
+    let train_set = Arc::new(ratings);
     let mut stream = stream::iter(iter_vehicle_pairs)
         .map(|(tank_id_1, magnitude_1, tank_id_2, magnitude_2)| {
             let train_set = Arc::clone(&train_set);

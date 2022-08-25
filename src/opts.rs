@@ -264,9 +264,18 @@ pub struct TrainOpts {
     #[clap(
         long,
         parse(try_from_str = humantime::parse_duration),
+        default_value = "7d",
         env = "BLITZ_DASHBOARD_TRAINER_PERIOD",
     )]
     pub train_period: time::Duration,
+
+    #[clap(
+        long,
+        parse(try_from_str = humantime::parse_duration),
+        default_value = "8h",
+        env = "BLITZ_DASHBOARD_TRAINER_INTERVAL",
+    )]
+    pub train_interval: time::Duration,
 
     #[clap(
         long,
