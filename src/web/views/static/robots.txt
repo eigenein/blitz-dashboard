@@ -9,3 +9,4 @@ Disallow: /*.png$
 Disallow: /*.webmanifest$
 Disallow: /*.svg$
 Disallow: /*?*
+Disallow: /analytics*
