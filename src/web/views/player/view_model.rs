@@ -66,14 +66,14 @@ impl ViewModel {
             .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
-        let is_recommendations_tester = [513713270, 5589968, 10894576].contains(&account_id);
-        let all_tank_ids = is_recommendations_tester
+        let is_recommender_tester = [513713270, 5589968].contains(&account_id);
+        let all_tank_ids = is_recommender_tester
             .then(|| actual_tanks.keys().copied().collect_vec())
             .unwrap_or_default();
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
-        let recommendations = if is_recommendations_tester {
+        let recommendations = if is_recommender_tester {
             recommend(db, &all_tank_ids, &stats_delta.tanks, preferences.confidence_level).await?
         } else {
             Vec::new()
