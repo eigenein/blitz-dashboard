@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::collections::hash_map::{Entry, Keys};
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::AddAssign;
@@ -34,7 +34,6 @@ pub async fn run(opts: TrainOpts) -> Result {
             train_set.retain(|item| item.last_battle_time >= since);
 
             let mut stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
-
             info!("reading new items…");
             while let Some(item) = stream.try_next().await? {
                 train_set.push(item);
@@ -44,27 +43,27 @@ pub async fn run(opts: TrainOpts) -> Result {
                 .iter()
                 .map(|item| &item.object_id)
                 .max()
-                .ok_or_else(|| anyhow!("failed to find the maximum train item's object ID"))?
+                .ok_or_else(|| anyhow!("the train set must not be empty"))?
         };
 
-        let similarities = {
+        let (by_vehicle, similarities) = {
             let (by_vehicle, by_account_tank) = aggregate_train_set(&train_set);
 
             info!(n_vehicles = by_vehicle.len(), "calculating per vehicle victory ratios…");
             let by_vehicle = calculate_victory_ratios(by_vehicle, z_level);
 
-            let (ratings, tank_ids) = {
+            let ratings = {
                 info!(n_tanks = by_account_tank.len(), "calculating per tank victory ratios…");
                 let by_account_tank = calculate_victory_ratios(by_account_tank, z_level);
-                let ratings = build_matrix(&by_vehicle, by_account_tank);
-                let tank_ids = by_vehicle.keys().copied().collect_vec();
-                (ratings, tank_ids)
+                build_matrix(&by_vehicle, by_account_tank)
             };
 
-            calculate_similarities(ratings, &tank_ids, opts.buffering).await?
+            let similarities =
+                calculate_similarities(ratings, by_vehicle.keys(), opts.buffering).await?;
+            (by_vehicle, similarities)
         };
 
-        update_database(&db, similarities).await?;
+        update_database(&db, by_vehicle, similarities).await?;
 
         info!(?opts.train_interval, %pointer, "sleeping…");
         sleep(opts.train_interval).await;
@@ -188,14 +187,13 @@ fn build_matrix(
 #[instrument(level = "info", skip_all)]
 async fn calculate_similarities(
     ratings: CscMatrix<f64>,
-    tank_ids: &[wargaming::TankId],
+    tank_ids: Keys<'_, wargaming::TankId, f64>,
     buffering: usize,
 ) -> Result<AHashMap<wargaming::TankId, Vec<(wargaming::TankId, f64)>>> {
     info!(nnz = ratings.nnz(), n_vehicles = tank_ids.len(), "calculating similarities…");
     let start_instant = Instant::now();
 
     let vehicle_magnitudes: Vec<_> = tank_ids
-        .iter()
         .copied()
         .map(|tank_id| (tank_id, magnitude(&ratings.col(tank_id as usize))))
         .collect();
@@ -227,20 +225,14 @@ async fn calculate_similarities(
         if !similarity.is_finite() {
             continue;
         }
-        match similarities.entry(tank_id_1) {
-            Entry::Vacant(entry) => {
-                entry.insert(vec![(tank_id_2, similarity)]);
-            }
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().push((tank_id_2, similarity));
-            }
-        }
-        match similarities.entry(tank_id_2) {
-            Entry::Vacant(entry) => {
-                entry.insert(vec![(tank_id_1, similarity)]);
-            }
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().push((tank_id_1, similarity));
+        for (tank_id_1, tank_id_2) in [(tank_id_1, tank_id_2), (tank_id_2, tank_id_1)] {
+            match similarities.entry(tank_id_1) {
+                Entry::Vacant(entry) => {
+                    entry.insert(vec![(tank_id_2, similarity)]);
+                }
+                Entry::Occupied(mut entry) => {
+                    entry.get_mut().push((tank_id_2, similarity));
+                }
             }
         }
     }
@@ -266,6 +258,7 @@ fn magnitude(column: &CscCol<f64>) -> f64 {
 #[instrument(level = "info", skip_all)]
 async fn update_database(
     db: &Database,
+    by_vehicle: AHashMap<wargaming::TankId, f64>,
     similarities: impl IntoIterator<
         Item = (wargaming::TankId, impl IntoIterator<Item = (wargaming::TankId, f64)>),
     >,
@@ -283,6 +276,9 @@ async fn update_database(
             .collect();
         let model = database::VehicleModel {
             tank_id: source_id,
+            victory_ratio: *by_vehicle
+                .get(&source_id)
+                .expect("vehicle's victory ratio is missing"),
             similar: similar_vehicles,
         };
         model.upsert(db).await?;

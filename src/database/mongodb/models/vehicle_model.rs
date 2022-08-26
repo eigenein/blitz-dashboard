@@ -14,6 +14,9 @@ pub struct VehicleModel {
     #[serde(rename = "_id")]
     pub tank_id: wargaming::TankId,
 
+    #[serde(rename = "vr")]
+    pub victory_ratio: f64,
+
     #[serde(rename = "sim")]
     pub similar: Vec<SimilarVehicle>,
 }
@@ -52,6 +55,6 @@ impl Upsert for VehicleModel {
     }
 
     fn update(&self) -> Result<Self::Update> {
-        Ok(doc! { "$set": { "sim": bson::to_bson(&self.similar)? } })
+        Ok(doc! { "$set": bson::to_bson(&self)? })
     }
 }
