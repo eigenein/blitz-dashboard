@@ -64,7 +64,7 @@ impl ViewModel {
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =
-            StatsDelta::retrieve(db, realm, account_id, actual_info.stats, actual_tanks, before)
+            StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
 
         let rating_snapshots = database::RatingSnapshot::retrieve_season(

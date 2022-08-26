@@ -22,7 +22,7 @@ impl StatsDelta {
         from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        stats: wargaming::AccountInfoStats,
+        stats: &wargaming::AccountInfoStats,
         actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
     ) -> Result<Self> {
@@ -32,7 +32,7 @@ impl StatsDelta {
             {
                 Either::Left(delta) => delta,
                 Either::Right(tanks) => {
-                    Self::retrieve_slowly(from, realm, account_id, tanks, before, stats.rating)
+                    Self::retrieve_slowly(from, realm, account_id, tanks, before, &stats.rating)
                         .await?
                 }
             };
@@ -48,7 +48,7 @@ impl StatsDelta {
         from: &mongodb::Database,
         realm: wargaming::Realm,
         account_id: wargaming::AccountId,
-        stats: wargaming::AccountInfoStats,
+        stats: &wargaming::AccountInfoStats,
         mut actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
     ) -> Result<Either<Self, AHashMap<wargaming::TankId, database::TankSnapshot>>> {
@@ -93,7 +93,7 @@ impl StatsDelta {
         account_id: wargaming::AccountId,
         actual_tanks: AHashMap<wargaming::TankId, database::TankSnapshot>,
         before: DateTime,
-        rating_stats: wargaming::RatingStats,
+        rating_stats: &wargaming::RatingStats,
     ) -> Result<Self> {
         debug!("taking the slow path");
         let actual_tanks: AHashMap<_, _> = actual_tanks

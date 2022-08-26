@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::ops::Sub;
 
 use serde::{Deserialize, Serialize};
@@ -57,8 +58,9 @@ impl DamageReceived for RatingStatsSnapshot {
     }
 }
 
-impl From<wargaming::RatingStats> for RatingStatsSnapshot {
-    fn from(stats: wargaming::RatingStats) -> Self {
+impl<RS: Borrow<wargaming::RatingStats>> From<RS> for RatingStatsSnapshot {
+    fn from(stats: RS) -> Self {
+        let stats = stats.borrow();
         Self {
             mm_rating: stats.mm_rating,
             n_battles: stats.basic.n_battles,
