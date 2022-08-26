@@ -1,3 +1,4 @@
+mod attributes;
 mod sample;
 
 use std::collections::hash_map::Entry;
@@ -15,6 +16,7 @@ use nalgebra_sparse::{CooMatrix, CscMatrix};
 use tokio::spawn;
 use tokio::time::sleep;
 
+use self::attributes::*;
 use self::sample::*;
 use crate::database::mongodb::traits::Upsert;
 use crate::opts::TrainOpts;
@@ -160,50 +162,51 @@ async fn build_models(
 
     let vehicle_attributes: Vec<_> = by_vehicle
         .into_iter()
-        .map(|(tank_id, victory_ratio)| {
-            (tank_id, victory_ratio, magnitude(&ratings.col(tank_id as usize)))
+        .map(|(tank_id, victory_ratio)| VehicleAttributes {
+            tank_id,
+            victory_ratio,
+            magnitude: magnitude(&ratings.col(tank_id as usize)),
         })
         .collect();
 
     let vehicle_pairs = vehicle_attributes
         .iter()
-        .flat_map(|(tank_id_1, victory_ratio_1, magnitude_1)| {
+        .flat_map(|attrs_1| {
             vehicle_attributes
                 .iter()
-                .map(|(tank_id_2, _, magnitude_2)| {
-                    (*tank_id_1, *magnitude_1, *victory_ratio_1, *tank_id_2, *magnitude_2)
-                })
+                .map(|attrs_2| (*attrs_1, *attrs_2))
         })
-        .filter(|(tank_id_1, _, _, tank_id_2, _)| tank_id_2 < tank_id_1);
+        .filter(|(attrs_1, attrs_2)| attrs_2.tank_id < attrs_1.tank_id);
 
     let train_set = Arc::new(ratings);
     let mut stream = stream::iter(vehicle_pairs)
-        .map(|(tank_id_1, magnitude_1, victory_ratio_1, tank_id_2, magnitude_2)| {
+        .map(|(attrs_1, attrs_2)| {
             let train_set = Arc::clone(&train_set);
             spawn(async move {
-                let column_1 = train_set.col(tank_id_1 as usize);
-                let column_2 = train_set.col(tank_id_2 as usize);
-                let similarity = dot_product(&column_1, &column_2) / magnitude_1 / magnitude_2;
-                (tank_id_1, victory_ratio_1, tank_id_2, similarity)
+                let column_1 = train_set.col(attrs_1.tank_id as usize);
+                let column_2 = train_set.col(attrs_2.tank_id as usize);
+                let similarity =
+                    dot_product(&column_1, &column_2) / attrs_1.magnitude / attrs_2.magnitude;
+                (attrs_1, attrs_2, similarity)
             })
         })
         .buffer_unordered(buffering);
 
     let mut models = AHashMap::default();
-    while let Some((tank_id_1, victory_ratio_1, tank_id_2, similarity)) = stream.try_next().await? {
+    while let Some((attrs_1, attrs_2, similarity)) = stream.try_next().await? {
         if !similarity.is_finite() || similarity <= 0.0 {
             continue;
         }
-        for (tank_id_1, tank_id_2) in [(tank_id_1, tank_id_2), (tank_id_2, tank_id_1)] {
+        for (attrs_1, attrs_2) in [(attrs_1, attrs_2), (attrs_2, attrs_1)] {
             let vehicle_2 = database::SimilarVehicle {
-                tank_id: tank_id_2,
+                tank_id: attrs_2.tank_id,
                 similarity,
             };
-            match models.entry(tank_id_1) {
+            match models.entry(attrs_1.tank_id) {
                 Entry::Vacant(entry) => {
                     entry.insert(database::VehicleModel {
-                        tank_id: tank_id_1,
-                        victory_ratio: victory_ratio_1,
+                        tank_id: attrs_1.tank_id,
+                        victory_ratio: attrs_1.victory_ratio,
                         similar: vec![vehicle_2],
                     });
                 }
