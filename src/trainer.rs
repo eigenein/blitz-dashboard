@@ -1,11 +1,11 @@
+mod sample;
+
 use std::collections::hash_map::Entry;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::AddAssign;
 use std::sync::Arc;
 
 use ahash::AHashMap;
-use bpci::{Interval, NSuccessesSample, WilsonScore};
 use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use mongodb::bson::oid::ObjectId;
@@ -15,6 +15,7 @@ use nalgebra_sparse::{CooMatrix, CscMatrix};
 use tokio::spawn;
 use tokio::time::sleep;
 
+use self::sample::*;
 use crate::database::mongodb::traits::Upsert;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
@@ -62,36 +63,6 @@ pub async fn run(opts: TrainOpts) -> Result {
 
         info!(?opts.train_interval, %pointer, "sleeping…");
         sleep(opts.train_interval).await;
-    }
-}
-
-#[derive(Copy, Clone)]
-struct Sample {
-    n_battles: u32,
-    n_wins: u32,
-}
-
-impl From<&database::TrainItem> for Sample {
-    fn from(item: &database::TrainItem) -> Self {
-        Self {
-            n_battles: item.n_battles,
-            n_wins: item.n_wins,
-        }
-    }
-}
-
-impl AddAssign<&Self> for Sample {
-    fn add_assign(&mut self, rhs: &Self) {
-        self.n_battles += rhs.n_battles;
-        self.n_wins += rhs.n_wins;
-    }
-}
-
-impl Sample {
-    fn victory_ratio(self, z_level: f64) -> Result<f64> {
-        Ok(NSuccessesSample::new(self.n_battles, self.n_wins)?
-            .wilson_score_with_cc(z_level)
-            .mean())
     }
 }
 
