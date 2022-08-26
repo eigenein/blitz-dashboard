@@ -820,6 +820,25 @@ pub async fn get(
                                 }
                             }
                         }
+
+                        @if !view_model.recommendations.is_empty() {
+                            div.field.is-grouped.is-grouped-multiline {
+                                @for (tank_id, prediction) in view_model.recommendations {
+                                    div.control {
+                                        div.tags.has-addons {
+                                            span.tag.is-info {
+                                                @let vehicle = get_vehicle(tank_id);
+                                                @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {
+                                                    span."mx-1" { (tier) }
+                                                }
+                                                (vehicle.name)
+                                            }
+                                            span.tag { (Float::from(100.0 * prediction)) "%" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

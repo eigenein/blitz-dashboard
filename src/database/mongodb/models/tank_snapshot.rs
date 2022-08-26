@@ -117,7 +117,7 @@ impl TankSnapshot {
 
     /// Finds difference between the actual statistics and snapshot's statistics.
     pub fn subtract_collections(
-        mut actual_tanks: AHashMap<wargaming::TankId, Self>,
+        mut actual_tanks: AHashMap<wargaming::TankId, Self>, // TODO: try to accept a reference.
         snapshots: Vec<Self>,
     ) -> Vec<Self> {
         let mut subtracted: Vec<Self> = snapshots

@@ -1,4 +1,5 @@
 mod attributes;
+mod recommender;
 mod sample;
 
 use std::collections::hash_map::Entry;
@@ -17,6 +18,7 @@ use tokio::spawn;
 use tokio::time::sleep;
 
 use self::attributes::*;
+pub use self::recommender::*;
 use self::sample::*;
 use crate::database::mongodb::traits::Upsert;
 use crate::opts::TrainOpts;

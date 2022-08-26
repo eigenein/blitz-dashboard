@@ -3,6 +3,7 @@ use std::net::IpAddr;
 
 use bpci::BoundedInterval;
 use futures::future::try_join;
+use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::cookie::CookieJar;
 use poem::web::Path;
@@ -10,6 +11,7 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
+use crate::trainer::recommend;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
@@ -24,6 +26,7 @@ pub struct ViewModel {
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
+    pub recommendations: Vec<(wargaming::TankId, f64)>,
 }
 
 impl ViewModel {
@@ -63,9 +66,18 @@ impl ViewModel {
             .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
+        let is_recommendations_tester = [513713270, 5589968, 10894576].contains(&account_id);
+        let all_tank_ids = is_recommendations_tester
+            .then(|| actual_tanks.keys().copied().collect_vec())
+            .unwrap_or_default();
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
+        let recommendations = if is_recommendations_tester {
+            recommend(db, &all_tank_ids, &stats_delta.tanks, preferences.confidence_level).await?
+        } else {
+            Vec::new()
+        };
 
         let rating_snapshots = database::RatingSnapshot::retrieve_season(
             db,
@@ -83,6 +95,7 @@ impl ViewModel {
             rating_snapshots,
             preferences,
             target_victory_ratio,
+            recommendations,
         })
     }
 

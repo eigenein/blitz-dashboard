@@ -17,14 +17,14 @@ use crate::prelude::*;
 use crate::tracing::format_elapsed;
 
 mod crawler;
-mod database;
+pub mod database;
 mod helpers;
 mod math;
 mod opts;
 mod prelude;
 mod tankopedia;
 mod trainer;
-mod wargaming;
+pub mod wargaming;
 mod web;
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
