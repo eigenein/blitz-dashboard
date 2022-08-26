@@ -61,6 +61,12 @@ pub async fn get(
                         div.navbar-item {
                             (vehicle_title(&vehicle, &locale)?)
                         }
+
+                        div.navbar-item {
+                            span.(SemaphoreClass::new(model.victory_ratio).threshold(0.5)) {
+                                strong { (Float::from(100.0 * model.victory_ratio)) } "%"
+                            }
+                        }
                     }
                 }
 
