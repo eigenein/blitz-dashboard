@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 
-use bpci::BoundedInterval;
+use bpci::{BoundedInterval, Interval};
 use futures::future::try_join;
 use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
@@ -37,6 +37,7 @@ impl ViewModel {
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
+        trainer_client: &crate::trainer::client::Client,
     ) -> poem::Result<Self> {
         let mut user =
             Self::get_sentry_user(realm, account_id, ip_addr).map_err(poem::Error::from)?;
@@ -73,7 +74,26 @@ impl ViewModel {
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
         let recommendations = if is_recommender_tester {
-            Vec::new()
+            let given = stats_delta
+                .tanks
+                .iter()
+                .map(|snapshot| {
+                    Ok((
+                        snapshot.tank_id,
+                        snapshot
+                            .stats
+                            .true_win_rate(preferences.confidence_level)?
+                            .mean(),
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            match trainer_client.recommend(given, all_tank_ids).await {
+                Ok(recommendations) => recommendations,
+                Err(error) => {
+                    error!("failed to fetch recommendations: {:#}", error);
+                    Vec::new()
+                }
+            }
         } else {
             Vec::new()
         };

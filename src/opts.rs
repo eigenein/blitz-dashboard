@@ -56,6 +56,13 @@ pub struct WebOpts {
     /// Google Analytics measurement ID.
     #[structopt(long, env = "BLITZ_DASHBOARD_WEB_GTAG")]
     pub gtag: Option<String>,
+
+    #[structopt(
+        long,
+        env = "BLITZ_DASHBOARD_WEB_TRAINER_BASE_URL",
+        default_value = "http://localhost:8082"
+    )]
+    pub trainer_base_url: String,
 }
 
 /// Runs the account crawler.

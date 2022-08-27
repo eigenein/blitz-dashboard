@@ -83,14 +83,23 @@ pub async fn get(
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
+    Data(trainer_client): Data<&crate::trainer::client::Client>,
     real_ip: RealIp,
     locale: Locale,
     none_match: Option<TypedHeader<IfNoneMatch>>,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
 
-    let view_model =
-        ViewModel::new(real_ip.0, path, cookies, *mongodb, *info_cache, *tanks_cache).await?;
+    let view_model = ViewModel::new(
+        real_ip.0,
+        path,
+        cookies,
+        *mongodb,
+        *info_cache,
+        *tanks_cache,
+        trainer_client,
+    )
+    .await?;
 
     let etag = format!(
         r#""{}""#,

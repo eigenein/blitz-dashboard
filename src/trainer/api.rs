@@ -2,14 +2,16 @@ use std::net::IpAddr;
 use std::str::FromStr;
 
 use futures::{stream, StreamExt};
+use poem::http::StatusCode;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, Tracing};
 use poem::web::{Data, Json, Path};
-use poem::{get, handler, post, EndpointExt, Route, Server};
+use poem::{get, handler, post, EndpointExt, IntoResponse, Response, Route, Server};
 use tokio::sync::RwLock;
 
 use crate::prelude::*;
-use crate::trainer::request::Request;
+use crate::trainer::requests::RecommendRequest;
+use crate::trainer::responses;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 
 pub async fn run(
@@ -19,8 +21,8 @@ pub async fn run(
     vehicle_similarities: Arc<RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>>,
 ) -> Result {
     let app = Route::new()
-        .at("/vehicles/:vehicle_id/similar", get(get_similar_vehicles))
-        .at("/predict", post(predict))
+        .at("/vehicles/:vehicle_id", get(get_vehicle))
+        .at("/recommend", post(recommend))
         .data(vehicle_victory_ratios)
         .data(vehicle_similarities)
         .with(Tracing)
@@ -36,21 +38,29 @@ pub async fn run(
 
 #[handler]
 #[instrument(level = "info", skip_all, fields(tank_id = tank_id))]
-async fn get_similar_vehicles(
+async fn get_vehicle(
     Path(tank_id): Path<wargaming::TankId>,
     Data(vehicle_victory_ratios): Data<&Arc<RwLock<AHashMap<wargaming::TankId, f64>>>>,
     Data(vehicle_similarities): Data<
         &Arc<RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>>,
     >,
-) -> Result<Json<Vec<(wargaming::TankId, f64)>>> {
+) -> Result<Response> {
+    let start_instant = Instant::now();
+    let victory_ratio = match vehicle_victory_ratios.read().await.get(&tank_id) {
+        Some(victory_ratio) => *victory_ratio,
+        _ => {
+            return Ok(StatusCode::NOT_FOUND.into_response());
+        }
+    };
     let tank_ids = vehicle_victory_ratios
         .read()
         .await
         .keys()
         .copied()
         .collect::<Vec<_>>();
-    Ok(Json(
-        stream::iter(tank_ids)
+    let mut response = responses::VehicleResponse {
+        victory_ratio,
+        similar_vehicles: stream::iter(tank_ids)
             .filter_map(|target_id| async move {
                 vehicle_similarities
                     .read()
@@ -60,20 +70,25 @@ async fn get_similar_vehicles(
             })
             .collect::<Vec<(wargaming::TankId, f64)>>()
             .await,
-    ))
+    };
+    response
+        .similar_vehicles
+        .sort_unstable_by(|(_, lhs), (_, rhs)| rhs.total_cmp(lhs));
+    info!(elapsed = ?start_instant.elapsed(), "completed");
+    Ok(Json(response).into_response())
 }
 
 #[handler]
 #[instrument(level = "info", skip_all)]
-async fn predict(
-    Json(request): Json<Request>,
+async fn recommend(
+    Json(request): Json<RecommendRequest>,
     Data(vehicle_victory_ratios): Data<&Arc<RwLock<AHashMap<wargaming::TankId, f64>>>>,
     Data(vehicle_similarities): Data<
         &Arc<RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>>,
     >,
 ) -> Result<Json<Vec<(wargaming::TankId, f64)>>> {
     let start_instant = Instant::now();
-    info!(predict = ?request.predict, n_given = request.given.len());
+    info!(n_given = request.given.len(), n_predict = ?request.predict.len());
     let given = {
         stream::iter(request.given.into_iter())
             .filter_map(|(tank_id, victory_ratio)| async move {
@@ -87,7 +102,7 @@ async fn predict(
             .await
     };
     let given = Arc::new(given);
-    let predictions = {
+    let mut predictions = {
         stream::iter(request.predict.into_iter())
             .filter_map(|target_id| {
                 let given = Arc::clone(&given);
@@ -115,9 +130,10 @@ async fn predict(
                         })
                 }
             })
-            .collect()
+            .collect::<Vec<_>>()
             .await
     };
-    info!(elapsed = ?start_instant.elapsed());
+    predictions.sort_unstable_by(|(_, lhs), (_, rhs)| rhs.total_cmp(lhs));
+    info!(n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
     Ok(Json(predictions))
 }

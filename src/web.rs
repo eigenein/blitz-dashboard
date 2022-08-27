@@ -50,6 +50,7 @@ struct AppData {
     api: WargamingApi,
     mongodb: mongodb::Database,
     redis: fred::pool::RedisPool,
+    trainer_client: crate::trainer::client::Client,
     tracking_code: TrackingCode,
 }
 
@@ -67,12 +68,14 @@ impl AppData {
             redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
                 .await?;
         let tracking_code = TrackingCode::new(opts)?;
+        let trainer_client = crate::trainer::client::Client::new(&opts.trainer_base_url);
 
         Ok(Self {
             api,
             mongodb,
             redis,
             tracking_code,
+            trainer_client,
         })
     }
 }
@@ -86,7 +89,8 @@ async fn create_app(data: AppData) -> Result<impl Endpoint> {
         .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
         .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
         .data(data.redis)
-        .data(data.api);
+        .data(data.api)
+        .data(data.trainer_client);
     Ok(app)
 }
 

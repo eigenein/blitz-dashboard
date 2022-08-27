@@ -1,5 +1,7 @@
 mod api;
-pub mod request;
+pub mod client;
+pub mod requests;
+pub mod responses;
 mod sample;
 
 use std::sync::Arc;
@@ -182,8 +184,13 @@ async fn update_vehicle_similarities(
     ratings: IndexedByTank<f64>,
     vehicle_similarities: &RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>,
 ) {
+    let start_instant = Instant::now();
     info!("calculating & updating vehicle similarities…");
     for (tank_id_1, by_account_1) in &ratings {
+        vehicle_similarities
+            .write()
+            .await
+            .insert((*tank_id_1, *tank_id_1), 1.0);
         let magnitude_1 = magnitude(by_account_1.values());
         for (tank_id_2, by_account_2) in &ratings {
             if tank_id_1 >= tank_id_2 {
@@ -211,6 +218,7 @@ async fn update_vehicle_similarities(
             }
         }
     }
+    info!(elapsed = ?start_instant.elapsed(), "completed");
 }
 
 fn magnitude<'a>(vector: impl IntoIterator<Item = &'a f64>) -> f64 {
