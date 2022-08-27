@@ -835,7 +835,7 @@ pub async fn get(
                                 @for (tank_id, prediction) in view_model.recommendations {
                                     div.control {
                                         div.tags.has-addons {
-                                            span.tag.is-info {
+                                            span.tag.is-info title=(tank_id) {
                                                 @let vehicle = get_vehicle(tank_id);
                                                 @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {
                                                     span."mx-1" { (tier) }
