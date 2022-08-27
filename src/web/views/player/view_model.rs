@@ -73,7 +73,7 @@ impl ViewModel {
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
-        let recommendations = if is_recommender_tester && !given.is_empty() {
+        let recommendations = if is_recommender_tester && !stats_delta.tanks.is_empty() {
             let given = stats_delta
                 .tanks
                 .iter()
