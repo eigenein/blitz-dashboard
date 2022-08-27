@@ -286,6 +286,13 @@ pub struct TrainOpts {
     )]
     pub confidence_level: ConfidenceLevel,
 
-    #[clap(long, default_value = "1", env = "BLITZ_DASHBOARD_TRAINER_BUFFERING")]
-    pub buffering: usize,
+    #[clap(long, default_value = "::", env = "BLITZ_DASHBOARD_TRAINER_BIND_HOST")]
+    pub host: String,
+
+    #[structopt(
+        long,
+        default_value = "8082",
+        env = "BLITZ_DASHBOARD_TRAINER_BIND_PORT"
+    )]
+    pub port: u16,
 }

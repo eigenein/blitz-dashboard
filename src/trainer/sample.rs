@@ -5,7 +5,7 @@ use bpci::{Interval, NSuccessesSample, WilsonScore};
 use crate::database;
 use crate::prelude::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Sample {
     pub n_battles: u32,
     pub n_wins: u32,

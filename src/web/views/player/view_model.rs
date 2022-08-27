@@ -11,7 +11,6 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
-use crate::trainer::recommend;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
@@ -74,7 +73,7 @@ impl ViewModel {
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
         let recommendations = if is_recommender_tester {
-            recommend(db, &all_tank_ids, &stats_delta.tanks, preferences.confidence_level).await?
+            Vec::new()
         } else {
             Vec::new()
         };

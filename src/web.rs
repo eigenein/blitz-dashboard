@@ -17,7 +17,7 @@ use crate::web::tracking_code::TrackingCode;
 
 mod cookies;
 mod i18n;
-mod middleware;
+pub mod middleware;
 mod partials;
 
 #[cfg(test)]
@@ -41,8 +41,9 @@ pub async fn run(opts: WebOpts) -> Result {
             },
             Some(time::Duration::from_secs(3)),
         )
-        .await
-        .map_err(Error::from)
+        .await?;
+
+    Ok(())
 }
 
 struct AppData {
