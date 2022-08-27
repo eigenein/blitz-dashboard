@@ -187,10 +187,6 @@ async fn update_vehicle_similarities(
     let start_instant = Instant::now();
     info!("calculating & updating vehicle similarities…");
     for (tank_id_1, by_account_1) in &ratings {
-        vehicle_similarities
-            .write()
-            .await
-            .insert((*tank_id_1, *tank_id_1), 1.0);
         let magnitude_1 = magnitude(by_account_1.values());
         for (tank_id_2, by_account_2) in &ratings {
             if tank_id_1 >= tank_id_2 {
