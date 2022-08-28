@@ -17,7 +17,7 @@ use crate::web::views::player::path::PathSegments;
 use crate::web::views::player::stats_delta::StatsDelta;
 use crate::{database, wargaming};
 
-const RECOMMENDER_TESTERS: &[wargaming::AccountId] = &[513713270, 5589968, 103809874, 3851977];
+const RECOMMENDER_TESTERS: &[wargaming::AccountId] = &[513713270, 5589968];
 
 pub struct ViewModel {
     pub realm: wargaming::Realm,
