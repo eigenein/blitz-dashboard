@@ -17,6 +17,8 @@ use crate::web::views::player::path::PathSegments;
 use crate::web::views::player::stats_delta::StatsDelta;
 use crate::{database, wargaming};
 
+const RECOMMENDER_TESTERS: &[wargaming::AccountId] = &[513713270, 5589968, 103809874, 3851977];
+
 pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
@@ -66,7 +68,7 @@ impl ViewModel {
             .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
-        let is_recommender_tester = [513713270, 5589968].contains(&account_id);
+        let is_recommender_tester = RECOMMENDER_TESTERS.contains(&account_id);
         let all_tank_ids = is_recommender_tester
             .then(|| actual_tanks.keys().copied().collect_vec())
             .unwrap_or_default();
