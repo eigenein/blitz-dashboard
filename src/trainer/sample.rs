@@ -1,3 +1,4 @@
+use std::iter::Sum;
 use std::ops::AddAssign;
 
 use bpci::{Interval, NSuccessesSample, WilsonScore};
@@ -24,6 +25,16 @@ impl AddAssign<&Self> for Sample {
     fn add_assign(&mut self, rhs: &Self) {
         self.n_battles += rhs.n_battles;
         self.n_wins += rhs.n_wins;
+    }
+}
+
+impl<'a> Sum<&'a Self> for Sample {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        let mut sum = Self::default();
+        for sample in iter {
+            sum += sample;
+        }
+        sum
     }
 }
 

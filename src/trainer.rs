@@ -1,5 +1,6 @@
 mod api;
 pub mod client;
+pub mod model;
 pub mod requests;
 pub mod responses;
 mod sample;
@@ -17,29 +18,17 @@ use self::sample::*;
 use crate::math::statistics::ConfidenceLevel;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
+use crate::trainer::model::Model;
 use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "trainer"));
 
     let db = database::mongodb::open(&opts.mongodb_uri).await?;
+    let model = Arc::new(RwLock::new(Model::default()));
 
-    let vehicle_victory_ratios = Arc::new(RwLock::new(AHashMap::default()));
-    let vehicle_similarities = Arc::new(RwLock::new(AHashMap::default()));
-
-    let serve_api = api::run(
-        &opts.host,
-        opts.port,
-        vehicle_victory_ratios.clone(),
-        vehicle_similarities.clone(),
-    );
-    let loop_trainer = run_trainer(
-        db,
-        opts.confidence_level,
-        opts.train_period,
-        vehicle_victory_ratios,
-        vehicle_similarities,
-    );
+    let serve_api = api::run(&opts.host, opts.port, model.clone());
+    let loop_trainer = run_trainer(db, opts.confidence_level, opts.train_period, model);
 
     try_join(serve_api, loop_trainer).await?;
     Ok(())
@@ -49,8 +38,7 @@ async fn run_trainer(
     db: Database,
     confidence_level: ConfidenceLevel,
     train_period: time::Duration,
-    vehicle_victory_ratios: Arc<RwLock<AHashMap<wargaming::TankId, f64>>>,
-    vehicle_similarities: Arc<RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>>,
+    model: Arc<RwLock<Model>>,
 ) -> Result {
     let z_level = confidence_level.z_value();
 
@@ -64,11 +52,11 @@ async fn run_trainer(
 
         let stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
         read_stream(stream, &mut pointer, &mut train_set).await?;
-        let (by_vehicle, by_tank_account) = aggregate_train_set(&train_set);
-        update_vehicle_victory_ratios(by_vehicle, z_level, &vehicle_victory_ratios).await?;
-        let ratings =
-            calculate_normalized_ratings(by_tank_account, z_level, &vehicle_victory_ratios).await;
-        update_vehicle_similarities(ratings, &vehicle_similarities).await;
+        let tank_samples = aggregate_train_set(&train_set);
+        let mut ratings = calculate_ratings(&tank_samples, z_level).await;
+        calculate_vehicle_mean_ratings(&tank_samples, &model, z_level).await?;
+        normalize_ratings(&mut ratings, &model).await?;
+        update_vehicle_similarities(ratings, &model).await;
 
         info!(?train_period, %pointer, "sleeping…");
         sleep(train_period).await;
@@ -83,6 +71,7 @@ async fn read_stream(
 ) -> Result {
     let start_instant = Instant::now();
     info!("reading new items…");
+
     let mut n_read = 0;
     while let Some(item) = stream.try_next().await? {
         if *pointer < item.object_id {
@@ -94,85 +83,56 @@ async fn read_stream(
             info!(n_read, elapsed = ?start_instant.elapsed());
         }
     }
+
     info!(elapsed = ?start_instant.elapsed(), n_items = into.len(), "finished");
     Ok(())
 }
 
-type IndexedByVehicle<V> = AHashMap<wargaming::TankId, V>;
 type IndexedByTank<V> = AHashMap<wargaming::TankId, AHashMap<wargaming::AccountId, V>>;
 
 #[instrument(level = "info", skip_all)]
-fn aggregate_train_set(
-    train_set: &[database::TrainItem],
-) -> (IndexedByVehicle<Sample>, IndexedByTank<Sample>) {
+fn aggregate_train_set(train_set: &[database::TrainItem]) -> IndexedByTank<Sample> {
     let start_instant = Instant::now();
     info!(n_train_items = train_set.len(), "aggregating…");
 
     let mut n_battles = 0;
 
-    let mut by_tank_account: IndexedByTank<Sample> = AHashMap::default();
+    let mut tank_samples: IndexedByTank<Sample> = AHashMap::default();
     for item in train_set {
         n_battles += item.n_battles;
-        *by_tank_account
+        *tank_samples
             .entry(item.tank_id)
             .or_default()
             .entry(item.account_id)
             .or_default() += &Sample::from(item);
     }
 
-    let mut by_vehicle = AHashMap::default();
-    for (tank_id, by_account) in &by_tank_account {
-        for sample in by_account.values() {
-            *by_vehicle.entry(*tank_id).or_default() += sample;
-        }
-    }
-
     info!(n_battles, elapsed = ?start_instant.elapsed(), "completed");
-    (by_vehicle, by_tank_account)
+    tank_samples
 }
 
 #[instrument(level = "info", skip_all)]
-async fn update_vehicle_victory_ratios(
-    by_vehicle: IndexedByVehicle<Sample>,
+async fn calculate_ratings(
+    tank_samples: &IndexedByTank<Sample>,
     z_level: f64,
-    vehicle_victory_ratios: &RwLock<AHashMap<wargaming::TankId, f64>>,
-) -> Result {
-    info!(n_vehicles = by_vehicle.len(), "updating per vehicle victory ratios…");
-    for (tank_id, sample) in by_vehicle {
-        vehicle_victory_ratios
-            .write()
-            .await
-            .insert(tank_id, sample.victory_ratio(z_level)?);
-    }
-    Ok(())
-}
-
-#[instrument(level = "info", skip_all)]
-async fn calculate_normalized_ratings(
-    by_tank_account: IndexedByTank<Sample>,
-    z_level: f64,
-    vehicle_victory_ratios: &RwLock<AHashMap<wargaming::TankId, f64>>,
 ) -> IndexedByTank<f64> {
     let start_instant = Instant::now();
-    info!("calculating normalized ratings…");
+    info!("calculating ratings…");
 
     let mut ratings: AHashMap<wargaming::TankId, AHashMap<wargaming::AccountId, f64>> =
         AHashMap::default();
-    for (tank_id, by_account) in by_tank_account {
-        if let Some(vehicle_victory_ratio) = vehicle_victory_ratios.read().await.get(&tank_id) {
-            let vehicle_victory_ratio = *vehicle_victory_ratio;
-            let account_ratings = ratings.entry(tank_id).or_default();
-            for (account_id, sample) in by_account {
-                match sample.victory_ratio(z_level) {
-                    Ok(victory_ratio) => {
-                        account_ratings.insert(account_id, victory_ratio - vehicle_victory_ratio);
-                    }
-                    Err(error) => {
-                        warn!("{:#}", error);
-                    }
+    for (tank_id, account_samples) in tank_samples {
+        let account_ratings = ratings.entry(*tank_id).or_default();
+        for (account_id, sample) in account_samples {
+            match sample.victory_ratio(z_level) {
+                Ok(victory_ratio) => {
+                    account_ratings.insert(*account_id, victory_ratio);
+                }
+                Err(error) => {
+                    warn!("{:#}", error);
                 }
             }
-        };
+        }
     }
 
     info!(elapsed = ?start_instant.elapsed(), "completed");
@@ -180,36 +140,84 @@ async fn calculate_normalized_ratings(
 }
 
 #[instrument(level = "info", skip_all)]
-async fn update_vehicle_similarities(
-    ratings: IndexedByTank<f64>,
-    vehicle_similarities: &RwLock<AHashMap<(wargaming::TankId, wargaming::TankId), f64>>,
-) {
+async fn calculate_vehicle_mean_ratings(
+    ratings: &IndexedByTank<Sample>,
+    model: &RwLock<Model>,
+    z_level: f64,
+) -> Result {
+    let start_instant = Instant::now();
+    info!("calculating vehicle mean ratings…");
+
+    for (tank_id, account_ratings) in ratings {
+        let total_sample = account_ratings.values().sum::<Sample>();
+        let mean_rating = total_sample.victory_ratio(z_level)?;
+        model
+            .write()
+            .await
+            .vehicles
+            .entry(*tank_id)
+            .or_default()
+            .mean_rating = mean_rating;
+    }
+
+    info!(elapsed = ?start_instant.elapsed(), "completed");
+    Ok(())
+}
+
+#[instrument(level = "info", skip_all)]
+async fn normalize_ratings(ratings: &mut IndexedByTank<f64>, model: &RwLock<Model>) -> Result {
+    let start_instant = Instant::now();
+    info!("normalizing ratings…");
+
+    for (tank_id, account_ratings) in ratings.iter_mut() {
+        let vehicle_mean_rating = model
+            .read()
+            .await
+            .vehicles
+            .get(tank_id)
+            .ok_or_else(|| anyhow!("vehicle #{}'s mean rating is missing", tank_id))?
+            .mean_rating;
+        for rating in account_ratings.values_mut() {
+            *rating -= vehicle_mean_rating;
+        }
+    }
+
+    info!(elapsed = ?start_instant.elapsed(), "completed");
+    Ok(())
+}
+
+#[instrument(level = "info", skip_all)]
+async fn update_vehicle_similarities(ratings: IndexedByTank<f64>, model: &RwLock<Model>) {
     let start_instant = Instant::now();
     info!("calculating & updating vehicle similarities…");
-    for (tank_id_1, by_account_1) in &ratings {
-        let magnitude_1 = magnitude(by_account_1.values());
-        for (tank_id_2, by_account_2) in &ratings {
+    for (i, (tank_id_1, account_1_ratings)) in ratings.iter().enumerate() {
+        if i % 50 == 0 {
+            info!(i, elapsed = ?start_instant.elapsed(), "working…");
+        }
+        let magnitude_1 = magnitude(account_1_ratings.values());
+        for (tank_id_2, account_2_ratings) in &ratings {
             if tank_id_1 >= tank_id_2 {
                 continue;
             }
-            let magnitude_2 = magnitude(by_account_2.values());
-            let dot_product = by_account_1
+            let magnitude_2 = magnitude(account_2_ratings.values());
+            let dot_product = account_1_ratings
                 .iter()
                 .filter_map(|(account_id, rating_1)| {
-                    by_account_2
+                    account_2_ratings
                         .get(account_id)
                         .map(|rating_2| rating_1 * rating_2)
                 })
                 .sum::<f64>();
             let similarity = dot_product / magnitude_1 / magnitude_2;
             if similarity.is_finite() {
-                let mut vehicle_similarities = vehicle_similarities.write().await;
-                if similarity > 0.0 {
-                    vehicle_similarities.insert((*tank_id_1, *tank_id_2), similarity);
-                    vehicle_similarities.insert((*tank_id_2, *tank_id_1), similarity);
-                } else {
-                    vehicle_similarities.remove(&(*tank_id_1, *tank_id_2));
-                    vehicle_similarities.remove(&(*tank_id_2, *tank_id_1));
+                for (tank_id_1, tank_id_2) in [(tank_id_1, tank_id_2), (tank_id_2, tank_id_1)] {
+                    let mut model = model.write().await;
+                    let entry_1 = model.vehicles.entry(*tank_id_1).or_default();
+                    if similarity > 0.0 {
+                        entry_1.similarities.entry(*tank_id_2).or_insert(similarity);
+                    } else {
+                        entry_1.similarities.remove(tank_id_2);
+                    }
                 }
             }
         }

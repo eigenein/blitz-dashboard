@@ -68,7 +68,7 @@ impl AppData {
             redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
                 .await?;
         let tracking_code = TrackingCode::new(opts)?;
-        let trainer_client = crate::trainer::client::Client::new(&opts.trainer_base_url);
+        let trainer_client = crate::trainer::client::Client::new(&opts.trainer_base_url)?;
 
         Ok(Self {
             api,

@@ -52,8 +52,8 @@ pub async fn get(
                         }
 
                         div.navbar-item {
-                            strong.(SemaphoreClass::new(vehicle_response.victory_ratio).threshold(0.5)) {
-                                (Float::from(100.0 * vehicle_response.victory_ratio).precision(1)) "%"
+                            strong.(SemaphoreClass::new(vehicle_response.mean_rating).threshold(0.0)) {
+                                (Float::from(vehicle_response.mean_rating).precision(6))
                             }
                         }
                     }

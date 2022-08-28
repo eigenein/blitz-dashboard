@@ -10,11 +10,15 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(base_url: impl Into<String>) -> Self {
-        Self {
-            client: reqwest::Client::new(),
+    pub fn new(base_url: impl Into<String>) -> Result<Self> {
+        let this = Self {
+            client: reqwest::ClientBuilder::new()
+                .timeout(time::Duration::from_secs(1))
+                .connect_timeout(time::Duration::from_secs(1))
+                .build()?,
             base_url: base_url.into(),
-        }
+        };
+        Ok(this)
     }
 
     pub async fn get_vehicle(
