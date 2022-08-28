@@ -6,7 +6,6 @@ use mongodb::{bson, Database, IndexModel};
 use serde::{Deserialize, Serialize};
 
 use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
-use crate::helpers::serde::is_default;
 use crate::helpers::time::from_months;
 use crate::prelude::*;
 use crate::wargaming;
@@ -37,7 +36,7 @@ pub struct TrainItem {
     pub n_battles: u32,
 
     #[serde_as(as = "TryFromInto<i32>")]
-    #[serde(default, rename = "nw", skip_serializing_if = "is_default")]
+    #[serde(default, rename = "nw")]
     pub n_wins: u32,
 }
 

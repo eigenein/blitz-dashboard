@@ -10,6 +10,7 @@ use poem::web::{Data, Json, Path};
 use poem::{get, handler, post, EndpointExt, IntoResponse, Response, Route, Server};
 use tokio::sync::RwLock;
 
+use crate::math::{logit, sigmoid};
 use crate::prelude::*;
 use crate::trainer::model::Model;
 use crate::trainer::requests::RecommendRequest;
@@ -75,7 +76,9 @@ async fn recommend(
                     .await
                     .vehicles
                     .get(&tank_id)
-                    .map(|vehicle_model| (tank_id, victory_ratio - vehicle_model.mean_rating))
+                    .map(|vehicle_model| {
+                        (tank_id, logit(victory_ratio) - vehicle_model.mean_rating)
+                    })
             })
             .collect::<Vec<_>>()
             .await
@@ -99,7 +102,7 @@ async fn recommend(
                         let offset = numerator / denominator;
                         offset
                             .is_finite()
-                            .then(|| (target_id, offset + vehicle_model.mean_rating))
+                            .then(|| (target_id, sigmoid(offset + vehicle_model.mean_rating)))
                     })
                 }
             })

@@ -4,6 +4,7 @@ pub mod model;
 pub mod requests;
 pub mod responses;
 mod sample;
+mod train_item;
 
 use std::sync::Arc;
 
@@ -15,10 +16,12 @@ use tokio::sync::RwLock;
 use tokio::time::sleep;
 
 use self::sample::*;
+use crate::math::logit;
 use crate::math::statistics::ConfidenceLevel;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
 use crate::trainer::model::Model;
+use crate::trainer::train_item::CompressedTrainItem;
 use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
@@ -43,12 +46,12 @@ async fn run_trainer(
     let z_level = confidence_level.z_value();
 
     let mut pointer = ObjectId::from_bytes([0; 12]);
-    let mut train_set: Vec<database::TrainItem> = Vec::new();
+    let mut train_set: Vec<CompressedTrainItem> = Vec::new();
     loop {
         let since = now() - Duration::from_std(train_period)?;
 
         info!(n_train_items = train_set.len(), "evicting outdated items…");
-        train_set.retain(|item| item.last_battle_time >= since);
+        train_set.retain(|item| item.last_battle_time >= since.timestamp());
 
         let stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
         read_stream(stream, &mut pointer, &mut train_set).await?;
@@ -67,7 +70,7 @@ async fn run_trainer(
 async fn read_stream(
     mut stream: impl Stream<Item = Result<database::TrainItem>> + Unpin,
     pointer: &mut ObjectId,
-    into: &mut Vec<database::TrainItem>,
+    into: &mut Vec<CompressedTrainItem>,
 ) -> Result {
     let start_instant = Instant::now();
     info!("reading new items…");
@@ -77,10 +80,10 @@ async fn read_stream(
         if *pointer < item.object_id {
             *pointer = item.object_id;
         }
-        into.push(item);
+        into.push(item.try_into()?);
         n_read += 1;
         if n_read % 100_000 == 0 {
-            info!(n_read, elapsed = ?start_instant.elapsed());
+            info!(n_read, elapsed_secs = ?start_instant.elapsed().as_secs(), per_sec = n_read / start_instant.elapsed().as_secs().max(1));
         }
     }
 
@@ -91,15 +94,15 @@ async fn read_stream(
 type IndexedByTank<V> = AHashMap<wargaming::TankId, AHashMap<wargaming::AccountId, V>>;
 
 #[instrument(level = "info", skip_all)]
-fn aggregate_train_set(train_set: &[database::TrainItem]) -> IndexedByTank<Sample> {
+fn aggregate_train_set(train_set: &[CompressedTrainItem]) -> IndexedByTank<Sample> {
     let start_instant = Instant::now();
     info!(n_train_items = train_set.len(), "aggregating…");
 
-    let mut n_battles = 0;
+    let mut n_battles: u32 = 0;
 
     let mut tank_samples: IndexedByTank<Sample> = AHashMap::default();
     for item in train_set {
-        n_battles += item.n_battles;
+        n_battles += item.n_battles as u32;
         *tank_samples
             .entry(item.tank_id)
             .or_default()
@@ -126,7 +129,7 @@ async fn calculate_ratings(
         for (account_id, sample) in account_samples {
             match sample.victory_ratio(z_level) {
                 Ok(victory_ratio) => {
-                    account_ratings.insert(*account_id, victory_ratio);
+                    account_ratings.insert(*account_id, logit(victory_ratio));
                 }
                 Err(error) => {
                     warn!("{:#}", error);
@@ -157,7 +160,7 @@ async fn calculate_vehicle_mean_ratings(
             .vehicles
             .entry(*tank_id)
             .or_default()
-            .mean_rating = mean_rating;
+            .mean_rating = logit(mean_rating);
     }
 
     info!(elapsed = ?start_instant.elapsed(), "completed");

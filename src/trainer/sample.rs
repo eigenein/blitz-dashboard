@@ -3,8 +3,8 @@ use std::ops::AddAssign;
 
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 
-use crate::database;
 use crate::prelude::*;
+use crate::trainer::train_item::CompressedTrainItem;
 
 #[derive(Copy, Clone, Default)]
 pub struct Sample {
@@ -12,11 +12,11 @@ pub struct Sample {
     pub n_wins: u32,
 }
 
-impl From<&database::TrainItem> for Sample {
-    fn from(item: &database::TrainItem) -> Self {
+impl From<&CompressedTrainItem> for Sample {
+    fn from(item: &CompressedTrainItem) -> Self {
         Self {
-            n_battles: item.n_battles,
-            n_wins: item.n_wins,
+            n_battles: item.n_battles as u32,
+            n_wins: item.n_wins as u32,
         }
     }
 }
