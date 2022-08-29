@@ -31,7 +31,13 @@ pub async fn run(opts: TrainOpts) -> Result {
     let model = Arc::new(RwLock::new(Model::default()));
 
     let serve_api = api::run(&opts.host, opts.port, model.clone());
-    let loop_trainer = run_trainer(db, opts.confidence_level, opts.train_period, model);
+    let loop_trainer = run_trainer(
+        db,
+        opts.confidence_level,
+        Duration::from_std(opts.train_period)?,
+        opts.train_interval,
+        model,
+    );
 
     try_join(serve_api, loop_trainer).await?;
     Ok(())
@@ -40,7 +46,8 @@ pub async fn run(opts: TrainOpts) -> Result {
 async fn run_trainer(
     db: Database,
     confidence_level: ConfidenceLevel,
-    train_period: time::Duration,
+    train_period: Duration,
+    train_interval: time::Duration,
     model: Arc<RwLock<Model>>,
 ) -> Result {
     let z_level = confidence_level.z_value();
@@ -48,7 +55,7 @@ async fn run_trainer(
     let mut pointer = ObjectId::from_bytes([0; 12]);
     let mut train_set: Vec<CompressedTrainItem> = Vec::new();
     loop {
-        let since = now() - Duration::from_std(train_period)?;
+        let since = now() - train_period;
 
         info!(n_train_items = train_set.len(), "evicting outdated items…");
         train_set.retain(|item| item.last_battle_time >= since.timestamp());
@@ -61,8 +68,8 @@ async fn run_trainer(
         normalize_ratings(&mut ratings, &model).await?;
         update_vehicle_similarities(ratings, &model).await;
 
-        info!(?train_period, %pointer, "sleeping…");
-        sleep(train_period).await;
+        info!(?train_interval, %pointer, "sleeping…");
+        sleep(train_interval).await;
     }
 }
 
@@ -122,8 +129,7 @@ async fn calculate_ratings(
     let start_instant = Instant::now();
     info!("calculating ratings…");
 
-    let mut ratings: AHashMap<wargaming::TankId, AHashMap<wargaming::AccountId, f64>> =
-        AHashMap::default();
+    let mut ratings: IndexedByTank<f64> = AHashMap::default();
     for (tank_id, account_samples) in tank_samples {
         let account_ratings = ratings.entry(*tank_id).or_default();
         for (account_id, sample) in account_samples {
