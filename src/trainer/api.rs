@@ -56,7 +56,7 @@ async fn get_vehicle(
             .sorted_unstable_by(|(_, lhs), (_, rhs)| rhs.total_cmp(lhs))
             .collect::<Vec<_>>(),
     };
-    info!(elapsed = ?start_instant.elapsed(), "completed");
+    debug!(elapsed = ?start_instant.elapsed(), "completed");
     Ok(Json(response).into_response())
 }
 
@@ -67,7 +67,7 @@ async fn recommend(
     Data(model): Data<&Arc<RwLock<Model>>>,
 ) -> Result<Json<Vec<(wargaming::TankId, f64)>>> {
     let start_instant = Instant::now();
-    info!(n_given = request.given.len(), n_predict = ?request.predict.len());
+    debug!(n_given = request.given.len(), n_predict = ?request.predict.len());
     let given = {
         stream::iter(request.given.into_iter())
             .filter_map(|(tank_id, victory_ratio)| async move {
@@ -110,6 +110,6 @@ async fn recommend(
             .await
     };
     predictions.sort_unstable_by(|(_, lhs), (_, rhs)| rhs.total_cmp(lhs));
-    info!(n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
+    debug!(n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
     Ok(Json(predictions))
 }

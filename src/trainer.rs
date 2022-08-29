@@ -64,7 +64,7 @@ async fn run_trainer(
         read_stream(stream, &mut pointer, &mut train_set).await?;
         let tank_samples = aggregate_train_set(&train_set);
         let mut ratings = calculate_ratings(&tank_samples, z_level).await;
-        calculate_vehicle_mean_ratings(&tank_samples, &model, z_level).await?;
+        update_vehicle_mean_ratings(&ratings, &model).await?;
         normalize_ratings(&mut ratings, &model).await?;
         update_vehicle_similarities(ratings, &model).await;
 
@@ -149,24 +149,22 @@ async fn calculate_ratings(
 }
 
 #[instrument(level = "info", skip_all)]
-async fn calculate_vehicle_mean_ratings(
-    ratings: &IndexedByTank<Sample>,
+async fn update_vehicle_mean_ratings(
+    ratings: &IndexedByTank<f64>,
     model: &RwLock<Model>,
-    z_level: f64,
 ) -> Result {
     let start_instant = Instant::now();
     info!("calculating vehicle mean ratings…");
 
     for (tank_id, account_ratings) in ratings {
-        let total_sample = account_ratings.values().sum::<Sample>();
-        let mean_rating = total_sample.victory_ratio(z_level)?;
+        let mean_rating = account_ratings.values().sum::<f64>() / account_ratings.len() as f64;
         model
             .write()
             .await
             .vehicles
             .entry(*tank_id)
             .or_default()
-            .mean_rating = logit(mean_rating);
+            .mean_rating = mean_rating;
     }
 
     info!(elapsed = ?start_instant.elapsed(), "completed");
