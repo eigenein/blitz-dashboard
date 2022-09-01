@@ -5,7 +5,7 @@ use poem::http::StatusCode;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, Tracing};
 use poem::web::{Data, Json};
-use poem::{handler, post, EndpointExt, IntoResponse, Response, Route, Server};
+use poem::{handler, post, EndpointExt, Route, Server};
 use tokio::sync::RwLock;
 
 use crate::math::{logit, sigmoid};
@@ -36,7 +36,7 @@ pub async fn run(host: &str, port: u16, model: Arc<RwLock<Model>>) -> Result {
 async fn recommend(
     Json(request): Json<RecommendRequest>,
     Data(model): Data<&Arc<RwLock<Model>>>,
-) -> Result<Response> {
+) -> Result<Json<RecommendResponse>> {
     let start_instant = Instant::now();
     debug!(?request.realm, n_given = request.given.len(), n_predict = ?request.predict.len());
 
@@ -44,7 +44,7 @@ async fn recommend(
     let regressions = match model.regressions.get(&request.realm) {
         Some(regressions) => regressions,
         _ => {
-            return Ok(StatusCode::NOT_FOUND.into_response());
+            return Ok(Json(RecommendResponse::default()));
         }
     };
 
@@ -84,5 +84,5 @@ async fn recommend(
     predictions.reverse();
 
     info!(?request.realm, n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
-    Ok(Json(RecommendResponse { predictions }).into_response())
+    Ok(Json(RecommendResponse { predictions }))
 }
