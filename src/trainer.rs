@@ -14,6 +14,7 @@ use mongodb::Database;
 use nalgebra::DVector;
 use tokio::spawn;
 use tokio::sync::RwLock;
+use tokio::task::yield_now;
 use tokio::time::sleep;
 
 use self::sample::*;
@@ -176,8 +177,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                     );
             }
         }
-
-        info!(source_vehicle_id, n_lhs_accounts = source_accounts.len(), elapsed = ?start_instant.elapsed());
+        yield_now().await;
     }
 
     info!(elapsed = ?start_instant.elapsed(), "completed");

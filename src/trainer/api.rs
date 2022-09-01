@@ -58,11 +58,14 @@ async fn recommend(
         let mut prediction_sum = 0.0;
         let mut total_weight = 0.0;
         for given in &request.given {
+            let source_weight =
+                (given.sample.n_battles + Sample::PRIOR_ALPHA + Sample::PRIOR_BETA) as f64;
             if let Some(regression) = regressions.get(&given.tank_id) {
-                let source_weight =
-                    (given.sample.n_battles + Sample::PRIOR_ALPHA + Sample::PRIOR_BETA) as f64;
                 prediction_sum +=
                     sigmoid(regression.predict(logit(given.sample.mean()))) * source_weight;
+                total_weight += source_weight;
+            } else if given.tank_id == target_vehicle_id {
+                prediction_sum += given.sample.mean() * source_weight;
                 total_weight += source_weight;
             }
         }
