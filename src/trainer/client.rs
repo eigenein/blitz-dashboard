@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use crate::trainer::requests;
 use crate::trainer::requests::Given;
+use crate::trainer::responses::RecommendResponse;
 
 #[derive(Clone)]
 pub struct Client {
@@ -25,7 +26,8 @@ impl Client {
         realm: wargaming::Realm,
         given: Vec<Given>,
         predict: Vec<wargaming::TankId>,
-    ) -> Result<Vec<(wargaming::TankId, f64)>> {
+        min_prediction: f64,
+    ) -> Result<RecommendResponse> {
         let response = self
             .client
             .post(format!("{}/recommend", self.base_url))
@@ -33,6 +35,7 @@ impl Client {
                 realm,
                 given,
                 predict,
+                min_prediction,
             })
             .send()
             .await?

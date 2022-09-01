@@ -11,8 +11,8 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
-use crate::tankopedia::get_vehicle;
 use crate::trainer::requests::Given;
+use crate::trainer::responses::RecommendResponse;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
@@ -29,7 +29,7 @@ pub struct ViewModel {
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
-    pub recommendations: Vec<(wargaming::TankId, f64)>,
+    pub recommendations: RecommendResponse,
 }
 
 impl ViewModel {
@@ -72,28 +72,20 @@ impl ViewModel {
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let is_recommender_tester = RECOMMENDER_TESTERS.contains(&account_id);
         let predict_ids = is_recommender_tester
-            .then(|| {
-                actual_tanks
-                    .keys()
-                    .copied()
-                    .filter(|tank_id| get_vehicle(*tank_id).tier >= 6)
-                    .collect_vec()
-            })
+            .then(|| actual_tanks.keys().copied().collect_vec())
             .unwrap_or_default();
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
         let recommendations = if is_recommender_tester && !stats_delta.tanks.is_empty() {
             let given = stats_delta.tanks.iter().map(Given::from).collect();
-            match trainer_client.recommend(realm, given, predict_ids).await {
-                Ok(recommendations) => recommendations,
-                Err(error) => {
-                    error!("failed to fetch recommendations: {:#}", error);
-                    Vec::new()
-                }
-            }
+            trainer_client
+                .recommend(realm, given, predict_ids, target_victory_ratio)
+                .await
+                .stable_inspect_err(|error| error!("failed to fetch recommendations: {:#}", error))
+                .unwrap_or_default()
         } else {
-            Vec::new()
+            RecommendResponse::default()
         };
 
         let rating_snapshots = database::RatingSnapshot::retrieve_season(

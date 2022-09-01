@@ -8,6 +8,10 @@ pub struct RecommendRequest {
     pub realm: wargaming::Realm,
     pub given: Vec<Given>,
     pub predict: Vec<wargaming::TankId>,
+
+    /// Filter predictions based on the minimal allowed predicted victory rate.
+    #[serde(default)]
+    pub min_prediction: f64,
 }
 
 #[derive(Serialize, Deserialize)]

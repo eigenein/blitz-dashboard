@@ -12,6 +12,7 @@ use crate::math::{logit, sigmoid};
 use crate::prelude::*;
 use crate::trainer::model::Model;
 use crate::trainer::requests::RecommendRequest;
+use crate::trainer::responses::{Prediction, RecommendResponse};
 use crate::trainer::sample::Sample;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 
@@ -47,7 +48,7 @@ async fn recommend(
         }
     };
 
-    let mut predictions = Vec::<(wargaming::TankId, f64)>::new();
+    let mut predictions = Vec::<Prediction>::new();
     for target_vehicle_id in request.predict {
         let regressions = match regressions.get(&target_vehicle_id) {
             Some(regressions) => regressions,
@@ -70,11 +71,18 @@ async fn recommend(
             }
         }
         if total_weight != 0.0 {
-            predictions.push((target_vehicle_id, prediction_sum / total_weight));
+            let prediction = prediction_sum / total_weight;
+            if prediction >= request.min_prediction {
+                predictions.push(Prediction {
+                    tank_id: target_vehicle_id,
+                    p: prediction,
+                });
+            }
         }
     }
-    predictions.sort_unstable_by(|(_, lhs), (_, rhs)| rhs.total_cmp(lhs));
+    predictions.sort_unstable();
+    predictions.reverse();
 
     info!(?request.realm, n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
-    Ok(Json(predictions).into_response())
+    Ok(Json(RecommendResponse { predictions }).into_response())
 }
