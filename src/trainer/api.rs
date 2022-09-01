@@ -1,7 +1,6 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use poem::http::StatusCode;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, Tracing};
 use poem::web::{Data, Json};

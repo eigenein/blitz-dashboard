@@ -1,7 +1,7 @@
 {
   "1": {
     "tank_id": 1,
-    "name": "Т-34",
+    "name": "T-34",
     "tier": 5,
     "is_premium": false,
     "nation": "ussr",
@@ -41,7 +41,7 @@
   },
   "10241": {
     "tank_id": 10241,
-    "name": "СУ-100М1",
+    "name": "SU-100M1",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -49,7 +49,7 @@
   },
   "1025": {
     "tank_id": 1025,
-    "name": "БТ-2",
+    "name": "BT-2",
     "tier": 2,
     "is_premium": false,
     "nation": "ussr",
@@ -81,7 +81,7 @@
   },
   "10497": {
     "tank_id": 10497,
-    "name": "КВ-2",
+    "name": "KV-2",
     "tier": 6,
     "is_premium": false,
     "nation": "ussr",
@@ -121,7 +121,7 @@
   },
   "10753": {
     "tank_id": 10753,
-    "name": "СТ-I",
+    "name": "ST-I",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -161,7 +161,7 @@
   },
   "11009": {
     "tank_id": 11009,
-    "name": "КВ-4",
+    "name": "KV-4",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",
@@ -209,7 +209,7 @@
   },
   "11265": {
     "tank_id": 11265,
-    "name": "Т-150",
+    "name": "T-150",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -249,7 +249,7 @@
   },
   "11521": {
     "tank_id": 11521,
-    "name": "ИС-8",
+    "name": "IS-8",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -289,7 +289,7 @@
   },
   "11777": {
     "tank_id": 11777,
-    "name": "КВ-1",
+    "name": "KV-1",
     "tier": 5,
     "is_premium": false,
     "nation": "ussr",
@@ -313,7 +313,7 @@
   },
   "12033": {
     "tank_id": 12033,
-    "name": "СУ-122-54",
+    "name": "SU-122-54",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -361,7 +361,7 @@
   },
   "12545": {
     "tank_id": 12545,
-    "name": "К-91",
+    "name": "K-91",
     "tier": 9,
     "is_premium": true,
     "nation": "ussr",
@@ -417,7 +417,7 @@
   },
   "13569": {
     "tank_id": 13569,
-    "name": "Объект 268",
+    "name": "Object 268",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -441,7 +441,7 @@
   },
   "13825": {
     "tank_id": 13825,
-    "name": "Т-62А",
+    "name": "T-62A",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -513,7 +513,7 @@
   },
   "14337": {
     "tank_id": 14337,
-    "name": "Объект 263",
+    "name": "Object 263",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -561,7 +561,7 @@
   },
   "1537": {
     "tank_id": 1537,
-    "name": "Т-28 обр. 1940 г.",
+    "name": "T-28 mod. 1940",
     "tier": 4,
     "is_premium": true,
     "nation": "ussr",
@@ -593,7 +593,7 @@
   },
   "15617": {
     "tank_id": 15617,
-    "name": "Объект 907",
+    "name": "Object 907",
     "tier": 10,
     "is_premium": true,
     "nation": "ussr",
@@ -721,7 +721,7 @@
   },
   "1649": {
     "tank_id": 1649,
-    "name": "Хелсинг",
+    "name": "Helsing",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -729,7 +729,7 @@
   },
   "16641": {
     "tank_id": 16641,
-    "name": "МТ-25",
+    "name": "MT-25",
     "tier": 6,
     "is_premium": false,
     "nation": "ussr",
@@ -769,7 +769,7 @@
   },
   "16897": {
     "tank_id": 16897,
-    "name": "Объект 140",
+    "name": "Object 140",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -793,7 +793,7 @@
   },
   "17217": {
     "tank_id": 17217,
-    "name": "Стиратель BP44",
+    "name": "Eraser BP44",
     "tier": 6,
     "is_premium": true,
     "nation": "france",
@@ -881,7 +881,7 @@
   },
   "18177": {
     "tank_id": 18177,
-    "name": "Т-54 обл.",
+    "name": "T-54 ltwt.",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",
@@ -921,7 +921,7 @@
   },
   "18433": {
     "tank_id": 18433,
-    "name": "ЛТТБ",
+    "name": "LTTB",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -929,7 +929,7 @@
   },
   "18449": {
     "tank_id": 18449,
-    "name": "Ru 251",
+    "name": "Spähpanzer Ru 251",
     "tier": 8,
     "is_premium": false,
     "nation": "germany",
@@ -937,7 +937,7 @@
   },
   "18497": {
     "tank_id": 18497,
-    "name": "Lorraine 40 t Бесстрашный",
+    "name": "Lorraine 40 t Fearless",
     "tier": 8,
     "is_premium": true,
     "nation": "france",
@@ -961,7 +961,7 @@
   },
   "18689": {
     "tank_id": 18689,
-    "name": "Т-70/57",
+    "name": "T-70/57",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -993,7 +993,7 @@
   },
   "18945": {
     "tank_id": 18945,
-    "name": "ИСУ-130",
+    "name": "ISU-130",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1065,7 +1065,7 @@
   },
   "19265": {
     "tank_id": 19265,
-    "name": "Шарль",
+    "name": "Charles",
     "tier": 6,
     "is_premium": true,
     "nation": "france",
@@ -1105,7 +1105,7 @@
   },
   "19713": {
     "tank_id": 19713,
-    "name": "М4-А2 Шерман Лозы",
+    "name": "Loza's M4-A2 Sherman",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -1137,7 +1137,7 @@
   },
   "19969": {
     "tank_id": 19969,
-    "name": "Т-22 ср.",
+    "name": "T-22 medium",
     "tier": 10,
     "is_premium": true,
     "nation": "ussr",
@@ -1145,7 +1145,7 @@
   },
   "19985": {
     "tank_id": 19985,
-    "name": "Skorpion G",
+    "name": "Rheinmetall Skorpion G",
     "tier": 8,
     "is_premium": true,
     "nation": "germany",
@@ -1185,7 +1185,7 @@
   },
   "20481": {
     "tank_id": 20481,
-    "name": "Объект 252У",
+    "name": "Object 252U",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1193,7 +1193,7 @@
   },
   "2049": {
     "tank_id": 2049,
-    "name": "А-20",
+    "name": "A-20",
     "tier": 4,
     "is_premium": false,
     "nation": "ussr",
@@ -1233,7 +1233,7 @@
   },
   "20737": {
     "tank_id": 20737,
-    "name": "СУ-130ПМ",
+    "name": "SU-130PM",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1265,7 +1265,7 @@
   },
   "20993": {
     "tank_id": 20993,
-    "name": "Т-2020",
+    "name": "T-2020",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1289,7 +1289,7 @@
   },
   "21073": {
     "tank_id": 21073,
-    "name": "Дредноут",
+    "name": "Dreadnought",
     "tier": 6,
     "is_premium": true,
     "nation": "uk",
@@ -1297,7 +1297,7 @@
   },
   "21249": {
     "tank_id": 21249,
-    "name": "Гром",
+    "name": "Thunder",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -1313,7 +1313,7 @@
   },
   "21281": {
     "tank_id": 21281,
-    "name": "Рудольф",
+    "name": "Rudolph",
     "tier": 6,
     "is_premium": true,
     "nation": "usa",
@@ -1345,7 +1345,7 @@
   },
   "21505": {
     "tank_id": 21505,
-    "name": "Т-44-85",
+    "name": "T-44-85",
     "tier": 7,
     "is_premium": true,
     "nation": "ussr",
@@ -1369,7 +1369,7 @@
   },
   "2161": {
     "tank_id": 2161,
-    "name": "WZ 135G FT Пылающий",
+    "name": "WZ 135G FT Blaze",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -1377,7 +1377,7 @@
   },
   "21761": {
     "tank_id": 21761,
-    "name": "СТГ",
+    "name": "STG",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1401,7 +1401,7 @@
   },
   "21793": {
     "tank_id": 21793,
-    "name": "XM551 Sheridan Ракетный",
+    "name": "XM551 Sheridan Missile",
     "tier": 10,
     "is_premium": true,
     "nation": "usa",
@@ -1409,7 +1409,7 @@
   },
   "22033": {
     "tank_id": 22033,
-    "name": "Диверсант",
+    "name": "Agent",
     "tier": 6,
     "is_premium": true,
     "nation": "germany",
@@ -1425,7 +1425,7 @@
   },
   "22273": {
     "tank_id": 22273,
-    "name": "Объект 260",
+    "name": "Object 260",
     "tier": 10,
     "is_premium": true,
     "nation": "ussr",
@@ -1441,7 +1441,7 @@
   },
   "22529": {
     "tank_id": 22529,
-    "name": "ЛТ-432",
+    "name": "LT-432",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -1465,7 +1465,7 @@
   },
   "22785": {
     "tank_id": 22785,
-    "name": "Триумфатор",
+    "name": "Triumphant",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -1473,7 +1473,7 @@
   },
   "22801": {
     "tank_id": 22801,
-    "name": "Ледокол",
+    "name": "Icebreaker",
     "tier": 6,
     "is_premium": true,
     "nation": "germany",
@@ -1489,7 +1489,7 @@
   },
   "23041": {
     "tank_id": 23041,
-    "name": "Т-34 экранированный",
+    "name": "T-34 shielded",
     "tier": 5,
     "is_premium": true,
     "nation": "ussr",
@@ -1497,7 +1497,7 @@
   },
   "2305": {
     "tank_id": 2305,
-    "name": "СУ-152",
+    "name": "SU-152",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -1545,7 +1545,7 @@
   },
   "23553": {
     "tank_id": 23553,
-    "name": "МС-1",
+    "name": "MS-1",
     "tier": 2,
     "is_premium": true,
     "nation": "ussr",
@@ -1553,7 +1553,7 @@
   },
   "23569": {
     "tank_id": 23569,
-    "name": "Pz. IV Гаргулья",
+    "name": "Pz. IV Gargoyle",
     "tier": 5,
     "is_premium": true,
     "nation": "germany",
@@ -1577,7 +1577,7 @@
   },
   "23809": {
     "tank_id": 23809,
-    "name": "Объект 84",
+    "name": "Object 84",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -1617,7 +1617,7 @@
   },
   "24065": {
     "tank_id": 24065,
-    "name": "ЛТГ",
+    "name": "LTG",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -1641,7 +1641,7 @@
   },
   "24321": {
     "tank_id": 24321,
-    "name": "Т-100 ЛТ",
+    "name": "T-100 LT",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -1665,7 +1665,7 @@
   },
   "24577": {
     "tank_id": 24577,
-    "name": "Объект 268 Вариант 4",
+    "name": "Object 268 Version 4",
     "tier": 10,
     "is_premium": true,
     "nation": "ussr",
@@ -1697,7 +1697,7 @@
   },
   "25089": {
     "tank_id": 25089,
-    "name": "Объект 752",
+    "name": "Object 752",
     "tier": 9,
     "is_premium": true,
     "nation": "ussr",
@@ -1711,6 +1711,14 @@
     "nation": "germany",
     "type": "heavyTank"
   },
+  "25345": {
+    "tank_id": 25345,
+    "name": "Object 274a",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "ussr",
+    "type": "mediumTank"
+  },
   "25377": {
     "tank_id": 25377,
     "name": "T77",
@@ -1721,7 +1729,7 @@
   },
   "2561": {
     "tank_id": 2561,
-    "name": "Т-34-85",
+    "name": "T-34-85",
     "tier": 6,
     "is_premium": false,
     "nation": "ussr",
@@ -1729,7 +1737,7 @@
   },
   "257": {
     "tank_id": 257,
-    "name": "СУ-85",
+    "name": "SU-85",
     "tier": 5,
     "is_premium": false,
     "nation": "ussr",
@@ -1745,7 +1753,7 @@
   },
   "25889": {
     "tank_id": 25889,
-    "name": "Рейнджер",
+    "name": "Ranger",
     "tier": 6,
     "is_premium": true,
     "nation": "usa",
@@ -1783,6 +1791,14 @@
     "nation": "france",
     "type": "heavyTank"
   },
+  "26401": {
+    "tank_id": 26401,
+    "name": "Enforcer",
+    "tier": 6,
+    "is_premium": true,
+    "nation": "usa",
+    "type": "AT-SPG"
+  },
   "2657": {
     "tank_id": 2657,
     "name": "STA-1",
@@ -1801,7 +1817,7 @@
   },
   "2817": {
     "tank_id": 2817,
-    "name": "КВ-1С",
+    "name": "KV-1S",
     "tier": 6,
     "is_premium": false,
     "nation": "ussr",
@@ -1865,7 +1881,7 @@
   },
   "3073": {
     "tank_id": 3073,
-    "name": "Т-46",
+    "name": "T-46",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -1977,7 +1993,7 @@
   },
   "3585": {
     "tank_id": 3585,
-    "name": "СУ-100",
+    "name": "SU-100",
     "tier": 6,
     "is_premium": false,
     "nation": "ussr",
@@ -2129,7 +2145,7 @@
   },
   "4353": {
     "tank_id": 4353,
-    "name": "Т-44",
+    "name": "T-44",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",
@@ -2201,7 +2217,7 @@
   },
   "4609": {
     "tank_id": 4609,
-    "name": "Т-26",
+    "name": "T-26",
     "tier": 1,
     "is_premium": false,
     "nation": "ussr",
@@ -2233,7 +2249,7 @@
   },
   "4721": {
     "tank_id": 4721,
-    "name": "Могильщик",
+    "name": "Gravedigger",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -2297,7 +2313,7 @@
   },
   "4977": {
     "tank_id": 4977,
-    "name": "Мародёр",
+    "name": "Scavenger",
     "tier": 5,
     "is_premium": true,
     "nation": "other",
@@ -2313,7 +2329,7 @@
   },
   "51201": {
     "tank_id": 51201,
-    "name": "КВ-220 Бета-Тест",
+    "name": "KV-220 Beta-Test",
     "tier": 5,
     "is_premium": true,
     "nation": "ussr",
@@ -2321,7 +2337,7 @@
   },
   "5121": {
     "tank_id": 5121,
-    "name": "АТ-1",
+    "name": "AT-1",
     "tier": 2,
     "is_premium": true,
     "nation": "ussr",
@@ -2329,7 +2345,7 @@
   },
   "513": {
     "tank_id": 513,
-    "name": "ИС",
+    "name": "IS",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -2345,7 +2361,7 @@
   },
   "51457": {
     "tank_id": 51457,
-    "name": "Матильда IV",
+    "name": "Matilda IV",
     "tier": 5,
     "is_premium": true,
     "nation": "ussr",
@@ -2385,7 +2401,7 @@
   },
   "51713": {
     "tank_id": 51713,
-    "name": "Черчилль III",
+    "name": "Churchill III",
     "tier": 5,
     "is_premium": true,
     "nation": "ussr",
@@ -2457,7 +2473,7 @@
   },
   "52225": {
     "tank_id": 52225,
-    "name": "БТ-СВ",
+    "name": "BT-SV",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -2481,7 +2497,7 @@
   },
   "5233": {
     "tank_id": 5233,
-    "name": "Крушитель",
+    "name": "Smasher",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -2489,7 +2505,7 @@
   },
   "52481": {
     "tank_id": 52481,
-    "name": "Валентайн II",
+    "name": "Valentine II",
     "tier": 4,
     "is_premium": true,
     "nation": "ussr",
@@ -2529,7 +2545,7 @@
   },
   "52737": {
     "tank_id": 52737,
-    "name": "М3 лёгкий",
+    "name": "M3 Light",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -2553,7 +2569,7 @@
   },
   "52993": {
     "tank_id": 52993,
-    "name": "А-32",
+    "name": "A-32",
     "tier": 4,
     "is_premium": true,
     "nation": "ussr",
@@ -2569,7 +2585,7 @@
   },
   "53249": {
     "tank_id": 53249,
-    "name": "КВ-5",
+    "name": "KV-5",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -2577,7 +2593,7 @@
   },
   "53505": {
     "tank_id": 53505,
-    "name": "Т-127",
+    "name": "T-127",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -2601,7 +2617,7 @@
   },
   "53761": {
     "tank_id": 53761,
-    "name": "СУ-85И",
+    "name": "SU-85I",
     "tier": 5,
     "is_premium": true,
     "nation": "ussr",
@@ -2609,7 +2625,7 @@
   },
   "5377": {
     "tank_id": 5377,
-    "name": "ИС-3",
+    "name": "IS-3",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",
@@ -2657,7 +2673,7 @@
   },
   "54273": {
     "tank_id": 54273,
-    "name": "СУ-76И",
+    "name": "SU-76I",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -2689,7 +2705,7 @@
   },
   "54529": {
     "tank_id": 54529,
-    "name": "Тетрарх",
+    "name": "Tetrarch",
     "tier": 2,
     "is_premium": true,
     "nation": "ussr",
@@ -2721,7 +2737,7 @@
   },
   "54785": {
     "tank_id": 54785,
-    "name": "СУ-100Y",
+    "name": "SU-100Y",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -2777,7 +2793,7 @@
   },
   "55297": {
     "tank_id": 55297,
-    "name": "СУ-122-44",
+    "name": "SU-122-44",
     "tier": 7,
     "is_premium": true,
     "nation": "ussr",
@@ -2809,7 +2825,7 @@
   },
   "56577": {
     "tank_id": 56577,
-    "name": "ЛТП",
+    "name": "LTP",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -2905,7 +2921,7 @@
   },
   "58881": {
     "tank_id": 58881,
-    "name": "ИС-5 (Объект 730)",
+    "name": "IS-5 (Object 730)",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -2913,7 +2929,7 @@
   },
   "5889": {
     "tank_id": 5889,
-    "name": "КВ-3",
+    "name": "KV-3",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -2921,7 +2937,7 @@
   },
   "59137": {
     "tank_id": 59137,
-    "name": "ИС-2 (1945)",
+    "name": "IS-2 (1945)",
     "tier": 7,
     "is_premium": true,
     "nation": "ussr",
@@ -2961,7 +2977,7 @@
   },
   "59649": {
     "tank_id": 59649,
-    "name": "ИСУ-122С",
+    "name": "ISU-122S",
     "tier": 7,
     "is_premium": true,
     "nation": "ussr",
@@ -2993,7 +3009,7 @@
   },
   "59905": {
     "tank_id": 59905,
-    "name": "Т-54 первый образец",
+    "name": "T-54 first prototype",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -3009,7 +3025,7 @@
   },
   "60161": {
     "tank_id": 60161,
-    "name": "ИС-2Ш",
+    "name": "IS-2Sh",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -3033,7 +3049,7 @@
   },
   "60417": {
     "tank_id": 60417,
-    "name": "ИС-3 Защитник",
+    "name": "IS-3 Defender",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -3041,7 +3057,7 @@
   },
   "60929": {
     "tank_id": 60929,
-    "name": "БТ-7 артиллерийский",
+    "name": "BT-7 artillery",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -3049,7 +3065,7 @@
   },
   "6145": {
     "tank_id": 6145,
-    "name": "ИС-4",
+    "name": "IS-4",
     "tier": 10,
     "is_premium": false,
     "nation": "ussr",
@@ -3169,7 +3185,7 @@
   },
   "63601": {
     "tank_id": 63601,
-    "name": "Дракула",
+    "name": "Dracula",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -3193,7 +3209,7 @@
   },
   "6401": {
     "tank_id": 6401,
-    "name": "СУ-76",
+    "name": "SU-76",
     "tier": 3,
     "is_premium": true,
     "nation": "ussr",
@@ -3201,7 +3217,7 @@
   },
   "64017": {
     "tank_id": 64017,
-    "name": "Франкенштанк",
+    "name": "Tankenstein",
     "tier": 7,
     "is_premium": true,
     "nation": "germany",
@@ -3233,7 +3249,7 @@
   },
   "64257": {
     "tank_id": 64257,
-    "name": "T-34-85 Победный",
+    "name": "T-34-85 Victory",
     "tier": 6,
     "is_premium": true,
     "nation": "ussr",
@@ -3241,7 +3257,7 @@
   },
   "64273": {
     "tank_id": 64273,
-    "name": "Новогодний Jagdtiger 8.8",
+    "name": "Snowstorm Jagdtiger 8.8",
     "tier": 8,
     "is_premium": true,
     "nation": "germany",
@@ -3281,7 +3297,7 @@
   },
   "64561": {
     "tank_id": 64561,
-    "name": "112 Ледяной",
+    "name": "112 Glacial",
     "tier": 8,
     "is_premium": true,
     "nation": "china",
@@ -3289,7 +3305,7 @@
   },
   "64593": {
     "tank_id": 64593,
-    "name": "Коннор Гневный",
+    "name": "Angry Connor",
     "tier": 5,
     "is_premium": true,
     "nation": "uk",
@@ -3305,7 +3321,7 @@
   },
   "64769": {
     "tank_id": 64769,
-    "name": "ИС-6 Бесстрашный",
+    "name": "IS-6 Fearless",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -3313,7 +3329,7 @@
   },
   "64801": {
     "tank_id": 64801,
-    "name": "T34 (1776)",
+    "name": "T34 Independence",
     "tier": 8,
     "is_premium": true,
     "nation": "usa",
@@ -3369,7 +3385,7 @@
   },
   "6657": {
     "tank_id": 6657,
-    "name": "Т-43",
+    "name": "T-43",
     "tier": 7,
     "is_premium": false,
     "nation": "ussr",
@@ -3385,7 +3401,7 @@
   },
   "6689": {
     "tank_id": 6689,
-    "name": "T49 ПТУР",
+    "name": "T49 ATM",
     "tier": 7,
     "is_premium": true,
     "nation": "usa",
@@ -3425,7 +3441,7 @@
   },
   "6913": {
     "tank_id": 6913,
-    "name": "СУ-85Б",
+    "name": "SU-85B",
     "tier": 4,
     "is_premium": false,
     "nation": "ussr",
@@ -3537,7 +3553,7 @@
   },
   "7281": {
     "tank_id": 7281,
-    "name": "Ликан",
+    "name": "Lycan",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -3553,7 +3569,7 @@
   },
   "7425": {
     "tank_id": 7425,
-    "name": "ИСУ-152",
+    "name": "ISU-152",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",
@@ -3585,7 +3601,7 @@
   },
   "7537": {
     "tank_id": 7537,
-    "name": "Кошмар",
+    "name": "Nightmare",
     "tier": 5,
     "is_premium": true,
     "nation": "other",
@@ -3601,7 +3617,7 @@
   },
   "769": {
     "tank_id": 769,
-    "name": "БТ-7",
+    "name": "BT-7",
     "tier": 3,
     "is_premium": false,
     "nation": "ussr",
@@ -3649,7 +3665,7 @@
   },
   "7793": {
     "tank_id": 7793,
-    "name": "Уничтожитель",
+    "name": "Annihilator",
     "tier": 7,
     "is_premium": true,
     "nation": "other",
@@ -3673,7 +3689,7 @@
   },
   "7937": {
     "tank_id": 7937,
-    "name": "Т-54",
+    "name": "T-54",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -3721,7 +3737,7 @@
   },
   "8049": {
     "tank_id": 8049,
-    "name": "Шип",
+    "name": "Spike",
     "tier": 5,
     "is_premium": true,
     "nation": "other",
@@ -3745,7 +3761,7 @@
   },
   "8193": {
     "tank_id": 8193,
-    "name": "Объект 704",
+    "name": "Object 704",
     "tier": 9,
     "is_premium": false,
     "nation": "ussr",
@@ -3921,7 +3937,7 @@
   },
   "8961": {
     "tank_id": 8961,
-    "name": "КВ-13",
+    "name": "KV-13",
     "tier": 7,
     "is_premium": true,
     "nation": "ussr",
@@ -3945,7 +3961,7 @@
   },
   "9009": {
     "tank_id": 9009,
-    "name": "Бык",
+    "name": "Ox",
     "tier": 6,
     "is_premium": true,
     "nation": "china",
@@ -3969,7 +3985,7 @@
   },
   "9217": {
     "tank_id": 9217,
-    "name": "ИС-6",
+    "name": "IS-6",
     "tier": 8,
     "is_premium": true,
     "nation": "ussr",
@@ -4001,7 +4017,7 @@
   },
   "9345": {
     "tank_id": 9345,
-    "name": "Свей",
+    "name": "Svear",
     "tier": 7,
     "is_premium": true,
     "nation": "european",
@@ -4089,7 +4105,7 @@
   },
   "9985": {
     "tank_id": 9985,
-    "name": "СУ-101",
+    "name": "SU-101",
     "tier": 8,
     "is_premium": false,
     "nation": "ussr",

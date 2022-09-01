@@ -168,7 +168,10 @@ impl WargamingApi {
         info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
             "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
-            &[("application_id", self.application_id.as_str())],
+            &[
+                ("application_id", self.application_id.as_str()),
+                ("language", "en"),
+            ],
         )?)
         .await
         .context("failed to get the tankopedia")
