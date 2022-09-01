@@ -4,7 +4,6 @@ pub mod model;
 pub mod requests;
 pub mod responses;
 mod sample;
-mod train_item;
 
 use std::sync::Arc;
 
@@ -12,16 +11,16 @@ use futures::future::try_join;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::oid::ObjectId;
 use mongodb::Database;
+use nalgebra::DVector;
+use tokio::spawn;
 use tokio::sync::RwLock;
 use tokio::time::sleep;
 
 use self::sample::*;
 use crate::math::logit;
-use crate::math::statistics::ConfidenceLevel;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
-use crate::trainer::model::Model;
-use crate::trainer::train_item::CompressedTrainItem;
+use crate::trainer::model::{Model, Regression};
 use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {
@@ -31,13 +30,8 @@ pub async fn run(opts: TrainOpts) -> Result {
     let model = Arc::new(RwLock::new(Model::default()));
 
     let serve_api = api::run(&opts.host, opts.port, model.clone());
-    let loop_trainer = run_trainer(
-        db,
-        opts.confidence_level,
-        Duration::from_std(opts.train_period)?,
-        opts.train_interval,
-        model,
-    );
+    let loop_trainer =
+        run_trainer(db, Duration::from_std(opts.train_period)?, opts.train_interval, model);
 
     try_join(serve_api, loop_trainer).await?;
     Ok(())
@@ -45,28 +39,23 @@ pub async fn run(opts: TrainOpts) -> Result {
 
 async fn run_trainer(
     db: Database,
-    confidence_level: ConfidenceLevel,
     train_period: Duration,
     train_interval: time::Duration,
     model: Arc<RwLock<Model>>,
 ) -> Result {
-    let z_level = confidence_level.z_value();
-
     let mut pointer = ObjectId::from_bytes([0; 12]);
-    let mut train_set: Vec<CompressedTrainItem> = Vec::new();
+    let mut train_set: Vec<database::TrainItem> = Vec::new();
     loop {
         let since = now() - train_period;
 
         info!(n_train_items = train_set.len(), "evicting outdated items…");
-        train_set.retain(|item| item.last_battle_time >= since.timestamp());
+        train_set.retain(|item| item.last_battle_time >= since);
 
         let stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
         read_stream(stream, &mut pointer, &mut train_set).await?;
-        let tank_samples = aggregate_train_set(&train_set);
-        let mut ratings = calculate_ratings(&tank_samples, z_level).await;
-        update_vehicle_mean_ratings(&ratings, &model).await?;
-        normalize_ratings(&mut ratings, &model).await?;
-        update_vehicle_similarities(ratings, &model).await;
+        let (returned_train_set, tank_samples) = spawn(aggregate_train_set(train_set)).await?;
+        train_set = returned_train_set;
+        spawn(update_model(tank_samples, model.clone())).await??;
 
         info!(?train_interval, %pointer, "sleeping…");
         sleep(train_interval).await;
@@ -77,7 +66,7 @@ async fn run_trainer(
 async fn read_stream(
     mut stream: impl Stream<Item = Result<database::TrainItem>> + Unpin,
     pointer: &mut ObjectId,
-    into: &mut Vec<CompressedTrainItem>,
+    into: &mut Vec<database::TrainItem>,
 ) -> Result {
     let start_instant = Instant::now();
     info!("reading new items…");
@@ -87,7 +76,7 @@ async fn read_stream(
         if *pointer < item.object_id {
             *pointer = item.object_id;
         }
-        into.push(item.try_into()?);
+        into.push(item);
         n_read += 1;
         if n_read % 100_000 == 0 {
             info!(n_read, elapsed_secs = ?start_instant.elapsed().as_secs(), per_sec = n_read / start_instant.elapsed().as_secs().max(1));
@@ -98,140 +87,99 @@ async fn read_stream(
     Ok(())
 }
 
-type IndexedByTank<V> = AHashMap<wargaming::TankId, AHashMap<wargaming::AccountId, V>>;
+type IndexedByTank<V> =
+    AHashMap<wargaming::TankId, AHashMap<(wargaming::Realm, wargaming::AccountId), V>>;
 
 #[instrument(level = "info", skip_all)]
-fn aggregate_train_set(train_set: &[CompressedTrainItem]) -> IndexedByTank<Sample> {
+async fn aggregate_train_set(
+    train_set: Vec<database::TrainItem>,
+) -> (Vec<database::TrainItem>, IndexedByTank<Sample>) {
     let start_instant = Instant::now();
     info!(n_train_items = train_set.len(), "aggregating…");
 
     let mut n_battles: u32 = 0;
 
-    let mut tank_samples: IndexedByTank<Sample> = AHashMap::default();
-    for item in train_set {
+    let mut samples: IndexedByTank<Sample> = AHashMap::default();
+    for item in &train_set {
         n_battles += item.n_battles as u32;
-        *tank_samples
+        *samples
             .entry(item.tank_id)
             .or_default()
-            .entry(item.account_id)
+            .entry((item.realm, item.account_id))
             .or_default() += &Sample::from(item);
     }
 
     info!(n_battles, elapsed = ?start_instant.elapsed(), "completed");
-    tank_samples
+    (train_set, samples)
 }
 
 #[instrument(level = "info", skip_all)]
-async fn calculate_ratings(
-    tank_samples: &IndexedByTank<Sample>,
-    z_level: f64,
-) -> IndexedByTank<f64> {
+async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>) -> Result {
+    info!("updating the model…");
     let start_instant = Instant::now();
-    info!("calculating ratings…");
 
-    let mut ratings: IndexedByTank<f64> = AHashMap::default();
-    for (tank_id, account_samples) in tank_samples {
-        let account_ratings = ratings.entry(*tank_id).or_default();
-        for (account_id, sample) in account_samples {
-            match sample.victory_ratio(z_level) {
-                Ok(victory_ratio) => {
-                    account_ratings.insert(*account_id, logit(victory_ratio));
-                }
-                Err(error) => {
-                    warn!("{:#}", error);
-                }
-            }
-        }
-    }
-
-    info!(elapsed = ?start_instant.elapsed(), "completed");
-    ratings
-}
-
-#[instrument(level = "info", skip_all)]
-async fn update_vehicle_mean_ratings(
-    ratings: &IndexedByTank<f64>,
-    model: &RwLock<Model>,
-) -> Result {
-    let start_instant = Instant::now();
-    info!("calculating vehicle mean ratings…");
-
-    for (tank_id, account_ratings) in ratings {
-        let mean_rating = account_ratings.values().sum::<f64>() / account_ratings.len() as f64;
-        model
-            .write()
-            .await
-            .vehicles
-            .entry(*tank_id)
-            .or_default()
-            .mean_rating = mean_rating;
-    }
-
-    info!(elapsed = ?start_instant.elapsed(), "completed");
-    Ok(())
-}
-
-#[instrument(level = "info", skip_all)]
-async fn normalize_ratings(ratings: &mut IndexedByTank<f64>, model: &RwLock<Model>) -> Result {
-    let start_instant = Instant::now();
-    info!("normalizing ratings…");
-
-    for (tank_id, account_ratings) in ratings.iter_mut() {
-        let vehicle_mean_rating = model
-            .read()
-            .await
-            .vehicles
-            .get(tank_id)
-            .ok_or_else(|| anyhow!("vehicle #{}'s mean rating is missing", tank_id))?
-            .mean_rating;
-        for rating in account_ratings.values_mut() {
-            *rating -= vehicle_mean_rating;
-        }
-    }
-
-    info!(elapsed = ?start_instant.elapsed(), "completed");
-    Ok(())
-}
-
-#[instrument(level = "info", skip_all)]
-async fn update_vehicle_similarities(ratings: IndexedByTank<f64>, model: &RwLock<Model>) {
-    let start_instant = Instant::now();
-    info!("calculating & updating vehicle similarities…");
-    for (i, (tank_id_1, account_1_ratings)) in ratings.iter().enumerate() {
-        if i % 50 == 0 {
-            info!(i, elapsed = ?start_instant.elapsed(), "working…");
-        }
-        let magnitude_1 = magnitude(account_1_ratings.values());
-        for (tank_id_2, account_2_ratings) in &ratings {
-            if tank_id_1 >= tank_id_2 {
+    for (source_vehicle_id, source_accounts) in &samples {
+        for (target_vehicle_id, target_accounts) in &samples {
+            if source_vehicle_id == target_vehicle_id {
                 continue;
             }
-            let magnitude_2 = magnitude(account_2_ratings.values());
-            let dot_product = account_1_ratings
-                .iter()
-                .filter_map(|(account_id, rating_1)| {
-                    account_2_ratings
-                        .get(account_id)
-                        .map(|rating_2| rating_1 * rating_2)
-                })
-                .sum::<f64>();
-            let similarity = dot_product / magnitude_1 / magnitude_2;
-            if similarity.is_finite() {
-                for (tank_id_1, tank_id_2) in [(tank_id_1, tank_id_2), (tank_id_2, tank_id_1)] {
-                    let mut model = model.write().await;
-                    let entry_1 = model.vehicles.entry(*tank_id_1).or_default();
-                    if similarity > 0.0 {
-                        entry_1.similarities.entry(*tank_id_2).or_insert(similarity);
-                    } else {
-                        entry_1.similarities.remove(tank_id_2);
+            let mut matrices = AHashMap::default();
+            for ((realm, source_account_id), source_sample) in source_accounts {
+                let target_sample = match target_accounts.get(&(*realm, *source_account_id)) {
+                    Some(sample) => sample,
+                    _ => {
+                        continue;
                     }
+                };
+                let (x, y) = matrices
+                    .remove(realm)
+                    .unwrap_or_else(|| (DVector::<f64>::zeros(0), DVector::<f64>::zeros(0)));
+                let i = x.nrows();
+                matrices.insert(
+                    *realm,
+                    (x.insert_row(i, source_sample.mean()), y.insert_row(i, target_sample.mean())),
+                );
+            }
+            for (realm, (mut x, mut y)) in matrices {
+                if x.nrows() == 0 {
+                    continue;
                 }
+                x.apply(|x| {
+                    *x = logit(*x);
+                });
+                let x = x.insert_column(1, 1.0);
+                y.apply(|y| {
+                    *y = logit(*y);
+                });
+                let reversed = match (x.tr_mul(&x)).try_inverse() {
+                    Some(reversed) => reversed,
+                    _ => {
+                        continue;
+                    }
+                };
+                let theta = reversed * x.transpose() * y;
+                model
+                    .write()
+                    .await
+                    .regressions
+                    .entry(realm)
+                    .or_default()
+                    .entry(*target_vehicle_id)
+                    .or_default()
+                    .insert(
+                        *source_vehicle_id,
+                        Regression {
+                            k: theta[0],
+                            bias: theta[1],
+                            n_rows: x.nrows(),
+                        },
+                    );
             }
         }
-    }
-    info!(elapsed = ?start_instant.elapsed(), "completed");
-}
 
-fn magnitude<'a>(vector: impl IntoIterator<Item = &'a f64>) -> f64 {
-    vector.into_iter().map(|x| x * x).sum::<f64>().sqrt()
+        info!(source_vehicle_id, n_lhs_accounts = source_accounts.len(), elapsed = ?start_instant.elapsed());
+    }
+
+    info!(elapsed = ?start_instant.elapsed(), "completed");
+    Ok(())
 }

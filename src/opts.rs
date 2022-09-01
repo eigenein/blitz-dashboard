@@ -5,7 +5,6 @@ use std::num::NonZeroU32;
 use clap::builder::EnumValueParser;
 use clap::Parser;
 
-use crate::math::statistics::ConfidenceLevel;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -283,15 +282,6 @@ pub struct TrainOpts {
         env = "BLITZ_DASHBOARD_TRAINER_INTERVAL",
     )]
     pub train_interval: time::Duration,
-
-    #[clap(
-        long,
-        default_value = "99",
-        ignore_case = true,
-        value_parser = EnumValueParser::<ConfidenceLevel>::new(),
-        env = "BLITZ_DASHBOARD_TRAINER_CONFIDENCE_LEVEL"
-    )]
-    pub confidence_level: ConfidenceLevel,
 
     #[clap(long, default_value = "::", env = "BLITZ_DASHBOARD_TRAINER_BIND_HOST")]
     pub host: String,

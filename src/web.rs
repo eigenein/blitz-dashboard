@@ -123,7 +123,6 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
-        .at("/analytics/vehicles/:vehicle_id", get(views::vehicle::get))
         .data(i18n::build_resources()?)
         .with(Tracing)
         .with(CatchPanic::new())

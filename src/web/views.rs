@@ -6,4 +6,3 @@ pub mod random;
 pub mod search;
 pub mod sitemaps;
 pub mod r#static;
-pub mod vehicle;

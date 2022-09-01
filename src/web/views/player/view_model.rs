@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 
-use bpci::{BoundedInterval, Interval};
+use bpci::BoundedInterval;
 use futures::future::try_join;
 use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
@@ -11,6 +11,8 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
+use crate::tankopedia::get_vehicle;
+use crate::trainer::requests::Given;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
@@ -69,27 +71,21 @@ impl ViewModel {
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let is_recommender_tester = RECOMMENDER_TESTERS.contains(&account_id);
-        let all_tank_ids = is_recommender_tester
-            .then(|| actual_tanks.keys().copied().collect_vec())
+        let predict_ids = is_recommender_tester
+            .then(|| {
+                actual_tanks
+                    .keys()
+                    .copied()
+                    .filter(|tank_id| get_vehicle(*tank_id).tier >= 6)
+                    .collect_vec()
+            })
             .unwrap_or_default();
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
         let recommendations = if is_recommender_tester && !stats_delta.tanks.is_empty() {
-            let given = stats_delta
-                .tanks
-                .iter()
-                .map(|snapshot| {
-                    Ok((
-                        snapshot.tank_id,
-                        snapshot
-                            .stats
-                            .true_win_rate(preferences.confidence_level)?
-                            .mean(),
-                    ))
-                })
-                .collect::<Result<Vec<_>>>()?;
-            match trainer_client.recommend(given, all_tank_ids).await {
+            let given = stats_delta.tanks.iter().map(Given::from).collect();
+            match trainer_client.recommend(realm, given, predict_ids).await {
                 Ok(recommendations) => recommendations,
                 Err(error) => {
                     error!("failed to fetch recommendations: {:#}", error);

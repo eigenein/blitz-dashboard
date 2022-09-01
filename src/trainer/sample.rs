@@ -1,19 +1,18 @@
 use std::iter::Sum;
 use std::ops::AddAssign;
 
-use bpci::{Interval, NSuccessesSample, WilsonScore};
+use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
-use crate::trainer::train_item::CompressedTrainItem;
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 pub struct Sample {
     pub n_battles: u32,
     pub n_wins: u32,
 }
 
-impl From<&CompressedTrainItem> for Sample {
-    fn from(item: &CompressedTrainItem) -> Self {
+impl From<&database::TrainItem> for Sample {
+    fn from(item: &database::TrainItem) -> Self {
         Self {
             n_battles: item.n_battles as u32,
             n_wins: item.n_wins as u32,
@@ -39,9 +38,11 @@ impl<'a> Sum<&'a Self> for Sample {
 }
 
 impl Sample {
-    pub fn victory_ratio(self, z_level: f64) -> Result<f64> {
-        Ok(NSuccessesSample::new(self.n_battles, self.n_wins)?
-            .wilson_score_with_cc(z_level)
-            .mean())
+    pub const PRIOR_ALPHA: u32 = 1;
+    pub const PRIOR_BETA: u32 = 1;
+
+    pub fn mean(self) -> f64 {
+        (self.n_wins + Self::PRIOR_ALPHA) as f64
+            / (self.n_battles + Self::PRIOR_ALPHA + Self::PRIOR_BETA) as f64
     }
 }
