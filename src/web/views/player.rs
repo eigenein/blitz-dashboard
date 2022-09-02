@@ -835,9 +835,14 @@ pub async fn get(
                         }
 
                         @if !view_model.recommendations.predictions.is_empty() {
-                            div.card {
+                            div.card id="anchor-recommendations" {
                                 header.card-header {
-                                    p.card-header-title { "Recommendations" }
+                                    p.card-header-title {
+                                        span.icon-text.is-flex-wrap-nowrap {
+                                            a.icon.has-text-link href="#anchor-recommendations" { i.fa-solid.fa-dice-d20 {} }
+                                            span { "Recommendations" }
+                                        }
+                                    }
                                 }
                                 div.card-content {
                                     div.field.is-grouped.is-grouped-multiline {
@@ -848,7 +853,7 @@ pub async fn get(
                                                         @let vehicle = get_vehicle(prediction.tank_id);
                                                         (vehicle_title(&vehicle, &locale)?)
                                                     }
-                                                    span.tag.has-text-weight-medium { (Float::from(100.0 * prediction.p)) "%" }
+                                                    span.tag { (Float::from(100.0 * prediction.p)) "%" }
                                                 }
                                             }
                                         }
