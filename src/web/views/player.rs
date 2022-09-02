@@ -2,18 +2,15 @@
 //!
 //! «Abandon hope, all ye who enter here».
 
-use std::str::FromStr;
 use std::time;
 use std::time::Instant;
 
 use bpci::Interval;
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
-use poem::http::StatusCode;
 use poem::i18n::Locale;
 use poem::web::cookie::CookieJar;
-use poem::web::headers::{ETag, IfNoneMatch};
-use poem::web::{Data, Form, Html, Path, RealIp, Redirect, TypedHeader};
+use poem::web::{Data, Form, Html, Path, RealIp, Redirect};
 use poem::{handler, IntoResponse, Response};
 
 use self::damage_item::DamageItem;
@@ -24,7 +21,6 @@ use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
 pub use self::testers::*;
 use self::view_model::ViewModel;
-use crate::helpers::hash::hash_digest;
 use crate::helpers::time::{from_days, from_hours, from_months, from_years};
 use crate::math::statistics::ConfidenceLevel;
 use crate::math::traits::*;
@@ -89,7 +85,6 @@ pub async fn get(
     Data(testers): Data<&Testers>,
     real_ip: RealIp,
     locale: Locale,
-    none_match: Option<TypedHeader<IfNoneMatch>>,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
 
@@ -104,18 +99,6 @@ pub async fn get(
         testers,
     )
     .await?;
-
-    let etag = format!(
-        r#""{}""#,
-        hash_digest(&(view_model.actual_info.last_battle_time, &view_model.preferences))
-    );
-    if let Some(TypedHeader(none_match)) = none_match {
-        if !none_match.precondition_passes(&ETag::from_str(&etag).context("failed to parse ETag")?)
-        {
-            info!("not modified");
-            return Ok(StatusCode::NOT_MODIFIED.into_response());
-        }
-    }
 
     let vehicles_thead = html! {
         tr {
@@ -982,7 +965,6 @@ pub async fn get(
 
     let response = Html(markup.into_string())
         .with_header("Cache-Control", "public, max-age=30, stale-while-revalidate=3600")
-        .with_header("ETag", etag)
         .into_response();
     info!(elapsed = ?start_instant.elapsed(), "finished");
     Ok(response)
