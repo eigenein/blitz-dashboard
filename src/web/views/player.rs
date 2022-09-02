@@ -848,7 +848,7 @@ pub async fn get(
                                                         @let vehicle = get_vehicle(prediction.tank_id);
                                                         (vehicle_title(&vehicle, &locale)?)
                                                     }
-                                                    span.tag.is-info.is-light.has-text-weight-medium { (Float::from(100.0 * prediction.p)) "%" }
+                                                    span.tag.has-text-weight-medium { (Float::from(100.0 * prediction.p)) "%" }
                                                 }
                                             }
                                         }
