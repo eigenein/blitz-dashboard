@@ -835,18 +835,22 @@ pub async fn get(
                         }
 
                         @if !view_model.recommendations.predictions.is_empty() {
-                            div.field.is-grouped.is-grouped-multiline {
-                                @for prediction in view_model.recommendations.predictions {
-                                    div.control {
-                                        div.tags.has-addons {
-                                            span.tag.is-info title=(prediction.tank_id) {
-                                                @let vehicle = get_vehicle(prediction.tank_id);
-                                                @if let Some(tier) = TIER_MARKUP.get(&vehicle.tier) {
-                                                    span."mx-1" { (tier) }
+                            div.card {
+                                header.card-header {
+                                    p.card-header-title { "Recommendations" }
+                                }
+                                div.card-content {
+                                    div.field.is-grouped.is-grouped-multiline {
+                                        @for prediction in view_model.recommendations.predictions {
+                                            div.control {
+                                                div.tags.has-addons.are-medium {
+                                                    span.tag title=(prediction.tank_id) {
+                                                        @let vehicle = get_vehicle(prediction.tank_id);
+                                                        (vehicle_title(&vehicle, &locale)?)
+                                                    }
+                                                    span.tag.is-info.is-light.has-text-weight-medium { (Float::from(100.0 * prediction.p)) "%" }
                                                 }
-                                                (vehicle.name)
                                             }
-                                            span.tag { (Float::from(100.0 * prediction.p)) "%" }
                                         }
                                     }
                                 }
