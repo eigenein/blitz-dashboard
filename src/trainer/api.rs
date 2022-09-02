@@ -12,7 +12,6 @@ use crate::prelude::*;
 use crate::trainer::model::Model;
 use crate::trainer::requests::RecommendRequest;
 use crate::trainer::responses::{Prediction, RecommendResponse};
-use crate::trainer::sample::Sample;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 
 pub async fn run(host: &str, port: u16, model: Arc<RwLock<Model>>) -> Result {
@@ -58,8 +57,7 @@ async fn recommend(
         let mut prediction_sum = 0.0;
         let mut total_weight = 0.0;
         for given in &request.given {
-            let source_weight =
-                (given.sample.n_battles + Sample::PRIOR_ALPHA + Sample::PRIOR_BETA) as f64;
+            let source_weight = given.sample.n_posterior_battles() as f64;
             if let Some(regression) = regressions.get(&given.tank_id) {
                 prediction_sum +=
                     sigmoid(regression.predict(logit(given.sample.mean()))) * source_weight;
