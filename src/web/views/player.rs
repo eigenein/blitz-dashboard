@@ -818,11 +818,11 @@ pub async fn get(
                         }
 
                         @if !view_model.recommendations.predictions.is_empty() {
-                            div.card id="anchor-recommendations" {
+                            div.card id="recommendations" {
                                 header.card-header {
                                     p.card-header-title {
                                         span.icon-text.is-flex-wrap-nowrap {
-                                            a.icon.has-text-link href="#anchor-recommendations" { i.fa-solid.fa-dice-d20 {} }
+                                            a.icon.has-text-link href="#recommendations" { i.fa-solid.fa-dice-d20 {} }
                                             span { "Recommendations" }
                                         }
                                     }
