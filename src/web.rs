@@ -14,6 +14,7 @@ use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 use crate::web::tracking_code::TrackingCode;
+use crate::web::views::player::Testers;
 
 mod cookies;
 mod i18n;
@@ -29,7 +30,7 @@ mod views;
 /// Run the web app.
 pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
-    info!(host = opts.host.as_str(), port = opts.port, "starting up…");
+    info!(host = opts.host.as_str(), port = opts.port, trainer_testers = ?opts.trainer_testers, "starting up…");
 
     let app_data = AppData::initialize_from_opts(&opts).await?;
     let app = create_app(app_data).await?;
@@ -52,6 +53,7 @@ struct AppData {
     redis: fred::pool::RedisPool,
     trainer_client: crate::trainer::client::Client,
     tracking_code: TrackingCode,
+    testers: Testers,
 }
 
 impl AppData {
@@ -69,6 +71,9 @@ impl AppData {
                 .await?;
         let tracking_code = TrackingCode::new(opts)?;
         let trainer_client = crate::trainer::client::Client::new(&opts.trainer_base_url)?;
+        let testers = Testers {
+            trainer_testers: opts.trainer_testers.iter().copied().collect(),
+        };
 
         Ok(Self {
             api,
@@ -76,6 +81,7 @@ impl AppData {
             redis,
             tracking_code,
             trainer_client,
+            testers,
         })
     }
 }
@@ -90,7 +96,8 @@ async fn create_app(data: AppData) -> Result<impl Endpoint> {
         .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
         .data(data.redis)
         .data(data.api)
-        .data(data.trainer_client);
+        .data(data.trainer_client)
+        .data(data.testers);
     Ok(app)
 }
 

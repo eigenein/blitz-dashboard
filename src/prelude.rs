@@ -13,6 +13,7 @@ pub use crate::helpers::result::InspectErr;
 pub use crate::{database, wargaming};
 
 pub type AHashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
+pub type AHashSet<V> = std::collections::HashSet<V, ahash::RandomState>;
 pub type DateTime = chrono::DateTime<Utc>;
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 

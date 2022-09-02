@@ -62,6 +62,14 @@ pub struct WebOpts {
         default_value = "http://localhost:8082"
     )]
     pub trainer_base_url: String,
+
+    #[structopt(
+        long,
+        env = "BLITZ_DASHBOARD_WEB_TRAINER_TESTERS",
+        default_value = "513713270,5589968,10894576",
+        use_delimiter = true
+    )]
+    pub trainer_testers: Vec<wargaming::AccountId>,
 }
 
 /// Runs the account crawler.

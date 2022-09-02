@@ -17,9 +17,8 @@ use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
 use crate::web::views::player::stats_delta::StatsDelta;
+use crate::web::views::player::Testers;
 use crate::{database, wargaming};
-
-const RECOMMENDER_TESTERS: &[wargaming::AccountId] = &[513713270, 5589968];
 
 pub struct ViewModel {
     pub realm: wargaming::Realm,
@@ -42,6 +41,7 @@ impl ViewModel {
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
         trainer_client: &crate::trainer::client::Client,
+        testers: &Testers,
     ) -> poem::Result<Self> {
         let mut user =
             Self::get_sentry_user(realm, account_id, ip_addr).map_err(poem::Error::from)?;
@@ -70,7 +70,7 @@ impl ViewModel {
             .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
-        let is_recommender_tester = RECOMMENDER_TESTERS.contains(&account_id);
+        let is_recommender_tester = testers.trainer_testers.contains(&account_id);
         let predict_ids = is_recommender_tester
             .then(|| actual_tanks.keys().copied().collect_vec())
             .unwrap_or_default();

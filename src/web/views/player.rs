@@ -22,6 +22,7 @@ use self::interval_item::IntervalItem;
 use self::partials::*;
 use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
+pub use self::testers::*;
 use self::view_model::ViewModel;
 use crate::helpers::hash::hash_digest;
 use crate::helpers::time::{from_days, from_hours, from_months, from_years};
@@ -44,6 +45,7 @@ mod path;
 mod percentage_item;
 mod stats_delta;
 mod target_victory_ratio;
+mod testers;
 mod view_constants;
 mod view_model;
 
@@ -84,6 +86,7 @@ pub async fn get(
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
     Data(trainer_client): Data<&crate::trainer::client::Client>,
+    Data(testers): Data<&Testers>,
     real_ip: RealIp,
     locale: Locale,
     none_match: Option<TypedHeader<IfNoneMatch>>,
@@ -98,6 +101,7 @@ pub async fn get(
         *info_cache,
         *tanks_cache,
         trainer_client,
+        testers,
     )
     .await?;
 
