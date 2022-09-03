@@ -84,3 +84,4 @@ hint-significantly-lower-than-target = Victory ratio is significantly lower than
 hint-significantly-higher-than-target = Victory ratio is significantly higher than the target one
 navbar-item-confidence-level = Confidence level
 title-victory-probability = Victory probability
+title-period-4-hours = 4 hours

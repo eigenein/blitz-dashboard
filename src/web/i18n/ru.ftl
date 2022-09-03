@@ -84,3 +84,4 @@ hint-significantly-lower-than-target = Процент побед значите�
 hint-significantly-higher-than-target = Процент побед значительно выше, чем целевой
 navbar-item-confidence-level = Уровень доверия
 title-victory-probability = Вероятность победы
+title-period-4-hours = 4 часа

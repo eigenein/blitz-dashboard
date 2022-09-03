@@ -414,6 +414,7 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
+                                (render_period_li(view_model.preferences.period, from_hours(4), &locale.text("title-period-4-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_hours(8), &locale.text("title-period-8-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_hours(12), &locale.text("title-period-12-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_days(1), &locale.text("title-period-24-hours")?)?)
