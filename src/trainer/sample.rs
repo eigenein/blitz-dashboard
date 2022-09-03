@@ -42,14 +42,22 @@ impl Sample {
     const PRIOR_BETA: u32 = 2;
 
     pub fn mean(self) -> f64 {
-        self.n_posterior_wins() as f64 / self.n_posterior_battles() as f64
+        self.n_posterior_wins_f64() / self.n_posterior_battles_f64()
     }
 
     pub const fn n_posterior_wins(self) -> u32 {
         self.n_wins + Self::PRIOR_ALPHA
     }
 
+    pub const fn n_posterior_wins_f64(self) -> f64 {
+        self.n_posterior_wins() as f64
+    }
+
     pub const fn n_posterior_battles(self) -> u32 {
         self.n_battles + Self::PRIOR_ALPHA + Self::PRIOR_BETA
+    }
+
+    pub const fn n_posterior_battles_f64(self) -> f64 {
+        self.n_posterior_battles() as f64
     }
 }
