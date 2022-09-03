@@ -109,7 +109,7 @@ pub async fn get(
                 }
             }
 
-            th { (locale.text("title-type")?) }
+            th.has-text-centered { (locale.text("title-type")?) }
 
             th.has-text-right {
                 a data-sort="battles" {
@@ -148,6 +148,16 @@ pub async fn get(
             }
 
             th {
+                a data-sort="victory-probability" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span {
+                            (locale.text("title-victory-probability")?)
+                        }
+                    }
+                }
+            }
+
+            th {
                 a data-sort="frags-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-frags-per-battle")?) }
@@ -175,7 +185,7 @@ pub async fn get(
                 }
             }
 
-            th.has-text-right {
+            th.has-text-left {
                 a data-sort="damage-dealt" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-damage-dealt")?) }
@@ -183,7 +193,7 @@ pub async fn get(
                 }
             }
 
-            th.has-text-right {
+            th.has-text-left {
                 a data-sort="damage-per-battle" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-damage-dealt-per-battle")?) }
@@ -191,7 +201,7 @@ pub async fn get(
                 }
             }
 
-            th.has-text-right {
+            th.has-text-left {
                 a data-sort="accuracy" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-hits")?) }
@@ -1022,8 +1032,19 @@ fn render_tank_tr(
                 }
             }
 
+            @let victory_probability = snapshot.stats.posterior_victory_probability();
+            td.has-text-left data-sort="victory-probability" data-value=(victory_probability) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
+                    span {
+                        (Float::from(100.0 * victory_probability).precision(1))
+                        span.has-text-grey { "%" }
+                    }
+                }
+            }
+
             @let frags_per_battle = snapshot.stats.frags_per_battle();
-            td.has-text-centered data-sort="frags-per-battle" data-value=(frags_per_battle) {
+            td data-sort="frags-per-battle" data-value=(frags_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon { i.fas.fa-skull-crossbones.has-text-grey-light {} }
                     span { (render_float(frags_per_battle, 1)) }
@@ -1051,7 +1072,7 @@ fn render_tank_tr(
                 }
             }
 
-            td.has-text-right data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
+            td.has-text-left data-sort="damage-dealt" data-value=(snapshot.stats.damage_dealt) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-house-damage {} }
                     (HumanFloat(snapshot.stats.damage_dealt as f64))
@@ -1059,7 +1080,7 @@ fn render_tank_tr(
             }
 
             @let damage_per_battle = snapshot.stats.average_damage_dealt();
-            td.has-text-right data-sort="damage-per-battle" data-value=(damage_per_battle) {
+            td.has-text-left data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-house-damage {} }
                     (format!("{:.0}", damage_per_battle))
@@ -1067,7 +1088,7 @@ fn render_tank_tr(
             }
 
             @let accuracy = snapshot.stats.accuracy();
-            td.has-text-right data-sort="accuracy" data-value=(accuracy) {
+            td.has-text-left data-sort="accuracy" data-value=(accuracy) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-bullseye {} }
                     span {

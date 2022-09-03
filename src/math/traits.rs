@@ -21,12 +21,18 @@ pub trait DamageDealt {
 
 pub trait TrueWinRate {
     fn true_win_rate(&self, confidence_level: ConfidenceLevel) -> Result<BoundedInterval<f64>>;
+
+    fn posterior_victory_probability(&self) -> f64;
 }
 
 impl<T: NBattles + NWins> TrueWinRate for T {
     fn true_win_rate(&self, confidence_level: ConfidenceLevel) -> Result<BoundedInterval<f64>> {
         let sample = NSuccessesSample::new(self.n_battles(), self.n_wins())?;
         Ok(sample.wilson_score_with_cc(confidence_level.z_value()))
+    }
+
+    fn posterior_victory_probability(&self) -> f64 {
+        (self.n_wins() + 2) as f64 / (self.n_battles() + 4) as f64
     }
 }
 
