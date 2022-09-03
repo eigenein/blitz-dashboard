@@ -86,13 +86,6 @@ jobs:
               User pi
               StrictHostKeyChecking no
 
-      - name: Stop the crawlers
-        run: |
-          ssh yastatist "sudo systemctl stop crawler-ru
-          systemctl status --lines=0 crawler-ru"
-          ssh yastatist "sudo systemctl stop crawler-eu
-          systemctl status --lines=0 crawler-eu"
-
       - name: Rsync
         working-directory: ./target/aarch64-unknown-linux-gnu/release
         run: |
