@@ -1042,7 +1042,7 @@ fn render_tank_tr(
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
                     span {
-                        (Float::from(100.0 * victory_probability).precision(1))
+                        (Float::from(100.0 * victory_probability))
                         span.has-text-grey { "%" }
                     }
                 }
