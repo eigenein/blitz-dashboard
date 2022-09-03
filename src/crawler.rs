@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
 use futures::{stream, Stream, StreamExt, TryStreamExt};
@@ -9,7 +8,7 @@ use tokio::sync::Mutex;
 
 use crate::crawler::crawled_data::CrawledData;
 use crate::crawler::metrics::CrawlerMetrics;
-use crate::opts::{BufferingOpts, CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
+use crate::opts::{CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::WargamingApi;
 use crate::{database, wargaming};
@@ -17,12 +16,14 @@ use crate::{database, wargaming};
 mod crawled_data;
 mod metrics;
 
-#[derive(Clone)]
 pub struct Crawler {
     api: WargamingApi,
     realm: wargaming::Realm,
     db: mongodb::Database,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
+    metrics: Mutex<CrawlerMetrics>,
+    n_buffered_batches: usize,
+    heartbeat_url: Option<String>,
+    enable_train: bool,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -30,9 +31,12 @@ pub struct Crawler {
 ///
 /// Intended to be run as a system service.
 pub async fn run_crawler(opts: CrawlerOpts) -> Result {
-    sentry::configure_scope(|scope| scope.set_tag("app", "crawler"));
+    sentry::configure_scope(|scope| {
+        scope.set_tag("app", "crawler");
+        scope.set_tag("realm", opts.shared.realm);
+    });
 
-    let crawler = Crawler::new(&opts.shared).await?;
+    let crawler = Crawler::new(&opts.shared, opts.heartbeat_url, opts.enable_train).await?;
     let accounts = database::Account::get_sampled_stream(
         crawler.db.clone(),
         opts.shared.realm,
@@ -40,14 +44,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         Duration::from_std(opts.min_offset)?,
         Duration::from_std(opts.max_offset)?,
     );
-    crawler
-        .run(
-            Box::pin(accounts),
-            &opts.shared.buffering,
-            opts.heartbeat_url,
-            opts.enable_train,
-        )
-        .await
+    crawler.run(Box::pin(accounts)).await
 }
 
 /// Performs a very slow one-time account scan.
@@ -62,14 +59,16 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     let accounts = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| database::Account::new(opts.shared.realm, account_id))
         .map(Ok);
-    let crawler = Crawler::new(&opts.shared).await?;
-    crawler
-        .run(accounts, &opts.shared.buffering, None, false)
-        .await
+    let crawler = Crawler::new(&opts.shared, None, false).await?;
+    crawler.run(accounts).await
 }
 
 impl Crawler {
-    pub async fn new(opts: &SharedCrawlerOpts) -> Result<Self> {
+    pub async fn new(
+        opts: &SharedCrawlerOpts,
+        heartbeat_url: Option<String>,
+        enable_train: bool,
+    ) -> Result<Self> {
         let api = WargamingApi::new(
             &opts.connections.application_id,
             opts.connections.api_timeout,
@@ -80,14 +79,17 @@ impl Crawler {
 
         let this = Self {
             realm: opts.realm,
-            metrics: Arc::new(Mutex::new(CrawlerMetrics::new(
+            metrics: Mutex::new(CrawlerMetrics::new(
                 &api.request_counter,
                 opts.lag_percentile,
                 opts.lag_window_size,
                 opts.log_interval,
-            ))),
+            )),
             api,
             db,
+            n_buffered_batches: opts.buffering.n_batches,
+            heartbeat_url,
+            enable_train,
         };
         Ok(this)
     }
@@ -96,32 +98,20 @@ impl Crawler {
     pub async fn run(
         self,
         accounts: impl Stream<Item = Result<database::Account>> + Unpin,
-        buffering: &BufferingOpts,
-        heartbeat_url: Option<String>,
-        enable_train: bool,
     ) -> Result {
-        info!(
-            realm = ?self.realm,
-            n_buffered_batches = buffering.n_batches,
-            "running…",
-        );
+        info!(realm = ?self.realm, n_buffered_batches = self.n_buffered_batches, "running…");
+        let this = Arc::new(self);
         accounts
             .try_chunks(100)
             .map_err(Error::from)
-            .try_for_each_concurrent(buffering.n_batches, |batch| {
-                let api = self.api.clone();
-                let db = self.db.clone();
-                let metrics = self.metrics.clone();
-                let heartbeat_url = heartbeat_url.clone();
+            .try_for_each_concurrent(this.n_buffered_batches, |batch| {
+                let this = Arc::clone(&this);
                 async move {
-                    let mut accounts =
-                        crawl_batch(&api, self.realm, batch, &metrics, heartbeat_url).await?;
+                    let mut accounts = this.crawl_batch(batch).await?;
                     while let Some((account, account_info)) = accounts.try_next().await? {
-                        let crawled_data =
-                            crawl_account(&api, self.realm, account, account_info, enable_train)
-                                .await?;
+                        let crawled_data = this.crawl_account(account, account_info).await?;
                         let account_id = crawled_data.account.id;
-                        update_account(&db, crawled_data, &metrics)
+                        this.update_account(crawled_data)
                             .await
                             .with_context(|| anyhow!("failed to update account #{}", account_id))?;
                     }
@@ -131,184 +121,177 @@ impl Crawler {
             .await
             .context("the crawler stream has failed")
     }
-}
 
-#[instrument(skip_all, level = "trace", err)]
-async fn crawl_batch(
-    api: &WargamingApi,
-    realm: wargaming::Realm,
-    batch: Vec<database::Account>,
-    metrics: &Mutex<CrawlerMetrics>,
-    heartbeat_url: Option<String>,
-) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
-    let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
-    let new_infos = api.get_account_info(realm, &account_ids).await?;
-    let batch_len = batch.len();
-    let matched = match_account_infos(batch, new_infos);
+    #[instrument(skip_all, level = "trace", err)]
+    async fn crawl_batch(
+        &self,
+        batch: Vec<database::Account>,
+    ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
+        let account_ids: Vec<wargaming::AccountId> =
+            batch.iter().map(|account| account.id).collect();
+        let new_infos = self.api.get_account_info(self.realm, &account_ids).await?;
+        let batch_len = batch.len();
+        let matched = Self::match_account_infos(batch, new_infos);
 
-    on_batch_crawled(batch_len, matched.len(), metrics, &api.request_counter, heartbeat_url).await;
-    Ok(stream::iter(matched.into_iter()).map(Ok))
-}
-
-async fn on_batch_crawled(
-    batch_len: usize,
-    matched_len: usize,
-    metrics: &Mutex<CrawlerMetrics>,
-    request_counter: &AtomicU32,
-    heartbeat_url: Option<String>,
-) {
-    debug!(matched_len, "batch crawled");
-
-    let mut metrics = metrics.lock().await;
-    metrics.add_batch(batch_len, matched_len);
-    let is_metrics_logged = metrics.check(request_counter);
-    if let (true, Some(heartbeat_url)) = (is_metrics_logged, heartbeat_url) {
-        tokio::spawn(reqwest::get(heartbeat_url));
+        self.on_batch_crawled(batch_len, matched.len()).await;
+        Ok(stream::iter(matched.into_iter()).map(Ok))
     }
-}
 
-/// Match the batch's accounts to the account infos fetched from the API.
-/// Filters out accounts with unchanged last battle time.
-///
-/// # Returns
-///
-/// Vector of matched pairs.
-#[instrument(skip_all, level = "debug")]
-fn match_account_infos(
-    batch: Vec<database::Account>,
-    mut new_infos: HashMap<String, Option<wargaming::AccountInfo>>,
-) -> Vec<(database::Account, wargaming::AccountInfo)> {
-    batch
-        .into_iter()
-        .filter_map(move |account| match new_infos.remove(&account.id.to_string()).flatten() {
-            Some(new_info) if account.last_battle_time != Some(new_info.last_battle_time) => {
-                Some((account, new_info))
-            }
-            _ => None,
+    async fn on_batch_crawled(&self, batch_len: usize, matched_len: usize) {
+        debug!(matched_len, "batch crawled");
+
+        let mut metrics = self.metrics.lock().await;
+        metrics.add_batch(batch_len, matched_len);
+        let is_metrics_logged = metrics.check(&self.api.request_counter);
+        if let (true, Some(heartbeat_url)) = (is_metrics_logged, &self.heartbeat_url) {
+            tokio::spawn(reqwest::get(heartbeat_url.clone()));
+        }
+    }
+
+    /// Match the batch's accounts to the account infos fetched from the API.
+    /// Filters out accounts with unchanged last battle time.
+    ///
+    /// # Returns
+    ///
+    /// Vector of matched pairs.
+    #[instrument(skip_all, level = "debug")]
+    fn match_account_infos(
+        batch: Vec<database::Account>,
+        mut new_infos: HashMap<String, Option<wargaming::AccountInfo>>,
+    ) -> Vec<(database::Account, wargaming::AccountInfo)> {
+        batch
+            .into_iter()
+            .filter_map(move |account| match new_infos.remove(&account.id.to_string()).flatten() {
+                Some(new_info) if account.last_battle_time != Some(new_info.last_battle_time) => {
+                    Some((account, new_info))
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Crawls account's tank statistics and achievements.
+    ///
+    /// # Returns
+    ///
+    /// Updated account, snapshot of the account and snapshots of its tanks.
+    #[instrument(
+        skip_all,
+        level = "debug",
+        fields(account_id = account_info.id),
+    )]
+    async fn crawl_account(
+        &self,
+        account: database::Account,
+        account_info: wargaming::AccountInfo,
+    ) -> Result<CrawledData> {
+        debug!(?account.last_battle_time);
+
+        let tanks_stats = self
+            .api
+            .get_tanks_stats(self.realm, account_info.id)
+            .await?;
+        debug!(n_tanks_stats = tanks_stats.len());
+        let tank_last_battle_times = tanks_stats
+            .iter()
+            .map_into::<database::TankLastBattleTime>()
+            .collect_vec();
+        let partial_tank_stats = tanks_stats
+            .iter()
+            .map_into::<database::PartialTankStats>()
+            .collect_vec();
+        let train_items = if self.enable_train {
+            self.gather_train_items(&account, &tanks_stats)
+        } else {
+            Vec::new()
+        };
+        let tanks_stats = tanks_stats
+            .into_iter()
+            .filter(|tank| Some(tank.last_battle_time) > account.last_battle_time)
+            .collect_vec();
+        let tank_snapshots = if !tanks_stats.is_empty() {
+            debug!(n_updated_tanks = tanks_stats.len());
+            let achievements = self
+                .api
+                .get_tanks_achievements(self.realm, account_info.id)
+                .await?;
+            database::TankSnapshot::from_vec(self.realm, account_info.id, tanks_stats, achievements)
+        } else {
+            trace!("no updated tanks");
+            Vec::new()
+        };
+        debug!(n_tank_snapshots = tank_snapshots.len(), "crawled");
+
+        let account = database::Account {
+            id: account.id,
+            realm: self.realm,
+            last_battle_time: Some(account_info.last_battle_time),
+            random: fastrand::f64(),
+            partial_tank_stats,
+        };
+        let account_snapshot =
+            database::AccountSnapshot::new(self.realm, &account_info, tank_last_battle_times);
+        let rating_snapshot = database::RatingSnapshot::new(self.realm, &account_info);
+
+        Ok(CrawledData {
+            account,
+            account_snapshot,
+            tank_snapshots,
+            rating_snapshot,
+            train_items,
         })
-        .collect()
-}
+    }
 
-/// Crawls account's tank statistics and achievements.
-///
-/// # Returns
-///
-/// Updated account, snapshot of the account and snapshots of its tanks.
-#[instrument(
-    skip_all,
-    level = "debug",
-    fields(account_id = account_info.id),
-)]
-async fn crawl_account(
-    api: &WargamingApi,
-    realm: wargaming::Realm,
-    account: database::Account,
-    account_info: wargaming::AccountInfo,
-    enable_train: bool,
-) -> Result<CrawledData> {
-    debug!(?account.last_battle_time);
-
-    let tanks_stats = api.get_tanks_stats(realm, account_info.id).await?;
-    debug!(n_tanks_stats = tanks_stats.len());
-    let tank_last_battle_times = tanks_stats
-        .iter()
-        .map_into::<database::TankLastBattleTime>()
-        .collect_vec();
-    let partial_tank_stats = tanks_stats
-        .iter()
-        .map_into::<database::PartialTankStats>()
-        .collect_vec();
-    let train_items = if enable_train {
-        gather_train_items(&account, &tanks_stats)
-    } else {
-        Vec::new()
-    };
-    let tanks_stats = tanks_stats
-        .into_iter()
-        .filter(|tank| Some(tank.last_battle_time) > account.last_battle_time)
-        .collect_vec();
-    let tank_snapshots = if !tanks_stats.is_empty() {
-        debug!(n_updated_tanks = tanks_stats.len());
-        let achievements = api.get_tanks_achievements(realm, account_info.id).await?;
-        database::TankSnapshot::from_vec(realm, account_info.id, tanks_stats, achievements)
-    } else {
-        trace!("no updated tanks");
-        Vec::new()
-    };
-    debug!(n_tank_snapshots = tank_snapshots.len(), "crawled");
-
-    let account = database::Account {
-        id: account.id,
-        realm,
-        last_battle_time: Some(account_info.last_battle_time),
-        random: fastrand::f64(),
-        partial_tank_stats,
-    };
-    let account_snapshot =
-        database::AccountSnapshot::new(realm, &account_info, tank_last_battle_times);
-    let rating_snapshot = database::RatingSnapshot::new(realm, &account_info);
-
-    Ok(CrawledData {
-        account,
-        account_snapshot,
-        tank_snapshots,
-        rating_snapshot,
-        train_items,
-    })
-}
-
-/// Gather the recommender system's train data.
-/// Highly experimental.
-#[instrument(level = "debug", skip_all, fields(account_id = account.id))]
-fn gather_train_items(
-    account: &database::Account,
-    actual_tank_stats: &[wargaming::TankStats],
-) -> Vec<database::TrainItem> {
-    let previous_partial_tank_stats = account
-        .partial_tank_stats
-        .iter()
-        .map(|stats| (stats.tank_id, (stats.n_battles, stats.n_wins)))
-        .collect::<AHashMap<_, _>>();
-    actual_tank_stats
-        .iter()
-        .filter_map(|stats| {
-            previous_partial_tank_stats
-                .get(&stats.tank_id)
-                .and_then(|(n_battles, n_wins)| {
-                    let differs = stats.all.n_battles != 0
-                        && stats.all.n_battles > *n_battles
-                        && stats.all.n_wins >= *n_wins;
-                    differs.then(|| database::TrainItem {
-                        object_id: ObjectId::from_bytes([0; 12]),
-                        realm: account.realm,
-                        account_id: account.id,
-                        tank_id: stats.tank_id,
-                        last_battle_time: stats.last_battle_time,
-                        // TODO: check `n_battles >= n_wins`.
-                        n_battles: stats.all.n_battles - n_battles,
-                        n_wins: stats.all.n_wins - n_wins,
+    /// Gather the recommender system's train data.
+    /// Highly experimental.
+    #[instrument(level = "debug", skip_all, fields(account_id = account.id))]
+    fn gather_train_items(
+        &self,
+        account: &database::Account,
+        actual_tank_stats: &[wargaming::TankStats],
+    ) -> Vec<database::TrainItem> {
+        let previous_partial_tank_stats = account
+            .partial_tank_stats
+            .iter()
+            .map(|stats| (stats.tank_id, (stats.n_battles, stats.n_wins)))
+            .collect::<AHashMap<_, _>>();
+        actual_tank_stats
+            .iter()
+            .filter_map(|stats| {
+                previous_partial_tank_stats
+                    .get(&stats.tank_id)
+                    .and_then(|(n_battles, n_wins)| {
+                        let differs = stats.all.n_battles != 0
+                            && stats.all.n_battles > *n_battles
+                            && stats.all.n_wins >= *n_wins;
+                        differs.then(|| database::TrainItem {
+                            object_id: ObjectId::from_bytes([0; 12]),
+                            realm: account.realm,
+                            account_id: account.id,
+                            tank_id: stats.tank_id,
+                            last_battle_time: stats.last_battle_time,
+                            // TODO: check `n_battles >= n_wins`.
+                            n_battles: stats.all.n_battles - n_battles,
+                            n_wins: stats.all.n_wins - n_wins,
+                        })
                     })
-                })
-        })
-        .collect()
-}
+            })
+            .collect()
+    }
 
-#[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]
-async fn update_account(
-    in_: &mongodb::Database,
-    crawled_data: CrawledData,
-    metrics: &Mutex<CrawlerMetrics>,
-) -> Result {
-    let start_instant = Instant::now();
-    debug!(last_battle_time = ?crawled_data.account.last_battle_time, "updating account…");
+    #[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]
+    async fn update_account(&self, crawled_data: CrawledData) -> Result {
+        let start_instant = Instant::now();
+        debug!(last_battle_time = ?crawled_data.account.last_battle_time, "updating account…");
 
-    crawled_data.upsert(in_).await?;
+        crawled_data.upsert(&self.db).await?;
 
-    let mut metrics = metrics.lock().await;
-    metrics.add_account(crawled_data.account_snapshot.account_id);
-    metrics.add_lag_from(crawled_data.account_snapshot.last_battle_time);
-    drop(metrics);
+        let mut metrics = self.metrics.lock().await;
+        metrics.add_account(crawled_data.account_snapshot.account_id);
+        metrics.add_lag_from(crawled_data.account_snapshot.last_battle_time);
+        drop(metrics);
 
-    debug!(elapsed = ?start_instant.elapsed());
-    Ok(())
+        debug!(elapsed = ?start_instant.elapsed());
+        Ok(())
+    }
 }
