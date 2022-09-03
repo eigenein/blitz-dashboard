@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use maud::{html, Markup, Render};
+use maud::{html, Markup, PreEscaped, Render};
 
 pub struct Float<T> {
     value: T,
@@ -30,8 +30,12 @@ impl<T: Display + num_traits::Float> Render for Float<T> {
                 span title=(self.value) {
                     (format!("{0:.1$}", self.value, self.precision))
                 }
+            } @else if self.value.is_infinite() && self.value.is_sign_positive() {
+                (PreEscaped("<span>+∞</span>"))
+            } @else if self.value.is_infinite() && self.value.is_sign_negative() {
+                (PreEscaped("<span>-∞</span>"))
             } @else {
-                span { "-" }
+                (PreEscaped("<span>-</span>"))
             }
         }
     }
@@ -48,6 +52,11 @@ mod tests {
 
     #[test]
     fn infinite_ok() {
-        assert_eq!(Float::from(f64::INFINITY).render().into_string(), "<span>-</span>");
+        assert_eq!(Float::from(f64::INFINITY).render().into_string(), "<span>+∞</span>");
+    }
+
+    #[test]
+    fn nan_ok() {
+        assert_eq!(Float::from(f64::NAN).render().into_string(), "<span>-</span>");
     }
 }
