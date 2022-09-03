@@ -31,7 +31,7 @@ impl<T: Display + num_traits::Float> Render for Float<T> {
                     (format!("{0:.1$}", self.value, self.precision))
                 }
             } @else if self.value.is_infinite() && self.value.is_sign_positive() {
-                (PreEscaped("<span>+∞</span>"))
+                (PreEscaped("<span>∞</span>"))
             } @else if self.value.is_infinite() && self.value.is_sign_negative() {
                 (PreEscaped("<span>-∞</span>"))
             } @else {
@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn infinite_ok() {
-        assert_eq!(Float::from(f64::INFINITY).render().into_string(), "<span>+∞</span>");
+        assert_eq!(Float::from(f64::INFINITY).render().into_string(), "<span>∞</span>");
     }
 
     #[test]
