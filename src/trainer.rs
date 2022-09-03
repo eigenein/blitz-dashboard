@@ -155,13 +155,16 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                     *y = logit(*y);
                 });
                 // See: https://towardsdatascience.com/weighted-linear-regression-2ef23b12a6d7.
-                let theta = match (x.tr_mul(&x)).try_inverse() {
-                    Some(inverted) => inverted * x.transpose() * y,
-                    _ => {
-                        n_non_invertible += 1;
-                        continue;
-                    }
+                let xt_x = x.tr_mul(&x);
+                let xt_x_inverted = if let Some(inverted) = xt_x.clone().try_inverse() {
+                    inverted
+                } else if let Ok(inverted) = xt_x.pseudo_inverse(f64::EPSILON) {
+                    inverted
+                } else {
+                    n_non_invertible += 1;
+                    continue;
                 };
+                let theta = xt_x_inverted * x.transpose() * y;
                 debug_assert_eq!(theta.shape(), (2, 1));
                 n_successful += 1;
                 model
