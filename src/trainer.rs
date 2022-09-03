@@ -11,7 +11,7 @@ use futures::future::try_join;
 use futures::{Stream, TryStreamExt};
 use mongodb::bson::oid::ObjectId;
 use mongodb::Database;
-use nalgebra::{DMatrix, DVector};
+use nalgebra::DVector;
 use tokio::spawn;
 use tokio::sync::RwLock;
 use tokio::task::yield_now;
@@ -137,22 +137,15 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                         continue;
                     }
                 };
-                let (x, y, w) = matrices.remove(realm).unwrap_or_else(|| {
-                    (
-                        DVector::<f64>::zeros(0),
-                        DVector::<f64>::zeros(0),
-                        DMatrix::<f64>::zeros(0, 0),
-                    )
-                });
+                let (x, y) = matrices
+                    .remove(realm)
+                    .unwrap_or_else(|| (DVector::<f64>::zeros(0), DVector::<f64>::zeros(0)));
                 let i = x.nrows();
                 let x = x.insert_row(i, source_sample.posterior_mean());
                 let y = y.insert_row(i, target_sample.posterior_mean());
-                let mut w = w.insert_row(i, 0.0).insert_column(i, 0.0);
-                w[(i, i)] = source_sample.n_posterior_battles_f64()
-                    * target_sample.n_posterior_battles_f64();
-                matrices.insert(*realm, (x, y, w));
+                matrices.insert(*realm, (x, y));
             }
-            for (realm, (mut x, mut y, w)) in matrices {
+            for (realm, (mut x, mut y)) in matrices {
                 debug_assert_ne!(x.nrows(), 0);
                 x.apply(|x| {
                     *x = logit(*x);
@@ -162,13 +155,14 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                     *y = logit(*y);
                 });
                 // See: https://towardsdatascience.com/weighted-linear-regression-2ef23b12a6d7.
-                let theta = match (x.tr_mul(&w) * &x).try_inverse() {
-                    Some(inverted) => inverted * x.transpose() * w * y,
+                let theta = match (x.tr_mul(&x)).try_inverse() {
+                    Some(inverted) => inverted * x.transpose() * y,
                     _ => {
                         n_non_invertible += 1;
                         continue;
                     }
                 };
+                debug_assert_eq!(theta.shape(), (2, 1));
                 n_successful += 1;
                 model
                     .write()
