@@ -41,7 +41,7 @@ impl Sample {
     const PRIOR_ALPHA: u32 = 2;
     const PRIOR_BETA: u32 = 2;
 
-    pub fn mean(self) -> f64 {
+    pub fn posterior_mean(self) -> f64 {
         self.n_posterior_wins_f64() / self.n_posterior_battles_f64()
     }
 

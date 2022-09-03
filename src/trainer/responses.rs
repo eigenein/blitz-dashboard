@@ -13,6 +13,17 @@ pub struct RecommendResponse {
 pub struct Prediction {
     pub tank_id: wargaming::TankId,
     pub p: f64,
+    pub n_sources: usize,
+}
+
+impl Prediction {
+    pub const fn new(tank_id: wargaming::TankId) -> Self {
+        Self {
+            tank_id,
+            p: 0.0,
+            n_sources: 0,
+        }
+    }
 }
 
 impl Eq for Prediction {}

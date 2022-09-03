@@ -54,26 +54,26 @@ async fn recommend(
                 continue;
             }
         };
-        let mut prediction_sum = 0.0;
+
         let mut total_weight = 0.0;
+        let mut prediction = Prediction::new(target_vehicle_id);
+
         for given in &request.given {
             let source_weight = given.sample.n_posterior_battles_f64();
             if let Some(regression) = regressions.get(&given.tank_id) {
-                prediction_sum +=
-                    sigmoid(regression.predict(logit(given.sample.mean()))) * source_weight;
+                prediction.p += sigmoid(regression.predict(logit(given.sample.posterior_mean())))
+                    * source_weight;
                 total_weight += source_weight;
+                prediction.n_sources += 1;
             } else if given.tank_id == target_vehicle_id {
-                prediction_sum += given.sample.mean() * source_weight;
+                prediction.p += given.sample.posterior_mean() * source_weight;
                 total_weight += source_weight;
             }
         }
         if total_weight != 0.0 {
-            let prediction = prediction_sum / total_weight;
-            if prediction >= request.min_prediction {
-                predictions.push(Prediction {
-                    tank_id: target_vehicle_id,
-                    p: prediction,
-                });
+            prediction.p /= total_weight;
+            if prediction.p >= request.min_prediction {
+                predictions.push(prediction);
             }
         }
     }

@@ -846,7 +846,12 @@ pub async fn get(
                                                         @let vehicle = get_vehicle(prediction.tank_id);
                                                         (vehicle_title(&vehicle, &locale)?)
                                                     }
-                                                    span.tag { (Float::from(100.0 * prediction.p)) "%" }
+                                                    @let tag_color = match prediction.n_sources {
+                                                        n_sources if n_sources < 2 => "is-danger",
+                                                        n_sources if n_sources < 3 => "is-warning",
+                                                        _ => "is-success",
+                                                    };
+                                                    span.tag.(tag_color) { (Float::from(100.0 * prediction.p)) "%" }
                                                 }
                                             }
                                         }
