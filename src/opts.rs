@@ -137,11 +137,8 @@ pub struct CrawlAccountsOpts {
 
 #[derive(Parser)]
 pub struct BufferingOpts {
-    /// Number of account batches which should get concurrently crawled and buffered.
+    /// Number of account batches which should get concurrently crawled.
     /// A batch is 100 accounts – the maximum for Wargaming.net API.
-    /// Each batch needs one API call (basic account information).
-    /// A buffered batch contains accounts which last battle timestamp has changed,
-    /// they are ready to be crawled.
     /// Note, that buffered batches are not necessarily full – they may even be empty
     /// (if no account in the batch has played since the last update).
     /// Use this to adjust the API load (requests per second).
@@ -152,28 +149,6 @@ pub struct BufferingOpts {
         env = "BLITZ_DASHBOARD_CRAWLER_BUFFERED_BATCHES",
     )]
     pub n_batches: usize,
-
-    /// Number of accounts being concurrently crawled.
-    /// Each account needs 2 API calls (tanks statistics and achievements).
-    /// Buffered account contains all the information needed to update it in the database.
-    /// Use this to adjust the API load (requests per second).
-    #[structopt(
-        long = "n-buffered-accounts",
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-        env = "BLITZ_DASHBOARD_CRAWLER_BUFFERED_ACCOUNTS",
-    )]
-    pub n_buffered_accounts: usize,
-
-    /// Number of already crawled accounts being concurrently updated in the database.
-    /// This configures the last step in the crawling pipeline – use it to adjust the database load.
-    #[structopt(
-        long = "n-updated-accounts",
-        default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
-        env = "BLITZ_DASHBOARD_CRAWLER_UPDATED_ACCOUNTS",
-    )]
-    pub n_updated_accounts: usize,
 }
 
 #[derive(Parser)]

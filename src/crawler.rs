@@ -41,7 +41,12 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         Duration::from_std(opts.max_offset)?,
     );
     crawler
-        .run(accounts, &opts.shared.buffering, opts.heartbeat_url, opts.enable_train)
+        .run(
+            Box::pin(accounts),
+            &opts.shared.buffering,
+            opts.heartbeat_url,
+            opts.enable_train,
+        )
         .await
 }
 
@@ -90,7 +95,7 @@ impl Crawler {
     /// Runs the crawler on the stream of batches.
     pub async fn run(
         self,
-        accounts: impl Stream<Item = Result<database::Account>>,
+        accounts: impl Stream<Item = Result<database::Account>> + Unpin,
         buffering: &BufferingOpts,
         heartbeat_url: Option<String>,
         enable_train: bool,
@@ -98,67 +103,42 @@ impl Crawler {
         info!(
             realm = ?self.realm,
             n_buffered_batches = buffering.n_batches,
-            n_buffered_accounts = buffering.n_buffered_accounts,
-            n_updated_accounts = buffering.n_updated_accounts,
             "running…",
         );
         accounts
-            // Chunk in batches of 100 accounts – the maximum for the account information API.
             .try_chunks(100)
-            .enumerate()
-            // For each batch request basic account information.
-            // We need the accounts' last battle timestamps.
-            .map(|(batch_number, batch)| {
-                let batch = batch?;
-                trace!(batch_number, n_accounts = batch.len(), "scheduling the crawler");
+            .map_err(Error::from)
+            .try_for_each_concurrent(buffering.n_batches, |batch| {
                 let api = self.api.clone();
-                let metrics = self.metrics.clone();
-                let heartbeat_url = heartbeat_url.clone();
-                Ok(crawl_batch(api, self.realm, batch, batch_number, metrics, heartbeat_url))
-            })
-            // Here we have the stream of batches of accounts that need to be crawled.
-            // Now buffer the batches.
-            .try_buffer_unordered(buffering.n_batches)
-            .inspect_err(|error| error!("failed to crawl the batch: {:#}", error))
-            // Flatten the stream of batches into the stream of non-crawled accounts.
-            .try_flatten()
-            // Crawl the accounts.
-            .map(|item| {
-                let (account, account_info) = item?;
-                trace!(account.id, "scheduling the crawler");
-                Ok(crawl_account(self.api.clone(), self.realm, account, account_info, enable_train))
-            })
-            // Buffer the accounts.
-            .try_buffer_unordered(buffering.n_buffered_accounts)
-            .inspect_err(|error| error!("failed to crawl the account: {:#}", error))
-            // Make the database updates concurrent.
-            .try_for_each_concurrent(Some(buffering.n_updated_accounts), |crawled_data| {
-                let account_id = crawled_data.account.id;
-                trace!(
-                    account_id,
-                    n_tanks = crawled_data.tank_snapshots.len(),
-                    "scheduling the update"
-                );
                 let db = self.db.clone();
                 let metrics = self.metrics.clone();
+                let heartbeat_url = heartbeat_url.clone();
                 async move {
-                    update_account(&db, crawled_data, metrics)
-                        .await
-                        .with_context(|| anyhow!("failed to update account #{}", account_id))
+                    let mut accounts =
+                        crawl_batch(&api, self.realm, batch, &metrics, heartbeat_url).await?;
+                    while let Some((account, account_info)) = accounts.try_next().await? {
+                        let crawled_data =
+                            crawl_account(&api, self.realm, account, account_info, enable_train)
+                                .await?;
+                        let account_id = crawled_data.account.id;
+                        update_account(&db, crawled_data, &metrics)
+                            .await
+                            .with_context(|| anyhow!("failed to update account #{}", account_id))?;
+                    }
+                    Ok(())
                 }
             })
             .await
-            .context("crawler stream has failed")
+            .context("the crawler stream has failed")
     }
 }
 
-#[instrument(skip_all, level = "trace", fields(batch_number = _batch_number), err)]
+#[instrument(skip_all, level = "trace", err)]
 async fn crawl_batch(
-    api: WargamingApi,
+    api: &WargamingApi,
     realm: wargaming::Realm,
     batch: Vec<database::Account>,
-    _batch_number: usize,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
+    metrics: &Mutex<CrawlerMetrics>,
     heartbeat_url: Option<String>,
 ) -> Result<impl Stream<Item = Result<(database::Account, wargaming::AccountInfo)>>> {
     let account_ids: Vec<wargaming::AccountId> = batch.iter().map(|account| account.id).collect();
@@ -173,7 +153,7 @@ async fn crawl_batch(
 async fn on_batch_crawled(
     batch_len: usize,
     matched_len: usize,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
+    metrics: &Mutex<CrawlerMetrics>,
     request_counter: &AtomicU32,
     heartbeat_url: Option<String>,
 ) {
@@ -220,7 +200,7 @@ fn match_account_infos(
     fields(account_id = account_info.id),
 )]
 async fn crawl_account(
-    api: WargamingApi,
+    api: &WargamingApi,
     realm: wargaming::Realm,
     account: database::Account,
     account_info: wargaming::AccountInfo,
@@ -317,7 +297,7 @@ fn gather_train_items(
 async fn update_account(
     in_: &mongodb::Database,
     crawled_data: CrawledData,
-    metrics: Arc<Mutex<CrawlerMetrics>>,
+    metrics: &Mutex<CrawlerMetrics>,
 ) -> Result {
     let start_instant = Instant::now();
     debug!(last_battle_time = ?crawled_data.account.last_battle_time, "updating account…");
