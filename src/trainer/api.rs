@@ -1,10 +1,11 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use poem::http::StatusCode;
 use poem::listener::TcpListener;
 use poem::middleware::{CatchPanic, Tracing};
-use poem::web::{Data, Json};
-use poem::{handler, post, EndpointExt, Route, Server};
+use poem::web::{Data, Json, Path};
+use poem::{get, handler, post, EndpointExt, IntoResponse, Response, Route, Server};
 use tokio::sync::RwLock;
 
 use crate::math::{logit, sigmoid};
@@ -17,6 +18,7 @@ use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryM
 pub async fn run(host: &str, port: u16, model: Arc<RwLock<Model>>) -> Result {
     let app = Route::new()
         .at("/recommend", post(recommend))
+        .at("/regression/:realm/:source_id/:target_id", get(get_regression))
         .data(model)
         .with(Tracing)
         .with(CatchPanic::new())
@@ -82,4 +84,36 @@ async fn recommend(
 
     info!(?request.realm, n_predictions = predictions.len(), elapsed = ?start_instant.elapsed());
     Ok(Json(RecommendResponse { predictions }))
+}
+
+#[handler]
+#[instrument(level = "info", skip_all)]
+async fn get_regression(
+    Path((realm, source_vehicle_id, target_vehicle_id)): Path<(
+        wargaming::Realm,
+        wargaming::TankId,
+        wargaming::TankId,
+    )>,
+    Data(model): Data<&Arc<RwLock<Model>>>,
+) -> Response {
+    let model = model.read().await;
+    let realm_regressions = match model.regressions.get(&realm) {
+        Some(realm_regressions) => realm_regressions,
+        _ => {
+            return StatusCode::NOT_FOUND.into_response();
+        }
+    };
+    let target_regressions = match realm_regressions.get(&target_vehicle_id) {
+        Some(target_regressions) => target_regressions,
+        _ => {
+            return StatusCode::NOT_FOUND.into_response();
+        }
+    };
+    let regression = match target_regressions.get(&source_vehicle_id) {
+        Some(regression) => regression,
+        _ => {
+            return StatusCode::NOT_FOUND.into_response();
+        }
+    };
+    Json(regression).into_response()
 }

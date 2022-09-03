@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::prelude::*;
 
 #[derive(Default)]
@@ -8,6 +10,7 @@ pub struct Model {
     >,
 }
 
+#[derive(Serialize)]
 pub struct Regression {
     pub bias: f64,
     pub k: f64,
