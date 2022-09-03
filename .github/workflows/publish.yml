@@ -86,6 +86,13 @@ jobs:
               User pi
               StrictHostKeyChecking no
 
+      - name: Stop the crawlers
+        run: |
+          ssh yastatist "sudo systemctl stop crawler-ru
+          systemctl status --lines=0 crawler-ru"
+          ssh yastatist "sudo systemctl stop crawler-eu
+          systemctl status --lines=0 crawler-eu"
+
       - name: Rsync
         working-directory: ./target/aarch64-unknown-linux-gnu/release
         run: |
@@ -93,19 +100,23 @@ jobs:
 
       - name: Restart Web
         run: |
-          ssh yastatist "sudo systemctl restart web; systemctl status --lines=0 web"
+          ssh yastatist "sudo systemctl restart web
+          systemctl status --lines=0 web"
 
       - name: Restart Crawler (RU)
         if: ${{ true }}
         run: |
-          ssh yastatist "sudo systemctl restart crawler-ru; systemctl status --lines=0 crawler-ru"
+          ssh yastatist "sudo systemctl restart crawler-ru
+          systemctl status --lines=0 crawler-ru"
 
       - name: Restart Crawler (EU)
         if: ${{ true }}
         run: |
-          ssh yastatist "sudo systemctl restart crawler-eu; systemctl status --lines=0 crawler-eu"
+          ssh yastatist "sudo systemctl restart crawler-eu
+          systemctl status --lines=0 crawler-eu"
 
       - name: Restart Trainer
         if: ${{ true }}
         run: |
-          ssh yastatist "sudo systemctl restart trainer; systemctl status --lines=0 trainer"
+          ssh yastatist "sudo systemctl restart trainer
+          systemctl status --lines=0 trainer"
