@@ -19,6 +19,7 @@ use tokio::task::yield_now;
 use tokio::time::sleep;
 
 pub use self::client::*;
+pub use self::model::*;
 pub use self::regression::*;
 pub use self::requests::*;
 pub use self::responses::*;
@@ -26,7 +27,6 @@ use self::sample::*;
 use crate::math::logit;
 use crate::opts::TrainOpts;
 use crate::prelude::*;
-use crate::trainer::model::{Model, Regression};
 use crate::{database, wargaming};
 
 pub async fn run(opts: TrainOpts) -> Result {

@@ -1,10 +1,9 @@
 use reqwest::StatusCode;
 
 use crate::prelude::*;
-use crate::trainer::model::Regression;
-use crate::trainer::requests;
 use crate::trainer::requests::Given;
 use crate::trainer::responses::RecommendResponse;
+use crate::trainer::{requests, Regression};
 
 #[derive(Clone)]
 pub struct Client {
