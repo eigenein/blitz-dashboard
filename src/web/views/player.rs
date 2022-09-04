@@ -81,7 +81,7 @@ pub async fn get(
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
-    Data(trainer_client): Data<&crate::trainer::client::Client>,
+    Data(trainer_client): Data<&crate::trainer::Client>,
     Data(testers): Data<&Testers>,
     real_ip: RealIp,
     locale: Locale,

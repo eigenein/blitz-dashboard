@@ -1,4 +1,7 @@
+use reqwest::StatusCode;
+
 use crate::prelude::*;
+use crate::trainer::model::Regression;
 use crate::trainer::requests;
 use crate::trainer::requests::Given;
 use crate::trainer::responses::RecommendResponse;
@@ -21,6 +24,7 @@ impl Client {
         Ok(this)
     }
 
+    #[instrument(level = "debug", skip_all)]
     pub async fn recommend(
         &self,
         realm: wargaming::Realm,
@@ -28,8 +32,7 @@ impl Client {
         predict: Vec<wargaming::TankId>,
         min_prediction: f64,
     ) -> Result<RecommendResponse> {
-        let response = self
-            .client
+        self.client
             .post(format!("{}/recommend", self.base_url))
             .json(&requests::RecommendRequest {
                 realm,
@@ -41,7 +44,35 @@ impl Client {
             .await?
             .error_for_status()?
             .json()
+            .await
+            .context("the request has failed")
+    }
+
+    #[instrument(level = "debug", skip_all)]
+    pub async fn get_regression(
+        &self,
+        realm: wargaming::Realm,
+        source_vehicle_id: wargaming::TankId,
+        target_vehicle_id: wargaming::TankId,
+    ) -> Result<Option<Regression>> {
+        let response = self
+            .client
+            .get(format!(
+                "{}/{}/{}/{}/regression",
+                self.base_url,
+                realm.to_str(),
+                source_vehicle_id,
+                target_vehicle_id
+            ))
+            .send()
             .await?;
-        Ok(response)
+        match response.status() {
+            StatusCode::NOT_FOUND => Ok(None),
+            _ => response
+                .error_for_status()?
+                .json()
+                .await
+                .context("the request has failed"),
+        }
     }
 }

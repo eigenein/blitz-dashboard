@@ -51,7 +51,7 @@ struct AppData {
     api: WargamingApi,
     mongodb: mongodb::Database,
     redis: fred::pool::RedisPool,
-    trainer_client: crate::trainer::client::Client,
+    trainer_client: crate::trainer::Client,
     tracking_code: TrackingCode,
     testers: Testers,
 }
@@ -70,7 +70,7 @@ impl AppData {
             redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
                 .await?;
         let tracking_code = TrackingCode::new(opts)?;
-        let trainer_client = crate::trainer::client::Client::new(&opts.trainer_base_url)?;
+        let trainer_client = crate::trainer::Client::new(&opts.trainer_base_url)?;
         let testers = Testers {
             trainer_testers: opts.trainer_testers.iter().copied().collect(),
         };
@@ -130,6 +130,10 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
+        .at(
+            "/analytics/:realm/:source_id/:target_id/regression",
+            get(views::analytics::get_regression),
+        )
         .data(i18n::build_resources()?)
         .with(Tracing)
         .with(CatchPanic::new())

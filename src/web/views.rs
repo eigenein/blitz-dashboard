@@ -1,3 +1,4 @@
+pub mod analytics;
 pub mod error;
 pub mod gone;
 pub mod index;

@@ -14,7 +14,6 @@ pub struct Prediction {
     pub tank_id: wargaming::TankId,
     pub p: f64,
     pub n_sources: usize,
-    pub n_points: usize,
 }
 
 impl Prediction {
@@ -23,7 +22,6 @@ impl Prediction {
             tank_id,
             p: 0.0,
             n_sources: 0,
-            n_points: 0,
         }
     }
 }

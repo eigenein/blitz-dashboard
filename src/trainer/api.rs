@@ -18,7 +18,7 @@ use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryM
 pub async fn run(host: &str, port: u16, model: Arc<RwLock<Model>>) -> Result {
     let app = Route::new()
         .at("/recommend", post(recommend))
-        .at("/regression/:realm/:source_id/:target_id", get(get_regression))
+        .at("/:realm/:source_id/:target_id/regression", get(get_regression))
         .data(model)
         .with(Tracing)
         .with(CatchPanic::new())
@@ -67,7 +67,6 @@ async fn recommend(
                     * source_weight;
                 total_weight += source_weight;
                 prediction.n_sources += 1;
-                prediction.n_points += regression.n_points;
             } else if given.tank_id == target_vehicle_id {
                 prediction.p += given.sample.posterior_mean() * source_weight;
                 total_weight += source_weight;

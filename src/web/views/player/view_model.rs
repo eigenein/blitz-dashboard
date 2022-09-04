@@ -11,8 +11,7 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
-use crate::trainer::requests::Given;
-use crate::trainer::responses::RecommendResponse;
+use crate::trainer::{Given, RecommendResponse};
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
@@ -40,7 +39,7 @@ impl ViewModel {
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
-        trainer_client: &crate::trainer::client::Client,
+        trainer_client: &crate::trainer::Client,
         testers: &Testers,
     ) -> poem::Result<Self> {
         let mut user =

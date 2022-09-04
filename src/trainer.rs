@@ -1,8 +1,9 @@
 mod api;
-pub mod client;
-pub mod model;
-pub mod requests;
-pub mod responses;
+mod client;
+mod model;
+mod regression;
+mod requests;
+mod responses;
 mod sample;
 
 use std::sync::Arc;
@@ -17,6 +18,10 @@ use tokio::sync::RwLock;
 use tokio::task::yield_now;
 use tokio::time::sleep;
 
+pub use self::client::*;
+pub use self::regression::*;
+pub use self::requests::*;
+pub use self::responses::*;
 use self::sample::*;
 use crate::math::logit;
 use crate::opts::TrainOpts;
@@ -170,7 +175,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                     continue;
                 };
                 n_points += x.nrows();
-                let theta = xt_x_inverted * x.transpose() * y;
+                let theta = xt_x_inverted * x.transpose() * &y;
                 debug_assert_eq!(theta.shape(), (2, 1));
                 n_vehicle_pairs += 1;
                 model
@@ -186,7 +191,8 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                         Regression {
                             k: theta[0],
                             bias: theta[1],
-                            n_points: x.nrows(),
+                            x: x.column(0).clone_owned(),
+                            y,
                         },
                     );
             }

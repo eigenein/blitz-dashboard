@@ -1,4 +1,5 @@
-use serde::Serialize;
+use nalgebra::DVector;
+use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 
@@ -10,11 +11,12 @@ pub struct Model {
     >,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Regression {
     pub bias: f64,
     pub k: f64,
-    pub n_points: usize,
+    pub x: DVector<f64>,
+    pub y: DVector<f64>,
 }
 
 impl Regression {
