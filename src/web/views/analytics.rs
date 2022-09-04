@@ -35,13 +35,15 @@ pub async fn get_regression(
             return Ok(StatusCode::NOT_FOUND.into_response());
         }
     };
+    let source_vehicle = get_vehicle(source_vehicle_id);
+    let target_vehicle = get_vehicle(target_vehicle_id);
 
     let markup = html! {
         (DOCTYPE)
         html lang=(locale.text("html-lang")?) {
             head {
                 (headers())
-                title { (locale.text("page-title-index")?) }
+                title { (source_vehicle.name) " vs " (target_vehicle.name) " – " (locale.text("page-title-index")?) }
             }
             body {
                 (*tracking_code)
@@ -77,10 +79,10 @@ pub async fn get_regression(
                             "))
 
                             (PreEscaped("xaxis: {type: 'numeric', tickAmount: 'dataPoints', min: 0, max: 100,"))
-                            (PreEscaped("title: {text: '")) (get_vehicle(source_vehicle_id).name) (PreEscaped("'},"))
+                            (PreEscaped("title: {text: '")) (source_vehicle.name) (PreEscaped("'},"))
                             (PreEscaped("},"))
                             (PreEscaped("yaxis: {min: 0, max: 100,"))
-                            (PreEscaped("title: {text: '")) (get_vehicle(target_vehicle_id).name) (PreEscaped("'},"))
+                            (PreEscaped("title: {text: '")) (target_vehicle.name) (PreEscaped("'},"))
                             (PreEscaped("},"))
                             (PreEscaped("series: ["))
 

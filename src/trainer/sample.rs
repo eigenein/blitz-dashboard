@@ -38,8 +38,8 @@ impl<'a> Sum<&'a Self> for Sample {
 }
 
 impl Sample {
-    const PRIOR_ALPHA: u32 = 2;
-    const PRIOR_BETA: u32 = 2;
+    const PRIOR_ALPHA: u32 = 1;
+    const PRIOR_BETA: u32 = 1;
 
     pub fn posterior_mean(self) -> f64 {
         self.n_posterior_wins_f64() / self.n_posterior_battles_f64()
