@@ -129,6 +129,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
             if source_vehicle_id == target_vehicle_id {
                 continue;
             }
+            // Contains matrices for this pair of vehicles per realm.
             let mut matrices = AHashMap::default();
             for ((realm, source_account_id), source_sample) in source_accounts {
                 let target_sample = match target_accounts.get(&(*realm, *source_account_id)) {
@@ -146,7 +147,10 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                 matrices.insert(*realm, (x, y));
             }
             for (realm, (mut x, mut y)) in matrices {
-                debug_assert_ne!(x.nrows(), 0);
+                if x.nrows() < 2 {
+                    // We want at least 2 points to build a regression.
+                    continue;
+                }
                 x.apply(|x| {
                     *x = logit(*x);
                 });
