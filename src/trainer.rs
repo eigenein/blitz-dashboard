@@ -186,7 +186,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                         Regression {
                             k: theta[0],
                             bias: theta[1],
-                            n_rows: x.nrows(),
+                            n_points: x.nrows(),
                         },
                     );
             }

@@ -853,6 +853,8 @@ pub async fn get(
                                                         _ => "is-success",
                                                     };
                                                     span.tag.(tag_color) { (Float::from(100.0 * prediction.p)) "%" }
+                                                    // language=html
+                                                    (PreEscaped(format!("<!-- {} -->", prediction.n_points)))
                                                 }
                                             }
                                         }

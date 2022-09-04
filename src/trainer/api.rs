@@ -67,6 +67,7 @@ async fn recommend(
                     * source_weight;
                 total_weight += source_weight;
                 prediction.n_sources += 1;
+                prediction.n_points += regression.n_points;
             } else if given.tank_id == target_vehicle_id {
                 prediction.p += given.sample.posterior_mean() * source_weight;
                 total_weight += source_weight;

@@ -14,7 +14,7 @@ pub struct Model {
 pub struct Regression {
     pub bias: f64,
     pub k: f64,
-    pub n_rows: usize,
+    pub n_points: usize,
 }
 
 impl Regression {
