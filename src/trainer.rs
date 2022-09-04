@@ -118,12 +118,13 @@ async fn aggregate_train_set(
 async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>) -> Result {
     info!("updating the model…");
     let start_instant = Instant::now();
-    let mut n_successful = 0;
-    let mut n_non_invertible = 0;
+    let mut n_vehicle_pairs = 0;
+    let mut n_failed_regressions = 0;
+    let mut n_points = 0;
 
     for (n_vehicle, (source_vehicle_id, source_accounts)) in samples.iter().enumerate() {
         if n_vehicle % 25 == 0 {
-            info!(n_vehicle, of = samples.len(), n_successful, n_non_invertible);
+            info!(n_vehicle, of = samples.len(), n_vehicle_pairs, n_points, n_failed_regressions);
         }
         for (target_vehicle_id, target_accounts) in &samples {
             if source_vehicle_id == target_vehicle_id {
@@ -160,17 +161,18 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                 });
                 // See: https://towardsdatascience.com/weighted-linear-regression-2ef23b12a6d7.
                 let xt_x = x.tr_mul(&x);
-                let xt_x_inverted = if let Some(inverted) = xt_x.clone().try_inverse() {
+                let xt_x_inverted = if let Some(inverted) = xt_x.try_inverse() {
                     inverted
                 } else if let Ok(inverted) = xt_x.pseudo_inverse(f64::EPSILON) {
                     inverted
                 } else {
-                    n_non_invertible += 1;
+                    n_failed_regressions += 1;
                     continue;
                 };
+                n_points += x.nrows();
                 let theta = xt_x_inverted * x.transpose() * y;
                 debug_assert_eq!(theta.shape(), (2, 1));
-                n_successful += 1;
+                n_vehicle_pairs += 1;
                 model
                     .write()
                     .await
@@ -192,6 +194,6 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
         yield_now().await;
     }
 
-    info!(elapsed = ?start_instant.elapsed(), "completed");
+    info!(n_vehicle_pairs, n_points, n_failed_regressions, elapsed = ?start_instant.elapsed(), "completed");
     Ok(())
 }
