@@ -84,6 +84,9 @@ async fn read_stream(
         }
         into.push(item);
         n_read += 1;
+        if n_read % 1000 == 0 {
+            yield_now().await;
+        }
         if n_read % 100_000 == 0 {
             info!(n_read, elapsed_secs = ?start_instant.elapsed().as_secs(), per_sec = n_read / start_instant.elapsed().as_secs().max(1));
         }

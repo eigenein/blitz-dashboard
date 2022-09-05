@@ -5,7 +5,7 @@ use poem::web::{Data, Html, Path};
 use poem::{handler, IntoResponse, Response};
 
 use crate::helpers::sentry::clear_user;
-use crate::math::sigmoid;
+use crate::math::{logit, sigmoid};
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::web::partials::*;
@@ -95,9 +95,9 @@ pub async fn get_regression(
                             (PreEscaped("]},"))
 
                             (PreEscaped("{name: 'Regression', type: 'line', data: ["))
-                            @for i in 0..=20 {
-                                @let x = i as f64 / 20.0;
-                                @let y = 100.0 * sigmoid(regression.predict(x));
+                            @for i in 1..50 {
+                                @let x = i as f64 / 50.0;
+                                @let y = 100.0 * sigmoid(regression.predict(logit(x)));
                                 @let x = 100.0 * x;
                                 (PreEscaped("{x:")) (format!("{:.2}", x)) (PreEscaped(",y:")) (format!("{:.2}", y)) (PreEscaped("},"))
                             }
