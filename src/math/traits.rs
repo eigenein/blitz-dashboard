@@ -32,7 +32,7 @@ impl<T: NBattles + NWins> TrueWinRate for T {
     }
 
     fn posterior_victory_probability(&self) -> f64 {
-        (self.n_wins() + 2) as f64 / (self.n_battles() + 4) as f64
+        (self.n_wins() + 1) as f64 / (self.n_battles() + 2) as f64
     }
 }
 
