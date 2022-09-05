@@ -147,15 +147,20 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                         continue;
                     }
                 };
-                let (x, y) = matrices
-                    .remove(realm)
-                    .unwrap_or_else(|| (DVector::<f64>::zeros(0), DVector::<f64>::zeros(0)));
+                let (x, y, w) = matrices.remove(realm).unwrap_or_else(|| {
+                    (DVector::<f64>::zeros(0), DVector::<f64>::zeros(0), DVector::<f64>::zeros(0))
+                });
                 let i = x.nrows();
                 let x = x.insert_row(i, source_sample.posterior_mean());
                 let y = y.insert_row(i, target_sample.posterior_mean());
-                matrices.insert(*realm, (x, y));
+                let w = w.insert_row(
+                    i,
+                    source_sample.n_posterior_battles_f64()
+                        * target_sample.n_posterior_battles_f64(),
+                );
+                matrices.insert(*realm, (x, y, w));
             }
-            for (realm, (mut x, mut y)) in matrices {
+            for (realm, (mut x, mut y, w)) in matrices {
                 if x.nrows() < 2 {
                     // We want at least 2 points to build a regression.
                     continue;
@@ -163,23 +168,17 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                 x.apply(|x| {
                     *x = logit(*x);
                 });
-                let x = x.insert_column(1, 1.0);
                 y.apply(|y| {
                     *y = logit(*y);
                 });
-                // See: https://towardsdatascience.com/weighted-linear-regression-2ef23b12a6d7.
-                let xt_x = x.tr_mul(&x);
-                let xt_x_inverted = if let Some(inverted) = xt_x.try_inverse() {
-                    inverted
-                } else if let Ok(inverted) = xt_x.pseudo_inverse(f64::EPSILON) {
-                    inverted
-                } else {
-                    n_failed_regressions += 1;
-                    continue;
+                let (bias, k) = match make_regression(&x, &y, &w) {
+                    Some(result) => result,
+                    _ => {
+                        n_failed_regressions += 1;
+                        continue;
+                    }
                 };
                 n_points += x.nrows();
-                let theta = xt_x_inverted * x.transpose() * &y;
-                debug_assert_eq!(theta.shape(), (2, 1));
                 n_vehicle_pairs += 1;
                 model
                     .write()
@@ -189,15 +188,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                     .or_default()
                     .entry(*target_vehicle_id)
                     .or_default()
-                    .insert(
-                        *source_vehicle_id,
-                        Regression {
-                            k: theta[0],
-                            bias: theta[1],
-                            x: x.column(0).clone_owned(),
-                            y,
-                        },
-                    );
+                    .insert(*source_vehicle_id, Regression { k, bias, x, y });
             }
         }
         yield_now().await;
@@ -205,4 +196,23 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
 
     info!(n_vehicle_pairs, n_points, n_failed_regressions, elapsed = ?start_instant.elapsed(), "completed");
     Ok(())
+}
+
+/// See also: <https://arxiv.org/pdf/1311.1835.pdf>.
+fn make_regression(x: &DVector<f64>, y: &DVector<f64>, w: &DVector<f64>) -> Option<(f64, f64)> {
+    let total_weight = w.sum();
+    let mean_x = x.dot(w) / total_weight;
+    let mean_y = y.dot(w) / total_weight;
+    let normalized_x = x.add_scalar(-mean_x);
+    let normalized_y = y.add_scalar(-mean_y);
+
+    let k = {
+        let numerator = normalized_x.component_mul(&normalized_y).dot(w);
+        let denominator = normalized_x.component_mul(&normalized_x).dot(w);
+        numerator / denominator
+    };
+
+    let bias = mean_y - k * mean_x;
+
+    (bias.is_finite() && k.is_finite()).then_some((bias, k))
 }

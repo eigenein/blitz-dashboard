@@ -32,7 +32,7 @@ pub async fn get_regression(
         Some(regression) => regression,
         _ => {
             info!(?realm, source_vehicle_id, target_vehicle_id, "not found");
-            return Ok(StatusCode::NOT_FOUND.into_response());
+            return Ok(StatusCode::IM_A_TEAPOT.into_response());
         }
     };
     let source_vehicle = get_vehicle(source_vehicle_id);
