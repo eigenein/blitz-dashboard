@@ -45,7 +45,7 @@ impl WargamingApi {
     pub fn new(
         application_id: &str,
         timeout: time::Duration,
-        max_rps: u32,
+        max_rps: f64,
     ) -> Result<WargamingApi> {
         info!(max_rps);
 
@@ -55,8 +55,7 @@ impl WargamingApi {
         headers.insert(header::ACCEPT_ENCODING, HeaderValue::from_static("br, deflate, gzip"));
         headers.insert(header::CONNECTION, HeaderValue::from_static("keep-alive"));
 
-        let min_request_period = time::Duration::from_secs_f64(1.0 / max_rps as f64);
-        let quota = Quota::with_period(min_request_period)
+        let quota = Quota::with_period(time::Duration::from_secs_f64(1.0 / max_rps))
             .ok_or_else(|| anyhow!("failed to initialize the rate limiter quota"))?;
         let rate_limiter = RateLimiter::direct(quota);
 
