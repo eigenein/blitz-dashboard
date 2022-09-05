@@ -2,7 +2,6 @@ use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
-use std::num::NonZeroU32;
 use std::path::Path;
 
 use tracing::instrument;
@@ -26,11 +25,7 @@ pub fn get_vehicle(tank_id: TankId) -> Cow<'static, Vehicle> {
 pub async fn import(opts: ImportTankopediaOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "import-tankopedia"));
 
-    let api = WargamingApi::new(
-        &opts.application_id,
-        time::Duration::from_secs(30),
-        NonZeroU32::new(10).unwrap(),
-    )?;
+    let api = WargamingApi::new(&opts.application_id, time::Duration::from_secs(30), 10)?;
     let json_path = Path::new(file!())
         .parent()
         .unwrap()

@@ -1,7 +1,6 @@
 //! Wargaming.net API.
 
 use std::collections::{BTreeMap, HashMap};
-use std::num::NonZeroU32;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -46,14 +45,21 @@ impl WargamingApi {
     pub fn new(
         application_id: &str,
         timeout: time::Duration,
-        max_rps: NonZeroU32,
+        max_rps: u32,
     ) -> Result<WargamingApi> {
         info!(max_rps);
+
         let mut headers = header::HeaderMap::new();
         headers.insert(header::USER_AGENT, HeaderValue::from_static(Self::USER_AGENT));
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
         headers.insert(header::ACCEPT_ENCODING, HeaderValue::from_static("br, deflate, gzip"));
         headers.insert(header::CONNECTION, HeaderValue::from_static("keep-alive"));
+
+        let min_request_period = time::Duration::from_secs_f64(1.0 / max_rps as f64);
+        let quota = Quota::with_period(min_request_period)
+            .ok_or_else(|| anyhow!("failed to initialize the rate limiter quota"))?;
+        let rate_limiter = RateLimiter::direct(quota);
+
         let this = Self {
             application_id: Arc::new(application_id.to_string()),
             client: reqwest::ClientBuilder::new()
@@ -67,7 +73,7 @@ impl WargamingApi {
                 .tcp_nodelay(true)
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
-            rate_limiter: Arc::new(RateLimiter::direct(Quota::per_second(max_rps))),
+            rate_limiter: Arc::new(rate_limiter),
         };
         Ok(this)
     }

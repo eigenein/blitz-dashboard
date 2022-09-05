@@ -1,7 +1,5 @@
 //! CLI options.
 
-use std::num::NonZeroU32;
-
 use clap::builder::EnumValueParser;
 use clap::Parser;
 
@@ -213,8 +211,8 @@ pub struct ConnectionOpts {
     pub api_timeout: time::Duration,
 
     /// Maximum number of requests per second for the API.
-    #[clap(long, env = "BLITZ_DASHBOARD_MAX_API_RPS", default_value = "19")]
-    pub max_api_rps: NonZeroU32,
+    #[clap(long, env = "BLITZ_DASHBOARD_MAX_API_RPS", default_value = "20")]
+    pub max_api_rps: u32,
 }
 
 #[derive(Parser)]
