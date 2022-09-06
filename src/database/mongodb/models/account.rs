@@ -1,6 +1,7 @@
 use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
+use itertools::Itertools;
 use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
@@ -167,7 +168,11 @@ impl Account {
             .await?
             .try_collect()
             .await?;
-        Self::reset_updated_at(from, &accounts).await?;
+        let reset_updated_at_ids = accounts
+            .iter()
+            .filter_map(|account| account.updated_at.is_none().then_some(account.id))
+            .collect_vec();
+        Self::reset_updated_at(from, realm, &reset_updated_at_ids).await?;
 
         debug!(
             n_accounts = accounts.len(),
@@ -192,15 +197,20 @@ impl Account {
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn reset_updated_at(from: &Database, accounts: &[Self]) -> Result {
-        debug!(n_accounts = accounts.len());
+    async fn reset_updated_at(
+        from: &Database,
+        realm: wargaming::Realm,
+        account_ids: &[wargaming::AccountId],
+    ) -> Result {
+        debug!(n_accounts = account_ids.len());
+        if account_ids.is_empty() {
+            return Ok(());
+        }
         Self::collection(from)
             .update_many(
                 doc! {
-                    "$or": accounts.iter().map(|account| doc! {
-                        "rlm": account.realm.to_str(),
-                        "aid": account.id,
-                    }).collect::<Vec<_>>(),
+                    "rlm": realm.to_str(),
+                    "aid": { "$in": account_ids },
                 },
                 vec![doc! { "$set": { "u": "$$NOW" } }],
                 None,
