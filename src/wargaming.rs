@@ -1,6 +1,7 @@
 //! Wargaming.net API.
 
 use std::collections::{BTreeMap, HashMap};
+use std::num::NonZeroU32;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -45,7 +46,7 @@ impl WargamingApi {
     pub fn new(
         application_id: &str,
         timeout: time::Duration,
-        max_rps: f64,
+        max_rps: NonZeroU32,
     ) -> Result<WargamingApi> {
         info!(max_rps);
 
@@ -55,9 +56,7 @@ impl WargamingApi {
         headers.insert(header::ACCEPT_ENCODING, HeaderValue::from_static("br, deflate, gzip"));
         headers.insert(header::CONNECTION, HeaderValue::from_static("keep-alive"));
 
-        let quota = Quota::with_period(time::Duration::from_secs_f64(1.0 / max_rps))
-            .ok_or_else(|| anyhow!("failed to initialize the rate limiter quota"))?;
-        let rate_limiter = RateLimiter::direct(quota);
+        let rate_limiter = RateLimiter::direct(Quota::per_second(max_rps));
 
         let this = Self {
             application_id: Arc::new(application_id.to_string()),
