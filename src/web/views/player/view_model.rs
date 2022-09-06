@@ -50,8 +50,7 @@ impl ViewModel {
             try_join(info_cache.get(realm, account_id), tanks_cache.get(realm, account_id)).await?;
         let actual_info = actual_info.ok_or(NotFoundError)?;
 
-        database::Account::new(realm, account_id)
-            .ensure_exists(db)
+        database::Account::ensure_exists(db, realm, account_id)
             .await
             .context("failed to ensure the account existence")?;
 

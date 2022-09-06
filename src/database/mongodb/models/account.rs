@@ -95,6 +95,13 @@ impl Upsert for Account {
 }
 
 impl Account {
+    /// Okay, this is a cheat. 😀
+    ///
+    /// Because the crawler's sampler queries the accounts whose `random` is either
+    /// greater than `fastrand::f64` or less than `0.0`, and sorts the by the same `random` –
+    /// `-1.0` gets picked up sooner than any other accounts.
+    const RANDOM_HIGH_PRIORITY: f64 = -1.0;
+
     #[instrument(skip_all, level = "debug")]
     pub fn get_sampled_stream(
         database: Database,
@@ -117,15 +124,22 @@ impl Account {
 
     /// Ensures that the account exists in the database.
     /// Does nothing if it exists, inserts – otherwise.
-    #[instrument(skip_all, level = "debug", fields(realm = ?self.realm, account_id = self.id))]
-    pub async fn ensure_exists(&self, in_: &Database) -> Result {
-        let filter = doc! { "rlm": self.realm.to_str(), "aid": self.id };
-        let update = doc! { "$setOnInsert": bson::to_bson(&self)? };
+    #[instrument(skip_all, level = "debug", fields(realm = ?realm, account_id = account_id))]
+    pub async fn ensure_exists(
+        in_: &Database,
+        realm: wargaming::Realm,
+        account_id: wargaming::AccountId,
+    ) -> Result {
+        let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
+        let update = doc! {
+            "$setOnInsert": { "lbts": null, "pts": [] },
+            "$set": { "random": Self::RANDOM_HIGH_PRIORITY },
+        };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
             .update_one(filter, update, options)
             .await
-            .with_context(|| format!("failed to ensure the account #{} existence", self.id))?;
+            .with_context(|| format!("failed to ensure the account #{} existence", account_id))?;
         Ok(())
     }
 
@@ -139,11 +153,25 @@ impl Account {
     ) -> Result<Vec<Account>> {
         let now = Utc::now();
         let filter = doc! {
-            "rlm": realm.to_str(),
-            "random": { "$gt": fastrand::f64() },
-            "$or": [
-                { "lbts": null },
-                { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
+            "$and": [
+                {
+                    // From the specified realm.
+                    "rlm": realm.to_str()
+                },
+                {
+                    // Last battle time is either unset, or within the range.
+                    "$or": [
+                        { "lbts": null },
+                        { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
+                    ],
+                },
+                {
+                    // Random selection with the high-priority accounts.
+                    "$or": [
+                        { "random": { "$gt": fastrand::f64() } },
+                        { "random": { "$lt": 0.0 } },
+                    ],
+                },
             ],
         };
         let options = FindOptions::builder()
@@ -159,6 +187,14 @@ impl Account {
             .context("failed to query a sample of accounts")?
             .try_collect()
             .await?;
+
+        let reset_ids = accounts
+            .iter()
+            .filter_map(|account| (account.random < 0.0).then_some(account.id))
+            .collect::<Vec<wargaming::AccountId>>();
+        if !reset_ids.is_empty() {
+            Self::reset_random_field(from, realm, &reset_ids).await?;
+        }
 
         debug!(
             n_accounts = accounts.len(),
@@ -182,5 +218,22 @@ impl Account {
             .ok_or_else(|| anyhow!("could not sample a random account"))?;
         debug!(elapsed = ?start_instant.elapsed());
         Ok(account)
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn reset_random_field(
+        from: &Database,
+        realm: wargaming::Realm,
+        account_ids: &[wargaming::AccountId],
+    ) -> Result {
+        info!(n_accounts = account_ids.len());
+        Self::collection(from)
+            .update_many(
+                doc! { "rlm": realm.to_str(), "aid": { "$in": account_ids } },
+                vec![doc! { "$set": { "random": { "$rand": {} } } }],
+                None,
+            )
+            .await?;
+        Ok(())
     }
 }
