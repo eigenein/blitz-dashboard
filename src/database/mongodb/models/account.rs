@@ -41,9 +41,6 @@ pub struct Account {
     #[serde_as(as = "Option<bson::DateTime>")]
     pub updated_at: Option<DateTime>,
 
-    /// Used to select random accounts from the database.
-    pub random: f64,
-
     #[serde(default, rename = "pts")]
     pub partial_tank_stats: Vec<PartialTankStats>,
 }
@@ -54,21 +51,16 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 3];
+    type I = [IndexModel; 2];
 
     fn indexes() -> Self::I {
         [
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "u": -1 })
                 .build(),
-            // Ensures the single entry for each account.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
-                .build(),
-            // Optimizes the crawler's range query.
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "random": 1, "lbts": -1, })
                 .build(),
         ]
     }
@@ -80,7 +72,6 @@ impl Account {
             id: account_id,
             realm,
             last_battle_time: None,
-            random: fastrand::f64(),
             partial_tank_stats: Vec::new(),
             updated_at: Some(Utc::now()),
         }
@@ -103,13 +94,6 @@ impl Upsert for Account {
 }
 
 impl Account {
-    /// Okay, this is a cheat. 😀
-    ///
-    /// Because the crawler's sampler queries the accounts whose `random` is either
-    /// greater than `fastrand::f64` or less than `0.0`, and sorts the by the same `random` –
-    /// `-1.0` gets picked up sooner than any other accounts.
-    const RANDOM_HIGH_PRIORITY: f64 = -1.0;
-
     #[instrument(skip_all, level = "debug")]
     pub fn get_sampled_stream(
         database: Database,
@@ -141,7 +125,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "random": Self::RANDOM_HIGH_PRIORITY, "u": null },
+            "$set": { "u": null },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -162,28 +146,17 @@ impl Account {
         let now = Utc::now();
         let filter = doc! {
             "$and": [
+                { "rlm": realm.to_str() },
                 {
-                    // From the specified realm.
-                    "rlm": realm.to_str()
-                },
-                {
-                    // Last battle time is either unset, or within the range.
                     "$or": [
-                        { "lbts": null },
-                        { "lbts": { "$gt": now - max_offset, "$lte": now - min_offset } },
-                    ],
-                },
-                {
-                    // Random selection with the high-priority accounts.
-                    "$or": [
-                        { "random": { "$gt": fastrand::f64() } },
-                        { "random": { "$lt": 0.0 } },
+                        { "u": null },
+                        { "u": { "$gt": now - max_offset, "$lte": now - min_offset } },
                     ],
                 },
             ],
         };
         let options = FindOptions::builder()
-            .sort(doc! { "random": 1 })
+            .sort(doc! { "u": 1 })
             .limit(sample_size as i64)
             .build();
 
@@ -191,18 +164,10 @@ impl Account {
         debug!(sample_size, "retrieving a sample…");
         let accounts: Vec<Account> = Self::collection(from)
             .find(filter, options)
-            .await
-            .context("failed to query a sample of accounts")?
+            .await?
             .try_collect()
             .await?;
-
-        let reset_ids = accounts
-            .iter()
-            .filter_map(|account| (account.random < 0.0).then_some(account.id))
-            .collect::<Vec<wargaming::AccountId>>();
-        if !reset_ids.is_empty() {
-            Self::reset_random_field(from, realm, &reset_ids).await?;
-        }
+        Self::reset_updated_at(from, &accounts).await?;
 
         debug!(
             n_accounts = accounts.len(),
@@ -215,10 +180,9 @@ impl Account {
     pub async fn sample_account(from: &Database, realm: wargaming::Realm) -> Result<Account> {
         let filter = doc! {
             "rlm": realm.to_str(),
-            "random": { "$gt": fastrand::f64() },
-            "lbts": { "$gt": Utc::now() - Duration::days(1) },
+            "lbts": { "$lt": Utc::now() - Duration::seconds(fastrand::i64(0..86400)) },
         };
-        let options = FindOneOptions::builder().sort(doc! { "random": 1 }).build();
+        let options = FindOneOptions::builder().sort(doc! { "lbts": -1 }).build();
         let start_instant = Instant::now();
         let account = Self::collection(from)
             .find_one(filter, options)
@@ -229,16 +193,17 @@ impl Account {
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn reset_random_field(
-        from: &Database,
-        realm: wargaming::Realm,
-        account_ids: &[wargaming::AccountId],
-    ) -> Result {
-        debug!(n_accounts = account_ids.len());
+    async fn reset_updated_at(from: &Database, accounts: &[Self]) -> Result {
+        debug!(n_accounts = accounts.len());
         Self::collection(from)
             .update_many(
-                doc! { "rlm": realm.to_str(), "aid": { "$in": account_ids } },
-                vec![doc! { "$set": { "random": { "$rand": {} } } }],
+                doc! {
+                    "$or": accounts.iter().map(|account| doc! {
+                        "rlm": account.realm.to_str(),
+                        "aid": account.id,
+                    }).collect::<Vec<_>>(),
+                },
+                vec![doc! { "$set": { "u": "$$NOW" } }],
                 None,
             )
             .await?;

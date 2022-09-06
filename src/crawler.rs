@@ -226,7 +226,6 @@ impl Crawler {
             id: account.id,
             realm: self.realm,
             last_battle_time: Some(account_info.last_battle_time),
-            random: fastrand::f64(),
             partial_tank_stats,
             updated_at: Some(Utc::now()),
         };
