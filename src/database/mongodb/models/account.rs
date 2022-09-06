@@ -61,7 +61,7 @@ impl Indexes for Account {
                 .build(),
             // Optimizes the crawler's range query.
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1, "random": 1 })
+                .keys(doc! { "rlm": 1, "random": 1 "lbts": -1, })
                 .build(),
         ]
     }
