@@ -50,7 +50,7 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 3];
+    type I = [IndexModel; 2];
 
     fn indexes() -> Self::I {
         [
@@ -61,11 +61,7 @@ impl Indexes for Account {
                 .build(),
             // Optimizes the crawler's range query.
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1 })
-                .build(),
-            // Optimizes the crawler's range query.
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "random": 1 })
+                .keys(doc! { "rlm": 1, "lbts": -1, "random": 1 })
                 .build(),
         ]
     }
