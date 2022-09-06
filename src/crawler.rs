@@ -228,6 +228,7 @@ impl Crawler {
             last_battle_time: Some(account_info.last_battle_time),
             random: fastrand::f64(),
             partial_tank_stats,
+            updated_at: Some(Utc::now()),
         };
         let account_snapshot =
             database::AccountSnapshot::new(self.realm, &account_info, tank_last_battle_times);

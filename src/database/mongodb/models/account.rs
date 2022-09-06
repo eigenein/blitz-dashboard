@@ -37,6 +37,10 @@ pub struct Account {
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
 
+    #[serde(rename = "u")]
+    #[serde_as(as = "Option<bson::DateTime>")]
+    pub updated_at: Option<DateTime>,
+
     /// Used to select random accounts from the database.
     pub random: f64,
 
@@ -50,10 +54,13 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 2];
+    type I = [IndexModel; 3];
 
     fn indexes() -> Self::I {
         [
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "u": -1 })
+                .build(),
             // Ensures the single entry for each account.
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
@@ -75,6 +82,7 @@ impl Account {
             last_battle_time: None,
             random: fastrand::f64(),
             partial_tank_stats: Vec::new(),
+            updated_at: Some(Utc::now()),
         }
     }
 }
@@ -133,7 +141,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "random": Self::RANDOM_HIGH_PRIORITY },
+            "$set": { "random": Self::RANDOM_HIGH_PRIORITY, "u": null },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
