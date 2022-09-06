@@ -37,7 +37,7 @@ pub struct Account {
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
 
-    #[serde(rename = "u")]
+    #[serde(default, rename = "u")]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub updated_at: Option<DateTime>,
 
