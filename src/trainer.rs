@@ -36,8 +36,13 @@ pub async fn run(opts: TrainOpts) -> Result {
     let model = Arc::new(RwLock::new(Model::default()));
 
     let serve_api = api::run(&opts.host, opts.port, model.clone());
-    let loop_trainer =
-        run_trainer(db, Duration::from_std(opts.train_period)?, opts.train_interval, model);
+    let loop_trainer = run_trainer(
+        db,
+        Duration::from_std(opts.train_period)?,
+        opts.n_min_points_per_regression,
+        opts.train_interval,
+        model,
+    );
 
     try_join(serve_api, loop_trainer).await?;
     Ok(())
@@ -46,6 +51,7 @@ pub async fn run(opts: TrainOpts) -> Result {
 async fn run_trainer(
     db: Database,
     train_period: Duration,
+    n_min_points_per_regression: usize,
     train_interval: time::Duration,
     model: Arc<RwLock<Model>>,
 ) -> Result {
@@ -61,7 +67,7 @@ async fn run_trainer(
         read_stream(stream, &mut pointer, &mut train_set).await?;
         let (returned_train_set, tank_samples) = spawn(aggregate_train_set(train_set)).await?;
         train_set = returned_train_set;
-        spawn(update_model(tank_samples, model.clone())).await??;
+        spawn(update_model(tank_samples, n_min_points_per_regression, model.clone())).await??;
 
         info!(?train_interval, %pointer, "sleeping…");
         sleep(train_interval).await;
@@ -123,8 +129,12 @@ async fn aggregate_train_set(
 }
 
 #[instrument(level = "info", skip_all)]
-async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>) -> Result {
-    info!("updating the model…");
+async fn update_model(
+    samples: IndexedByTank<Sample>,
+    n_min_points_per_regression: usize,
+    model: Arc<RwLock<Model>>,
+) -> Result {
+    info!(n_min_points_per_regression, "updating the model…");
     let start_instant = Instant::now();
     let mut n_vehicle_pairs = 0;
     let mut n_failed_regressions = 0;
@@ -161,8 +171,7 @@ async fn update_model(samples: IndexedByTank<Sample>, model: Arc<RwLock<Model>>)
                 matrices.insert(*realm, (x, y, w));
             }
             for (realm, (mut x, mut y, w)) in matrices {
-                if x.nrows() < 2 {
-                    // We want at least 2 points to build a regression.
+                if x.nrows() < n_min_points_per_regression {
                     continue;
                 }
                 x.apply(|x| {

@@ -273,4 +273,11 @@ pub struct TrainOpts {
         env = "BLITZ_DASHBOARD_TRAINER_BIND_PORT"
     )]
     pub port: u16,
+
+    #[structopt(
+        long,
+        default_value = "2",
+        env = "BLITZ_DASHBOARD_TRAINER_MIN_POINTS_PER_REGRESSION"
+    )]
+    pub n_min_points_per_regression: usize,
 }
