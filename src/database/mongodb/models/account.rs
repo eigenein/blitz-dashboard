@@ -144,20 +144,16 @@ impl Account {
         min_offset: Duration,
         max_offset: Duration,
     ) -> Result<Vec<Account>> {
-        let now = Utc::now();
+        let before = Utc::now()
+            - Duration::seconds(fastrand::i64(min_offset.num_seconds()..max_offset.num_seconds()));
         let filter = doc! {
             "$and": [
                 { "rlm": realm.to_str() },
-                {
-                    "$or": [
-                        { "u": null },
-                        { "u": { "$gt": now - max_offset, "$lte": now - min_offset } },
-                    ],
-                },
+                { "$or": [ { "u": null }, { "u": { "$lte": before } } ] },
             ],
         };
         let options = FindOptions::builder()
-            .sort(doc! { "u": 1 })
+            .sort(doc! { "u": -1 })
             .limit(sample_size as i64)
             .build();
 
