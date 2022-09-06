@@ -180,9 +180,8 @@ impl Account {
     pub async fn sample_account(from: &Database, realm: wargaming::Realm) -> Result<Account> {
         let filter = doc! {
             "rlm": realm.to_str(),
-            "lbts": { "$lt": Utc::now() - Duration::seconds(fastrand::i64(0..86400)) },
         };
-        let options = FindOneOptions::builder().sort(doc! { "lbts": -1 }).build();
+        let options = FindOneOptions::builder().sort(doc! { "u": -1 }).build();
         let start_instant = Instant::now();
         let account = Self::collection(from)
             .find_one(filter, options)
