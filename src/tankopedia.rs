@@ -29,7 +29,7 @@ pub async fn import(opts: ImportTankopediaOpts) -> Result {
     let api = WargamingApi::new(
         &opts.application_id,
         time::Duration::from_secs(30),
-        NonZeroU32::new_unchecked(10),
+        NonZeroU32::new(10).unwrap(),
     )?;
     let json_path = Path::new(file!())
         .parent()
