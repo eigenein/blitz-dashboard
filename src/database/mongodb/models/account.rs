@@ -226,7 +226,7 @@ impl Account {
         realm: wargaming::Realm,
         account_ids: &[wargaming::AccountId],
     ) -> Result {
-        info!(n_accounts = account_ids.len());
+        debug!(n_accounts = account_ids.len());
         Self::collection(from)
             .update_many(
                 doc! { "rlm": realm.to_str(), "aid": { "$in": account_ids } },
