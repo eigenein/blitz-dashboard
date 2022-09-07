@@ -100,7 +100,7 @@ jobs:
       - name: Rsync
         working-directory: ./target/aarch64-unknown-linux-gnu/release
         run: |
-          rsync -avz blitz-dashboard yastatist:/home/pi/bin/blitz-dashboard
+          rsync -avz blitz-dashboard.aarch64-unknown-linux-gnu yastatist:/home/pi/bin/blitz-dashboard
 
       - name: Restart Web
         run: |
