@@ -45,6 +45,7 @@ pub struct Account {
     pub prio: bool,
 
     #[serde(rename = "due", default)]
+    #[serde_as(as = "bson::DateTime")]
     pub next_check_at: DateTime,
 }
 
