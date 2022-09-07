@@ -7,6 +7,7 @@ pub struct Regression {
     pub k: f64,
     pub x: DVector<f64>,
     pub y: DVector<f64>,
+    pub w: DVector<f64>,
 }
 
 impl Regression {

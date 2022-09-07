@@ -76,6 +76,7 @@ pub async fn get_regression(
                                     tooltip: {shared: false, intersect: true},
                                     theme: {mode: mode},
                                     legend: {show: false},
+                                    title: {text: 'Regression'},
                             "))
 
                             (PreEscaped("xaxis: {type: 'numeric', tickAmount: 'dataPoints', min: 0, max: 100,"))
@@ -86,11 +87,15 @@ pub async fn get_regression(
                             (PreEscaped("},"))
                             (PreEscaped("series: ["))
 
-                            (PreEscaped("{name: 'Target', type: 'scatter', data: ["))
-                            @for (x, y) in regression.x.iter().copied().zip(regression.y.iter().copied()) {
+                            (PreEscaped("{name: 'Target', type: 'bubble', data: ["))
+                            @for ((x, y), w) in regression.x.iter().copied().zip(regression.y.iter().copied()).zip(regression.w.iter().copied()) {
                                 @let x = 100.0 * sigmoid(x);
                                 @let y = 100.0 * sigmoid(y);
-                                (PreEscaped("{x:")) (format!("{:.2}", x)) (PreEscaped(",y:")) (format!("{:.2}", y)) (PreEscaped("},"))
+                                (PreEscaped("["))
+                                (format!("{:.2}", x)) (PreEscaped(", "))
+                                (format!("{:.2}", y)) (PreEscaped(", "))
+                                (format!("{:.2}", w)) (PreEscaped(", "))
+                                (PreEscaped("],"))
                             }
                             (PreEscaped("]},"))
 
@@ -99,7 +104,10 @@ pub async fn get_regression(
                                 @let x = i as f64 / 50.0;
                                 @let y = 100.0 * sigmoid(regression.predict(logit(x)));
                                 @let x = 100.0 * x;
-                                (PreEscaped("{x:")) (format!("{:.2}", x)) (PreEscaped(",y:")) (format!("{:.2}", y)) (PreEscaped("},"))
+                                (PreEscaped("["))
+                                (format!("{:.2}", x)) (PreEscaped(", "))
+                                (format!("{:.2}", y)) (PreEscaped(", "))
+                                (PreEscaped("],"))
                             }
                             (PreEscaped("]},"))
 

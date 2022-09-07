@@ -197,7 +197,7 @@ async fn update_model(
                     .or_default()
                     .entry(*target_vehicle_id)
                     .or_default()
-                    .insert(*source_vehicle_id, Regression { k, bias, x, y });
+                    .insert(*source_vehicle_id, Regression { k, bias, x, y, w });
             }
         }
         yield_now().await;
