@@ -43,6 +43,9 @@ pub struct Account {
 
     #[serde(default)]
     pub prio: bool,
+
+    #[serde(rename = "due", default)]
+    pub next_check_at: DateTime,
 }
 
 impl TypedDocument for Account {
@@ -51,7 +54,7 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 3];
+    type I = [IndexModel; 4];
 
     fn indexes() -> Self::I {
         [
@@ -70,18 +73,22 @@ impl Indexes for Account {
                         .build(),
                 )
                 .build(),
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "due": 1 })
+                .build(),
         ]
     }
 }
 
 impl Account {
-    pub const fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
+    pub fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
         Self {
             id: account_id,
             realm,
             last_battle_time: None,
             partial_tank_stats: Vec::new(),
             prio: false,
+            next_check_at: DateTime::default(),
         }
     }
 }
@@ -137,7 +144,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "prio": true },
+            "$set": { "prio": true, "due": now() },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -218,6 +225,7 @@ impl Account {
     pub async fn sample_account(from: &Database, realm: wargaming::Realm) -> Result<Account> {
         let filter = doc! {
             "rlm": realm.to_str(),
+            "lbts": { "$lte": now() - Duration::seconds(thread_rng().gen_range(0..14400)) },
         };
         let options = FindOneOptions::builder().sort(doc! { "lbts": -1 }).build();
         let start_instant = Instant::now();

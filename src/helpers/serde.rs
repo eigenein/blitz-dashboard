@@ -1,5 +1,6 @@
-use chrono::Duration;
 use serde::{Deserialize, Serializer};
+
+use crate::prelude::*;
 
 pub fn serialize_duration_seconds<S: Serializer>(
     value: &Duration,
