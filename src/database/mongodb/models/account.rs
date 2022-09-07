@@ -1,7 +1,6 @@
 use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
-use itertools::Itertools;
 use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
@@ -40,10 +39,6 @@ pub struct Account {
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
 
-    #[serde(default, rename = "u")]
-    #[serde_as(as = "Option<bson::DateTime>")]
-    pub updated_at: Option<DateTime>,
-
     #[serde(default, rename = "pts")]
     pub partial_tank_stats: Vec<PartialTankStats>,
 }
@@ -59,7 +54,7 @@ impl Indexes for Account {
     fn indexes() -> Self::I {
         [
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "u": -1 })
+                .keys(doc! { "rlm": 1, "lbts": -1 })
                 .build(),
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
@@ -70,13 +65,12 @@ impl Indexes for Account {
 }
 
 impl Account {
-    pub fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
+    pub const fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
         Self {
             id: account_id,
             realm,
             last_battle_time: None,
             partial_tank_stats: Vec::new(),
-            updated_at: Some(Utc::now()),
         }
     }
 }
@@ -132,7 +126,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "u": null },
+            // TODO: "$set": { "u": null },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -152,11 +146,11 @@ impl Account {
         let filter = doc! {
             "$and": [
                 { "rlm": realm.to_str() },
-                { "$or": [ { "u": null }, { "u": { "$lte": before } } ] },
+                { "$or": [ { "lbts": null }, { "lbts": { "$lte": before } } ] },
             ],
         };
         let options = FindOptions::builder()
-            .sort(doc! { "u": -1 })
+            .sort(doc! { "lbts": -1 })
             .limit(sample_size as i64)
             .build();
 
@@ -167,11 +161,13 @@ impl Account {
             .await?
             .try_collect()
             .await?;
+        /* TODO
         let reset_updated_at_ids = accounts
             .iter()
             .filter_map(|account| account.updated_at.is_none().then_some(account.id))
             .collect_vec();
         Self::reset_updated_at(from, realm, &reset_updated_at_ids).await?;
+         */
 
         debug!(
             n_accounts = accounts.len(),
@@ -185,7 +181,7 @@ impl Account {
         let filter = doc! {
             "rlm": realm.to_str(),
         };
-        let options = FindOneOptions::builder().sort(doc! { "u": -1 }).build();
+        let options = FindOneOptions::builder().sort(doc! { "lbts": -1 }).build();
         let start_instant = Instant::now();
         let account = Self::collection(from)
             .find_one(filter, options)
