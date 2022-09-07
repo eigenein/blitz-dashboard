@@ -1,19 +1,37 @@
 use std::fmt::Debug;
 
+use futures::TryStreamExt;
 use mongodb::bson::Document;
-use mongodb::options::{UpdateModifications, UpdateOptions, WriteConcern};
+use mongodb::options::{FindOptions, UpdateModifications, UpdateOptions, WriteConcern};
 use mongodb::{Collection, Database, IndexModel};
+use serde::de::DeserializeOwned;
 use tokio::spawn;
 use tokio::time::timeout;
 
 use crate::prelude::*;
 
-pub trait TypedDocument: 'static + Sized + Send {
+#[async_trait]
+pub trait TypedDocument: 'static + Sized + Send + Sync + DeserializeOwned + Unpin {
     const NAME: &'static str;
 
     #[inline]
     fn collection(in_: &Database) -> Collection<Self> {
         in_.collection(Self::NAME)
+    }
+
+    #[inline]
+    async fn find_vec(
+        in_: &Database,
+        filter: impl Into<Option<Document>> + Send,
+        options: impl Into<Option<FindOptions>> + Send,
+    ) -> Result<Vec<Self>> {
+        Self::collection(in_)
+            .find(filter, options)
+            .await
+            .with_context(|| format!("failed to search in `{}`", Self::NAME))?
+            .try_collect()
+            .await
+            .with_context(|| format!("failed to collect a vector from `{}`", Self::NAME))
     }
 }
 

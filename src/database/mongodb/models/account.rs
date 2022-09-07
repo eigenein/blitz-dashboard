@@ -1,6 +1,6 @@
-use anyhow::Error;
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
+use itertools::Itertools;
 use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
@@ -14,9 +14,8 @@ pub use self::partial_tank_stats::*;
 pub use self::random::*;
 pub use self::rating::*;
 pub use self::tank_last_battle_time::*;
-use crate::database::mongodb::traits::{Indexes, TypedDocument, Upsert};
+use crate::database::mongodb::traits::*;
 use crate::prelude::*;
-use crate::{format_elapsed, wargaming};
 
 mod id_projection;
 mod partial_tank_stats;
@@ -41,6 +40,9 @@ pub struct Account {
 
     #[serde(default, rename = "pts")]
     pub partial_tank_stats: Vec<PartialTankStats>,
+
+    #[serde(default)]
+    pub prio: bool,
 }
 
 impl TypedDocument for Account {
@@ -49,7 +51,7 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 2];
+    type I = [IndexModel; 3];
 
     fn indexes() -> Self::I {
         [
@@ -60,7 +62,14 @@ impl Indexes for Account {
                 .keys(doc! { "rlm": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
-            // TODO: priority flag, sparse.
+            IndexModel::builder()
+                .keys(doc! { "rlm": 1, "prio": 1 })
+                .options(
+                    IndexOptions::builder()
+                        .partial_filter_expression(doc! { "prio": {"$eq": true} })
+                        .build(),
+                )
+                .build(),
         ]
     }
 }
@@ -72,6 +81,7 @@ impl Account {
             realm,
             last_battle_time: None,
             partial_tank_stats: Vec::new(),
+            prio: false,
         }
     }
 }
@@ -96,7 +106,7 @@ impl Account {
     pub fn get_sampled_stream(
         database: Database,
         realm: wargaming::Realm,
-        sample_size: u32,
+        sample_size: usize,
         min_offset: Duration,
         offset_scale: time::Duration,
     ) -> Result<impl Stream<Item = Result<Self>>> {
@@ -127,7 +137,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            // TODO: priority flag.
+            "$set": { "prio": true },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -141,38 +151,67 @@ impl Account {
     pub async fn retrieve_sample(
         from: &Database,
         realm: wargaming::Realm,
-        after: DateTime,
-        sample_size: u32,
+        before: DateTime,
+        sample_size: usize,
     ) -> Result<Vec<Account>> {
-        let filter = doc! {
-            "rlm": realm.to_str(),
-            "$or": [ { "lbts": null }, { "lbts": { "$gte": after } } ], // TODO: or priority flag set.
-        };
-        let options = FindOptions::builder()
-            .sort(doc! { "lbts": 1 })
-            .limit(sample_size as i64)
-            .build();
-
+        debug!(sample_size, "retrieving…");
         let start_instant = Instant::now();
-        debug!(sample_size, "retrieving a sample…");
-        let accounts: Vec<Account> = Self::collection(from)
-            .find(filter, options)
-            .await?
-            .try_collect()
-            .await?;
-        /* TODO: reset priority flags.
-        let reset_updated_at_ids = accounts
-            .iter()
-            .filter_map(|account| account.updated_at.is_none().then_some(account.id))
-            .collect_vec();
-        Self::reset_updated_at(from, realm, &reset_updated_at_ids).await?;
-         */
 
-        debug!(
-            n_accounts = accounts.len(),
-            elapsed = format_elapsed(start_instant).as_str(),
-            "done",
-        );
+        // Retrieve new accounts which have never been crawled yet (their last battle time is `null`):
+        let mut accounts: Vec<Account> = {
+            debug!("querying new accounts…");
+            let options = FindOptions::builder().limit(sample_size as i64).build();
+            let new_accounts =
+                Self::find_vec(from, doc! { "rlm": realm.to_str(), "lbts": null }, options).await?;
+            debug!(n_new_accounts = new_accounts.len(), elapsed = ?start_instant.elapsed());
+            new_accounts
+        };
+
+        // Retrieve marked accounts:
+        if accounts.len() != sample_size {
+            debug!("querying marked high-prio accounts…");
+            let filter = doc! { "rlm": realm.to_str(), "prio": true };
+            let options = FindOptions::builder()
+                .limit((sample_size - accounts.len()) as i64)
+                .build();
+            let prio_accounts = Self::find_vec(from, filter, options).await?;
+            debug!(
+                n_prio_accounts = prio_accounts.len(),
+                elapsed = ?start_instant.elapsed(),
+            );
+            if !prio_accounts.is_empty() {
+                debug!(n_prio_accounts = prio_accounts.len(), "clearing the prio flags…");
+                let query = doc! {
+                    "rlm": realm.to_str(),
+                    "aid": { "$in": prio_accounts.iter().map(|account| account.id).collect_vec() },
+                };
+                Self::collection(from)
+                    .update_many(query, doc! { "$set": { "prio": false } }, None)
+                    .await?;
+                debug!(elapsed = ?start_instant.elapsed(), "cleared the prio flags");
+            }
+            accounts.extend(prio_accounts);
+        }
+
+        // Retrieve random selection of accounts:
+        if accounts.len() != sample_size {
+            debug!("querying random accounts…");
+            let filter = doc! {
+                "rlm": realm.to_str(),
+                "$and": [ { "lbts": { "$ne": null } }, { "lbts": { "$lte": before } } ],
+            };
+            let options = FindOptions::builder()
+                .sort(doc! { "lbts": -1 })
+                .limit((sample_size - accounts.len()) as i64)
+                .build();
+            let random_accounts = Self::find_vec(from, filter, options).await?;
+            debug!(
+                n_random_accounts = random_accounts.len(),
+                elapsed = ?start_instant.elapsed(),
+            );
+            accounts.extend(random_accounts);
+        };
+
         Ok(accounts)
     }
 
@@ -188,28 +227,5 @@ impl Account {
             .ok_or_else(|| anyhow!("could not sample a random account"))?;
         debug!(elapsed = ?start_instant.elapsed());
         Ok(account)
-    }
-
-    #[instrument(level = "info", skip_all)]
-    async fn reset_updated_at(
-        from: &Database,
-        realm: wargaming::Realm,
-        account_ids: &[wargaming::AccountId],
-    ) -> Result {
-        debug!(n_accounts = account_ids.len());
-        if account_ids.is_empty() {
-            return Ok(());
-        }
-        Self::collection(from)
-            .update_many(
-                doc! {
-                    "rlm": realm.to_str(),
-                    "aid": { "$in": account_ids },
-                },
-                vec![doc! { "$set": { "u": "$$NOW" } }], // TODO: `$unset` priority flag.
-                None,
-            )
-            .await?;
-        Ok(())
     }
 }

@@ -81,7 +81,7 @@ pub struct CrawlerOpts {
     /// Minimum last battle time offset.
     #[clap(
         long,
-        default_value = "8hours",
+        default_value = "0s",
         parse(try_from_str = humantime::parse_duration),
         env = "BLITZ_DASHBOARD_CRAWLER_MIN_OFFSET",
     )]
@@ -99,10 +99,10 @@ pub struct CrawlerOpts {
     #[clap(
         long,
         default_value = "100",
-        parse(try_from_str = parsers::non_zero_u32),
+        parse(try_from_str = parsers::non_zero_usize),
         env = "BLITZ_DASHBOARD_CRAWLER_SAMPLE_SIZE",
     )]
-    pub sample_size: u32,
+    pub sample_size: usize,
 
     #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_HEARTBEAT_URL")]
     pub heartbeat_url: Option<String>,

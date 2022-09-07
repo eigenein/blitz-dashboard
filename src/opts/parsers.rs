@@ -21,6 +21,7 @@ pub fn non_zero_usize(value: &str) -> Result<usize> {
     }
 }
 
+#[allow(dead_code)]
 pub fn non_zero_u32(value: &str) -> Result<u32> {
     match FromStr::from_str(value)? {
         value if value >= 1 => Ok(value),

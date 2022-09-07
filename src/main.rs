@@ -14,7 +14,6 @@ use sentry::integrations::anyhow::capture_anyhow;
 
 use crate::opts::{Opts, Subcommand};
 use crate::prelude::*;
-use crate::tracing::format_elapsed;
 
 mod crawler;
 pub mod database;
