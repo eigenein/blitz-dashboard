@@ -44,9 +44,10 @@ pub struct Account {
     #[serde(default)]
     pub prio: bool,
 
+    /// FIXME: remove `Option` when filled in.
     #[serde(rename = "due", default)]
-    #[serde_as(as = "bson::DateTime")]
-    pub next_check_at: DateTime,
+    #[serde_as(as = "Option<bson::DateTime>")]
+    pub next_check_at: Option<DateTime>,
 }
 
 impl TypedDocument for Account {
@@ -89,7 +90,7 @@ impl Account {
             last_battle_time: None,
             partial_tank_stats: Vec::new(),
             prio: false,
-            next_check_at: DateTime::default(),
+            next_check_at: Some(DateTime::default()),
         }
     }
 }
