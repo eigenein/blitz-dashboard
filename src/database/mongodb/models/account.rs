@@ -60,6 +60,7 @@ impl Indexes for Account {
                 .keys(doc! { "rlm": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
                 .build(),
+            // TODO: priority flag, sparse.
         ]
     }
 }
@@ -126,7 +127,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            // TODO: "$set": { "u": null },
+            // TODO: priority flag.
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -146,11 +147,11 @@ impl Account {
         let filter = doc! {
             "$and": [
                 { "rlm": realm.to_str() },
-                { "$or": [ { "lbts": null }, { "lbts": { "$lte": before } } ] },
+                { "$or": [ { "lbts": null }, { "lbts": { "$lte": before } } ] }, // TODO: or priority flag set.
             ],
         };
         let options = FindOptions::builder()
-            .sort(doc! { "lbts": -1 })
+            .sort(doc! { "lbts": 1 })
             .limit(sample_size as i64)
             .build();
 
@@ -161,7 +162,7 @@ impl Account {
             .await?
             .try_collect()
             .await?;
-        /* TODO
+        /* TODO: reset priority flags.
         let reset_updated_at_ids = accounts
             .iter()
             .filter_map(|account| account.updated_at.is_none().then_some(account.id))
@@ -207,7 +208,7 @@ impl Account {
                     "rlm": realm.to_str(),
                     "aid": { "$in": account_ids },
                 },
-                vec![doc! { "$set": { "u": "$$NOW" } }],
+                vec![doc! { "$set": { "u": "$$NOW" } }], // TODO: `$unset` priority flag.
                 None,
             )
             .await?;
