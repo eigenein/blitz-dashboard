@@ -5,6 +5,8 @@ use itertools::Itertools;
 use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
+use rand::prelude::*;
+use rand_distr::Exp;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
@@ -101,18 +103,22 @@ impl Account {
         realm: wargaming::Realm,
         sample_size: u32,
         min_offset: Duration,
-        max_offset: Duration,
-    ) -> impl Stream<Item = Result<Self>> {
-        info!(sample_size, %min_offset, %max_offset);
-        try_unfold((1, database), move |(sample_number, database)| async move {
-            debug!(sample_number, "retrieving a sample…");
-            let sample =
-                Account::retrieve_sample(&database, realm, sample_size, min_offset, max_offset)
-                    .await?;
+        offset_scale: time::Duration,
+    ) -> Result<impl Stream<Item = Result<Self>>> {
+        info!(sample_size, %min_offset, ?offset_scale);
+        let distribution = Exp::new(1.0 / offset_scale.as_secs_f64())?;
+        let stream = try_unfold((1, database), move |(sample_number, database)| async move {
+            let offset = Duration::from_std(time::Duration::from_secs_f64(
+                distribution.sample(&mut thread_rng()),
+            ))?;
+            let before = Utc::now() - min_offset - offset;
+            debug!(sample_number, ?before, "retrieving a sample…");
+            let sample = Account::retrieve_sample(&database, realm, before, sample_size).await?;
             debug!(sample_number, "retrieved");
             Ok::<_, Error>(Some((iter(sample.into_iter().map(Ok)), (sample_number + 1, database))))
         })
-        .try_flatten()
+        .try_flatten();
+        Ok(stream)
     }
 
     /// Ensures that the account exists in the database.
@@ -140,12 +146,9 @@ impl Account {
     pub async fn retrieve_sample(
         from: &Database,
         realm: wargaming::Realm,
+        before: DateTime,
         sample_size: u32,
-        min_offset: Duration,
-        max_offset: Duration,
     ) -> Result<Vec<Account>> {
-        let before = Utc::now()
-            - Duration::seconds(fastrand::i64(min_offset.num_seconds()..max_offset.num_seconds()));
         let filter = doc! {
             "$and": [
                 { "rlm": realm.to_str() },

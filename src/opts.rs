@@ -87,14 +87,13 @@ pub struct CrawlerOpts {
     )]
     pub min_offset: time::Duration,
 
-    /// Maximum last battle time offset.
     #[clap(
         long,
-        default_value = "3years",
+        default_value = "24h",
         parse(try_from_str = humantime::parse_duration),
-        env = "BLITZ_DASHBOARD_CRAWLER_MAX_OFFSET",
+        env = "BLITZ_DASHBOARD_CRAWLER_OFFSET_SCALE",
     )]
-    pub max_offset: time::Duration,
+    pub offset_scale: time::Duration,
 
     /// Number of accounts to sample from the database in one query.
     #[clap(

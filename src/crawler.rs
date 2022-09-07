@@ -42,8 +42,8 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         opts.shared.realm,
         opts.sample_size,
         Duration::from_std(opts.min_offset)?,
-        Duration::from_std(opts.max_offset)?,
-    );
+        opts.offset_scale,
+    )?;
     crawler.run(Box::pin(accounts)).await
 }
 
