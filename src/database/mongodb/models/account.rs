@@ -54,7 +54,7 @@ impl Indexes for Account {
     fn indexes() -> Self::I {
         [
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": -1 })
+                .keys(doc! { "rlm": 1, "lbts": 1 })
                 .build(),
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
@@ -141,13 +141,13 @@ impl Account {
     pub async fn retrieve_sample(
         from: &Database,
         realm: wargaming::Realm,
-        before: DateTime,
+        after: DateTime,
         sample_size: u32,
     ) -> Result<Vec<Account>> {
         let filter = doc! {
             "$and": [
                 { "rlm": realm.to_str() },
-                { "$or": [ { "lbts": null }, { "lbts": { "$lte": before } } ] }, // TODO: or priority flag set.
+                { "$or": [ { "lbts": null }, { "lbts": { "$gte": after } } ] }, // TODO: or priority flag set.
             ],
         };
         let options = FindOptions::builder()
