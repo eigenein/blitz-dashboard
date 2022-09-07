@@ -54,7 +54,7 @@ impl Indexes for Account {
     fn indexes() -> Self::I {
         [
             IndexModel::builder()
-                .keys(doc! { "rlm": 1, "lbts": 1 })
+                .keys(doc! { "rlm": 1, "lbts": -1 })
                 .build(),
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
@@ -145,10 +145,8 @@ impl Account {
         sample_size: u32,
     ) -> Result<Vec<Account>> {
         let filter = doc! {
-            "$and": [
-                { "rlm": realm.to_str() },
-                { "$or": [ { "lbts": null }, { "lbts": { "$gte": after } } ] }, // TODO: or priority flag set.
-            ],
+            "rlm": realm.to_str(),
+            "$or": [ { "lbts": null }, { "lbts": { "$gte": after } } ], // TODO: or priority flag set.
         };
         let options = FindOptions::builder()
             .sort(doc! { "lbts": 1 })
