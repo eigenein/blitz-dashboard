@@ -98,7 +98,9 @@ jobs:
               StrictHostKeyChecking no
 
       - name: Rsync
-        run: rsync -avz blitz-dashboard.aarch64-unknown-linux-gnu yastatist:/home/pi/bin/blitz-dashboard
+        run: |
+          chmod +x blitz-dashboard.aarch64-unknown-linux-gnu
+          rsync -avz blitz-dashboard.aarch64-unknown-linux-gnu yastatist:/home/pi/bin/blitz-dashboard
 
       - name: Restart Web
         run: |

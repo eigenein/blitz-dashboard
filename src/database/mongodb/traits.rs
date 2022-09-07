@@ -28,10 +28,10 @@ pub trait TypedDocument: 'static + Sized + Send + Sync + DeserializeOwned + Unpi
         Self::collection(in_)
             .find(filter, options)
             .await
-            .map_err(|error| anyhow!("failed to search in `{}`: {}", Self::NAME, error))?
+            .map_err(|error| anyhow!("failed to search in `{}`: {:#}", Self::NAME, error))?
             .try_collect()
             .await
-            .map_err(|error| anyhow!("failed to collect from `{}`: {}", Self::NAME, error))
+            .map_err(|error| anyhow!("failed to collect from `{}`: {:#}", Self::NAME, error))
     }
 }
 
