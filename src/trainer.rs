@@ -166,7 +166,7 @@ async fn update_model(
                 let w = w.insert_row(
                     i,
                     source_sample.n_posterior_battles_f64()
-                        * target_sample.n_posterior_battles_f64(),
+                        + target_sample.n_posterior_battles_f64(),
                 );
                 matrices.insert(*realm, (x, y, w));
             }
