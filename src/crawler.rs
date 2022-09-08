@@ -230,7 +230,7 @@ impl Crawler {
             last_battle_time: Some(account_info.last_battle_time),
             partial_tank_stats,
             prio: false,
-            next_check_at: Some(NextCheckAt::from(account_info.last_battle_time).into()),
+            next_check_at: Some(NextCheckAt::new(account_info.last_battle_time).into()),
         };
         let account_snapshot =
             database::AccountSnapshot::new(self.realm, &account_info, tank_last_battle_times);
