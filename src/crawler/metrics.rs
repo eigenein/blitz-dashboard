@@ -64,8 +64,8 @@ impl CrawlerMetrics {
             rps = %format!("{:.1}", n_requests as f64 / elapsed_secs),
             fill = %format!("{:.1}%", self.average_batch_fill_level.average() * 100.0),
             apm = %format!("{:.0}", self.n_accounts as f64 / elapsed_mins),
-            lag_days = %format!("{:.2}", self.lag_days()),
-            aid = self.last_account_id,
+            lag_hrs = %format!("{:.1}", self.lag_hours()),
+            id = self.last_account_id,
         );
     }
 
@@ -77,9 +77,9 @@ impl CrawlerMetrics {
         self.total_lag = Duration::zero();
     }
 
-    fn lag_days(&self) -> f64 {
+    fn lag_hours(&self) -> f64 {
         if self.n_accounts != 0 {
-            (self.total_lag.num_seconds() as f64) / (self.n_accounts as f64) / 86400.0
+            (self.total_lag.num_seconds() as f64) / (self.n_accounts as f64) / 3600.0
         } else {
             0f64
         }
