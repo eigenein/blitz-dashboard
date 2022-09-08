@@ -8,7 +8,6 @@ use tokio::sync::Mutex;
 
 use self::crawled_data::CrawledData;
 use self::metrics::CrawlerMetrics;
-use self::next_check_at::NextCheckAt;
 use crate::opts::{CrawlAccountsOpts, CrawlerOpts, SharedCrawlerOpts};
 use crate::prelude::*;
 use crate::wargaming::WargamingApi;
@@ -230,7 +229,6 @@ impl Crawler {
             last_battle_time: Some(account_info.last_battle_time),
             partial_tank_stats,
             prio: false,
-            next_check_at: Some(NextCheckAt::new(account_info.last_battle_time).into()),
         };
         let account_snapshot =
             database::AccountSnapshot::new(self.realm, &account_info, tank_last_battle_times);

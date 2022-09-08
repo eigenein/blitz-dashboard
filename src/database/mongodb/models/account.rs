@@ -5,7 +5,7 @@ use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
 use rand::prelude::*;
-use rand_distr::Exp;
+use rand_distr::Exp1;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
@@ -43,11 +43,6 @@ pub struct Account {
 
     #[serde(default)]
     pub prio: bool,
-
-    /// FIXME: remove `Option` when filled in.
-    #[serde(rename = "due", default)]
-    #[serde_as(as = "Option<bson::DateTime>")]
-    pub next_check_at: Option<DateTime>,
 }
 
 impl TypedDocument for Account {
@@ -56,7 +51,7 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 4];
+    type I = [IndexModel; 3];
 
     fn indexes() -> Self::I {
         [
@@ -75,22 +70,18 @@ impl Indexes for Account {
                         .build(),
                 )
                 .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "due": 1 })
-                .build(),
         ]
     }
 }
 
 impl Account {
-    pub fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
+    pub const fn new(realm: wargaming::Realm, account_id: wargaming::AccountId) -> Self {
         Self {
             id: account_id,
             realm,
             last_battle_time: None,
             partial_tank_stats: Vec::new(),
             prio: false,
-            next_check_at: Some(DateTime::default()),
         }
     }
 }
@@ -120,11 +111,10 @@ impl Account {
         offset_scale: time::Duration,
     ) -> Result<impl Stream<Item = Result<Self>>> {
         info!(sample_size, %min_offset, ?offset_scale);
-        let distribution = Exp::new(1.0 / offset_scale.as_secs_f64())?;
+        let offset_scale_secs = offset_scale.as_secs_f64();
         let stream = try_unfold((1, database), move |(sample_number, database)| async move {
-            let offset = Duration::from_std(time::Duration::from_secs_f64(
-                distribution.sample(&mut thread_rng()),
-            ))?;
+            let offset =
+                Duration::seconds((thread_rng().sample::<f64, _>(Exp1) * offset_scale_secs) as i64);
             let before = Utc::now() - min_offset - offset;
             debug!(sample_number, ?before, "retrieving a sample…");
             let sample = Account::retrieve_sample(&database, realm, before, sample_size).await?;
@@ -146,7 +136,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "prio": true, "due": now() },
+            "$set": { "prio": true },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
@@ -166,23 +156,11 @@ impl Account {
         debug!(sample_size, "retrieving…");
         let start_instant = Instant::now();
 
-        // Retrieve new accounts which have never been crawled yet (their last battle time is `null`):
-        let mut accounts: Vec<Account> = {
-            debug!("querying new accounts…");
-            let options = FindOptions::builder().limit(sample_size as i64).build();
-            let new_accounts =
-                Self::find_vec(from, doc! { "rlm": realm.to_str(), "lbts": null }, options).await?;
-            debug!(n_new_accounts = new_accounts.len(), elapsed = ?start_instant.elapsed());
-            new_accounts
-        };
-
         // Retrieve marked accounts:
-        if accounts.len() != sample_size {
+        let mut accounts = {
             debug!("querying marked high-prio accounts…");
             let filter = doc! { "rlm": realm.to_str(), "prio": true };
-            let options = FindOptions::builder()
-                .limit((sample_size - accounts.len()) as i64)
-                .build();
+            let options = FindOptions::builder().limit(sample_size as i64).build();
             let prio_accounts = Self::find_vec(from, filter, options).await?;
             debug!(
                 n_prio_accounts = prio_accounts.len(),
@@ -199,8 +177,8 @@ impl Account {
                     .await?;
                 debug!(elapsed = ?start_instant.elapsed(), "cleared the prio flags");
             }
-            accounts.extend(prio_accounts);
-        }
+            prio_accounts
+        };
 
         // Retrieve random selection of accounts:
         if accounts.len() != sample_size {
