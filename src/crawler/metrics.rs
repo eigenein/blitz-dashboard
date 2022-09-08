@@ -79,7 +79,7 @@ impl CrawlerMetrics {
 
     fn lag_days(&self) -> f64 {
         if self.n_accounts != 0 {
-            self.total_lag.num_seconds() as f64 / 86400.0
+            (self.total_lag.num_seconds() as f64) / (self.n_accounts as f64) / 86400.0
         } else {
             0f64
         }
