@@ -80,12 +80,7 @@ impl Crawler {
 
         let this = Self {
             realm: opts.realm,
-            metrics: Mutex::new(CrawlerMetrics::new(
-                &api.request_counter,
-                opts.lag_percentile,
-                opts.lag_window_size,
-                opts.log_interval,
-            )),
+            metrics: Mutex::new(CrawlerMetrics::new(&api.request_counter, opts.log_interval)),
             api,
             db,
             n_buffered_batches: opts.buffering.n_batches,
@@ -287,10 +282,10 @@ impl Crawler {
 
         crawled_data.upsert(&self.db).await?;
 
-        let mut metrics = self.metrics.lock().await;
-        metrics.add_account(crawled_data.account_snapshot.account_id);
-        metrics.add_lag_from(crawled_data.account_snapshot.last_battle_time);
-        drop(metrics);
+        self.metrics
+            .lock()
+            .await
+            .add_account(&crawled_data.account_snapshot);
 
         debug!(elapsed = ?start_instant.elapsed());
         Ok(())

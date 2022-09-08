@@ -175,22 +175,6 @@ pub struct SharedCrawlerOpts {
         env = "BLITZ_DASHBOARD_CRAWLER_LOG_INTERVAL",
     )]
     pub log_interval: time::Duration,
-
-    #[structopt(
-        long,
-        default_value = "95",
-        parse(try_from_str = parsers::non_zero_usize),
-        env = "BLITZ_DASHBOARD_CRAWLER_LAG_PERCENTILE",
-    )]
-    pub lag_percentile: usize,
-
-    #[structopt(
-        long,
-        default_value = "5000",
-        parse(try_from_str = parsers::non_zero_usize),
-        env = "BLITZ_DASHBOARD_CRAWLER_LAG_WINDOW_SIZE",
-    )]
-    pub lag_window_size: usize,
 }
 
 #[derive(Parser)]
