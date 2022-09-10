@@ -171,33 +171,37 @@ async fn update_model(
                 matrices.insert(*realm, (x, y, w));
             }
             for (realm, (mut x, mut y, w)) in matrices {
-                if x.nrows() < n_min_points_per_regression {
-                    continue;
-                }
-                x.apply(|x| {
-                    *x = logit(*x);
-                });
-                y.apply(|y| {
-                    *y = logit(*y);
-                });
-                let (bias, k) = match make_regression(&x, &y, &w) {
-                    Some(result) => result,
-                    _ => {
-                        n_failed_regressions += 1;
-                        continue;
+                let result = if x.nrows() < n_min_points_per_regression {
+                    None
+                } else {
+                    x.apply(|x| {
+                        *x = logit(*x);
+                    });
+                    y.apply(|y| {
+                        *y = logit(*y);
+                    });
+                    match make_regression(&x, &y, &w) {
+                        Some((bias, k)) => Some((k, bias, x, y, w)),
+                        _ => {
+                            n_failed_regressions += 1;
+                            None
+                        }
                     }
                 };
-                n_points += x.nrows();
-                n_vehicle_pairs += 1;
-                model
-                    .write()
-                    .await
+                let mut model = model.write().await;
+                let target_regressions = model
                     .regressions
                     .entry(realm)
                     .or_default()
                     .entry(*target_vehicle_id)
-                    .or_default()
-                    .insert(*source_vehicle_id, Regression { k, bias, x, y, w });
+                    .or_default();
+                if let Some((k, bias, x, y, w)) = result {
+                    n_points += x.nrows();
+                    n_vehicle_pairs += 1;
+                    target_regressions.insert(*source_vehicle_id, Regression { k, bias, x, y, w });
+                } else {
+                    target_regressions.remove(source_vehicle_id);
+                }
             }
         }
         yield_now().await;
