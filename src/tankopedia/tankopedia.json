@@ -1527,6 +1527,14 @@
     "nation": "germany",
     "type": "heavyTank"
   },
+  "23313": {
+    "tank_id": 23313,
+    "name": "Kampfpanzer 50 t",
+    "tier": 10,
+    "is_premium": true,
+    "nation": "germany",
+    "type": "mediumTank"
+  },
   "23329": {
     "tank_id": 23329,
     "name": "M-III-Yoh",
@@ -4102,6 +4110,14 @@
     "is_premium": true,
     "nation": "other",
     "type": "lightTank"
+  },
+  "9857": {
+    "tank_id": 9857,
+    "name": "Škoda T 45",
+    "tier": 7,
+    "is_premium": true,
+    "nation": "european",
+    "type": "heavyTank"
   },
   "9985": {
     "tank_id": 9985,
