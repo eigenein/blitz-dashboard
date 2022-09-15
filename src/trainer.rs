@@ -65,9 +65,9 @@ async fn run_trainer(
 
         let stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
         read_stream(stream, &mut pointer, &mut train_set).await?;
-        let (returned_train_set, tank_samples) = spawn(aggregate_train_set(train_set)).await?;
+        let (returned_train_set, samples_by_tank) = spawn(aggregate_train_set(train_set)).await?;
         train_set = returned_train_set;
-        spawn(update_model(tank_samples, n_min_points_per_regression, model.clone())).await??;
+        spawn(update_model(samples_by_tank, n_min_points_per_regression, model.clone())).await??;
 
         info!(?train_interval, %pointer, "sleeping…");
         sleep(train_interval).await;
@@ -113,81 +113,58 @@ async fn aggregate_train_set(
     info!(n_train_items = train_set.len(), "aggregating…");
 
     let mut n_battles: u32 = 0;
-
-    let mut samples: IndexedByTank<Sample> = AHashMap::default();
+    let mut samples_by_tank: IndexedByTank<Sample> = AHashMap::default();
     for item in &train_set {
         n_battles += item.n_battles as u32;
-        *samples
+        let sample = Sample::from(item);
+        *samples_by_tank
             .entry(item.tank_id)
             .or_default()
             .entry((item.realm, item.account_id))
-            .or_default() += &Sample::from(item);
+            .or_default() += &sample;
     }
 
     info!(n_battles, elapsed = ?start_instant.elapsed(), "completed");
-    (train_set, samples)
+    (train_set, samples_by_tank)
 }
 
 #[instrument(level = "info", skip_all)]
 async fn update_model(
-    samples: IndexedByTank<Sample>,
+    samples_by_tank: IndexedByTank<Sample>,
     n_min_points_per_regression: usize,
     model: Arc<RwLock<Model>>,
 ) -> Result {
     info!(n_min_points_per_regression, "updating the model…");
     let start_instant = Instant::now();
-    let mut n_vehicle_pairs = 0;
+    let mut n_regressions = 0;
     let mut n_failed_regressions = 0;
     let mut n_points = 0;
 
-    for (n_vehicle, (source_vehicle_id, source_accounts)) in samples.iter().enumerate() {
+    for (n_vehicle, (target_vehicle_id, target_accounts)) in samples_by_tank.iter().enumerate() {
         if n_vehicle % 25 == 0 {
-            info!(n_vehicle, of = samples.len(), n_vehicle_pairs, n_points, n_failed_regressions);
+            info!(
+                n_vehicle,
+                of = samples_by_tank.len(),
+                n_regressions,
+                n_points,
+                n_failed_regressions
+            );
         }
-        for (target_vehicle_id, target_accounts) in &samples {
+        for (source_vehicle_id, source_accounts) in &samples_by_tank {
             if source_vehicle_id == target_vehicle_id {
                 continue;
             }
-            // Contains matrices for this pair of vehicles per realm.
             let mut matrices = AHashMap::default();
             for ((realm, source_account_id), source_sample) in source_accounts {
-                let target_sample = match target_accounts.get(&(*realm, *source_account_id)) {
-                    Some(sample) => sample,
-                    _ => {
-                        continue;
-                    }
-                };
-                let (x, y, w) = matrices.remove(realm).unwrap_or_else(|| {
-                    (DVector::<f64>::zeros(0), DVector::<f64>::zeros(0), DVector::<f64>::zeros(0))
-                });
-                let i = x.nrows();
-                let x = x.insert_row(i, source_sample.posterior_mean());
-                let y = y.insert_row(i, target_sample.posterior_mean());
-                let w = w.insert_row(
-                    i,
-                    source_sample.n_posterior_battles_f64()
-                        + target_sample.n_posterior_battles_f64(),
-                );
-                matrices.insert(*realm, (x, y, w));
+                if let Some(target_sample) = target_accounts.get(&(*realm, *source_account_id)) {
+                    update_matrices(*realm, *source_sample, *target_sample, &mut matrices);
+                }
             }
-            for (realm, (mut x, mut y, w)) in matrices {
-                let result = if x.nrows() < n_min_points_per_regression {
-                    None
-                } else {
-                    x.apply(|x| {
-                        *x = logit(*x);
-                    });
-                    y.apply(|y| {
-                        *y = logit(*y);
-                    });
-                    match make_regression(&x, &y, &w) {
-                        Some((bias, k)) => Some((k, bias, x, y, w)),
-                        _ => {
-                            n_failed_regressions += 1;
-                            None
-                        }
-                    }
-                };
+            for (realm, Matrices { mut x, mut y, w }) in matrices {
+                let result = make_regression(&mut x, &mut y, &w, n_min_points_per_regression);
+                if result == RegressionResult::Undefined {
+                    n_failed_regressions += 1;
+                }
                 let mut model = model.write().await;
                 let target_regressions = model
                     .regressions
@@ -195,9 +172,9 @@ async fn update_model(
                     .or_default()
                     .entry(*target_vehicle_id)
                     .or_default();
-                if let Some((k, bias, x, y, w)) = result {
+                if let RegressionResult::Ok { bias, k } = result {
                     n_points += x.nrows();
-                    n_vehicle_pairs += 1;
+                    n_regressions += 1;
                     target_regressions.insert(*source_vehicle_id, Regression { k, bias, x, y, w });
                 } else {
                     target_regressions.remove(source_vehicle_id);
@@ -207,12 +184,69 @@ async fn update_model(
         yield_now().await;
     }
 
-    info!(n_vehicle_pairs, n_points, n_failed_regressions, elapsed = ?start_instant.elapsed(), "completed");
+    info!(n_regressions, n_points, n_failed_regressions, elapsed = ?start_instant.elapsed(), "completed");
     Ok(())
 }
 
+struct Matrices {
+    x: DVector<f64>,
+    y: DVector<f64>,
+    w: DVector<f64>,
+}
+
+impl Default for Matrices {
+    fn default() -> Self {
+        Self {
+            x: DVector::zeros(0),
+            y: DVector::zeros(0),
+            w: DVector::zeros(0),
+        }
+    }
+}
+
+fn update_matrices(
+    realm: wargaming::Realm,
+    source_sample: Sample,
+    target_sample: Sample,
+    matrices: &mut AHashMap<wargaming::Realm, Matrices>,
+) {
+    let Matrices { x, y, w } = matrices.remove(&realm).unwrap_or_default();
+    let i = x.nrows();
+    let x = x.insert_row(i, source_sample.posterior_mean());
+    let y = y.insert_row(i, target_sample.posterior_mean());
+    let w = w.insert_row(
+        i,
+        source_sample.n_posterior_battles_f64() + target_sample.n_posterior_battles_f64(),
+    );
+    matrices.insert(realm, Matrices { x, y, w });
+}
+
+#[derive(PartialEq)]
+enum RegressionResult {
+    Ok { bias: f64, k: f64 },
+    NotEnoughPoints,
+    Undefined,
+}
+
 /// See also: <https://arxiv.org/pdf/1311.1835.pdf>.
-fn make_regression(x: &DVector<f64>, y: &DVector<f64>, w: &DVector<f64>) -> Option<(f64, f64)> {
+#[instrument(level = "debug", skip_all)]
+fn make_regression(
+    x: &mut DVector<f64>,
+    y: &mut DVector<f64>,
+    w: &DVector<f64>,
+    n_min_points_per_regression: usize,
+) -> RegressionResult {
+    if x.nrows() < n_min_points_per_regression {
+        return RegressionResult::NotEnoughPoints;
+    }
+
+    x.apply(|x| {
+        *x = logit(*x);
+    });
+    y.apply(|y| {
+        *y = logit(*y);
+    });
+
     let total_weight = w.sum();
     let mean_x = x.dot(w) / total_weight;
     let mean_y = y.dot(w) / total_weight;
@@ -227,5 +261,9 @@ fn make_regression(x: &DVector<f64>, y: &DVector<f64>, w: &DVector<f64>) -> Opti
 
     let bias = mean_y - k * mean_x;
 
-    (bias.is_finite() && k.is_finite()).then_some((bias, k))
+    if bias.is_finite() && k.is_finite() {
+        RegressionResult::Ok { bias, k }
+    } else {
+        RegressionResult::Undefined
+    }
 }
