@@ -6,6 +6,7 @@ mod requests;
 mod responses;
 mod sample;
 
+use std::hash::Hash;
 use std::sync::Arc;
 
 use futures::future::try_join;
@@ -65,7 +66,9 @@ async fn run_trainer(
 
         let stream = database::TrainItem::get_stream(&db, since, &pointer).await?;
         read_stream(stream, &mut pointer, &mut train_set).await?;
-        let (returned_train_set, samples_by_tank) = spawn(aggregate_train_set(train_set)).await?;
+        let (returned_train_set, samples_by_tank) =
+            spawn(aggregate_train_set(train_set, |item| item.tank_id, |item| item.account_id))
+                .await?;
         train_set = returned_train_set;
         spawn(update_model(samples_by_tank, n_min_points_per_regression, model.clone())).await??;
 
@@ -102,35 +105,37 @@ async fn read_stream(
     Ok(())
 }
 
-type IndexedByTank<V> =
-    AHashMap<wargaming::TankId, AHashMap<(wargaming::Realm, wargaming::AccountId), V>>;
+type IndexedSamples<K1, K2> = AHashMap<wargaming::Realm, AHashMap<K1, AHashMap<K2, Sample>>>;
 
 #[instrument(level = "info", skip_all)]
-async fn aggregate_train_set(
+async fn aggregate_train_set<K1: Eq + Hash, K2: Eq + Hash>(
     train_set: Vec<database::TrainItem>,
-) -> (Vec<database::TrainItem>, IndexedByTank<Sample>) {
+    key_1: fn(&database::TrainItem) -> K1,
+    key_2: fn(&database::TrainItem) -> K2,
+) -> (Vec<database::TrainItem>, IndexedSamples<K1, K2>) {
     let start_instant = Instant::now();
     info!(n_train_items = train_set.len(), "aggregating…");
 
     let mut n_battles: u32 = 0;
-    let mut samples_by_tank: IndexedByTank<Sample> = AHashMap::default();
+    let mut aggregated: IndexedSamples<K1, K2> = AHashMap::default();
     for item in &train_set {
         n_battles += item.n_battles as u32;
-        let sample = Sample::from(item);
-        *samples_by_tank
-            .entry(item.tank_id)
+        *aggregated
+            .entry(item.realm)
             .or_default()
-            .entry((item.realm, item.account_id))
-            .or_default() += &sample;
+            .entry(key_1(item))
+            .or_default()
+            .entry(key_2(item))
+            .or_default() += &Sample::from(item);
     }
 
     info!(n_battles, elapsed = ?start_instant.elapsed(), "completed");
-    (train_set, samples_by_tank)
+    (train_set, aggregated)
 }
 
 #[instrument(level = "info", skip_all)]
 async fn update_model(
-    samples_by_tank: IndexedByTank<Sample>,
+    samples_by_tank: IndexedSamples<wargaming::TankId, wargaming::AccountId>,
     n_min_points_per_regression: usize,
     model: Arc<RwLock<Model>>,
 ) -> Result {
@@ -140,44 +145,50 @@ async fn update_model(
     let mut n_failed_regressions = 0;
     let mut n_points = 0;
 
-    for (n_vehicle, (target_vehicle_id, target_accounts)) in samples_by_tank.iter().enumerate() {
-        if n_vehicle % 25 == 0 {
-            info!(
-                n_vehicle,
-                of = samples_by_tank.len(),
-                n_regressions,
-                n_points,
-                n_failed_regressions
-            );
-        }
-        for (source_vehicle_id, source_accounts) in &samples_by_tank {
-            if source_vehicle_id == target_vehicle_id {
-                continue;
+    for (realm, samples_by_tank) in &samples_by_tank {
+        for (n_vehicle, (target_vehicle_id, target_accounts)) in samples_by_tank.iter().enumerate()
+        {
+            if n_vehicle % 25 == 0 {
+                info!(
+                    n_vehicle,
+                    of = samples_by_tank.len(),
+                    n_regressions,
+                    n_points,
+                    n_failed_regressions
+                );
             }
-            let mut matrices = AHashMap::default();
-            for ((realm, source_account_id), source_sample) in source_accounts {
-                if let Some(target_sample) = target_accounts.get(&(*realm, *source_account_id)) {
-                    update_matrices(*realm, *source_sample, *target_sample, &mut matrices);
+
+            for (source_vehicle_id, source_accounts) in samples_by_tank {
+                if source_vehicle_id == target_vehicle_id {
+                    continue;
                 }
-            }
-            for (realm, Matrices { mut x, mut y, w }) in matrices {
-                let result = make_regression(&mut x, &mut y, &w, n_min_points_per_regression);
-                if result == RegressionResult::Undefined {
-                    n_failed_regressions += 1;
+                let mut matrices = Matrices::default();
+                for (source_account_id, source_sample) in source_accounts {
+                    if let Some(target_sample) = target_accounts.get(source_account_id) {
+                        matrices = update_matrices(*source_sample, *target_sample, matrices);
+                    }
                 }
-                let mut model = model.write().await;
-                let target_regressions = model
-                    .regressions
-                    .entry(realm)
-                    .or_default()
-                    .entry(*target_vehicle_id)
-                    .or_default();
-                if let RegressionResult::Ok { bias, k } = result {
-                    n_points += x.nrows();
-                    n_regressions += 1;
-                    target_regressions.insert(*source_vehicle_id, Regression { k, bias, x, y, w });
-                } else {
-                    target_regressions.remove(source_vehicle_id);
+                {
+                    let result = make_regression(&mut matrices, n_min_points_per_regression);
+                    if result == RegressionResult::Undefined {
+                        n_failed_regressions += 1;
+                    }
+                    let mut model = model.write().await;
+                    let target_regressions = model
+                        .regressions
+                        .entry(*realm)
+                        .or_default()
+                        .entry(*target_vehicle_id)
+                        .or_default();
+                    let Matrices { x, y, w } = matrices;
+                    if let RegressionResult::Ok { bias, k } = result {
+                        n_points += x.nrows();
+                        n_regressions += 1;
+                        target_regressions
+                            .insert(*source_vehicle_id, Regression { k, bias, x, y, w });
+                    } else {
+                        target_regressions.remove(source_vehicle_id);
+                    }
                 }
             }
         }
@@ -204,21 +215,15 @@ impl Default for Matrices {
     }
 }
 
-fn update_matrices(
-    realm: wargaming::Realm,
-    source_sample: Sample,
-    target_sample: Sample,
-    matrices: &mut AHashMap<wargaming::Realm, Matrices>,
-) {
-    let Matrices { x, y, w } = matrices.remove(&realm).unwrap_or_default();
-    let i = x.nrows();
-    let x = x.insert_row(i, source_sample.posterior_mean());
-    let y = y.insert_row(i, target_sample.posterior_mean());
-    let w = w.insert_row(
+fn update_matrices(source_sample: Sample, target_sample: Sample, matrices: Matrices) -> Matrices {
+    let i = matrices.x.nrows();
+    let x = matrices.x.insert_row(i, source_sample.posterior_mean());
+    let y = matrices.y.insert_row(i, target_sample.posterior_mean());
+    let w = matrices.w.insert_row(
         i,
         source_sample.n_posterior_battles_f64() + target_sample.n_posterior_battles_f64(),
     );
-    matrices.insert(realm, Matrices { x, y, w });
+    Matrices { x, y, w }
 }
 
 #[derive(PartialEq)]
@@ -231,11 +236,11 @@ enum RegressionResult {
 /// See also: <https://arxiv.org/pdf/1311.1835.pdf>.
 #[instrument(level = "debug", skip_all)]
 fn make_regression(
-    x: &mut DVector<f64>,
-    y: &mut DVector<f64>,
-    w: &DVector<f64>,
+    matrices: &mut Matrices,
     n_min_points_per_regression: usize,
 ) -> RegressionResult {
+    let Matrices { x, y, w } = matrices;
+
     if x.nrows() < n_min_points_per_regression {
         return RegressionResult::NotEnoughPoints;
     }
