@@ -203,7 +203,10 @@ impl Crawler {
         };
         let tanks_stats = tanks_stats
             .into_iter()
-            .filter(|tank| Some(tank.last_battle_time) > account.last_battle_time)
+            .filter(|tank| match account.last_battle_time {
+                Some(last_battle_time) => tank.last_battle_time > last_battle_time,
+                _ => true,
+            })
             .collect_vec();
         let tank_snapshots = if !tanks_stats.is_empty() {
             debug!(n_updated_tanks = tanks_stats.len());
