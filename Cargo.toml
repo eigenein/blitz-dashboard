@@ -41,7 +41,7 @@ phf = { version = "0.11.0", features = ["macros"] }
 poem = { version = "1.3.32", features = ["anyhow", "i18n", "cookie"] }
 rand = "0.8.4"
 rand_distr = "0.4.3"
-reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "json"] }
+reqwest = { version = "0.11.12", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "json"] }
 sentry = { version = "0.27.0", default-features = false, features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "tracing", "anyhow"] }
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
