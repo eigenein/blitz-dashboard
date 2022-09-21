@@ -32,7 +32,7 @@ futures = { version = "0.3.21", default-features = false }
 governor = "0.4.2"
 human-repr = "1.0.1"
 humantime = "2.1.0"
-itertools = "0.10.3"
+itertools = "0.10.5"
 maud = "0.23.0"
 mongodb = { version = "2.2.2", features = ["zstd-compression", "bson-chrono-0_4", "bson-serde_with"] }
 nalgebra = { version = "0.31.1", features = ["serde-serialize"] }
