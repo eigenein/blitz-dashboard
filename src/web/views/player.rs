@@ -293,7 +293,7 @@ pub async fn get(
 
                     div.container {
                         div.columns.is-multiline {
-                            div class=(view_model.rating_snapshots.is_empty().then_some("column is-3-tablet is-3-desktop is-2-widescreen").unwrap_or("column is-5-tablet is-4-desktop is-3-widescreen")) {
+                            div class=(if view_model.rating_snapshots.is_empty() { "column is-3-tablet is-3-desktop is-2-widescreen" } else { "column is-5-tablet is-4-desktop is-3-widescreen" }) {
                                 div.card {
                                     header.card-header {
                                         p.card-header-title {
