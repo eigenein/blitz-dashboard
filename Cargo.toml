@@ -42,7 +42,7 @@ rand = "0.8.4"
 rand_distr = "0.4.3"
 reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "json"] }
 sentry = { version = "0.27.0", default-features = false, features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "tracing", "anyhow"] }
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.145", features = ["derive"] }
 serde_json = "1.0.81"
 serde_with = { version = "1.14.0", features = ["chrono"] }
 tokio = { version = "1.20.1", features = ["rt-multi-thread", "time", "signal"] }
