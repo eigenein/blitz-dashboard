@@ -21,7 +21,6 @@ pub async fn open(uri: &str) -> Result<Database> {
     models::AccountSnapshot::ensure_indexes(&database).await?;
     models::TankSnapshot::ensure_indexes(&database).await?;
     models::RatingSnapshot::ensure_indexes(&database).await?;
-    models::TrainItem::ensure_indexes(&database).await?;
 
     info!("connected");
     Ok(database)

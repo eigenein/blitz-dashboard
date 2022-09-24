@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::wargaming::models::{Nation, TankId};
 
+pub type Tier = u8;
+
 /// Represents a generic vehicle from the tankopedia.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Vehicle {
     pub tank_id: TankId,
     pub name: Cow<'static, str>,
-    pub tier: i32,
+    pub tier: Tier,
     pub is_premium: bool,
     pub nation: Nation,
 
@@ -31,18 +33,18 @@ impl Vehicle {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Clone, Debug, Copy, Ord, Eq, PartialEq, PartialOrd, Hash)]
 pub enum TankType {
-    #[serde(rename = "lightTank")]
+    #[serde(rename = "lightTank", alias = "Light")]
     Light,
 
-    #[serde(rename = "mediumTank")]
+    #[serde(rename = "mediumTank", alias = "Medium")]
     Medium,
 
-    #[serde(rename = "heavyTank")]
+    #[serde(rename = "heavyTank", alias = "Heavy")]
     Heavy,
 
-    #[serde(rename = "AT-SPG")]
+    #[serde(rename = "AT-SPG", alias = "AT")]
     AT,
 
     #[serde(other)]

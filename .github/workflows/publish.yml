@@ -118,9 +118,3 @@ jobs:
         run: |
           ssh yastatist "sudo systemctl restart crawler-eu
           systemctl status --lines=0 crawler-eu"
-
-      - name: Restart Trainer
-        if: ${{ true }}
-        run: |
-          ssh yastatist "sudo systemctl restart trainer
-          systemctl status --lines=0 trainer"

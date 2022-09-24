@@ -3,7 +3,6 @@ use std::net::IpAddr;
 
 use bpci::BoundedInterval;
 use futures::future::try_join;
-use itertools::Itertools;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::cookie::CookieJar;
 use poem::web::Path;
@@ -11,12 +10,10 @@ use sentry::protocol::IpAddress;
 
 use crate::math::traits::{CurrentWinRate, TrueWinRate};
 use crate::prelude::*;
-use crate::trainer::{Given, RecommendResponse};
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::views::player::path::PathSegments;
 use crate::web::views::player::stats_delta::StatsDelta;
-use crate::web::views::player::Testers;
 use crate::{database, wargaming};
 
 pub struct ViewModel {
@@ -27,7 +24,6 @@ pub struct ViewModel {
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
-    pub recommendations: RecommendResponse,
 }
 
 impl ViewModel {
@@ -39,8 +35,6 @@ impl ViewModel {
         db: &mongodb::Database,
         info_cache: &AccountInfoCache,
         tanks_cache: &AccountTanksCache,
-        trainer_client: &crate::trainer::Client,
-        testers: &Testers,
     ) -> poem::Result<Self> {
         let mut user =
             Self::get_sentry_user(realm, account_id, ip_addr).map_err(poem::Error::from)?;
@@ -68,23 +62,9 @@ impl ViewModel {
             .custom_or_else(|| actual_info.stats.random.current_win_rate());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
-        let is_recommender_tester = testers.trainer_testers.contains(&account_id);
-        let predict_ids = is_recommender_tester
-            .then(|| actual_tanks.keys().copied().collect_vec())
-            .unwrap_or_default();
         let stats_delta =
             StatsDelta::retrieve(db, realm, account_id, &actual_info.stats, actual_tanks, before)
                 .await?;
-        let recommendations = if is_recommender_tester && !stats_delta.tanks.is_empty() {
-            let given = stats_delta.tanks.iter().map(Given::from).collect();
-            trainer_client
-                .recommend(realm, given, predict_ids, target_victory_ratio)
-                .await
-                .stable_inspect_err(|error| error!("failed to fetch recommendations: {:#}", error))
-                .unwrap_or_default()
-        } else {
-            RecommendResponse::default()
-        };
 
         let rating_snapshots = database::RatingSnapshot::retrieve_season(
             db,
@@ -102,7 +82,6 @@ impl ViewModel {
             rating_snapshots,
             preferences,
             target_victory_ratio,
-            recommendations,
         })
     }
 

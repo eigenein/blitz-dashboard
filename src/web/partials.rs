@@ -15,9 +15,8 @@ pub use self::colors::*;
 pub use self::float::*;
 pub use self::human_float::*;
 pub use self::semaphore::*;
-use crate::prelude::Result;
+use crate::prelude::*;
 use crate::wargaming::models::tank_id::to_client_id;
-use crate::wargaming::{Nation, TankId, TankType, Vehicle};
 
 #[must_use]
 pub fn headers() -> Markup {
@@ -146,7 +145,7 @@ pub fn home_button(locale: &Locale) -> Result<Markup> {
     Ok(markup)
 }
 
-pub fn vehicle_th(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
+pub fn vehicle_th(vehicle: &wargaming::Vehicle, locale: &Locale) -> Result<Markup> {
     let markup = html! {
         th.is-white-space-nowrap {
             (vehicle_title(vehicle, locale)?)
@@ -155,17 +154,17 @@ pub fn vehicle_th(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
     Ok(markup)
 }
 
-pub fn vehicle_title(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
+pub fn vehicle_title(vehicle: &wargaming::Vehicle, locale: &Locale) -> Result<Markup> {
     let flag = match vehicle.nation {
-        Nation::China => "flag-icon-cn",
-        Nation::Europe => "flag-icon-eu",
-        Nation::France => "flag-icon-fr",
-        Nation::Germany => "flag-icon-de",
-        Nation::Japan => "flag-icon-jp",
-        Nation::Other => "flag-icon-xx",
-        Nation::Uk => "flag-icon-gb",
-        Nation::Usa => "flag-icon-us",
-        Nation::Ussr => "flag-icon-su",
+        wargaming::Nation::China => "flag-icon-cn",
+        wargaming::Nation::Europe => "flag-icon-eu",
+        wargaming::Nation::France => "flag-icon-fr",
+        wargaming::Nation::Germany => "flag-icon-de",
+        wargaming::Nation::Japan => "flag-icon-jp",
+        wargaming::Nation::Other => "flag-icon-xx",
+        wargaming::Nation::Uk => "flag-icon-gb",
+        wargaming::Nation::Usa => "flag-icon-us",
+        wargaming::Nation::Ussr => "flag-icon-su",
     };
     let name_class = if vehicle.is_premium {
         if COLLECTIBLE_VEHICLE_IDS.contains(&vehicle.tank_id) {
@@ -173,7 +172,7 @@ pub fn vehicle_title(vehicle: &Vehicle, locale: &Locale) -> Result<Markup> {
         } else {
             "has-text-warning-dark"
         }
-    } else if vehicle.type_ == TankType::Unknown {
+    } else if vehicle.type_ == wargaming::TankType::Unknown {
         "has-text-grey"
     } else {
         ""
@@ -216,20 +215,20 @@ pub fn render_float(value: f64, precision: usize) -> Markup {
     }
 }
 
-pub static TIER_MARKUP: phf::Map<i32, &'static str> = phf::phf_map! {
-    1_i32 => "Ⅰ",
-    2_i32 => "Ⅱ",
-    3_i32 => "Ⅲ",
-    4_i32 => "Ⅳ",
-    5_i32 => "Ⅴ",
-    6_i32 => "Ⅵ",
-    7_i32 => "Ⅶ",
-    8_i32 => "Ⅷ",
-    9_i32 => "Ⅸ",
-    10_i32 => "Ⅹ",
+pub static TIER_MARKUP: phf::Map<wargaming::Tier, &'static str> = phf::phf_map! {
+    1_u8 => "Ⅰ",
+    2_u8 => "Ⅱ",
+    3_u8 => "Ⅲ",
+    4_u8 => "Ⅳ",
+    5_u8 => "Ⅴ",
+    6_u8 => "Ⅵ",
+    7_u8 => "Ⅶ",
+    8_u8 => "Ⅷ",
+    9_u8 => "Ⅸ",
+    10_u8 => "Ⅹ",
 };
 
-static COLLECTIBLE_VEHICLE_IDS: phf::Set<TankId> = phf_set! {
+static COLLECTIBLE_VEHICLE_IDS: phf::Set<wargaming::TankId> = phf_set! {
     113_u32,
     1537_u32,
     1617_u32,

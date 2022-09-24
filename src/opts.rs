@@ -35,7 +35,6 @@ pub enum Subcommand {
     CrawlAccounts(CrawlAccountsOpts),
     ImportTankopedia(ImportTankopediaOpts),
     Web(WebOpts),
-    Train(TrainOpts),
 }
 
 /// Runs the web application.
@@ -62,14 +61,6 @@ pub struct WebOpts {
         default_value = "http://localhost:8082"
     )]
     pub trainer_base_url: String,
-
-    #[structopt(
-        long,
-        env = "BLITZ_DASHBOARD_WEB_TRAINER_TESTERS",
-        default_value = "513713270,5589968,10894576",
-        use_delimiter = true
-    )]
-    pub trainer_testers: Vec<wargaming::AccountId>,
 }
 
 /// Runs the account crawler.
@@ -106,9 +97,6 @@ pub struct CrawlerOpts {
 
     #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_HEARTBEAT_URL")]
     pub heartbeat_url: Option<String>,
-
-    #[clap(long, env = "BLITZ_DASHBOARD_CRAWLER_ENABLE_TRAIN")]
-    pub enable_train: bool,
 }
 
 /// Updates the bundled Tankopedia module.
@@ -221,48 +209,4 @@ pub struct InternalConnectionOpts {
         env = "BLITZ_DASHBOARD_MONGODB_URI"
     )]
     pub mongodb_uri: String,
-}
-
-#[derive(Parser)]
-pub struct TrainOpts {
-    /// MongoDB connection URI
-    #[structopt(
-        long = "mongodb-uri",
-        default_value = "mongodb://localhost/yastatist?directConnection=true",
-        env = "BLITZ_DASHBOARD_MONGODB_URI"
-    )]
-    pub mongodb_uri: String,
-
-    #[clap(
-        long,
-        parse(try_from_str = humantime::parse_duration),
-        default_value = "7d",
-        env = "BLITZ_DASHBOARD_TRAINER_PERIOD",
-    )]
-    pub train_period: time::Duration,
-
-    #[clap(
-        long,
-        parse(try_from_str = humantime::parse_duration),
-        default_value = "8h",
-        env = "BLITZ_DASHBOARD_TRAINER_INTERVAL",
-    )]
-    pub train_interval: time::Duration,
-
-    #[clap(long, default_value = "::", env = "BLITZ_DASHBOARD_TRAINER_BIND_HOST")]
-    pub host: String,
-
-    #[structopt(
-        long,
-        default_value = "8082",
-        env = "BLITZ_DASHBOARD_TRAINER_BIND_PORT"
-    )]
-    pub port: u16,
-
-    #[structopt(
-        long,
-        default_value = "2",
-        env = "BLITZ_DASHBOARD_TRAINER_MIN_POINTS_PER_REGRESSION"
-    )]
-    pub n_min_points_per_regression: usize,
 }

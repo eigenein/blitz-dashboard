@@ -14,7 +14,6 @@ use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 use crate::web::tracking_code::TrackingCode;
-use crate::web::views::player::Testers;
 
 mod cookies;
 mod i18n;
@@ -30,7 +29,7 @@ mod views;
 /// Run the web app.
 pub async fn run(opts: WebOpts) -> Result {
     sentry::configure_scope(|scope| scope.set_tag("app", "web"));
-    info!(host = opts.host.as_str(), port = opts.port, trainer_testers = ?opts.trainer_testers, "starting up…");
+    info!(host = opts.host.as_str(), port = opts.port, "starting up…");
 
     let app_data = AppData::initialize_from_opts(&opts).await?;
     let app = create_app(app_data).await?;
@@ -51,9 +50,7 @@ struct AppData {
     api: WargamingApi,
     mongodb: mongodb::Database,
     redis: fred::pool::RedisPool,
-    trainer_client: crate::trainer::Client,
     tracking_code: TrackingCode,
-    testers: Testers,
 }
 
 impl AppData {
@@ -70,18 +67,12 @@ impl AppData {
             redis::connect(&connections.internal.redis_uri, connections.internal.redis_pool_size)
                 .await?;
         let tracking_code = TrackingCode::new(opts)?;
-        let trainer_client = crate::trainer::Client::new(&opts.trainer_base_url)?;
-        let testers = Testers {
-            trainer_testers: opts.trainer_testers.iter().copied().collect(),
-        };
 
         Ok(Self {
             api,
             mongodb,
             redis,
             tracking_code,
-            trainer_client,
-            testers,
         })
     }
 }
@@ -95,9 +86,7 @@ async fn create_app(data: AppData) -> Result<impl Endpoint> {
         .data(AccountInfoCache::new(data.api.clone(), data.redis.clone()))
         .data(AccountTanksCache::new(data.api.clone(), data.redis.clone()))
         .data(data.redis)
-        .data(data.api)
-        .data(data.trainer_client)
-        .data(data.testers);
+        .data(data.api);
     Ok(app)
 }
 
@@ -130,10 +119,6 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/error", get(views::error::get_error))
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
-        .at(
-            "/analytics/:realm/:source_id/:target_id/regression",
-            get(views::analytics::get_regression),
-        )
         .data(i18n::build_resources()?)
         .with(Tracing)
         .with(CatchPanic::new())

@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use futures::{stream, Stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
-use mongodb::bson::oid::ObjectId;
 use tokio::sync::Mutex;
 
 use self::crawled_data::CrawledData;
@@ -24,7 +23,6 @@ pub struct Crawler {
     metrics: Mutex<CrawlerMetrics>,
     n_buffered_batches: usize,
     heartbeat_url: Option<String>,
-    enable_train: bool,
 }
 
 /// Runs the full-featured account crawler, that infinitely scans all the accounts
@@ -37,7 +35,7 @@ pub async fn run_crawler(opts: CrawlerOpts) -> Result {
         scope.set_tag("realm", opts.shared.realm);
     });
 
-    let crawler = Crawler::new(&opts.shared, opts.heartbeat_url, opts.enable_train).await?;
+    let crawler = Crawler::new(&opts.shared, opts.heartbeat_url).await?;
     let accounts = database::Account::get_sampled_stream(
         crawler.db.clone(),
         opts.shared.realm,
@@ -60,16 +58,12 @@ pub async fn crawl_accounts(opts: CrawlAccountsOpts) -> Result {
     let accounts = stream::iter(opts.start_id..opts.end_id)
         .map(|account_id| database::Account::new(opts.shared.realm, account_id))
         .map(Ok);
-    let crawler = Crawler::new(&opts.shared, None, false).await?;
+    let crawler = Crawler::new(&opts.shared, None).await?;
     crawler.run(accounts).await
 }
 
 impl Crawler {
-    pub async fn new(
-        opts: &SharedCrawlerOpts,
-        heartbeat_url: Option<String>,
-        enable_train: bool,
-    ) -> Result<Self> {
+    pub async fn new(opts: &SharedCrawlerOpts, heartbeat_url: Option<String>) -> Result<Self> {
         let api = WargamingApi::new(
             &opts.connections.application_id,
             opts.connections.api_timeout,
@@ -85,7 +79,6 @@ impl Crawler {
             db,
             n_buffered_batches: opts.buffering.n_batches,
             heartbeat_url,
-            enable_train,
         };
         Ok(this)
     }
@@ -196,11 +189,6 @@ impl Crawler {
             .iter()
             .map_into::<database::PartialTankStats>()
             .collect_vec();
-        let train_items = if self.enable_train {
-            self.gather_train_items(&account, &tanks_stats)
-        } else {
-            Vec::new()
-        };
         let tanks_stats = tanks_stats
             .into_iter()
             .filter(|tank| match account.last_battle_time {
@@ -237,45 +225,7 @@ impl Crawler {
             account_snapshot,
             tank_snapshots,
             rating_snapshot,
-            train_items,
         })
-    }
-
-    /// Gather the recommender system's train data.
-    /// Highly experimental.
-    #[instrument(level = "debug", skip_all, fields(account_id = account.id))]
-    fn gather_train_items(
-        &self,
-        account: &database::Account,
-        actual_tank_stats: &[wargaming::TankStats],
-    ) -> Vec<database::TrainItem> {
-        let previous_partial_tank_stats = account
-            .partial_tank_stats
-            .iter()
-            .map(|stats| (stats.tank_id, (stats.n_battles, stats.n_wins)))
-            .collect::<AHashMap<_, _>>();
-        actual_tank_stats
-            .iter()
-            .filter_map(|stats| {
-                previous_partial_tank_stats
-                    .get(&stats.tank_id)
-                    .and_then(|(n_battles, n_wins)| {
-                        let differs = stats.all.n_battles != 0
-                            && stats.all.n_battles > *n_battles
-                            && stats.all.n_wins >= *n_wins;
-                        differs.then(|| database::TrainItem {
-                            object_id: ObjectId::from_bytes([0; 12]),
-                            realm: account.realm,
-                            account_id: account.id,
-                            tank_id: stats.tank_id,
-                            last_battle_time: stats.last_battle_time,
-                            // TODO: check `n_battles >= n_wins`.
-                            n_battles: stats.all.n_battles - n_battles,
-                            n_wins: stats.all.n_wins - n_wins,
-                        })
-                    })
-            })
-            .collect()
     }
 
     #[instrument(skip_all, fields(account_id = crawled_data.account_snapshot.account_id))]

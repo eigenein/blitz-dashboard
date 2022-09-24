@@ -19,7 +19,6 @@ use self::interval_item::IntervalItem;
 use self::partials::*;
 use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
-pub use self::testers::*;
 use self::view_model::ViewModel;
 use crate::helpers::time::{from_days, from_hours, from_months, from_years};
 use crate::math::statistics::ConfidenceLevel;
@@ -41,7 +40,6 @@ mod path;
 mod percentage_item;
 mod stats_delta;
 mod target_victory_ratio;
-mod testers;
 mod view_constants;
 mod view_model;
 
@@ -81,24 +79,13 @@ pub async fn get(
     info_cache: Data<&AccountInfoCache>,
     tanks_cache: Data<&AccountTanksCache>,
     tracking_code: Data<&TrackingCode>,
-    Data(trainer_client): Data<&crate::trainer::Client>,
-    Data(testers): Data<&Testers>,
     real_ip: RealIp,
     locale: Locale,
 ) -> poem::Result<Response> {
     let start_instant = Instant::now();
 
-    let view_model = ViewModel::new(
-        real_ip.0,
-        path,
-        cookies,
-        *mongodb,
-        *info_cache,
-        *tanks_cache,
-        trainer_client,
-        testers,
-    )
-    .await?;
+    let view_model =
+        ViewModel::new(real_ip.0, path, cookies, *mongodb, *info_cache, *tanks_cache).await?;
 
     let vehicles_thead = html! {
         tr {
@@ -822,39 +809,6 @@ pub async fn get(
                                         }
                                         @if view_model.stats_delta.tanks.len() >= 25 {
                                             tfoot { (vehicles_thead) }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        @if !view_model.recommendations.predictions.is_empty() {
-                            div.card id="recommendations" {
-                                header.card-header {
-                                    p.card-header-title {
-                                        span.icon-text.is-flex-wrap-nowrap {
-                                            a.icon.has-text-link href="#recommendations" { i.fa-solid.fa-dice-d20 {} }
-                                            span { "Recommendations" }
-                                        }
-                                    }
-                                }
-                                div.card-content {
-                                    div.field.is-grouped.is-grouped-multiline {
-                                        @for prediction in view_model.recommendations.predictions {
-                                            div.control {
-                                                div.tags.has-addons.are-medium {
-                                                    span.tag title=(prediction.tank_id) {
-                                                        @let vehicle = get_vehicle(prediction.tank_id);
-                                                        (vehicle_title(&vehicle, &locale)?)
-                                                    }
-                                                    @let tag_color = match prediction.n_sources {
-                                                        n_sources if n_sources < 2 => "is-danger",
-                                                        n_sources if n_sources < 3 => "is-warning",
-                                                        _ => "is-success",
-                                                    };
-                                                    span.tag.(tag_color) { (Float::from(100.0 * prediction.p)) "%" }
-                                                }
-                                            }
                                         }
                                     }
                                 }
