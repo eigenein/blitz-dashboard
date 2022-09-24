@@ -83,5 +83,6 @@ title-damage-ratio-rating-short = RTG ratio
 hint-significantly-lower-than-target = Victory ratio is significantly lower than the target one
 hint-significantly-higher-than-target = Victory ratio is significantly higher than the target one
 navbar-item-confidence-level = Confidence level
-title-victory-probability = Victory probability
+title-victory-probability = Posterior victory probability
 title-period-4-hours = 4 hours
+title-target-victory-ratio-probability = Target VR probability

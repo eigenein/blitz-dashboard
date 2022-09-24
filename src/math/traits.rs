@@ -1,4 +1,5 @@
 use bpci::{BoundedInterval, NSuccessesSample, WilsonScore};
+use statrs::distribution::Beta;
 
 use crate::math::statistics::ConfidenceLevel;
 use crate::Result;
@@ -57,6 +58,8 @@ pub trait VictoryRatio {
         &self,
         confidence_level: ConfidenceLevel,
     ) -> Result<BoundedInterval<f64>>;
+
+    fn victory_ratio_beta(&self) -> Result<Beta>;
 }
 
 impl<T: NBattles + NWins> VictoryRatio for T {
@@ -74,6 +77,13 @@ impl<T: NBattles + NWins> VictoryRatio for T {
     ) -> Result<BoundedInterval<f64>> {
         let sample = NSuccessesSample::new(self.n_battles(), self.n_wins())?;
         Ok(sample.wilson_score_with_cc(confidence_level.z_value()))
+    }
+
+    fn victory_ratio_beta(&self) -> Result<Beta> {
+        Ok(Beta::new(
+            self.n_posterior_wins(),
+            self.n_posterior_battles() - self.n_posterior_wins(),
+        )?)
     }
 }
 

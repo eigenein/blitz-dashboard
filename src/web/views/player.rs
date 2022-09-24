@@ -12,6 +12,7 @@ use poem::i18n::Locale;
 use poem::web::cookie::CookieJar;
 use poem::web::{Data, Form, Html, Path, RealIp, Redirect};
 use poem::{handler, IntoResponse, Response};
+use statrs::distribution::ContinuousCDF;
 
 use self::damage_item::DamageItem;
 use self::display_preferences::UpdateDisplayPreferences;
@@ -140,6 +141,14 @@ pub async fn get(
                         span {
                             (locale.text("title-victory-probability")?)
                         }
+                    }
+                }
+            }
+
+            th {
+                a data-sort="target-victory-ratio-probability" {
+                    span.icon-text.is-flex-wrap-nowrap {
+                        span { (locale.text("title-target-victory-ratio-probability")?) }
                     }
                 }
             }
@@ -998,6 +1007,17 @@ fn render_tank_tr(
                     span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
                     span {
                         (Float::from(100.0 * victory_probability))
+                        span.has-text-grey { "%" }
+                    }
+                }
+            }
+
+            @let target_victory_ratio_probability = 1.0 - snapshot.stats.victory_ratio_beta()?.cdf(target_victory_ratio);
+            td.has-text-left data-sort="target-victory-ratio-probability" data-value=(target_victory_ratio_probability) {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
+                    span {
+                        (Float::from(100.0 * target_victory_ratio_probability))
                         span.has-text-grey { "%" }
                     }
                 }
