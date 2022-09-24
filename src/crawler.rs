@@ -14,7 +14,6 @@ use crate::{database, wargaming};
 
 mod crawled_data;
 mod metrics;
-mod next_check_at;
 
 pub struct Crawler {
     api: WargamingApi,

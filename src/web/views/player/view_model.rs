@@ -8,7 +8,7 @@ use poem::web::cookie::CookieJar;
 use poem::web::Path;
 use sentry::protocol::IpAddress;
 
-use crate::math::traits::{CurrentWinRate, TrueWinRate};
+use crate::math::traits::*;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
@@ -56,10 +56,10 @@ impl ViewModel {
         let current_win_rate = actual_info
             .stats
             .random
-            .true_win_rate(preferences.confidence_level)?;
+            .victory_ratio_interval(preferences.confidence_level)?;
         let target_victory_ratio = preferences
             .target_victory_ratio
-            .custom_or_else(|| actual_info.stats.random.current_win_rate());
+            .custom_or_else(|| actual_info.stats.random.victory_ratio());
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =

@@ -148,7 +148,7 @@ fn account_item(realm: Realm, account_info: &AccountInfo, locale: &Locale) -> Re
                     }
                     span.icon-text."mr-4" {
                         span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                        (Float::from(account_info.stats.random.current_win_rate() * 100.0).precision(2))
+                        (Float::from(account_info.stats.random.victory_ratio() * 100.0).precision(2))
                     }
                     span.icon-text."mr-4" {
                         span.icon.has-text-warning-dark { i.fa-solid.fa-house-damage {} }

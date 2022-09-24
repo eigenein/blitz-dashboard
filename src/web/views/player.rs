@@ -338,7 +338,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-random-battles")?) }
                                                     p.title {
-                                                        (PercentageItem::from(view_model.actual_info.stats.random.current_win_rate()).precision(2))
+                                                        (PercentageItem::from(view_model.actual_info.stats.random.victory_ratio()).precision(2))
                                                     }
                                                 }
                                             }
@@ -346,7 +346,7 @@ pub async fn get(
                                                 div {
                                                     p.heading { (locale.text("title-rating-battles")?) }
                                                     p.title {
-                                                        (PercentageItem::from(view_model.actual_info.stats.rating.basic.current_win_rate()).precision(2))
+                                                        (PercentageItem::from(view_model.actual_info.stats.rating.basic.victory_ratio()).precision(2))
                                                     }
                                                 }
                                             }
@@ -542,7 +542,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title {
-                                                            (PercentageItem::from(view_model.stats_delta.rating.current_win_rate()))
+                                                            (PercentageItem::from(view_model.stats_delta.rating.victory_ratio()))
                                                         }
                                                     }
                                                 }
@@ -550,7 +550,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.rating.true_win_rate(view_model.preferences.confidence_level)?))
+                                                            (IntervalItem(view_model.stats_delta.rating.victory_ratio_interval(view_model.preferences.confidence_level)?))
                                                         }
                                                     }
                                                 }
@@ -682,7 +682,7 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let period_win_rate = view_model.stats_delta.random.true_win_rate(view_model.preferences.confidence_level)?;
+                                    @let period_win_rate = view_model.stats_delta.random.victory_ratio_interval(view_model.preferences.confidence_level)?;
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.target_victory_ratio))) {
                                         header.card-header {
                                             p.card-header-title {
@@ -701,7 +701,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-average-masculine")?) }
                                                         p.title {
-                                                            (PercentageItem::from(view_model.stats_delta.random.current_win_rate()))
+                                                            (PercentageItem::from(view_model.stats_delta.random.victory_ratio()))
                                                         }
                                                     }
                                                 }
@@ -745,7 +745,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.random.true_survival_rate(view_model.preferences.confidence_level)?))
+                                                            (IntervalItem(view_model.stats_delta.random.survival_ratio_interval(view_model.preferences.confidence_level)?))
                                                         }
                                                     }
                                                 }
@@ -844,7 +844,7 @@ pub async fn get(
                                     a.navbar-item onclick="this.parentNode.submit()" {
                                         strong { (locale.text("navbar-item-current-masculine")?) }
                                         (PreEscaped("&nbsp;"))
-                                        span.has-text-grey { " (" (Float::from(100.0 * view_model.actual_info.stats.random.current_win_rate()).precision(2)) "%)" }
+                                        span.has-text-grey { " (" (Float::from(100.0 * view_model.actual_info.stats.random.victory_ratio()).precision(2)) "%)" }
                                     }
                                 }
                                 (target_victory_ratio_item(TargetVictoryRatio::P50, "P50"))
@@ -948,7 +948,7 @@ fn render_tank_tr(
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.stats.true_win_rate(confidence_level)?;
+        @let true_win_rate = snapshot.stats.victory_ratio_interval(confidence_level)?;
         @let win_rate_ordering = true_win_rate.partial_cmp(&target_victory_ratio);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -975,7 +975,7 @@ fn render_tank_tr(
                 }
             }
 
-            @let win_rate = snapshot.stats.current_win_rate();
+            @let win_rate = snapshot.stats.victory_ratio();
             td.has-text-right data-sort="win-rate" data-value=(win_rate) {
                 strong { (render_percentage(win_rate)) }
             }

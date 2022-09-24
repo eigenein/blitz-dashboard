@@ -5,9 +5,9 @@ use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
 use rand::prelude::*;
-use rand_distr::Exp1;
 use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
+use statrs::distribution::Exp;
 
 pub use self::id_projection::*;
 pub use self::random::*;
@@ -106,9 +106,10 @@ impl Account {
     ) -> Result<impl Stream<Item = Result<Self>>> {
         info!(sample_size, %min_offset, ?offset_scale);
         let offset_scale_secs = offset_scale.as_secs_f64();
+        let exp1 = Exp::new(1.0)?;
         let stream = try_unfold((1, database), move |(sample_number, database)| async move {
             let offset =
-                Duration::seconds((thread_rng().sample::<f64, _>(Exp1) * offset_scale_secs) as i64);
+                Duration::seconds((thread_rng().sample::<f64, _>(exp1) * offset_scale_secs) as i64);
             let before = Utc::now() - min_offset - offset;
             debug!(sample_number, ?before, "retrieving a sample…");
             let sample = Account::retrieve_sample(&database, realm, before, sample_size).await?;
