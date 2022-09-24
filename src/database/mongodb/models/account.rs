@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::TryFromInto;
 
 pub use self::id_projection::*;
-pub use self::partial_tank_stats::*;
 pub use self::random::*;
 pub use self::rating::*;
 pub use self::tank_last_battle_time::*;
@@ -18,7 +17,6 @@ use crate::database::mongodb::traits::*;
 use crate::prelude::*;
 
 mod id_projection;
-mod partial_tank_stats;
 mod random;
 mod rating;
 mod tank_last_battle_time;
@@ -37,9 +35,6 @@ pub struct Account {
     #[serde(rename = "lbts")]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
-
-    #[serde(default, rename = "pts")]
-    pub partial_tank_stats: Vec<PartialTankStats>,
 
     #[serde(default)]
     pub prio: bool,
@@ -80,7 +75,6 @@ impl Account {
             id: account_id,
             realm,
             last_battle_time: None,
-            partial_tank_stats: Vec::new(),
             prio: false,
         }
     }

@@ -185,10 +185,6 @@ impl Crawler {
             .iter()
             .map_into::<database::TankLastBattleTime>()
             .collect_vec();
-        let partial_tank_stats = tanks_stats
-            .iter()
-            .map_into::<database::PartialTankStats>()
-            .collect_vec();
         let tanks_stats = tanks_stats
             .into_iter()
             .filter(|tank| match account.last_battle_time {
@@ -213,7 +209,6 @@ impl Crawler {
             id: account.id,
             realm: self.realm,
             last_battle_time: Some(account_info.last_battle_time),
-            partial_tank_stats,
             prio: false,
         };
         let account_snapshot =
