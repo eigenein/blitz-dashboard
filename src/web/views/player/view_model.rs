@@ -56,7 +56,7 @@ impl ViewModel {
         let current_win_rate = actual_info
             .stats
             .random
-            .victory_ratio_interval(preferences.confidence_level)?;
+            .victory_ratio_interval(preferences.confidence_z_level)?;
         let target_victory_ratio = preferences
             .target_victory_ratio
             .custom_or_else(|| actual_info.stats.random.victory_ratio());

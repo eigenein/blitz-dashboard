@@ -22,7 +22,6 @@ use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
 use self::view_model::ViewModel;
 use crate::helpers::time::{from_days, from_hours, from_months, from_years};
-use crate::math::statistics::ConfidenceLevel;
 use crate::math::traits::*;
 use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
@@ -559,7 +558,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.rating.victory_ratio_interval(view_model.preferences.confidence_level)?))
+                                                            (IntervalItem(view_model.stats_delta.rating.victory_ratio_interval(view_model.preferences.confidence_z_level)?))
                                                         }
                                                     }
                                                 }
@@ -691,7 +690,7 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let period_win_rate = view_model.stats_delta.random.victory_ratio_interval(view_model.preferences.confidence_level)?;
+                                    @let period_win_rate = view_model.stats_delta.random.victory_ratio_interval(view_model.preferences.confidence_z_level)?;
                                     div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.target_victory_ratio))) {
                                         header.card-header {
                                             p.card-header-title {
@@ -754,7 +753,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-interval")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.random.survival_ratio_interval(view_model.preferences.confidence_level)?))
+                                                            (IntervalItem(view_model.stats_delta.random.survival_ratio_interval(view_model.preferences.confidence_z_level)?))
                                                         }
                                                     }
                                                 }
@@ -811,7 +810,7 @@ pub async fn get(
                                                 (render_tank_tr(
                                                     tank,
                                                     view_model.target_victory_ratio,
-                                                    view_model.preferences.confidence_level,
+                                                    view_model.preferences.confidence_z_level,
                                                     &locale,
                                                 )?)
                                             }
@@ -873,27 +872,29 @@ pub async fn get(
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-p {} }
                                 (view_model.preferences.confidence_level)
+                                span.has-text-grey { "%" }
                             }
                             div.navbar-dropdown {
-                                div.navbar-item {
-                                    (locale.text("navbar-item-confidence-level")?)
+                                form method="post" {
+                                    div.navbar-item {
+                                        (locale.text("navbar-item-confidence-level")?)
+                                    }
+                                    hr.navbar-divider;
+                                    div.navbar-item {
+                                        div.field.is-expanded {
+                                            div.field.has-addons {
+                                                div.control.has-icons-left.is-expanded {
+                                                    input.input name="confidence_level" type="number" min="1" max="99" value=(view_model.preferences.confidence_level);
+                                                    span.icon.is-small.is-left { i.fa-solid.fa-percentage {} }
+                                                }
+                                                div.control {
+                                                    button.button.is-link { span.icon { i.fa-solid.fa-arrow-right {} } }
+                                                }
+                                            }
+                                            p.help { (locale.text("navbar-item-confidence-level-help")?) }
+                                        }
+                                    }
                                 }
-                                hr.navbar-divider;
-                                (confidence_level_item(ConfidenceLevel::Z45, "Z45"))
-                                (confidence_level_item(ConfidenceLevel::Z50, "Z50"))
-                                (confidence_level_item(ConfidenceLevel::Z70, "Z70"))
-                                (confidence_level_item(ConfidenceLevel::Z75, "Z75"))
-                                (confidence_level_item(ConfidenceLevel::Z80, "Z80"))
-                                (confidence_level_item(ConfidenceLevel::Z85, "Z85"))
-                                (confidence_level_item(ConfidenceLevel::Z87, "Z87"))
-                                (confidence_level_item(ConfidenceLevel::Z88, "Z88"))
-                                (confidence_level_item(ConfidenceLevel::Z89, "Z89"))
-                                (confidence_level_item(ConfidenceLevel::Z90, "Z90"))
-                                (confidence_level_item(ConfidenceLevel::Z95, "Z95"))
-                                (confidence_level_item(ConfidenceLevel::Z96, "Z96"))
-                                (confidence_level_item(ConfidenceLevel::Z97, "Z97"))
-                                (confidence_level_item(ConfidenceLevel::Z98, "Z98"))
-                                (confidence_level_item(ConfidenceLevel::Z99, "Z99"))
                             }
                         }
                     }
@@ -952,12 +953,12 @@ pub async fn get(
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
     target_victory_ratio: f64,
-    confidence_level: ConfidenceLevel,
+    confidence_z_level: f64,
     locale: &Locale,
 ) -> Result<Markup> {
     let markup = html! {
         @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.stats.victory_ratio_interval(confidence_level)?;
+        @let true_win_rate = snapshot.stats.victory_ratio_interval(confidence_z_level)?;
         @let win_rate_ordering = true_win_rate.partial_cmp(&target_victory_ratio);
 
         tr.(partial_cmp_class(win_rate_ordering)) {
@@ -1092,15 +1093,6 @@ fn render_tank_tr(
         }
     };
     Ok(markup)
-}
-
-fn confidence_level_item(level: ConfidenceLevel, value: &str) -> Markup {
-    html! {
-        form method="post" {
-            input name="confidence_level" type="hidden" value=(value);
-            a.navbar-item onclick="this.parentNode.submit()" { (level) }
-        }
-    }
 }
 
 fn target_victory_ratio_item(ratio: TargetVictoryRatio, value: &str) -> Markup {

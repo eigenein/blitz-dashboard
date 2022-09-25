@@ -86,3 +86,4 @@ navbar-item-confidence-level = Уровень доверия
 title-victory-probability = Вероятность победы
 title-period-4-hours = 4 часа
 title-target-victory-ratio-probability = Вероятность целевого WR
+navbar-item-confidence-level-help = Используется при расчете интервалов

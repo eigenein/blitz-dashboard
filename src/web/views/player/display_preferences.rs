@@ -4,7 +4,7 @@ use std::time;
 use poem::web::cookie::{Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 
-use crate::math::statistics::ConfidenceLevel;
+use crate::math::z_level::Z_LEVELS;
 
 /// Form & cookie.
 #[serde_with::serde_as]
@@ -15,7 +15,7 @@ pub struct UpdateDisplayPreferences {
     pub period: Option<time::Duration>,
 
     #[serde(default)]
-    pub confidence_level: Option<ConfidenceLevel>,
+    pub confidence_level: Option<u8>,
 
     pub target_victory_ratio: Option<TargetVictoryRatio>,
 }
@@ -54,21 +54,27 @@ impl Add<UpdateDisplayPreferences> for UpdateDisplayPreferences {
 
 /// Display preferences.
 #[serde_with::serde_as]
-#[derive(Serialize, Hash)]
+#[derive(Serialize)]
 pub struct DisplayPreferences {
     #[serde_as(as = "serde_with::DurationSeconds")]
     pub period: time::Duration,
 
-    pub confidence_level: ConfidenceLevel,
+    pub confidence_level: u8,
+
+    pub confidence_z_level: f64,
 
     pub target_victory_ratio: TargetVictoryRatio,
 }
 
 impl From<UpdateDisplayPreferences> for DisplayPreferences {
     fn from(update: UpdateDisplayPreferences) -> Self {
+        let confidence_level = update
+            .confidence_level
+            .map_or(90, |level| level.clamp(1, 99));
         Self {
             period: update.period.unwrap_or(time::Duration::from_secs(86400)),
-            confidence_level: update.confidence_level.unwrap_or_default(),
+            confidence_level,
+            confidence_z_level: *Z_LEVELS.get(&confidence_level).unwrap(),
             target_victory_ratio: update.target_victory_ratio.unwrap_or_default(),
         }
     }

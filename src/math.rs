@@ -1,5 +1,6 @@
 pub mod statistics;
 pub mod traits;
+pub mod z_level;
 
 #[allow(dead_code)]
 #[inline]
