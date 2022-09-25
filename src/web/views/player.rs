@@ -27,7 +27,7 @@ use crate::prelude::*;
 use crate::tankopedia::get_vehicle;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::partials::*;
-use crate::web::views::player::display_preferences::{DisplayPreferences, TargetVictoryRatio};
+use crate::web::views::player::display_preferences::DisplayPreferences;
 use crate::web::{cookies, TrackingCode};
 use crate::{database, wargaming};
 
@@ -38,7 +38,6 @@ mod partials;
 mod path;
 mod percentage_item;
 mod stats_delta;
-mod target_victory_ratio;
 mod view_constants;
 mod view_model;
 
@@ -847,23 +846,28 @@ pub async fn get(
                                 }
                                 hr.navbar-divider;
                                 form method="post" {
-                                    input type="hidden" name="target_victory_ratio" value="Current";
-                                    a.navbar-item onclick="this.parentNode.submit()" {
-                                        strong { (locale.text("navbar-item-current-masculine")?) }
-                                        (PreEscaped("&nbsp;"))
-                                        span.has-text-grey { " (" (Float::from(100.0 * view_model.actual_info.stats.random.victory_ratio()).precision(2)) "%)" }
+                                    div.navbar-item {
+                                        div.field.is-expanded {
+                                            div.field.has-addons {
+                                                div.control.has-icons-left.is-expanded {
+                                                    input.input
+                                                        name="target_victory_ratio_percentage"
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        step="any"
+                                                        value=(view_model.preferences.target_victory_ratio_percentage)
+                                                        required;
+                                                    span.icon.is-small.is-left { i.fa-solid.fa-percentage {} }
+                                                }
+                                                div.control {
+                                                    button.button.is-link { span.icon { i.fa-solid.fa-arrow-right {} } }
+                                                }
+                                            }
+                                            p.help { (locale.text("navbar-item-target-victory-ratio-help")?) }
+                                        }
                                     }
                                 }
-                                (target_victory_ratio_item(TargetVictoryRatio::P50, "P50"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P55, "P55"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P60, "P60"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P65, "P65"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P70, "P70"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P75, "P75"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P80, "P80"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P85, "P85"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P90, "P90"))
-                                (target_victory_ratio_item(TargetVictoryRatio::P95, "P95"))
                             }
                         }
 
@@ -874,16 +878,22 @@ pub async fn get(
                                 span.has-text-grey { "%" }
                             }
                             div.navbar-dropdown {
+                                div.navbar-item {
+                                    (locale.text("navbar-item-confidence-level")?)
+                                }
+                                hr.navbar-divider;
                                 form method="post" {
-                                    div.navbar-item {
-                                        (locale.text("navbar-item-confidence-level")?)
-                                    }
-                                    hr.navbar-divider;
                                     div.navbar-item {
                                         div.field.is-expanded {
                                             div.field.has-addons {
                                                 div.control.has-icons-left.is-expanded {
-                                                    input.input name="confidence_level" type="number" min="1" max="99" value=(view_model.preferences.confidence_level);
+                                                    input.input
+                                                        name="confidence_level"
+                                                        type="number"
+                                                        min="1"
+                                                        max="99"
+                                                        value=(view_model.preferences.confidence_level)
+                                                        required;
                                                     span.icon.is-small.is-left { i.fa-solid.fa-percentage {} }
                                                 }
                                                 div.control {
@@ -1092,15 +1102,6 @@ fn render_tank_tr(
         }
     };
     Ok(markup)
-}
-
-fn target_victory_ratio_item(ratio: TargetVictoryRatio, value: &str) -> Markup {
-    html! {
-        form method="post" {
-            input type="hidden" name="target_victory_ratio" value=(value);
-            a.navbar-item onclick="this.parentNode.submit()" { (ratio) }
-        }
-    }
 }
 
 fn render_period_li(

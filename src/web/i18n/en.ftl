@@ -87,3 +87,4 @@ title-victory-probability = Posterior victory probability
 title-period-4-hours = 4 hours
 title-target-victory-ratio-probability = Target VR probability
 navbar-item-confidence-level-help = Used to calculate the intervals
+navbar-item-target-victory-ratio-help = Used to track the current progress

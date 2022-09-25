@@ -57,9 +57,7 @@ impl ViewModel {
             .stats
             .random
             .victory_ratio_interval(preferences.confidence_z_level)?;
-        let target_victory_ratio = preferences
-            .target_victory_ratio
-            .custom_or_else(|| actual_info.stats.random.victory_ratio());
+        let target_victory_ratio = preferences.target_victory_ratio_percentage / 100.0;
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =

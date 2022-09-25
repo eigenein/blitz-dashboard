@@ -17,7 +17,7 @@ pub struct UpdateDisplayPreferences {
     #[serde(default)]
     pub confidence_level: Option<u8>,
 
-    pub target_victory_ratio: Option<TargetVictoryRatio>,
+    pub target_victory_ratio_percentage: Option<f64>,
 }
 
 impl UpdateDisplayPreferences {
@@ -47,7 +47,9 @@ impl Add<UpdateDisplayPreferences> for UpdateDisplayPreferences {
         Self {
             period: rhs.period.or(self.period),
             confidence_level: rhs.confidence_level.or(self.confidence_level),
-            target_victory_ratio: rhs.target_victory_ratio.or(self.target_victory_ratio),
+            target_victory_ratio_percentage: rhs
+                .target_victory_ratio_percentage
+                .or(self.target_victory_ratio_percentage),
         }
     }
 }
@@ -63,7 +65,7 @@ pub struct DisplayPreferences {
 
     pub confidence_z_level: f64,
 
-    pub target_victory_ratio: TargetVictoryRatio,
+    pub target_victory_ratio_percentage: f64,
 }
 
 impl From<UpdateDisplayPreferences> for DisplayPreferences {
@@ -75,7 +77,9 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
             period: update.period.unwrap_or(time::Duration::from_secs(86400)),
             confidence_level,
             confidence_z_level: *Z_LEVELS.get(&confidence_level).unwrap(),
-            target_victory_ratio: update.target_victory_ratio.unwrap_or_default(),
+            target_victory_ratio_percentage: update
+                .target_victory_ratio_percentage
+                .map_or(50.0, |level| level.clamp(0.0, 100.0)),
         }
     }
 }
@@ -83,43 +87,5 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
 impl From<&CookieJar> for DisplayPreferences {
     fn from(jar: &CookieJar) -> Self {
         Self::from(UpdateDisplayPreferences::from(jar))
-    }
-}
-
-/// Target victory ratio defines which value we'll use to provide
-/// the «semaphore» hints to the user.
-#[must_use]
-#[derive(Serialize, Deserialize, Default, Copy, Clone, Hash)]
-pub enum TargetVictoryRatio {
-    #[default]
-    Current,
-
-    P50,
-    P55,
-    P60,
-    P65,
-    P70,
-    P75,
-    P80,
-    P85,
-    P90,
-    P95,
-}
-
-impl TargetVictoryRatio {
-    pub fn custom_or_else<F: FnOnce() -> f64>(self, current: F) -> f64 {
-        match self {
-            Self::P50 => 0.50,
-            Self::P55 => 0.55,
-            Self::P60 => 0.60,
-            Self::P65 => 0.65,
-            Self::P70 => 0.70,
-            Self::P75 => 0.75,
-            Self::P80 => 0.80,
-            Self::P85 => 0.85,
-            Self::P90 => 0.90,
-            Self::P95 => 0.95,
-            Self::Current => current(),
-        }
     }
 }
