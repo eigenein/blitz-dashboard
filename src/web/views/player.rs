@@ -31,7 +31,6 @@ use crate::web::views::player::display_preferences::{DisplayPreferences, TargetV
 use crate::web::{cookies, TrackingCode};
 use crate::{database, wargaming};
 
-mod confidence_level;
 mod damage_item;
 mod display_preferences;
 mod interval_item;

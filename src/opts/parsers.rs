@@ -3,7 +3,6 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use clap::PossibleValue;
 
-use crate::math::statistics::ConfidenceLevel;
 use crate::prelude::*;
 use crate::wargaming;
 
@@ -40,47 +39,6 @@ impl clap::ValueEnum for wargaming::Realm {
             Self::Europe => Some(PossibleValue::new(Self::Europe.to_str())),
             Self::Asia => Some(PossibleValue::new(Self::Asia.to_str())),
             Self::NorthAmerica => Some(PossibleValue::new(Self::NorthAmerica.to_str())),
-        }
-    }
-}
-
-impl clap::ValueEnum for ConfidenceLevel {
-    fn value_variants<'a>() -> &'a [Self] {
-        &[
-            ConfidenceLevel::Z50,
-            ConfidenceLevel::Z70,
-            ConfidenceLevel::Z75,
-            ConfidenceLevel::Z80,
-            ConfidenceLevel::Z85,
-            ConfidenceLevel::Z87,
-            ConfidenceLevel::Z88,
-            ConfidenceLevel::Z89,
-            ConfidenceLevel::Z90,
-            ConfidenceLevel::Z95,
-            ConfidenceLevel::Z96,
-            ConfidenceLevel::Z97,
-            ConfidenceLevel::Z98,
-            ConfidenceLevel::Z99,
-        ]
-    }
-
-    fn to_possible_value<'a>(&self) -> Option<PossibleValue<'a>> {
-        match self {
-            ConfidenceLevel::Z45 => Some(PossibleValue::new("45")),
-            ConfidenceLevel::Z50 => Some(PossibleValue::new("50")),
-            ConfidenceLevel::Z70 => Some(PossibleValue::new("70")),
-            ConfidenceLevel::Z75 => Some(PossibleValue::new("75")),
-            ConfidenceLevel::Z80 => Some(PossibleValue::new("80")),
-            ConfidenceLevel::Z85 => Some(PossibleValue::new("85")),
-            ConfidenceLevel::Z87 => Some(PossibleValue::new("87")),
-            ConfidenceLevel::Z88 => Some(PossibleValue::new("88")),
-            ConfidenceLevel::Z89 => Some(PossibleValue::new("89")),
-            ConfidenceLevel::Z90 => Some(PossibleValue::new("90")),
-            ConfidenceLevel::Z95 => Some(PossibleValue::new("95")),
-            ConfidenceLevel::Z96 => Some(PossibleValue::new("96")),
-            ConfidenceLevel::Z97 => Some(PossibleValue::new("97")),
-            ConfidenceLevel::Z98 => Some(PossibleValue::new("98")),
-            ConfidenceLevel::Z99 => Some(PossibleValue::new("99")),
         }
     }
 }
