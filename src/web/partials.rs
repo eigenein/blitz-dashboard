@@ -45,7 +45,7 @@ pub fn datetime(value: DateTime<Utc>, tense: Tense) -> Markup {
     html! {
         time
             datetime=(value.to_rfc3339())
-            title=(value) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
+            title=(maud::display(value)) { (HumanTime::from(value).to_text_en(Accuracy::Rough, tense)) }
     }
 }
 

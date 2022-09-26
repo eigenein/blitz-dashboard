@@ -27,7 +27,7 @@ impl<T: Display + num_traits::Float> Render for Float<T> {
     fn render(&self) -> Markup {
         html! {
             @if self.value.is_finite() {
-                span title=(self.value) {
+                span title=(maud::display(self.value)) {
                     (format!("{0:.1$}", self.value, self.precision))
                 }
             } @else if self.value.is_infinite() && self.value.is_sign_positive() {

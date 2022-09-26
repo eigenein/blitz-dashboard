@@ -256,7 +256,7 @@ pub async fn get(
                         div.navbar-item title="Последний бой" {
                             time.(if view_model.actual_info.has_recently_played() { "has-text-success-dark" } else if !view_model.actual_info.is_active() { "has-text-danger-dark" } else { "" })
                                 datetime=(view_model.actual_info.last_battle_time.to_rfc3339())
-                                title=(view_model.actual_info.last_battle_time) {
+                                title=(maud::display(view_model.actual_info.last_battle_time)) {
                                     (datetime(view_model.actual_info.last_battle_time, Tense::Past))
                                 }
                         }
@@ -275,7 +275,7 @@ pub async fn get(
                                 } @else {
                                     span.icon { i.far.fa-calendar-alt {} }
                                 }
-                                span title=(view_model.actual_info.created_at) {
+                                span title=(maud::display(view_model.actual_info.created_at)) {
                                     (datetime(view_model.actual_info.created_at, Tense::Present))
                                 }
                             }
