@@ -13,6 +13,7 @@ use poem::web::cookie::CookieJar;
 use poem::web::{Data, Form, Html, Path, RealIp, Redirect};
 use poem::{handler, IntoResponse, Response};
 use statrs::distribution::ContinuousCDF;
+use statrs::statistics::Distribution;
 
 use self::damage_item::DamageItem;
 use self::display_preferences::UpdateDisplayPreferences;
@@ -688,8 +689,9 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let period_win_rate = view_model.stats_delta.random.victory_ratio_interval(view_model.preferences.confidence_z_level)?;
-                                    div.card.(partial_cmp_class(period_win_rate.partial_cmp(&view_model.target_victory_ratio))) {
+                                    @let posterior_victory_ratio_beta = view_model.stats_delta.random.victory_ratio_beta()?;
+                                    @let target_victory_ratio_proba = posterior_victory_ratio_beta.cdf(view_model.target_victory_ratio);
+                                    div.card.(SemaphoreOptionalClass::new(target_victory_ratio_proba, "has-background-danger-light").threshold(view_model.preferences.confidence_level)).(SemaphoreOptionalClass::new(1.0 - target_victory_ratio_proba, "has-background-success-light").threshold(view_model.preferences.confidence_level)) {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -713,9 +715,9 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { (locale.text("title-interval")?) }
+                                                        p.heading { (locale.text("title-posterior-masculine")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(period_win_rate))
+                                                            (PercentageItem::from(posterior_victory_ratio_beta.mean().unwrap()))
                                                         }
                                                     }
                                                 }
@@ -874,7 +876,7 @@ pub async fn get(
                         div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-p {} }
-                                (view_model.preferences.confidence_level)
+                                (view_model.preferences.confidence_level_percentage)
                                 span.has-text-grey { "%" }
                             }
                             div.navbar-dropdown {
@@ -888,11 +890,11 @@ pub async fn get(
                                             div.field.has-addons {
                                                 div.control.has-icons-left.is-expanded {
                                                     input.input
-                                                        name="confidence_level"
+                                                        name="confidence_level_percentage"
                                                         type="number"
                                                         min="1"
                                                         max="99"
-                                                        value=(view_model.preferences.confidence_level)
+                                                        value=(view_model.preferences.confidence_level_percentage)
                                                         required;
                                                     span.icon.is-small.is-left { i.fa-solid.fa-percentage {} }
                                                 }
