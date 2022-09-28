@@ -32,6 +32,8 @@ impl<V: PartialOrd<T>, T> Render for SemaphoreClass<V, T> {
     }
 }
 
+/// TODO: refactor into `CdfSemaphore` with `distribution`, `confidence_level`
+/// and 2 options of rendered content.
 #[must_use]
 pub struct SemaphoreOptionalClass<R, V, T> {
     value: V,

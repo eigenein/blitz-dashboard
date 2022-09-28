@@ -1,14 +1,12 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 
-use bpci::BoundedInterval;
 use futures::future::try_join;
 use poem::error::{InternalServerError, NotFoundError};
 use poem::web::cookie::CookieJar;
 use poem::web::Path;
 use sentry::protocol::IpAddress;
 
-use crate::math::traits::*;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::web::views::player::display_preferences::DisplayPreferences;
@@ -19,8 +17,10 @@ use crate::{database, wargaming};
 pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
-    pub current_win_rate: BoundedInterval<f64>,
+
+    #[deprecated]
     pub target_victory_ratio: f64,
+
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
@@ -53,10 +53,6 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let preferences = DisplayPreferences::from(cookies);
-        let current_win_rate = actual_info
-            .stats
-            .random
-            .victory_ratio_interval(preferences.confidence_z_level)?;
         let target_victory_ratio = preferences.target_victory_ratio_percentage / 100.0;
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
@@ -75,7 +71,6 @@ impl ViewModel {
         Ok(Self {
             realm,
             actual_info,
-            current_win_rate,
             stats_delta,
             rating_snapshots,
             preferences,

@@ -13,6 +13,7 @@
 //! print("};")
 //! ```
 
+#[deprecated]
 pub static Z_LEVELS: phf::Map<u8, f64> = phf::phf_map! {
     1_u8 => 0.012533469508069278,
     2_u8 => 0.025068908258711057,

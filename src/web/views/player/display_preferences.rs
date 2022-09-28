@@ -63,10 +63,12 @@ pub struct DisplayPreferences {
     #[serde_as(as = "serde_with::DurationSeconds")]
     pub period: time::Duration,
 
+    /// TODO: change to `f64`.
     pub confidence_level_percentage: u8,
 
     pub confidence_level: f64,
 
+    #[deprecated]
     pub confidence_z_level: f64,
 
     pub target_victory_ratio_percentage: f64,
@@ -84,7 +86,7 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
             confidence_z_level: *Z_LEVELS.get(&confidence_level_percentage).unwrap(),
             target_victory_ratio_percentage: update
                 .target_victory_ratio_percentage
-                .map_or(50.0, |level| level.clamp(0.0, 100.0)),
+                .map_or(50.0, |level| level.clamp(0.01, 99.99)),
         }
     }
 }

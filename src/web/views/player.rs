@@ -855,8 +855,8 @@ pub async fn get(
                                                     input.input
                                                         name="target_victory_ratio_percentage"
                                                         type="number"
-                                                        min="0"
-                                                        max="100"
+                                                        min="0.01"
+                                                        max="99.99"
                                                         step="any"
                                                         value=(view_model.preferences.target_victory_ratio_percentage)
                                                         required;
@@ -892,8 +892,9 @@ pub async fn get(
                                                     input.input
                                                         name="confidence_level_percentage"
                                                         type="number"
-                                                        min="1"
-                                                        max="99"
+                                                        min="0.01"
+                                                        max="99.99"
+                                                        step="any"
                                                         value=(view_model.preferences.confidence_level_percentage)
                                                         required;
                                                     span.icon.is-small.is-left { i.fa-solid.fa-percentage {} }
