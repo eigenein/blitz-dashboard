@@ -760,7 +760,7 @@ pub async fn get(
                                                 div.level.is-mobile {
                                                     div.level-item.has-text-centered {
                                                         div {
-                                                            p.heading { (locale.text("title-on-average")?) }
+                                                            p.heading { (locale.text("title-average-feminine")?) }
                                                             p.title {
                                                                 (PercentageItem::from(view_model.stats_delta.random.accuracy()))
                                                             }
