@@ -5,7 +5,6 @@
 use std::time;
 use std::time::Instant;
 
-use bpci::Interval;
 use chrono_humanize::Tense;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use poem::i18n::Locale;
@@ -122,18 +121,6 @@ pub async fn get(
             }
 
             th {
-                a data-sort="true-win-rate-mean" {
-                    span.icon-text.is-flex-wrap-nowrap {
-                        span {
-                            abbr title=(locale.text("title-victory-ratio-interval-abbr")?) {
-                                (locale.text("title-victory-ratio-interval")?)
-                            }
-                        }
-                    }
-                }
-            }
-
-            th {
                 a data-sort="victory-probability" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span {
@@ -160,11 +147,11 @@ pub async fn get(
             }
 
             th {
-                a data-sort="true-gold" {
+                a data-sort="posterior-gold" {
                     span.icon-text.is-flex-wrap-nowrap {
                         span {
-                            abbr title=(locale.text("title-gold-booster-interval-abbr")?) {
-                                (locale.text("title-gold-booster-interval")?)
+                            abbr title=(locale.text("title-posterior-gold-abbr")?) {
+                                (locale.text("title-posterior-gold")?)
                             }
                         }
                     }
@@ -690,13 +677,14 @@ pub async fn get(
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
                                     @let posterior_victory_ratio_distribution = view_model.stats_delta.random.victory_ratio_beta()?;
-                                    div.card.(CdfSemaphore {
-                                        distribution: posterior_victory_ratio_distribution,
-                                        confidence_level: view_model.preferences.confidence_level,
-                                        x: view_model.target_victory_ratio,
-                                        render_low: HAS_BACKGROUND_DANGER_LIGHT,
-                                        render_high: HAS_BACKGROUND_SUCCESS_LIGHT,
-                                    }) {
+                                    div.card.(CdfSemaphore::new(
+                                        posterior_victory_ratio_distribution,
+                                        view_model.target_victory_ratio,
+                                        view_model.preferences.confidence_level)
+                                        .render_low(HAS_BACKGROUND_DANGER_LIGHT)
+                                        .render_high(HAS_BACKGROUND_SUCCESS_LIGHT)
+                                        .render_grey("")
+                                    ) {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -815,7 +803,7 @@ pub async fn get(
                                                 (render_tank_tr(
                                                     tank,
                                                     view_model.target_victory_ratio,
-                                                    view_model.preferences.confidence_z_level,
+                                                    view_model.preferences.confidence_level,
                                                     &locale,
                                                 )?)
                                             }
@@ -970,15 +958,21 @@ pub async fn get(
 fn render_tank_tr(
     snapshot: &database::TankSnapshot,
     target_victory_ratio: f64,
-    confidence_z_level: f64,
+    confidence_level: f64,
     locale: &Locale,
 ) -> Result<Markup> {
-    let markup = html! {
-        @let vehicle = get_vehicle(snapshot.tank_id);
-        @let true_win_rate = snapshot.stats.victory_ratio_interval(confidence_z_level)?;
-        @let win_rate_ordering = true_win_rate.partial_cmp(&target_victory_ratio);
+    let vehicle = get_vehicle(snapshot.tank_id);
+    let posterior_victory_ratio_distribution = snapshot.stats.victory_ratio_beta()?;
 
-        tr.(partial_cmp_class(win_rate_ordering)) {
+    let markup = html! {
+        tr.(CdfSemaphore::new(
+            posterior_victory_ratio_distribution,
+            target_victory_ratio,
+            confidence_level)
+            .render_high(HAS_BACKGROUND_SUCCESS_LIGHT)
+            .render_low(HAS_BACKGROUND_DANGER_LIGHT)
+            .render_grey("")
+        ) {
             (vehicle_th(&vehicle, locale)?)
 
             td.has-text-centered.is-white-space-nowrap {
@@ -1007,18 +1001,6 @@ fn render_tank_tr(
                 strong { (render_percentage(win_rate)) }
             }
 
-            td.is-white-space-nowrap.is-flex
-                data-sort="true-win-rate-mean"
-                data-value=(true_win_rate.mean())
-            {
-                span.icon-text.is-flex-wrap-nowrap."is-flex-grow-1".is-justify-content-space-around {
-                    (partial_cmp_icon(win_rate_ordering, locale)?)
-                    strong { span { (render_percentage(true_win_rate.lower())) } }
-                    span.icon.has-text-grey-light title=(true_win_rate.mean()) { i.fa-solid.fa-ellipsis {} }
-                    strong { span { (render_percentage(true_win_rate.upper())) } }
-                }
-            }
-
             @let victory_probability = snapshot.stats.posterior_victory_probability();
             td.has-text-left data-sort="victory-probability" data-value=(victory_probability) {
                 span.icon-text.is-flex-wrap-nowrap {
@@ -1030,10 +1012,17 @@ fn render_tank_tr(
                 }
             }
 
-            @let target_victory_ratio_probability = 1.0 - snapshot.stats.victory_ratio_beta()?.cdf(target_victory_ratio);
+            @let target_victory_ratio_probability = 1.0 - posterior_victory_ratio_distribution.cdf(target_victory_ratio);
             td.has-text-left data-sort="target-victory-ratio-probability" data-value=(target_victory_ratio_probability) {
                 span.icon-text.is-flex-wrap-nowrap {
-                    span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
+                    (CdfSemaphore::new(
+                        posterior_victory_ratio_distribution,
+                        target_victory_ratio,
+                        confidence_level)
+                        .render_high(html! { span.icon.has-text-success title=(locale.text("hint-significantly-higher-than-target")?) { i.fa-solid.fa-dice-d20 {} } })
+                        .render_low(html! { span.icon.has-text-danger title=(locale.text("hint-significantly-lower-than-target")?) { i.fa-solid.fa-dice-d20 {} } })
+                        .render_grey(html! { span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} } })
+                    )
                     span {
                         (Float::from(100.0 * target_victory_ratio_probability))
                         span.has-text-grey { "%" }
@@ -1049,16 +1038,11 @@ fn render_tank_tr(
                 }
             }
 
-            @let expected_gold = true_win_rate * (vehicle.tier as f64) + 10.0;
-            td.is-white-space-nowrap data-sort="true-gold" data-value=(expected_gold.mean()) {
+            @let posterior_gold = posterior_victory_ratio_distribution.mean().unwrap() * (vehicle.tier as f64) + 10.0;
+            td.is-white-space-nowrap data-sort="posterior-gold" data-value=(posterior_gold) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-warning-dark { i.fas.fa-coins {} }
-                    span {
-                        strong { (render_float(expected_gold.mean(), 1)) }
-                        span.has-text-grey {
-                            (format!(" ±{:.1}", expected_gold.margin()))
-                        }
-                    }
+                    strong { (Float::from(posterior_gold).precision(1)) }
                 }
             }
 
