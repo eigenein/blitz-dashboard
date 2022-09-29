@@ -16,7 +16,6 @@ use statrs::statistics::Distribution;
 
 use self::damage_item::DamageItem;
 use self::display_preferences::UpdateDisplayPreferences;
-use self::interval_item::IntervalItem;
 use self::partials::*;
 use self::path::PathSegments;
 use self::percentage_item::PercentageItem;
@@ -33,7 +32,6 @@ use crate::{database, wargaming};
 
 mod damage_item;
 mod display_preferences;
-mod interval_item;
 mod partials;
 mod path;
 mod percentage_item;
@@ -416,7 +414,7 @@ pub async fn get(
                     div.container {
                         @if view_model.stats_delta.rating.n_battles != 0 {
                             div.columns.is-multiline.has-background-warning-light id="rating-columns" {
-                                div.column."is-4-tablet"."is-4-desktop"."is-3-widescreen" {
+                                div.column."is-5-tablet"."is-4-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -486,7 +484,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-3-tablet"."is-3-desktop"."is-2-widescreen" {
+                                div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -517,7 +515,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-7-tablet"."is-6-desktop"."is-4-widescreen" {
+                                div.column."is-6-tablet"."is-4-desktop" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -542,9 +540,9 @@ pub async fn get(
                                                 }
                                                 div.level-item.has-text-centered {
                                                     div {
-                                                        p.heading { (locale.text("title-interval")?) }
+                                                        p.heading { (locale.text("title-posterior-masculine")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.rating.victory_ratio_interval(view_model.preferences.confidence_z_level)?))
+                                                            (PercentageItem::from(view_model.stats_delta.rating.posterior_victory_ratio_distribution()?.mean().unwrap()))
                                                         }
                                                     }
                                                 }
@@ -676,7 +674,7 @@ pub async fn get(
                                 div.column."is-6-tablet"."is-4-desktop" {
                                     @let posterior_victory_ratio_distribution = view_model.stats_delta.random.posterior_victory_ratio_distribution()?;
                                     @let posterior_victory_ratio = posterior_victory_ratio_distribution.mean().unwrap();
-                                    @let thumbs_down_probability = posterior_victory_ratio_distribution.cdf(view_model.target_victory_ratio);
+                                    @let thumbs_down_probability = posterior_victory_ratio_distribution.cdf(view_model.preferences.target_victory_ratio);
                                     div
                                         .card
                                         .has-background-danger-light[thumbs_down_probability > view_model.preferences.confidence_level]
@@ -791,7 +789,7 @@ pub async fn get(
                                             @for tank in &view_model.stats_delta.tanks {
                                                 (render_tank_tr(
                                                     tank,
-                                                    view_model.target_victory_ratio,
+                                                    view_model.preferences.target_victory_ratio,
                                                     view_model.preferences.confidence_level,
                                                     &locale,
                                                 )?)
@@ -821,7 +819,7 @@ pub async fn get(
                         div.navbar-item.has-dropdown.has-dropdown-up.is-hoverable {
                             a.navbar-link {
                                 span.icon.has-text-info { i.fa-solid.fa-percentage {} }
-                                (Float::from(100.0 * view_model.target_victory_ratio).precision(2))
+                                (Float::from(100.0 * view_model.preferences.target_victory_ratio).precision(2))
                                 span.has-text-grey { "%" }
                             }
                             div.navbar-dropdown {

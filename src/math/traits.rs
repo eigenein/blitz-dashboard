@@ -1,4 +1,3 @@
-use bpci::{BoundedInterval, NSuccessesSample, WilsonScore};
 use statrs::distribution::Beta;
 
 use crate::Result;
@@ -31,24 +30,8 @@ pub trait DamageDealt {
     fn damage_dealt(&self) -> u64;
 }
 
-pub trait SurvivalRatioInterval {
-    fn survival_ratio_interval(&self, z_level: f64) -> Result<BoundedInterval<f64>>;
-}
-
-impl<T: NBattles + NSurvivedBattles> SurvivalRatioInterval for T {
-    fn survival_ratio_interval(&self, z_level: f64) -> Result<BoundedInterval<f64>> {
-        let sample = NSuccessesSample::new(self.n_battles(), self.n_survived_battles())?;
-        Ok(sample.wilson_score_with_cc(z_level))
-    }
-}
-
 pub trait VictoryRatio {
     fn victory_ratio(&self) -> f64;
-
-    #[deprecated]
-    fn posterior_victory_probability(&self) -> f64;
-
-    fn victory_ratio_interval(&self, z_level: f64) -> Result<BoundedInterval<f64>>;
 
     fn posterior_victory_ratio_distribution(&self) -> Result<Beta>;
 }
@@ -56,15 +39,6 @@ pub trait VictoryRatio {
 impl<T: NBattles + NWins> VictoryRatio for T {
     fn victory_ratio(&self) -> f64 {
         self.n_wins() as f64 / self.n_battles() as f64
-    }
-
-    fn posterior_victory_probability(&self) -> f64 {
-        self.n_posterior_wins() / self.n_posterior_battles()
-    }
-
-    fn victory_ratio_interval(&self, z_level: f64) -> Result<BoundedInterval<f64>> {
-        let sample = NSuccessesSample::new(self.n_battles(), self.n_wins())?;
-        Ok(sample.wilson_score_with_cc(z_level))
     }
 
     fn posterior_victory_ratio_distribution(&self) -> Result<Beta> {

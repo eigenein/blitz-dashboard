@@ -17,10 +17,6 @@ use crate::{database, wargaming};
 pub struct ViewModel {
     pub realm: wargaming::Realm,
     pub actual_info: wargaming::AccountInfo,
-
-    #[deprecated]
-    pub target_victory_ratio: f64,
-
     pub stats_delta: StatsDelta,
     pub rating_snapshots: Vec<database::RatingSnapshot>,
     pub preferences: DisplayPreferences,
@@ -53,7 +49,6 @@ impl ViewModel {
         sentry::configure_scope(|scope| scope.set_user(Some(user)));
 
         let preferences = DisplayPreferences::from(cookies);
-        let target_victory_ratio = preferences.target_victory_ratio_percentage / 100.0;
         let before =
             Utc::now() - Duration::from_std(preferences.period).map_err(InternalServerError)?;
         let stats_delta =
@@ -74,7 +69,6 @@ impl ViewModel {
             stats_delta,
             rating_snapshots,
             preferences,
-            target_victory_ratio,
         })
     }
 
