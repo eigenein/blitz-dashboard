@@ -45,11 +45,12 @@ impl<T: NBattles + NSurvivedBattles> SurvivalRatioInterval for T {
 pub trait VictoryRatio {
     fn victory_ratio(&self) -> f64;
 
+    #[deprecated]
     fn posterior_victory_probability(&self) -> f64;
 
     fn victory_ratio_interval(&self, z_level: f64) -> Result<BoundedInterval<f64>>;
 
-    fn victory_ratio_beta(&self) -> Result<Beta>;
+    fn posterior_victory_ratio_distribution(&self) -> Result<Beta>;
 }
 
 impl<T: NBattles + NWins> VictoryRatio for T {
@@ -66,7 +67,7 @@ impl<T: NBattles + NWins> VictoryRatio for T {
         Ok(sample.wilson_score_with_cc(z_level))
     }
 
-    fn victory_ratio_beta(&self) -> Result<Beta> {
+    fn posterior_victory_ratio_distribution(&self) -> Result<Beta> {
         Ok(Beta::new(
             self.n_posterior_wins(),
             self.n_posterior_battles() - self.n_posterior_wins(),

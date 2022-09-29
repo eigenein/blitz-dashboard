@@ -672,19 +672,16 @@ pub async fn get(
                                         }
                                     }
                                 }
-                            }
 
-                            div.columns.is-multiline {
-                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let posterior_victory_ratio_distribution = view_model.stats_delta.random.victory_ratio_beta()?;
-                                    div.card.(CdfSemaphore::new(
-                                        posterior_victory_ratio_distribution,
-                                        view_model.target_victory_ratio,
-                                        view_model.preferences.confidence_level)
-                                        .render_low(HAS_BACKGROUND_DANGER_LIGHT)
-                                        .render_high(HAS_BACKGROUND_SUCCESS_LIGHT)
-                                        .render_grey("")
-                                    ) {
+                                div.column."is-6-tablet"."is-4-desktop" {
+                                    @let posterior_victory_ratio_distribution = view_model.stats_delta.random.posterior_victory_ratio_distribution()?;
+                                    @let posterior_victory_ratio = posterior_victory_ratio_distribution.mean().unwrap();
+                                    @let thumbs_down_probability = posterior_victory_ratio_distribution.cdf(view_model.target_victory_ratio);
+                                    div
+                                        .card
+                                        .has-background-danger-light[thumbs_down_probability > view_model.preferences.confidence_level]
+                                        .has-background-success-light[(1.0 - thumbs_down_probability) > view_model.preferences.confidence_level]
+                                    {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -710,7 +707,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-posterior-masculine")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (PercentageItem::from(posterior_victory_ratio_distribution.mean().unwrap()))
+                                                            (PercentageItem::from(posterior_victory_ratio))
                                                         }
                                                     }
                                                 }
@@ -719,7 +716,7 @@ pub async fn get(
                                     }
                                 }
 
-                                div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
+                                div.column."is-4-tablet"."is-3-desktop"."is-3-widescreen" {
                                     div.card {
                                         header.card-header {
                                             p.card-header-title {
@@ -742,21 +739,13 @@ pub async fn get(
                                                         }
                                                     }
                                                 }
-                                                div.level-item.has-text-centered {
-                                                    div {
-                                                        p.heading { (locale.text("title-interval")?) }
-                                                        p.title.is-white-space-nowrap {
-                                                            (IntervalItem(view_model.stats_delta.random.survival_ratio_interval(view_model.preferences.confidence_z_level)?))
-                                                        }
-                                                    }
-                                                }
                                             }
                                         }
                                     }
                                 }
 
                                 @if view_model.stats_delta.random.n_shots != 0 {
-                                    div.column."is-4-tablet"."is-3-desktop"."is-2-widescreen" {
+                                    div.column."is-4-tablet"."is-3-desktop"."is-3-widescreen" {
                                         div.card {
                                             header.card-header {
                                                 p.card-header-title {
@@ -885,7 +874,7 @@ pub async fn get(
                                                     input.input
                                                         name="confidence_level_percentage"
                                                         type="number"
-                                                        min="0.01"
+                                                        min="50.00"
                                                         max="99.99"
                                                         step="any"
                                                         value=(view_model.preferences.confidence_level_percentage)
@@ -962,17 +951,16 @@ fn render_tank_tr(
     locale: &Locale,
 ) -> Result<Markup> {
     let vehicle = get_vehicle(snapshot.tank_id);
-    let posterior_victory_ratio_distribution = snapshot.stats.victory_ratio_beta()?;
+    let posterior_victory_ratio_distribution =
+        snapshot.stats.posterior_victory_ratio_distribution()?;
+    let posterior_victory_ratio = posterior_victory_ratio_distribution.mean().unwrap();
+    let thumbs_down_probability = posterior_victory_ratio_distribution.cdf(target_victory_ratio);
 
     let markup = html! {
-        tr.(CdfSemaphore::new(
-            posterior_victory_ratio_distribution,
-            target_victory_ratio,
-            confidence_level)
-            .render_high(HAS_BACKGROUND_SUCCESS_LIGHT)
-            .render_low(HAS_BACKGROUND_DANGER_LIGHT)
-            .render_grey("")
-        ) {
+        tr
+            .has-background-danger-light[thumbs_down_probability > confidence_level]
+            .has-background-success-light[(1.0 - thumbs_down_probability > confidence_level)]
+        {
             (vehicle_th(&vehicle, locale)?)
 
             td.has-text-centered.is-white-space-nowrap {
@@ -1001,12 +989,11 @@ fn render_tank_tr(
                 strong { (render_percentage(win_rate)) }
             }
 
-            @let victory_probability = snapshot.stats.posterior_victory_probability();
-            td.has-text-left data-sort="victory-probability" data-value=(victory_probability) {
+            td.has-text-left data-sort="victory-probability" data-value=(posterior_victory_ratio) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} }
                     span {
-                        (Float::from(100.0 * victory_probability))
+                        (Float::from(100.0 * posterior_victory_ratio))
                         span.has-text-grey { "%" }
                     }
                 }
@@ -1015,14 +1002,13 @@ fn render_tank_tr(
             @let target_victory_ratio_probability = 1.0 - posterior_victory_ratio_distribution.cdf(target_victory_ratio);
             td.has-text-left data-sort="target-victory-ratio-probability" data-value=(target_victory_ratio_probability) {
                 span.icon-text.is-flex-wrap-nowrap {
-                    (CdfSemaphore::new(
-                        posterior_victory_ratio_distribution,
-                        target_victory_ratio,
-                        confidence_level)
-                        .render_high(html! { span.icon.has-text-success title=(locale.text("hint-significantly-higher-than-target")?) { i.fa-solid.fa-dice-d20 {} } })
-                        .render_low(html! { span.icon.has-text-danger title=(locale.text("hint-significantly-lower-than-target")?) { i.fa-solid.fa-dice-d20 {} } })
-                        .render_grey(html! { span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} } })
-                    )
+                    @if thumbs_down_probability > confidence_level {
+                        span.icon.has-text-danger title=(locale.text("hint-significantly-lower-than-target")?) { i.fa-solid.fa-dice-d20 {} }
+                    } @else if 1.0 - thumbs_down_probability > confidence_level {
+                        span.icon.has-text-success title=(locale.text("hint-significantly-higher-than-target")?) { i.fa-solid.fa-dice-d20 {} }
+                    } @else {
+                        { span.icon.has-text-grey-light { i.fa-solid.fa-dice-d20 {} } }
+                    }
                     span {
                         (Float::from(100.0 * target_victory_ratio_probability))
                         span.has-text-grey { "%" }

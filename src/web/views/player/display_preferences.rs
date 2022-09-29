@@ -78,7 +78,7 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
     fn from(update: UpdateDisplayPreferences) -> Self {
         let confidence_level_percentage = update
             .confidence_level_percentage
-            .map_or(90, |level| level.clamp(1, 99));
+            .map_or(90, |level| level.clamp(50, 99));
         Self {
             period: update.period.unwrap_or(time::Duration::from_secs(86400)),
             confidence_level_percentage,
