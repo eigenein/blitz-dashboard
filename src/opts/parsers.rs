@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use clap::PossibleValue;
+use clap::builder::PossibleValue;
 
 use crate::prelude::*;
 use crate::wargaming;
@@ -33,7 +33,7 @@ impl clap::ValueEnum for wargaming::Realm {
         &[Self::Russia, Self::Europe, Self::NorthAmerica, Self::Asia]
     }
 
-    fn to_possible_value<'a>(&self) -> Option<PossibleValue<'a>> {
+    fn to_possible_value(&self) -> Option<PossibleValue> {
         match self {
             Self::Russia => Some(PossibleValue::new(Self::Russia.to_str())),
             Self::Europe => Some(PossibleValue::new(Self::Europe.to_str())),

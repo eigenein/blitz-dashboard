@@ -73,7 +73,7 @@ pub struct CrawlerOpts {
     #[clap(
         long,
         default_value = "0s",
-        parse(try_from_str = humantime::parse_duration),
+        value_parser = humantime::parse_duration,
         env = "BLITZ_DASHBOARD_CRAWLER_MIN_OFFSET",
     )]
     pub min_offset: time::Duration,
@@ -81,7 +81,7 @@ pub struct CrawlerOpts {
     #[clap(
         long,
         default_value = "24h",
-        parse(try_from_str = humantime::parse_duration),
+        value_parser = humantime::parse_duration,
         env = "BLITZ_DASHBOARD_CRAWLER_OFFSET_SCALE",
     )]
     pub offset_scale: time::Duration,
@@ -90,7 +90,7 @@ pub struct CrawlerOpts {
     #[clap(
         long,
         default_value = "100",
-        parse(try_from_str = parsers::non_zero_usize),
+        value_parser = parsers::non_zero_usize,
         env = "BLITZ_DASHBOARD_CRAWLER_SAMPLE_SIZE",
     )]
     pub sample_size: usize,
@@ -114,11 +114,11 @@ pub struct CrawlAccountsOpts {
     pub shared: SharedCrawlerOpts,
 
     /// Starting account ID.
-    #[clap(long, parse(try_from_str = parsers::account_id))]
+    #[clap(long, value_parser = parsers::account_id)]
     pub start_id: wargaming::AccountId,
 
     /// Ending account ID (non-inclusive).
-    #[clap(long, parse(try_from_str = parsers::account_id))]
+    #[clap(long, value_parser = parsers::account_id)]
     pub end_id: wargaming::AccountId,
 }
 
@@ -132,7 +132,7 @@ pub struct BufferingOpts {
     #[structopt(
         long = "n-buffered-batches",
         default_value = "1",
-        parse(try_from_str = parsers::non_zero_usize),
+        value_parser = parsers::non_zero_usize,
         env = "BLITZ_DASHBOARD_CRAWLER_BUFFERED_BATCHES",
     )]
     pub n_batches: usize,
@@ -159,7 +159,7 @@ pub struct SharedCrawlerOpts {
     #[structopt(
         long,
         default_value = "1min",
-        parse(try_from_str = humantime::parse_duration),
+        value_parser = humantime::parse_duration,
         env = "BLITZ_DASHBOARD_CRAWLER_LOG_INTERVAL",
     )]
     pub log_interval: time::Duration,
@@ -178,7 +178,7 @@ pub struct ConnectionOpts {
     #[structopt(
         long,
         default_value = "10sec",
-        parse(try_from_str = humantime::parse_duration),
+        value_parser = humantime::parse_duration,
         env = "BLITZ_DASHBOARD_API_TIMEOUT",
     )]
     pub api_timeout: time::Duration,
