@@ -694,8 +694,8 @@ pub async fn get(
                                         distribution: posterior_victory_ratio_distribution,
                                         confidence_level: view_model.preferences.confidence_level,
                                         x: view_model.target_victory_ratio,
-                                        render_low: "has-background-danger-light",
-                                        render_high: "has-background-success-light",
+                                        render_low: HAS_BACKGROUND_DANGER_LIGHT,
+                                        render_high: HAS_BACKGROUND_SUCCESS_LIGHT,
                                     }) {
                                         header.card-header {
                                             p.card-header-title {
