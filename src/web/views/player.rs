@@ -689,9 +689,14 @@ pub async fn get(
 
                             div.columns.is-multiline {
                                 div.column."is-8-tablet"."is-6-desktop"."is-4-widescreen" {
-                                    @let posterior_victory_ratio_beta = view_model.stats_delta.random.victory_ratio_beta()?;
-                                    @let target_victory_ratio_proba = posterior_victory_ratio_beta.cdf(view_model.target_victory_ratio);
-                                    div.card.(SemaphoreOptionalClass::new(target_victory_ratio_proba, "has-background-danger-light").threshold(view_model.preferences.confidence_level)).(SemaphoreOptionalClass::new(1.0 - target_victory_ratio_proba, "has-background-success-light").threshold(view_model.preferences.confidence_level)) {
+                                    @let posterior_victory_ratio_distribution = view_model.stats_delta.random.victory_ratio_beta()?;
+                                    div.card.(CdfSemaphore {
+                                        distribution: posterior_victory_ratio_distribution,
+                                        confidence_level: view_model.preferences.confidence_level,
+                                        x: view_model.target_victory_ratio,
+                                        render_low: "has-background-danger-light",
+                                        render_high: "has-background-success-light",
+                                    }) {
                                         header.card-header {
                                             p.card-header-title {
                                                 span.icon-text.is-flex-wrap-nowrap {
@@ -717,7 +722,7 @@ pub async fn get(
                                                     div {
                                                         p.heading { (locale.text("title-posterior-masculine")?) }
                                                         p.title.is-white-space-nowrap {
-                                                            (PercentageItem::from(posterior_victory_ratio_beta.mean().unwrap()))
+                                                            (PercentageItem::from(posterior_victory_ratio_distribution.mean().unwrap()))
                                                         }
                                                     }
                                                 }
