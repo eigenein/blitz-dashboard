@@ -131,7 +131,7 @@ impl Account {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
         let update = doc! {
             "$setOnInsert": { "lbts": null, "pts": [] },
-            "$set": { "prio": true },
+            // TODO: "$set": { "prio": true },
         };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
