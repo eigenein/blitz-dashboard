@@ -311,6 +311,14 @@
     "nation": "usa",
     "type": "mediumTank"
   },
+  "11905": {
+    "tank_id": 11905,
+    "name": "Shadowhunter",
+    "tier": 6,
+    "is_premium": true,
+    "nation": "european",
+    "type": "mediumTank"
+  },
   "12033": {
     "tank_id": 12033,
     "name": "SU-122-54",

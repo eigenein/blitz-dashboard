@@ -422,9 +422,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.0.3"
+version = "4.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3943ff31339d6d148b4e9cfb9b1eb0f814989ed21dfede3c2d2e11f3d9497f60"
+checksum = "5840cd9093aabeabf7fd932754c435b7674520fc3ddc935c397837050f0f1e4b"
 dependencies = [
  "atty",
  "bitflags",
@@ -437,9 +437,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.0.1"
+version = "4.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca689d7434ce44517a12a89456b2be4d1ea1cafcd8f581978c03d45f5a5c12a7"
+checksum = "92289ffc6fb4a85d85c246ddb874c05a87a2e540fb6ad52f7ca07c8c1e1840b1"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -590,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "ctr"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d14f329cfbaf5d0e06b5e87fff7e265d2673c5ea7d2c27691a2c107db1442a0"
+checksum = "0369ee1ad671834580515889b80f2ea915f23b8be8d0daa4bbaf2ac5c7590835"
 dependencies = [
  "cipher",
 ]
@@ -773,7 +773,7 @@ dependencies = [
  "intl_pluralrules",
  "rustc-hash",
  "self_cell",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "unic-langid",
 ]
 
@@ -1021,7 +1021,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "quanta",
  "rand",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
 ]
 
 [[package]]
@@ -1869,7 +1869,7 @@ dependencies = [
  "instant",
  "libc",
  "redox_syscall 0.2.16",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "winapi 0.3.9",
 ]
 
@@ -1882,7 +1882,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "redox_syscall 0.2.16",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "windows-sys",
 ]
 
@@ -2030,7 +2030,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "sse-codec",
  "thiserror",
  "time 0.3.14",
@@ -2758,9 +2758,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
+checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 
 [[package]]
 name = "socket2"
@@ -3276,7 +3276,7 @@ dependencies = [
  "once_cell",
  "regex",
  "sharded-slab",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "thread_local",
  "tracing",
  "tracing-core",
@@ -3301,7 +3301,7 @@ dependencies = [
  "lazy_static",
  "log",
  "rand",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "thiserror",
  "tinyvec",
  "tokio 1.21.2",
@@ -3322,7 +3322,7 @@ dependencies = [
  "lru-cache",
  "parking_lot 0.12.1",
  "resolv-conf",
- "smallvec 1.9.0",
+ "smallvec 1.10.0",
  "thiserror",
  "tokio 1.21.2",
  "trust-dns-proto",
