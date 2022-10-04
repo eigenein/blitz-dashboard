@@ -1,6 +1,5 @@
 use futures::stream::{iter, try_unfold};
 use futures::{Stream, TryStreamExt};
-use itertools::Itertools;
 use mongodb::bson::{doc, Document};
 use mongodb::options::*;
 use mongodb::{bson, Database, IndexModel};
@@ -35,9 +34,6 @@ pub struct Account {
     #[serde(rename = "lbts")]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub last_battle_time: Option<DateTime>,
-
-    #[serde(default)]
-    pub prio: bool,
 }
 
 impl TypedDocument for Account {
@@ -46,7 +42,7 @@ impl TypedDocument for Account {
 
 #[async_trait]
 impl Indexes for Account {
-    type I = [IndexModel; 3];
+    type I = [IndexModel; 2];
 
     fn indexes() -> Self::I {
         [
@@ -56,14 +52,6 @@ impl Indexes for Account {
             IndexModel::builder()
                 .keys(doc! { "rlm": 1, "aid": 1 })
                 .options(IndexOptions::builder().unique(true).build())
-                .build(),
-            IndexModel::builder()
-                .keys(doc! { "rlm": 1, "prio": 1 })
-                .options(
-                    IndexOptions::builder()
-                        .partial_filter_expression(doc! { "prio": {"$eq": true} })
-                        .build(),
-                )
                 .build(),
         ]
     }
@@ -75,7 +63,6 @@ impl Account {
             id: account_id,
             realm,
             last_battle_time: None,
-            prio: false,
         }
     }
 }
@@ -129,10 +116,7 @@ impl Account {
         account_id: wargaming::AccountId,
     ) -> Result {
         let filter = doc! { "rlm": realm.to_str(), "aid": account_id };
-        let update = doc! {
-            "$setOnInsert": { "lbts": null, "pts": [] },
-            // TODO: "$set": { "prio": true },
-        };
+        let update = doc! { "$setOnInsert": { "lbts": null } };
         let options = UpdateOptions::builder().upsert(true).build();
         Self::collection(in_)
             .update_one(filter, update, options)
@@ -151,28 +135,17 @@ impl Account {
         debug!(sample_size, "retrieving…");
         let start_instant = Instant::now();
 
-        // Retrieve marked accounts:
+        // Retrieve new accounts:
         let mut accounts = {
-            debug!("querying marked high-prio accounts…");
-            let filter = doc! { "rlm": realm.to_str(), "prio": true };
+            debug!("querying new accounts…");
+            let filter = doc! { "rlm": realm.to_str(), "lbts": null };
             let options = FindOptions::builder().limit(sample_size as i64).build();
-            let prio_accounts = Self::find_vec(from, filter, options).await?;
+            let new_accounts = Self::find_vec(from, filter, options).await?;
             debug!(
-                n_prio_accounts = prio_accounts.len(),
+                n_new_accounts = new_accounts.len(),
                 elapsed = ?start_instant.elapsed(),
             );
-            if !prio_accounts.is_empty() {
-                debug!(n_prio_accounts = prio_accounts.len(), "clearing the prio flags…");
-                let query = doc! {
-                    "rlm": realm.to_str(),
-                    "aid": { "$in": prio_accounts.iter().map(|account| account.id).collect_vec() },
-                };
-                Self::collection(from)
-                    .update_many(query, doc! { "$set": { "prio": false } }, None)
-                    .await?;
-                debug!(elapsed = ?start_instant.elapsed(), "cleared the prio flags");
-            }
-            prio_accounts
+            new_accounts
         };
 
         // Retrieve random selection of accounts:

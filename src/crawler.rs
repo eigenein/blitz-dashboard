@@ -208,7 +208,6 @@ impl Crawler {
             id: account.id,
             realm: self.realm,
             last_battle_time: Some(account_info.last_battle_time),
-            prio: false,
         };
         let account_snapshot =
             database::AccountSnapshot::new(self.realm, &account_info, tank_last_battle_times);
