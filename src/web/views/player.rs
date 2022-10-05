@@ -393,8 +393,8 @@ pub async fn get(
                     nav.tabs.is-boxed.has-text-weight-medium {
                         div.container {
                             ul {
-                                (render_period_li(view_model.preferences.period, from_hours(4), &locale.text("title-period-4-hours")?)?)
-                                (render_period_li(view_model.preferences.period, from_hours(8), &locale.text("title-period-8-hours")?)?)
+                                (render_period_li(view_model.preferences.period, from_hours(2), &locale.text("title-period-2-hours")?)?)
+                                (render_period_li(view_model.preferences.period, from_hours(6), &locale.text("title-period-6-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_hours(12), &locale.text("title-period-12-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_days(1), &locale.text("title-period-24-hours")?)?)
                                 (render_period_li(view_model.preferences.period, from_days(2), &locale.text("title-period-2-days")?)?)
@@ -846,7 +846,6 @@ pub async fn get(
                                                     button.button.is-link { span.icon { i.fa-solid.fa-arrow-right {} } }
                                                 }
                                             }
-                                            p.help { (locale.text("navbar-item-target-victory-ratio-help")?) }
                                         }
                                     }
                                 }
@@ -883,7 +882,6 @@ pub async fn get(
                                                     button.button.is-link { span.icon { i.fa-solid.fa-arrow-right {} } }
                                                 }
                                             }
-                                            p.help { (locale.text("navbar-item-confidence-level-help")?) }
                                         }
                                     }
                                 }
