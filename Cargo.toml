@@ -47,7 +47,7 @@ statrs = "0.16.0"
 tokio = { version = "1.21.2", features = ["rt-multi-thread", "time", "signal"] }
 tracing = { version = "0.1.34", features = ["std"] }
 tracing-futures = { version = "0.2.5", features = ["tokio", "futures-03"] }
-tracing-subscriber = { version = "0.3.11", features = ["fmt", "env-filter"] }
+tracing-subscriber = { version = "0.3.16", features = ["fmt", "env-filter"] }
 
 [dev-dependencies]
 poem = { version = "1.3.44", features = ["test"], default-features = false }
