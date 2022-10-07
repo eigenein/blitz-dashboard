@@ -1751,6 +1751,14 @@
     "nation": "ussr",
     "type": "mediumTank"
   },
+  "25633": {
+    "tank_id": 25633,
+    "name": "M-IV-Y",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "usa",
+    "type": "heavyTank"
+  },
   "257": {
     "tank_id": 257,
     "name": "SU-85",
@@ -3990,6 +3998,14 @@
     "is_premium": false,
     "nation": "uk",
     "type": "AT-SPG"
+  },
+  "9073": {
+    "tank_id": 9073,
+    "name": "Titan-54d",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "other",
+    "type": "mediumTank"
   },
   "9089": {
     "tank_id": 9089,
