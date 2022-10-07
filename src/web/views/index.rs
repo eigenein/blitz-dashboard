@@ -32,14 +32,14 @@ pub async fn get(
                             div.columns {
                                 div.column."is-6"."is-offset-3" {
                                     form action="/search" method="GET" {
-                                        div.field.is-grouped.is-grouped-centered.is-grouped-multiline {
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/103809874" { "🇷🇺 Invincible_Beast" }
-                                            }
-                                            p.control {
-                                                a.button.is-rounded.is-small href="/ru/3851977" { "🇷🇺 D_W_S" }
-                                            }
-                                        }
+                                        // div.field.is-grouped.is-grouped-centered.is-grouped-multiline {
+                                        //     p.control {
+                                        //         a.button.is-rounded.is-small href="/ru/103809874" { "🇷🇺 Invincible_Beast" }
+                                        //     }
+                                        //     p.control {
+                                        //         a.button.is-rounded.is-small href="/ru/3851977" { "🇷🇺 D_W_S" }
+                                        //     }
+                                        // }
                                         (
                                             AccountSearch::new(wargaming::Realm::Europe, &locale)
                                                 .class("is-medium is-rounded")
