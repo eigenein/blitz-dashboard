@@ -822,7 +822,7 @@ pub async fn get(
                                 (Float::from(100.0 * view_model.preferences.target_victory_ratio).precision(2))
                                 span.has-text-grey { "%" }
                             }
-                            div.navbar-dropdown {
+                            div.navbar-dropdown style="width: 11rem" {
                                 div.navbar-item {
                                     (locale.text("navbar-item-target-victory-ratio")?)
                                 }
@@ -858,7 +858,7 @@ pub async fn get(
                                 (view_model.preferences.confidence_level_percentage)
                                 span.has-text-grey { "%" }
                             }
-                            div.navbar-dropdown {
+                            div.navbar-dropdown style="width: 11rem" {
                                 div.navbar-item {
                                     (locale.text("navbar-item-confidence-level")?)
                                 }
