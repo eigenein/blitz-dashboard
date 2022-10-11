@@ -24,7 +24,7 @@ async-compression = { version = "0.3.14", features = ["zstd"] }
 async-trait = "0.1.57"
 chrono = { version = "0.4.19" }
 chrono-humanize = "0.2.1"
-clap = { version = "4.0.10", features = ["cargo", "derive", "env"] }
+clap = { version = "4.0.12", features = ["cargo", "derive", "env"] }
 either = "1.6.1"
 fred = { version = "5.1.0", default-features = false, features = ["partial-tracing", "no-client-setname"] }
 futures = { version = "0.3.21", default-features = false }
