@@ -39,6 +39,14 @@
     "nation": "uk",
     "type": "AT-SPG"
   },
+  "10097": {
+    "tank_id": 10097,
+    "name": "Medjay",
+    "tier": 5,
+    "is_premium": true,
+    "nation": "other",
+    "type": "heavyTank"
+  },
   "10241": {
     "tank_id": 10241,
     "name": "SU-100M1",
@@ -70,6 +78,14 @@
     "is_premium": false,
     "nation": "usa",
     "type": "AT-SPG"
+  },
+  "10353": {
+    "tank_id": 10353,
+    "name": "Pharaoh",
+    "tier": 7,
+    "is_premium": true,
+    "nation": "other",
+    "type": "heavyTank"
   },
   "1041": {
     "tank_id": 1041,
