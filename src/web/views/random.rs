@@ -11,6 +11,6 @@ pub async fn get_random(db: Data<&mongodb::Database>) -> Result<impl IntoRespons
     let realm = [wargaming::Realm::Russia, wargaming::Realm::Europe]
         .choose(&mut thread_rng())
         .unwrap();
-    let account = database::Account::sample_account(*db, *realm).await?;
+    let account = database::Account::sample_account(&db, *realm).await?;
     Ok(Redirect::temporary(format!("/{}/{}", realm.to_str(), account.id)))
 }

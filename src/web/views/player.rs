@@ -81,7 +81,7 @@ pub async fn get(
     let start_instant = Instant::now();
 
     let view_model =
-        ViewModel::new(real_ip.0, path, cookies, *mongodb, *info_cache, *tanks_cache).await?;
+        ViewModel::new(real_ip.0, path, cookies, &mongodb, &info_cache, &tanks_cache).await?;
 
     let vehicles_thead = html! {
         tr {
