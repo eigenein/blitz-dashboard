@@ -1431,6 +1431,14 @@
     "nation": "usa",
     "type": "lightTank"
   },
+  "21841": {
+    "tank_id": 21841,
+    "name": "Caliban",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "uk",
+    "type": "heavyTank"
+  },
   "22033": {
     "tank_id": 22033,
     "name": "Agent",
