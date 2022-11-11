@@ -23,6 +23,7 @@ pub struct BasicStats {
     pub hits: u32,
     pub frags: u32,
     pub xp: u64,
+    pub spotted: u32,
 }
 
 impl From<&database::RandomStatsSnapshot> for BasicStats {
@@ -38,6 +39,7 @@ impl From<&database::RandomStatsSnapshot> for BasicStats {
             hits: snapshot.n_hits,
             frags: snapshot.n_frags,
             xp: snapshot.xp,
+            spotted: snapshot.n_spotted,
         }
     }
 }
@@ -57,6 +59,7 @@ impl Sub<database::RandomStatsSnapshot> for BasicStats {
             n_hits: self.hits - rhs.n_hits,
             n_frags: self.frags - rhs.n_frags,
             xp: self.xp - rhs.xp,
+            n_spotted: self.spotted - rhs.n_spotted,
         }
     }
 }

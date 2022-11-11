@@ -52,6 +52,10 @@ pub struct RandomStatsSnapshot {
     #[serde_as(as = "TryFromInto<i64>")]
     #[serde(default, rename = "xp", skip_serializing_if = "is_default")]
     pub xp: u64,
+
+    #[serde_as(as = "TryFromInto<i32>")]
+    #[serde(default, rename = "spot", skip_serializing_if = "is_default")]
+    pub n_spotted: u32,
 }
 
 impl NBattles for RandomStatsSnapshot {
@@ -97,6 +101,7 @@ impl From<wargaming::BasicStats> for RandomStatsSnapshot {
             n_hits: statistics.hits,
             n_frags: statistics.frags,
             xp: statistics.xp,
+            n_spotted: statistics.spotted,
         }
     }
 }
@@ -120,6 +125,7 @@ impl Sub<RandomStatsSnapshot> for RandomStatsSnapshot {
             n_hits: self.n_hits.saturating_sub(rhs.n_hits),
             n_frags: self.n_frags.saturating_sub(rhs.n_frags),
             xp: self.xp.saturating_sub(rhs.xp),
+            n_spotted: self.n_spotted.saturating_sub(rhs.n_spotted),
         }
     }
 }
