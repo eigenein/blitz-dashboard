@@ -43,6 +43,7 @@ impl AccountIdProjection {
         let filter = doc! { "rlm": realm.to_str(), "lbts": { "$gte": since } };
         let options = FindOptions::builder()
             .projection(doc! { "_id": 0, "aid": 1 })
+            .batch_size(10000)
             .build();
         Ok(Self::collection(from).find(filter, options).await?)
     }

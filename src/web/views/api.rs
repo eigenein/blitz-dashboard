@@ -22,8 +22,10 @@ pub async fn get_active_since(
 ) -> Result<impl IntoResponse> {
     let stream = AccountIdProjection::retrieve_active_since(&db, realm, since)
         .await?
-        .map(move |account| account.map(|account| format!("{}\n", account.id).into_bytes()));
+        .map(move |account| {
+            account.map(|account| format!("{{\"id\":{}}}\n", account.id).into_bytes())
+        });
     Ok(Response::from(Body::from_bytes_stream(stream))
         .with_header("Cache-Control", CACHE_CONTROL)
-        .with_content_type("text/plain"))
+        .with_content_type("application/jsonlines"))
 }
