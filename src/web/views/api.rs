@@ -27,5 +27,5 @@ pub async fn get_active_since(
         });
     Ok(Response::from(Body::from_bytes_stream(stream))
         .with_header("Cache-Control", CACHE_CONTROL)
-        .with_content_type("application/jsonlines"))
+        .with_content_type("application/json"))
 }
