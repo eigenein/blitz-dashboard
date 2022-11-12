@@ -892,7 +892,7 @@ pub async fn get(
 
                 @if !view_model.rating_snapshots.is_empty() {
                     script src="https://cdn.jsdelivr.net/npm/apexcharts" {}
-                    script {
+                    script defer {
                         (PreEscaped("
                             'use strict';
                             const mode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
