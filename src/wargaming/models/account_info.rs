@@ -31,12 +31,13 @@ impl AccountInfo {
     }
 
     pub fn is_account_birthday(&self) -> bool {
-        let today = Utc::today();
-        today.day() == self.created_at.day() && today.month() == self.created_at.month()
+        let now = Utc::now();
+        now.day() == self.created_at.day() && now.month() == self.created_at.month()
     }
 
     pub fn is_prerelease_account(&self) -> bool {
-        self.created_at.date() < Utc.ymd(2014, 6, 26)
+        // Thu Jun 26 2014 00:00:00 GMT+0000
+        self.created_at.timestamp() <= 1403740800
     }
 }
 
