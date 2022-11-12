@@ -19,7 +19,8 @@ impl TypedDocument for AccountIdProjection {
 }
 
 impl AccountIdProjection {
-    pub async fn retrieve_page(
+    #[instrument(skip_all, level = "info", fields(realm = realm, limit = limit))]
+    pub async fn retrieve_recently_active(
         from: &Database,
         realm: &str,
         limit: i64,
@@ -28,6 +29,19 @@ impl AccountIdProjection {
         let options = FindOptions::builder()
             .limit(limit)
             .sort(doc! { "rlm": 1, "lbts": -1 })
+            .projection(doc! { "_id": 0, "aid": 1 })
+            .build();
+        Ok(Self::collection(from).find(filter, options).await?)
+    }
+
+    #[instrument(skip_all, level = "info", fields(realm = ?realm, since = ?since))]
+    pub async fn retrieve_active_since(
+        from: &Database,
+        realm: wargaming::Realm,
+        since: DateTime,
+    ) -> Result<impl Stream<Item = Result<Self, mongodb::error::Error>>> {
+        let filter = doc! { "rlm": realm.to_str(), "lbts": { "$gte": since } };
+        let options = FindOptions::builder()
             .projection(doc! { "_id": 0, "aid": 1 })
             .build();
         Ok(Self::collection(from).find(filter, options).await?)

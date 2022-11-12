@@ -12,6 +12,7 @@ use crate::opts::WebOpts;
 use crate::prelude::*;
 use crate::wargaming::cache::account::{AccountInfoCache, AccountTanksCache};
 use crate::wargaming::WargamingApi;
+use crate::web::middleware::timeit::TimeItMiddleware;
 use crate::web::middleware::{ErrorMiddleware, SecurityHeadersMiddleware, SentryMiddleware};
 use crate::web::tracking_code::TrackingCode;
 
@@ -120,6 +121,10 @@ async fn create_standalone_app() -> Result<impl Endpoint> {
         .at("/random", get(views::random::get_random))
         .at("/sitemaps/:realm/sitemap.txt", get(views::sitemaps::get_sitemap))
         .at("/api/health", get(views::api::get_health))
+        .at(
+            "/api/:realm/accounts/:since/active-since",
+            get(views::api::get_active_since).with(TimeItMiddleware),
+        )
         .data(i18n::build_resources()?)
         .with(Tracing)
         .with(CatchPanic::new())

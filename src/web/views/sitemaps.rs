@@ -14,14 +14,10 @@ pub async fn get_sitemap(
     Path(realm): Path<String>,
 ) -> Result<impl IntoResponse> {
     let start_instant = Instant::now();
-    let stream = database::AccountIdProjection::retrieve_page(&db, &realm, 1000).await?;
+    let stream = database::AccountIdProjection::retrieve_recently_active(&db, &realm, 1000).await?;
     info!(elapsed_secs = ?start_instant.elapsed(), "stream ready");
     let stream = stream.map(move |account| {
-        account.map(|account| {
-            format!("https://yastati.st/{}/{}\n", realm, account.id)
-                .as_bytes()
-                .to_vec()
-        })
+        account.map(|account| format!("https://yastati.st/{}/{}\n", realm, account.id).into_bytes())
     });
 
     Ok(Response::from(Body::from_bytes_stream(stream))
