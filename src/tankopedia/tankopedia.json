@@ -47,6 +47,14 @@
     "nation": "other",
     "type": "heavyTank"
   },
+  "10113": {
+    "tank_id": 10113,
+    "name": "Carro da Combattimento 45t",
+    "tier": 10,
+    "is_premium": true,
+    "nation": "european",
+    "type": "mediumTank"
+  },
   "10241": {
     "tank_id": 10241,
     "name": "SU-100M1",
