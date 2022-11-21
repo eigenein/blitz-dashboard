@@ -28,6 +28,10 @@ pub struct RatingSnapshot {
     #[serde_as(as = "bson::DateTime")]
     pub date: DateTime,
 
+    /// The first seen rating during the day.
+    #[serde(default, rename = "op")]
+    pub open_rating: wargaming::MmRating,
+
     /// The last seen rating during the day.
     #[serde(default, rename = "cl")]
     pub close_rating: wargaming::MmRating,
@@ -47,6 +51,7 @@ impl RatingSnapshot {
             account_id: account_info.id,
             season: account_info.stats.rating.current_season,
             date: account_info.last_battle_time.date().and_hms(0, 0, 0),
+            open_rating: account_info.stats.rating.mm_rating,
             close_rating: account_info.stats.rating.mm_rating,
         })
     }
@@ -83,7 +88,10 @@ impl Upsert for RatingSnapshot {
 
     #[inline]
     fn update(&self) -> Result<Self::Update> {
-        Ok(doc! { "$set": { "cl": self.close_rating.0 } })
+        Ok(doc! {
+            "$set": { "cl": self.close_rating.0 },
+            "$setOnInsert": { "op": self.open_rating.0 },
+        })
     }
 }
 
