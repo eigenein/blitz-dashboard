@@ -69,6 +69,7 @@ impl WargamingApi {
                 .gzip(true)
                 .deflate(true)
                 .tcp_nodelay(true)
+                .pool_max_idle_per_host(0) // https://github.com/hyperium/hyper/issues/2312
                 .build()?,
             request_counter: Arc::new(AtomicU32::new(0)),
             rate_limiter: Arc::new(rate_limiter),
