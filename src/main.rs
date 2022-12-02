@@ -22,6 +22,7 @@ mod math;
 mod opts;
 mod prelude;
 mod tankopedia;
+mod test_replay;
 pub mod wargaming;
 mod web;
 
@@ -46,6 +47,7 @@ async fn run_subcommand(opts: Opts) -> Result {
         Subcommand::CrawlAccounts(opts) => crawler::crawl_accounts(opts).await,
         Subcommand::ImportTankopedia(opts) => tankopedia::import(opts).await,
         Subcommand::Web(opts) => web::run(opts).await,
+        Subcommand::TestReplay(opts) => test_replay::run(opts),
     };
     info!(elapsed = ?start_instant.elapsed(), "the command has finished");
     if let Err(error) = &result {

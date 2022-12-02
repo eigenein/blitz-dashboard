@@ -1,6 +1,7 @@
 //! CLI options.
 
 use std::num::NonZeroU32;
+use std::path::PathBuf;
 
 use clap::builder::EnumValueParser;
 use clap::Parser;
@@ -34,6 +35,7 @@ pub enum Subcommand {
     Crawl(CrawlerOpts),
     CrawlAccounts(CrawlAccountsOpts),
     ImportTankopedia(ImportTankopediaOpts),
+    TestReplay(TestReplayOpts),
     Web(WebOpts),
 }
 
@@ -209,4 +211,11 @@ pub struct InternalConnectionOpts {
         env = "BLITZ_DASHBOARD_MONGODB_URI"
     )]
     pub mongodb_uri: String,
+}
+
+/// Parses a replay file.
+#[derive(Parser)]
+pub struct TestReplayOpts {
+    #[structopt(value_name = "REPLAY_PATH")]
+    pub path: PathBuf,
 }

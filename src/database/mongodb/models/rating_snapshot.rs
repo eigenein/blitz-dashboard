@@ -50,6 +50,7 @@ impl RatingSnapshot {
             realm,
             account_id: account_info.id,
             season: account_info.stats.rating.current_season,
+            #[allow(deprecated)]
             date: account_info.last_battle_time.date().and_hms(0, 0, 0),
             open_rating: account_info.stats.rating.mm_rating,
             close_rating: account_info.stats.rating.mm_rating,
