@@ -19,7 +19,10 @@ pub fn run(opts: TestReplayOpts) -> Result {
 
     info!(timestamp = ?battle_results.timestamp()?);
     for player in &battle_results.players {
-        info!(player.account_id, player.info.nickname, player.info.team_number);
+        info!(
+            player.account_id,
+            player.info.nickname, player.info.team_number, player.info.platoon_id
+        );
     }
 
     Ok(())
@@ -69,6 +72,9 @@ struct Player {
 struct PlayerInfo {
     #[prost(string, tag = "1")]
     pub nickname: String,
+
+    #[prost(uint32, optional, tag = "2")]
+    pub platoon_id: Option<u32>,
 
     #[prost(uint32, tag = "3")]
     pub team_number: u32,
