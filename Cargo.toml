@@ -41,7 +41,7 @@ prost = "0.11.3"
 rand = "0.8.4"
 reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "json"] }
 sentry = { version = "0.29.0", default-features = false, features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "tracing", "anyhow"] }
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.150", features = ["derive"] }
 serde_json = "1.0.87"
 serde_with = { version = "1.14.0", features = ["chrono"] }
 statrs = "0.16.0"
