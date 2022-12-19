@@ -375,6 +375,14 @@
     "nation": "france",
     "type": "AT-SPG"
   },
+  "12161": {
+    "tank_id": 12161,
+    "name": "Strv K",
+    "tier": 10,
+    "is_premium": true,
+    "nation": "european",
+    "type": "heavyTank"
+  },
   "12305": {
     "tank_id": 12305,
     "name": "E 50 Ausf. M",
@@ -1766,6 +1774,14 @@
     "is_premium": true,
     "nation": "ussr",
     "type": "mediumTank"
+  },
+  "25361": {
+    "tank_id": 25361,
+    "name": "Waffenträger Ritter",
+    "tier": 9,
+    "is_premium": true,
+    "nation": "germany",
+    "type": "AT-SPG"
   },
   "25377": {
     "tank_id": 25377,
