@@ -18,7 +18,7 @@ debug = 1
 split-debuginfo = "unpacked"
 
 [dependencies]
-ahash = "0.8.0"
+ahash = "0.8.3"
 anyhow = "1.0.68"
 async-compression = { version = "0.3.15", features = ["zstd"] }
 async-trait = "0.1.60"
