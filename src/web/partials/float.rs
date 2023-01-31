@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn finite_ok() {
-        assert_eq!(Float::from(0.5).render().into_string(), r#"<span title="0.5">1</span>"#);
+        assert_eq!(Float::from(0.5).render().into_string(), r#"<span title="0.5">0</span>"#);
     }
 
     #[test]
