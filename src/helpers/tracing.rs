@@ -20,6 +20,7 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
             profiles_sample_rate: traces_sample_rate,
             attach_stacktrace: true,
             send_default_pii: true,
+            in_app_include: vec!["blitz_dashboard"],
             ..Default::default()
         },
     ));

@@ -1047,7 +1047,7 @@ fn render_tank_tr(
             td.has-text-left data-sort="damage-per-battle" data-value=(damage_per_battle) {
                 span.icon-text.is-flex-wrap-nowrap {
                     span.icon.has-text-grey-light { i.fa-solid.fa-house-damage {} }
-                    (format!("{:.0}", damage_per_battle))
+                    (format!("{damage_per_battle:.0}"))
                 }
             }
 
