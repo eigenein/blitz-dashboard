@@ -16,6 +16,10 @@ pub fn init(sentry_dsn: Option<String>, traces_sample_rate: f32) -> Result<Clien
         ClientOptions {
             release: Some(Cow::Borrowed(env!("CARGO_PKG_VERSION"))),
             traces_sample_rate,
+            enable_profiling: true,
+            profiles_sample_rate: traces_sample_rate,
+            attach_stacktrace: true,
+            send_default_pii: true,
             ..Default::default()
         },
     ));
