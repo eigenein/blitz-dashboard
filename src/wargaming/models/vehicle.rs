@@ -24,7 +24,7 @@ impl Vehicle {
     pub fn new_hardcoded(tank_id: TankId) -> Self {
         Self {
             tank_id,
-            name: Cow::Owned(format!("#{}", tank_id)),
+            name: Cow::Owned(format!("#{tank_id}")),
             tier: 0,
             is_premium: false,
             type_: TankType::Unknown,

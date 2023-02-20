@@ -119,14 +119,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> Result {
             type_: TankType::Light,
         },
         Vehicle {
-            tank_id: 3329,
-            name: Cow::Borrowed("MS-1 mod. 1"),
-            tier: 1,
-            is_premium: false,
-            nation: Nation::Ussr,
-            type_: TankType::Light,
-        },
-        Vehicle {
             tank_id: 23297,
             name: Cow::Borrowed("Объект 244"),
             tier: 6,
@@ -189,14 +181,6 @@ fn insert_missing_vehicles(vehicles: &mut BTreeMap<String, Vehicle>) -> Result {
             is_premium: true,
             nation: Nation::Europe,
             type_: TankType::Heavy,
-        },
-        Vehicle {
-            tank_id: 26913,
-            name: Cow::Borrowed("Frosty"),
-            tier: 6,
-            is_premium: true,
-            nation: Nation::Usa,
-            type_: TankType::Light,
         },
         Vehicle {
             tank_id: 10545,

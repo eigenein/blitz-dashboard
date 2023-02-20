@@ -190,7 +190,7 @@ pub fn vehicle_title(vehicle: &wargaming::Vehicle, locale: &Locale) -> Result<Ma
                 span.icon {
                     a
                         title=(locale.text("title-open-in-blitzhangar")?)
-                        href=(format!("https://blitzhangar.com/tank/{}", external_id))
+                        href=(format!("https://blitzhangar.com/tank/{external_id}"))
                         target="_blank"
                         rel="noopener noreferrer"
                     {
@@ -208,7 +208,7 @@ pub fn vehicle_title(vehicle: &wargaming::Vehicle, locale: &Locale) -> Result<Ma
 pub fn render_float(value: f64, precision: usize) -> Markup {
     html! {
         span title=(value) {
-            (format!("{:.1$}", value, precision))
+            (format!("{value:.precision$}"))
         }
     }
 }

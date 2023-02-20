@@ -121,7 +121,7 @@ impl Account {
         Self::collection(in_)
             .update_one(filter, update, options)
             .await
-            .with_context(|| format!("failed to ensure the account #{} existence", account_id))?;
+            .with_context(|| format!("failed to ensure the account #{account_id} existence"))?;
         Ok(())
     }
 

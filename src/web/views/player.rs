@@ -54,7 +54,7 @@ pub async fn post(
 ) -> poem::Result<Redirect> {
     let cookie_preferences = UpdateDisplayPreferences::from(cookies);
     cookies::Builder::new(UpdateDisplayPreferences::COOKIE_NAME)
-        .value(&DisplayPreferences::from(cookie_preferences + update_preferences))
+        .value(DisplayPreferences::from(cookie_preferences + update_preferences))
         .expires_in(Duration::weeks(4))
         .set_path("/")
         .add_to(cookies);
@@ -201,6 +201,13 @@ pub async fn get(
                     span.icon-text.is-flex-wrap-nowrap {
                         span { (locale.text("title-survival-ratio")?) }
                     }
+                }
+            }
+
+            th {
+                span.icon-text.is-flex-wrap-nowrap {
+                    span.icon { i.fas.fa-truck-monster {} }
+                    span { (locale.text("title-vehicle")?) }
                 }
             }
         }
@@ -434,7 +441,7 @@ pub async fn get(
                                                         p.heading { (locale.text("title-change")?) }
                                                         @let delta = view_model.stats_delta.rating.delta();
                                                         p.title.(SemaphoreClass::<_, f64>::new(delta)) title=(delta) {
-                                                            (format!("{:+.0}", delta))
+                                                            (format!("{delta:+.0}"))
                                                         }
                                                     }
                                                 }
@@ -443,7 +450,7 @@ pub async fn get(
                                                         p.heading { (locale.text("title-per-battle")?) }
                                                         @let delta_per_battle = view_model.stats_delta.rating.delta_per_battle();
                                                         p.title.(SemaphoreClass::new(delta_per_battle)) title=(delta_per_battle) {
-                                                            (format!("{:+.0}", delta_per_battle))
+                                                            (format!("{delta_per_battle:+.0}"))
                                                         }
                                                     }
                                                 }
@@ -957,7 +964,8 @@ fn render_tank_tr(
             .has-background-danger-light[thumbs_down_probability > confidence_level]
             .has-background-success-light[(1.0 - thumbs_down_probability > confidence_level)]
         {
-            (vehicle_th(&vehicle, locale)?)
+            @let vehicle_th = vehicle_th(&vehicle, locale)?;
+            (vehicle_th)
 
             td.has-text-centered.is-white-space-nowrap {
                 @match vehicle.type_ {
@@ -1073,6 +1081,8 @@ fn render_tank_tr(
                     span { (render_percentage(survival_rate)) }
                 }
             }
+
+            (vehicle_th)
         }
     };
     Ok(markup)

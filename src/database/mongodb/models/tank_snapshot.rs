@@ -212,7 +212,7 @@ impl TankSnapshot {
             .await
             .context("timed out to retrieve the latest tanks snapshots")??
             .with_context(|| {
-                format!("failed to retrieve the latest tank snapshots for #{}", account_id)
+                format!("failed to retrieve the latest tank snapshots for #{account_id}")
             })?;
         let stream = cursor
             .try_filter_map(|document| async move {

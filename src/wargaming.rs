@@ -95,7 +95,7 @@ impl WargamingApi {
             ],
         )?)
         .await
-        .with_context(|| format!("failed to search for accounts: `{}`", query))
+        .with_context(|| format!("failed to search for accounts: `{query}`"))
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/account/info/>.
@@ -124,7 +124,7 @@ impl WargamingApi {
             ],
         )?)
         .await
-        .with_context(|| format!("failed to get account infos: `{}`", account_id))
+        .with_context(|| format!("failed to get account infos: `{account_id}`"))
     }
 
     /// See <https://developers.wargaming.net/reference/all/wotb/tanks/stats/>.
@@ -143,7 +143,7 @@ impl WargamingApi {
         Ok(self
             .call_by_account(url, account_id)
             .await
-            .with_context(|| format!("failed to get tanks stats for #{}", account_id))?
+            .with_context(|| format!("failed to get tanks stats for #{account_id}"))?
             .unwrap_or_default())
     }
 
@@ -163,7 +163,7 @@ impl WargamingApi {
         Ok(self
             .call_by_account(url, account_id)
             .await
-            .with_context(|| format!("failed to get tanks achievements for #{}", account_id))?
+            .with_context(|| format!("failed to get tanks achievements for #{account_id}"))?
             .unwrap_or_default())
     }
 
@@ -172,7 +172,7 @@ impl WargamingApi {
     pub async fn get_tankopedia(&self) -> Result<Tankopedia> {
         info!("retrieving the tankopedia…");
         self.call::<Tankopedia>(Url::parse_with_params(
-            "https://api.wotblitz.ru/wotb/encyclopedia/vehicles/",
+            "https://api.wotblitz.eu/wotb/encyclopedia/vehicles/",
             &[
                 ("application_id", self.application_id.as_str()),
                 ("language", "en"),

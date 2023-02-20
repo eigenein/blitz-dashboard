@@ -5,7 +5,7 @@ pub type TankId = u32;
 
 /// Converts the API tank ID to the client tank ID.
 pub fn to_client_id(tank_id: TankId) -> Result<u32> {
-    Ok(Nation::from_tank_id(tank_id)?.get_id() + (tank_id as u32 >> 8))
+    Ok(Nation::from_tank_id(tank_id)?.get_id() + (tank_id >> 8))
 }
 
 #[cfg(test)]

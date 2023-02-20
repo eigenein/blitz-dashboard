@@ -81,7 +81,7 @@ impl From<UpdateDisplayPreferences> for DisplayPreferences {
         Self {
             period: update.period.unwrap_or(time::Duration::from_secs(86400)),
             confidence_level_percentage,
-            confidence_level: confidence_level_percentage as f64 / 100.0,
+            confidence_level: confidence_level_percentage / 100.0,
             target_victory_ratio_percentage,
             target_victory_ratio: target_victory_ratio_percentage / 100.0,
         }

@@ -95,6 +95,14 @@
     "nation": "other",
     "type": "heavyTank"
   },
+  "10369": {
+    "tank_id": 10369,
+    "name": "Controcarro 3 Minotauro",
+    "tier": 10,
+    "is_premium": false,
+    "nation": "european",
+    "type": "AT-SPG"
+  },
   "1041": {
     "tank_id": 1041,
     "name": "StuG III Ausf. G",
@@ -135,6 +143,14 @@
     "nation": "usa",
     "type": "mediumTank"
   },
+  "10625": {
+    "tank_id": 10625,
+    "name": "Controcarro 1 Mk. 2",
+    "tier": 9,
+    "is_premium": false,
+    "nation": "european",
+    "type": "AT-SPG"
+  },
   "1073": {
     "tank_id": 1073,
     "name": "T-34-1",
@@ -173,6 +189,14 @@
     "tier": 7,
     "is_premium": false,
     "nation": "france",
+    "type": "AT-SPG"
+  },
+  "10881": {
+    "tank_id": 10881,
+    "name": "Semovente Controcarro mod. 1964",
+    "tier": 8,
+    "is_premium": false,
+    "nation": "european",
     "type": "AT-SPG"
   },
   "1089": {
@@ -223,6 +247,14 @@
     "nation": "france",
     "type": "AT-SPG"
   },
+  "11137": {
+    "tank_id": 11137,
+    "name": "Semovente Controcarro mod. 1956",
+    "tier": 7,
+    "is_premium": false,
+    "nation": "european",
+    "type": "AT-SPG"
+  },
   "1121": {
     "tank_id": 1121,
     "name": "Type 5 Chi-Ri",
@@ -271,6 +303,14 @@
     "nation": "other",
     "type": "heavyTank"
   },
+  "11393": {
+    "tank_id": 11393,
+    "name": "Semovente M43 Bassotto",
+    "tier": 6,
+    "is_premium": false,
+    "nation": "european",
+    "type": "AT-SPG"
+  },
   "11521": {
     "tank_id": 11521,
     "name": "IS-8",
@@ -309,6 +349,14 @@
     "tier": 6,
     "is_premium": false,
     "nation": "france",
+    "type": "AT-SPG"
+  },
+  "11649": {
+    "tank_id": 11649,
+    "name": "Semovente M41",
+    "tier": 5,
+    "is_premium": false,
+    "nation": "european",
     "type": "AT-SPG"
   },
   "11777": {
@@ -969,7 +1017,7 @@
   },
   "18449": {
     "tank_id": 18449,
-    "name": "Spähpanzer Ru 251",
+    "name": "Ru 251",
     "tier": 8,
     "is_premium": false,
     "nation": "germany",
@@ -1185,7 +1233,7 @@
   },
   "19985": {
     "tank_id": 19985,
-    "name": "Rheinmetall Skorpion G",
+    "name": "Skorpion G",
     "tier": 8,
     "is_premium": true,
     "nation": "germany",
@@ -1879,6 +1927,14 @@
     "nation": "japan",
     "type": "mediumTank"
   },
+  "26657": {
+    "tank_id": 26657,
+    "name": "ASTRON Rex 105 mm",
+    "tier": 8,
+    "is_premium": true,
+    "nation": "usa",
+    "type": "mediumTank"
+  },
   "2689": {
     "tank_id": 2689,
     "name": "Vickers Mk. F",
@@ -1886,6 +1942,22 @@
     "is_premium": false,
     "nation": "european",
     "type": "lightTank"
+  },
+  "26913": {
+    "tank_id": 26913,
+    "name": "Frosty",
+    "tier": 6,
+    "is_premium": true,
+    "nation": "usa",
+    "type": "lightTank"
+  },
+  "27169": {
+    "tank_id": 27169,
+    "name": "Cyborg",
+    "tier": 6,
+    "is_premium": true,
+    "nation": "usa",
+    "type": "heavyTank"
   },
   "2817": {
     "tank_id": 2817,
@@ -2014,6 +2086,14 @@
     "is_premium": true,
     "nation": "usa",
     "type": "heavyTank"
+  },
+  "3329": {
+    "tank_id": 3329,
+    "name": "MS-1 mod. 1",
+    "tier": 1,
+    "is_premium": false,
+    "nation": "ussr",
+    "type": "lightTank"
   },
   "3345": {
     "tank_id": 3345,
@@ -3401,7 +3481,7 @@
   },
   "64801": {
     "tank_id": 64801,
-    "name": "T34 Independence",
+    "name": "T34 (1776)",
     "tier": 8,
     "is_premium": true,
     "nation": "usa",
@@ -3417,7 +3497,7 @@
   },
   "64849": {
     "tank_id": 64849,
-    "name": "AC 1 Sentinel",
+    "name": "Sentinel AC I",
     "tier": 4,
     "is_premium": true,
     "nation": "uk",
@@ -3449,7 +3529,7 @@
   },
   "65377": {
     "tank_id": 65377,
-    "name": "Type 3 Chi-Nu Kai",
+    "name": "Type 3 Chi-Nu Kai Shinobi",
     "tier": 5,
     "is_premium": true,
     "nation": "japan",
